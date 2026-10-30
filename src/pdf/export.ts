@@ -15,7 +15,8 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { Problem } from '../paper/layout';
-import { type Reader, type Rendered, render } from '../paper/render';
+import type { MarkdownPlugin } from '../paper/markdown';
+import { type Extensions, type Reader, type Rendered, render } from '../paper/render';
 import { findBrowser } from './browser';
 import { finishPdf, printPdf } from './pdf';
 
@@ -41,6 +42,14 @@ export interface Assets {
   pagedJs: string;
 }
 
+/**
+ * MarkdownExtensions are the parts of the Markdown extensions of VS Code for the PDF
+ * ([R-REN-010](../../docs/requirements.md#r-ren-010)): their markdown-it plugins, style sheets and scripts.
+ */
+export interface MarkdownExtensions extends Extensions {
+  plugins: readonly MarkdownPlugin[];
+}
+
 /** ExportOptions are the options of an export. */
 export interface ExportOptions {
   assets: Assets;
@@ -54,6 +63,8 @@ export interface ExportOptions {
   browser?: string;
   /** top is the path of the top folder of the search for a layout. */
   top?: string;
+  /** extensions are the parts of the Markdown extensions of VS Code; the command line has none. */
+  extensions?: MarkdownExtensions;
 }
 
 /** ExportResult is the result of an export. */
@@ -80,7 +91,7 @@ export const folderUrl = (folder: string): string => {
  * @param file - The path of the Markdown file.
  * @param options - The options.
  */
-export async function renderFile(file: string, options: Pick<ExportOptions, 'assets' | 'text' | 'top'>): Promise<Rendered> {
+export async function renderFile(file: string, options: Pick<ExportOptions, 'assets' | 'text' | 'top' | 'extensions'>): Promise<Rendered> {
   const text = options.text ?? (await fs.promises.readFile(file, 'utf8'));
   const pagedJs = await fs.promises.readFile(options.assets.pagedJs, 'utf8');
   return render(
@@ -92,10 +103,12 @@ export async function renderFile(file: string, options: Pick<ExportOptions, 'ass
       sources: 'file:',
       // A script element ends at the first "</script", which the code of Paged.js does not hold; the check keeps it so.
       scripts: [{ text: pagedJs.replace(/<\/script/gi, '<\\/script') }],
+      ...(options.extensions ? { extensions: { styles: options.extensions.styles, scripts: options.extensions.scripts } } : {}),
       nonce: randomBytes(16).toString('base64'),
     },
     pathToFileURL(file).href,
     text,
+    options.extensions?.plugins,
   );
 }
 

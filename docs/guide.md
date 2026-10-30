@@ -39,7 +39,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | One formatter command `markdownpaper format` | command line, VS Code | planned | [R-CLI-002](requirements.md#r-cli-002) |
 | Citations, the database of the sources, the reference list, `/source`, `/cite`, `/research` | the Markdown file, text editor | planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-004](requirements.md#r-cite-004) |
 | [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
-| Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF | PDF | planned | [R-REN-010](requirements.md#r-ren-010) |
+| [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line planned | [R-REN-010](requirements.md#r-ren-010) |
 
 ## Start a project
 
@@ -241,7 +241,10 @@ context menu of the Explorer, writes the PDF beside the file, with the name
 that `pdfName` of the layout gives, and opens it
 (`nimblescape.markdownPaper.openPdf`). It needs an installed Google Chrome,
 Chromium or Microsoft Edge; `nimblescape.markdownPaper.browserPath` names
-another program. On the command line:
+another program. The PDF shows what the Markdown extensions of VS Code add to
+the Markdown preview, for example the diagrams of Mermaid and the math of
+KaTeX, in the colors of a light theme; a diagram stands in the middle of the
+text. On the command line, which has no extensions of VS Code:
 
 ```sh
 npx -y @nimblescape/markdownpaper pdf paper/paper.md

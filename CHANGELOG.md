@@ -48,7 +48,9 @@ The first version.
 - "Export PDF" writes the PDF with an installed Google Chrome, Chromium or
   Microsoft Edge beside the Markdown file, with the name that the layout
   gives, without the marks of the soft hyphens and with its title, author and
-  language in its metadata.
+  language in its metadata. In VS Code, the PDF shows what the other Markdown
+  extensions add to the Markdown preview, for example the diagrams of Mermaid
+  and the math of KaTeX.
 - Checks of the front matter: a layout that does not exist, a missing required
   field and a link to a figure or a table that does not exist are warnings in
   the text editor; the pointer on a field shows its description.

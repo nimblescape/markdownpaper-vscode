@@ -10,6 +10,7 @@
 
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { markdownExtensions } from './markdownExtensions';
 import { fileOf, textOf } from './notesApi';
 import type { Layout } from './paper/layout';
 import { defaultLayout, findLayout, layoutName } from './paper/render';
@@ -72,6 +73,7 @@ export async function exportPdfCommand(context: Context, uri?: unknown): Promise
         text: await textOf(file),
         browser: context.browserPath(),
         ...(folder?.uri.scheme === 'file' ? { top: folder.uri.fsPath } : {}),
+        extensions: await markdownExtensions(context.extension),
       }),
     );
     const pdf = vscode.Uri.file(result.pdf);

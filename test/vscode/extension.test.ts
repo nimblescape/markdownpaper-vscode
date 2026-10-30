@@ -6,9 +6,10 @@
 // Tests in a real VS Code (npm run test:vscode, .vscode-test.mjs): mocha runs them in the extension host. They write a
 // layout and Markdown files into a temporary folder, and check the commands of the extension, the checks of the front
 // matter and their hover (R-DOC-002, R-DOC-003), the plugin of the pages in the Markdown preview of VS Code for a
-// paper document and none for a notes document (R-PRV-001, R-PRV-005, R-DOC-004), and "Export PDF" (R-PDF-001) when a
-// Chrome, Chromium or Edge is installed, as on the runners of GitHub. The test of the script of the pages, which needs
-// a browser page, is in src/paperPreview.test.ts.
+// paper document and none for a notes document (R-PRV-001, R-PRV-005, R-DOC-004), and "Export PDF" (R-PDF-001), with
+// the diagrams of Mermaid and the math of KaTeX of the built-in Markdown extensions (R-REN-010), when a Chrome,
+// Chromium or Edge is installed, as on the runners of GitHub. The test of the script of the pages, which needs a
+// browser page, is in src/paperPreview.test.ts.
 
 import * as assert from 'node:assert/strict';
 import * as fs from 'node:fs';
@@ -16,7 +17,10 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { Api } from '../../src/extension';
+import { markdownExtensions } from '../../src/markdownExtensions';
 import { findBrowser } from '../../src/pdf/browser';
+import { Browser } from '../../src/pdf/cdp';
+import { exportPdf } from '../../src/pdf/export';
 
 /** extensionId is the identifier of the extension. */
 const extensionId = 'nimblescape.nimblescape-markdownpaper';
@@ -156,5 +160,66 @@ describe('nimblescape Markdown Paper', function () {
     assert.ok(pdf, 'the command returns the PDF');
     assert.equal(path.basename(pdf.fsPath), 'Agenten-im-Team.pdf');
     assert.equal(fs.readFileSync(pdf.fsPath).subarray(0, 5).toString('latin1'), '%PDF-');
+  });
+
+  it('the pages of the PDF show the diagrams of Mermaid and the math of KaTeX of the Markdown extensions of VS Code (R-REN-010)', async function () {
+    let browser: string;
+    try {
+      browser = findBrowser(vscode.workspace.getConfiguration('nimblescape.markdownPaper').get<string>('browserPath') ?? '');
+    } catch {
+      this.skip();
+      return;
+    }
+    await api();
+    const own = vscode.extensions.getExtension(extensionId)?.extensionUri;
+    assert.ok(own);
+    const extensions = await markdownExtensions(own);
+    assert.ok(extensions.plugins.length >= 2, 'the plugins of Markdown Math and Mermaid');
+    assert.ok(
+      extensions.scripts.some((script) => 'src' in script && script.module && /mermaid/.test(script.src)),
+      'the module script of Mermaid',
+    );
+    assert.ok(!extensions.scripts.some((script) => 'src' in script && /markdown-language-features\/|paperPreview\.js/.test(script.src)), 'not the scripts of the preview itself');
+    const file = write('paper/diagram.md', '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nDie Formel $a^2 + b^2 = c^2$.\n\n```mermaid\ngraph LR\n  Alpha --> Beta\n```\n');
+    const html = path.join(folder, 'paper', 'diagram.html');
+    const result = await exportPdf(file.fsPath, {
+      assets: { layouts: vscode.Uri.joinPath(own, 'layouts').fsPath, pagedJs: vscode.Uri.joinPath(own, 'media', 'paged.polyfill.js').fsPath },
+      browser,
+      html,
+      extensions,
+    });
+    assert.equal(fs.readFileSync(result.pdf).subarray(0, 5).toString('latin1'), '%PDF-');
+    assert.deepEqual(result.messages, []);
+   
+    // The page of the PDF in the browser, as it printed it.
+    const running = await Browser.launch(browser);
+    try {
+      const { targetId } = (await running.send('Target.createTarget', { url: 'about:blank' })) as { targetId: string };
+      const { sessionId } = (await running.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
+      await running.send('Page.enable', {}, sessionId);
+      const loaded = running.once('Page.loadEventFired', sessionId);
+      await running.send('Page.navigate', { url: vscode.Uri.file(html).toString() }, sessionId);
+      await loaded;
+      const evaluated = (await running.send(
+        'Runtime.evaluate',
+        {
+          expression: `new Promise((resolve) => { const done = () => { const pages = document.querySelector('.pagedjs_pages'); resolve({
+            diagram: [...pages.querySelectorAll('svg')].some((svg) => svg.textContent.includes('Alpha') && svg.textContent.includes('Beta')),
+            inside: [...pages.querySelectorAll('svg')].every((svg) => svg.getBoundingClientRect().right <= svg.closest('.pagedjs_page_content').getBoundingClientRect().right + 1),
+            buttons: [...pages.querySelectorAll('.mermaid-zoom-controls')].filter((element) => getComputedStyle(element).display !== 'none').length,
+            math: pages.querySelectorAll('.katex').length,
+            font: document.fonts.check('16px KaTeX_Main'),
+            light: document.body.classList.contains('vscode-light'),
+          }); }; if (window.paperRendered) { done(); } else { document.addEventListener('paper-rendered', done); } })`,
+          awaitPromise: true,
+          returnByValue: true,
+        },
+        sessionId,
+      )) as { result: { value: { diagram: boolean; inside: boolean; buttons: number; math: number; font: boolean; light: boolean } } };
+      // The diagram stands inside the text of its page, without the buttons of the screen.
+      assert.deepEqual(evaluated.result.value, { diagram: true, inside: true, buttons: 0, math: 1, font: true, light: true });
+    } finally {
+      await running.close();
+    }
   });
 });

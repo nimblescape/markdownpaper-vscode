@@ -15,7 +15,8 @@ html:has(> body.nimblescape-paper-mode) {
   background: #7a7d80;
   /* The colors of the theme that the scripts of other extensions read for their drawings, such as the diagrams of
      Mermaid, with the values of the theme "Light Modern" of VS Code: the pages are white paper also in a dark theme.
-     VS Code sets the colors of its theme in the attribute style of html, which only !important overrides. */
+     VS Code sets the colors of its theme in the attribute style of html, which only !important overrides. The PDF
+     gets the same values from src/paper/extensionStyles.ts. */
   --vscode-foreground: #3b3b3b !important;
   --vscode-editor-background: #ffffff !important;
   --vscode-editor-foreground: #3b3b3b !important;
@@ -84,6 +85,24 @@ body.nimblescape-paper-mode .pagedjs_page {
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
   margin: 0 !important;
   flex: none;
+}
+
+/* The diagrams of Mermaid on the pages, without the parts for the screen (the area that the mouse moves and zooms,
+   moved to the middle of the width at the time of the drawing, and its buttons): the rules of drawingsCss in
+   src/paper/extensionStyles.ts, which the PDF gets. */
+body.nimblescape-paper-mode .nimblescape-paper-pages {
+  .mermaid-wrapper {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .mermaid-content {
+    transform: none !important;
+    text-align: center;
+  }
+  .mermaid-zoom-controls,
+  .mermaid-resize-handle {
+    display: none !important;
+  }
 }
 
 .nimblescape-paper-busy {

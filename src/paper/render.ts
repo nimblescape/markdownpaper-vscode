@@ -20,6 +20,7 @@
  */
 
 import { baseCss } from './baseCss';
+import { extensionCss } from './extensionStyles';
 import { bodyOf, type FrontMatter, readFrontMatter } from './frontMatter';
 import { hyphenatorOf } from './hyphenate';
 import { type Layout, layoutFile, type Problem, parseLayout, termsFor } from './layout';
@@ -32,8 +33,19 @@ export interface Reader {
   read(url: string): Promise<Uint8Array | undefined>;
 }
 
-/** Script is a script of the page: a file or a text. */
-export type Script = { src: string } | { text: string };
+/** Script is a script of the page: a file, also an ECMAScript module, or a text. */
+export type Script = { src: string; module?: boolean } | { text: string };
+
+/**
+ * Extensions are the parts of the Markdown extensions of VS Code for the page of the PDF
+ * ([R-REN-010](../../docs/requirements.md#r-ren-010)): their markdown-it plugins go to `render`.
+ */
+export interface Extensions {
+  /** styles are their style sheets as texts, whose addresses name the files as the page loads them. */
+  styles: string[];
+  /** scripts are their scripts, which draw in the page before Paged.js makes the pages. */
+  scripts: Script[];
+}
 
 /** Host is what the renderer needs from its host. */
 export interface Host {
@@ -46,8 +58,10 @@ export interface Host {
   resource(url: string): string;
   /** sources are the sources of the policy of the page for images, fonts and styles, for example `file:`. */
   sources: string;
-  /** scripts are the scripts of the page after the text: Paged.js, and the script of the page preview. */
+  /** scripts are the scripts of the page after the text: Paged.js. */
   scripts: Script[];
+  /** extensions are the style sheets and the scripts of the Markdown extensions of VS Code, if any. */
+  extensions?: Extensions;
   /** screenStyles are style sheets for the screen only, which Paged.js leaves out. */
   screenStyles?: string[];
   /** nonce is the nonce of the scripts of the page. */
@@ -309,7 +323,17 @@ export async function render(host: Host, document: string, text: string, plugins
     `style-src ${source} 'unsafe-inline'`,
     `script-src 'nonce-${host.nonce}'`,
   ].join('; ');
-  const scripts = host.scripts.map((script) => ('src' in script ? `<script nonce="${host.nonce}" src="${escapeHtml(script.src)}"></script>` : `<script nonce="${host.nonce}">${script.text}</script>`));
+  const scripts = [...(host.extensions?.scripts ?? []), ...host.scripts].map((script) =>
+    'src' in script
+      ? `<script nonce="${host.nonce}"${script.module ? ' type="module"' : ''} src="${escapeHtml(script.src)}"></script>`
+      : `<script nonce="${host.nonce}">${script.text}</script>`,
+  );
+  // The style sheets of the extensions come first, so that the layout can change what they set. Their scripts read
+  // the colors of the theme and the class of a light theme on the body, as in the Markdown preview of VS Code; the
+  // diagrams lose their parts for the screen.
+  const extensionStyles = host.extensions
+    ? `${host.extensions.styles.map((css) => `<style data-paper="extension">\n${css.replace(/<\/style/gi, '<\\/style')}\n</style>`).join('\n')}\n<style data-paper="drawings">\n${extensionCss}\n</style>\n`
+    : '';
   const html = `<!DOCTYPE html>
 <html lang="${escapeHtml(layout.language)}">
 <head>
@@ -318,7 +342,7 @@ export async function render(host: Host, document: string, text: string, plugins
 <title>${escapeHtml(title)}</title>
 <base href="${escapeHtml(host.resource(folderOf(document)))}">
 ${(host.screenStyles ?? []).map((href) => `<link rel="stylesheet" media="screen" href="${escapeHtml(href)}">`).join('\n')}
-<style data-paper="base">
+${extensionStyles}<style data-paper="base">
 ${baseCss}
 </style>
 ${composed.styles.map((css, index) => `<style data-paper="layout" data-file="${escapeHtml(layout.stylesheets[index] ?? '')}">\n${css}\n</style>`).join('\n')}
@@ -328,6 +352,36 @@ ${composed.variables}
 <script nonce="${host.nonce}">
 window.PagedConfig = {
   auto: true,
+  // The scripts of the Markdown extensions draw after the page has loaded, for example the diagrams of Mermaid.
+  // Paged.js makes the pages when the page has not changed for 200 milliseconds and no diagram of Mermaid waits, at
+  // the latest after 10 seconds.
+  before: function () {
+    return new Promise(function (resolve) {
+      function start() {
+        var end = Date.now() + 10000;
+        var last = Date.now();
+        var observer = new MutationObserver(function () {
+          last = Date.now();
+        });
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+        function check() {
+          var waiting = document.querySelector('.mermaid:not(:has(svg))');
+          if (Date.now() > end || (!waiting && Date.now() - last >= 200)) {
+            observer.disconnect();
+            resolve();
+          } else {
+            setTimeout(check, 50);
+          }
+        }
+        setTimeout(check, 150);
+      }
+      if (document.readyState === 'complete') {
+        start();
+      } else {
+        window.addEventListener('load', start);
+      }
+    });
+  },
   after: function () {
     window.paperRendered = true;
     document.dispatchEvent(new Event('paper-rendered'));
@@ -335,7 +389,7 @@ window.PagedConfig = {
 };
 </script>
 </head>
-<body class="paper" data-layout="${escapeHtml(layout.id)}"${attributes}>
+<body class="paper${host.extensions ? ' vscode-light' : ''}" data-layout="${escapeHtml(layout.id)}"${attributes}>
 ${composed.before}
 <main class="paper-text">
 ${body.html}

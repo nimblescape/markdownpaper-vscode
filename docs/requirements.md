@@ -45,7 +45,7 @@ This document replaces it where the two differ.
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006) | instructions done; the first layout planned |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when Hannes asks |
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
-| 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | planned |
+| 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; the command line is open |
 | 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark and the name wait for Hannes |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` and links `lst-…` | [R-REN-009](#r-ren-009) | planned |
@@ -574,12 +574,23 @@ markdown plugins though, ie, mermaid, plantuml, footnotes, etc.").
   that contribute `markdown.markdownItPlugins`, as the Markdown preview of
   VS Code does: the extension activates them and gives their function
   `extendMarkdownIt` to the renderer, which calls it on its markdown-it before
-  its own steps. The page of the PDF loads the scripts and the style sheets
-  that these extensions contribute with `markdown.previewScripts` and
-  `markdown.previewStyles`, and Paged.js makes the pages after these scripts
-  have drawn their content. The PDF leaves out the plugin, the scripts and the
-  style sheets of the Markdown extension of VS Code itself and of Markdown
-  Notes, because the PDF shows no notes ([R-REN-002](#r-ren-002)).
+  its own steps. The page of the PDF loads the scripts that these extensions
+  contribute with `markdown.previewScripts`, also ECMAScript modules, and has
+  their style sheets of `markdown.previewStyles` as text. Paged.js makes the
+  pages after these scripts have drawn their content: when the page has not
+  changed for 200 milliseconds and no diagram of Mermaid waits, at the latest
+  10 seconds after the page has loaded. The PDF leaves out the plugin, the
+  scripts and the style sheets of the Markdown extension of VS Code itself
+  and of Markdown Notes, because the PDF shows no notes
+  ([R-REN-002](#r-ren-002)).
+- The page of the PDF gives these scripts what the Markdown preview gives
+  them: the colors of the theme with the values of a light theme, as in
+  [R-PRV-005](#r-prv-005), and the class `vscode-light` on the body.
+- A diagram of Mermaid stands in the middle of the text of its page, at most
+  as wide as the text, without the parts for the screen: Mermaid puts each
+  diagram into an area that the mouse moves and zooms, moved to the middle of
+  the width of the page at the time of the drawing, with buttons. The pages of
+  the PDF and of the preview leave out the movement and the buttons.
 - Footnotes are part of the renderer ([R-REN-008](#r-ren-008)).
 - The renderer itself stays without an API of VS Code
   ([R-REN-001](#r-ren-001)): it takes the plugins, the scripts and the style
@@ -1066,8 +1077,9 @@ Decision 20 is the technique that Claude chose for decision 17 of Hannes.
   `nimblescape-layout` and `layout: github:majikmate/pht-thesis@v1.0.0`; the
   form for an npm package is open too.
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
-  `markdownpaper` has no extensions of VS Code. It can bring Mermaid itself;
-  PlantUML needs Java or a PlantUML server.
+  `markdownpaper` has no extensions of VS Code, so its PDF shows a diagram as
+  its source text. It can bring Mermaid itself; PlantUML needs Java or a
+  PlantUML server. In VS Code, "Export PDF" shows the diagrams.
 - The npm name `@nimblescape/markdownpaper` ([decision 5](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.

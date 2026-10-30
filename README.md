@@ -34,7 +34,11 @@ gives the same renderer to people and AI agents on the command line:
   Chrome, Chromium or Microsoft Edge, without a window, with a profile of its
   own in a temporary folder, and connected to the extension through a pipe,
   not through a network port. The browser reads the page from a temporary
-  file and the images of the document from the disk.
+  file and the images of the document from the disk. For the content of the
+  other Markdown extensions, "Export PDF" starts the extensions that
+  contribute to the Markdown preview, as the preview does, and the page runs
+  their scripts from their folders; a script in a Markdown file or in a
+  layout does not run.
 - **Network.** The extension's own code connects to no address and collects
   no telemetry. A document or a layout that names an image or a font on the
   web makes the Markdown preview and the browser load it.
@@ -84,7 +88,9 @@ gives the same renderer to people and AI agents on the command line:
   shows its description.
 - **Export PDF.** "Export PDF" in the menu "Run" of the title of a Markdown
   file writes the PDF beside the file, with the name that the layout gives,
-  for example `{{matrikelnummer}}_{{author}}`.
+  for example `{{matrikelnummer}}_{{author}}`. The PDF shows what the other
+  Markdown extensions add, such as the diagrams of Mermaid and the math of
+  KaTeX.
 - **New project, document and layout.** "New Project" writes the folders of a
   paper: `AGENTS.md` for AI agents, the layout, `paper/paper.md`, the drop
   folder `inbox/` for sources, the folder `bib/` for the files of the
@@ -135,7 +141,9 @@ describes every feature.
 - Paged.js stops at a single paragraph that is longer than about two pages;
   the pages then end before it.
 - The diagrams of Mermaid, PlantUML and the other Markdown extensions of
-  VS Code show on the pages of the preview; in the PDF they are planned.
+  VS Code show on the pages of the preview and in the PDF of "Export PDF" in
+  VS Code. The command line has no extensions of VS Code: its PDF shows the
+  source text of a diagram.
 - A layout has no scripts. Its templates know fields and parts that show
   only with a field, no other logic.
 - The citations and the reference list from a database of sources are

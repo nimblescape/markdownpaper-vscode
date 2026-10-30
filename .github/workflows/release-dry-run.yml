@@ -8,7 +8,9 @@
 # until a successful dry run of the workflow "Release" on the branch of the
 # pull request had these files as they are at the head of the pull request.
 # After the dry run, re-run the job. On every other pull request, the job
-# passes.
+# passes, and also on the pull request that brings release.yml to a new
+# repository: GitHub starts the workflow "Release" only when the default
+# branch has it, so the first release checks the rule on main.
 # Do not make the job a required check of main: the release moves main to its
 # version commit, which has no result of this job. The version job of the
 # release checks the same rule again. The job only reads; it is a workflow of

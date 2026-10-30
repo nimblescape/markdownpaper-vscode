@@ -90,11 +90,8 @@ export interface Layout {
   contentsDepth: number;
   /** hyphenate is true when the renderer hyphenates the text by the language. */
   hyphenate: boolean;
-  /**
-   * listings are the options of the listings of source code: lineNumbers puts the number of each line, from 1, before
-   * the code; source writes the file and the lines of the source after the caption.
-   */
-  listings: { lineNumbers: boolean; source: boolean };
+  /** listings are the options of the listings of source code: lineNumbers puts the number of each line, from 1, before the code. */
+  listings: { lineNumbers: boolean };
   /** pdfName is the pattern of the name of the PDF file, with fields such as {{title}}. */
   pdfName: string;
   /** terms are the words of the language, changed by the layout. */
@@ -299,7 +296,7 @@ export function parseLayout(text: string, id: string, folder: string): { layout?
     unnumbered: strings(headings.unnumbered) ?? [],
     contentsDepth: count(isObject(json.contents) ? json.contents.depth : undefined, 3),
     hyphenate: json.hyphenate !== false,
-    listings: { lineNumbers: isObject(json.listings) && json.listings.lineNumbers === true, source: !(isObject(json.listings) && json.listings.source === false) },
+    listings: { lineNumbers: isObject(json.listings) && json.listings.lineNumbers === true },
     pdfName: typeof json.pdfName === 'string' && json.pdfName.trim() !== '' ? json.pdfName : '{{file}}',
     terms,
   };

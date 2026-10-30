@@ -22,8 +22,8 @@
  *   an image alone in its paragraph is the caption of the figure, above the image; an image without it is a figure
  *   without a caption. A paragraph "Table 1: …" directly before a table is the caption of the table. A paragraph
  *   "Listing 1: …" before a listing of Markdown Notes, a fenced code block with the comment of its source, is the
- *   caption of the listing, with the file and the lines of the source after it, and the code gets the numbers of its
- *   lines when the layout asks for them ([R-REN-011](../../docs/requirements.md#r-ren-011)).
+ *   caption of the listing, with the cite of its source after it, and the code gets the numbers of its lines when
+ *   the layout asks for them ([R-REN-011](../../docs/requirements.md#r-ren-011)).
  * - The section of the table of contents (TOC), of the list of figures (LOF), of the list of tables (LOT) or of the
  *   list of listings (LOL) shows the list that the file holds between the markers of the section, such as
  *   `<!-- toc -->` and `<!-- /toc -->`, which the formatter writes, with the page of each entry; a section without
@@ -389,29 +389,8 @@ function placeFootnotes(state: StateCore): number {
 /** listingComment matches the comment of a listing of Markdown Notes, `<!-- listing: ../src/fields.ts#read-fields -->`. */
 const listingComment = /^\s*<!--\s*listing:\s*(\S+)\s*-->\s*$/;
 
-/**
- * sourceOf returns the file and the lines of the source of a listing for its caption, for example "fields.ts, L12-L30",
- * from the target of the link of the caption (`../src/fields.ts#L12-L30`, one line `#L12`, the whole file without `#`),
- * or from the comment of the listing, which names a snippet and no lines.
- * @param target - The target, or undefined.
- */
-function sourceOf(target: string | undefined): string | undefined {
-  if (!target) {
-    return undefined;
-  }
-  const [path, fragment = ''] = target.split('#', 2);
-  let file = path.split('?')[0].split('/').filter((part) => part !== '').at(-1) ?? '';
-  try {
-    file = decodeURIComponent(file);
-  } catch {
-    // A name with a wrong escape stays as it is.
-  }
-  if (file === '') {
-    return undefined;
-  }
-  const lines = /^L\d+(?:-L\d+)?$/.test(fragment) ? fragment : '';
-  return lines ? `${file}, ${lines}` : file;
-}
+/** citeText matches the cite of the source after the link of the caption of a listing: "(fields.ts, L12-L30)". */
+const citeText = /^\s*\([^()]+\)\s*$/;
 
 /** ListingMeta is the mark of the code block of a listing for the renderer of code blocks, in the meta of its token. */
 interface ListingMeta {
@@ -729,14 +708,19 @@ function paperRule(layout: Layout, found: Found) {
             id = unique(`listing-${number.toLowerCase()}`);
           }
           const label = `${terms.listing} ${number}`;
-          // The caption is a link to the source, which a page cannot open: the page shows its text, and the file and
-          // the lines of the source after it.
+          // The caption is a link to the source, which a page cannot open: the page shows its text. The cite of the
+          // source after the link, which the formatter of Markdown Notes writes, gets an element of its own.
           let kids = withoutTrailingSpace(kept);
           const link = kids.find((child) => child.type === 'link_open' && !child.attrGet('href')?.startsWith('#'));
-          const source = sourceOf(link?.attrGet('href') ?? comment?.[1]);
+          let cite = '';
           if (link) {
             const open = kids.indexOf(link);
             const close = kids.findIndex((child, position) => position > open && child.type === 'link_close');
+            const after = close >= 0 ? plainText(kids.slice(close + 1)) : '';
+            if (citeText.test(after)) {
+              cite = after.trim();
+              kids = kids.slice(0, close + 1);
+            }
             kids = kids.filter((_child, position) => position !== open && position !== close);
           }
           const first = kids.find((child) => child.type === 'text');
@@ -748,7 +732,7 @@ function paperRule(layout: Layout, found: Found) {
           inline.children = [
             html(state, `<span class="caption-label">${escapeHtml(label)}</span><span class="caption-separator">: </span><span class="caption-text">`),
             ...kids,
-            html(state, `</span>${layout.listings.source && source ? `<span class="caption-source"> (${escapeHtml(source)})</span>` : ''}`),
+            html(state, `</span>${cite ? `<span class="caption-source"> ${escapeHtml(cite)}</span>` : ''}`),
           ];
           fence.meta = { ...(fence.meta as object | undefined), paperListing: { lineNumbers: layout.listings.lineNumbers } } satisfies ListingMeta;
           found.listings.push({ id, label, text: plainText(kids), line: token.map?.[0] ?? 0 });

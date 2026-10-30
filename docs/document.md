@@ -173,10 +173,11 @@ A listing is code of a source file of the repository, as the slash command
 `/listing` of nimblescape Markdown Notes writes it: a paragraph `Listing 1:`,
 the comment of the source, and a fenced code block. The caption is a link to
 the file and the lines of the source (`#L12-L30`, one line `#L12`, no `#L`
-for the whole file), and an anchor `lst-…` at its end names the listing:
+for the whole file), followed by the cite of the source, and an anchor
+`lst-…` at its end names the listing:
 
 ````markdown
-Listing 1: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
+Listing 1: [Reading the fields](../src/fields.ts#L12-L30) (fields.ts, L12-L30)<a id="lst-reading-fields"></a>
 
 <!-- listing: ../src/fields.ts#read-fields -->
 
@@ -189,8 +190,8 @@ export function readFields(lines: readonly string[]): Map<string, string> {
 
 The page shows "Listing 1: Reading the fields (fields.ts, L12-L30)" above the
 code, without the link. A link `[Listing 1](#lst-reading-fields)` gets the
-label of the listing. Do not change the code of a listing by hand: the
-formatter of Markdown Notes writes it from the source.
+label of the listing. Do not change the code, the link or the cite of a
+listing by hand: the formatter of Markdown Notes writes them from the source.
 
 ## 7. Footnotes
 

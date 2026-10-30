@@ -26,7 +26,7 @@ const layoutOf = (changes: Partial<Layout> = {}): Layout => ({
   unnumbered: [],
   contentsDepth: 3,
   hyphenate: false,
-  listings: { lineNumbers: false, source: true },
+  listings: { lineNumbers: false },
   pdfName: '{{file}}',
   terms: termsFor('de-AT'),
   ...changes,
@@ -360,7 +360,7 @@ describe('listings (R-REN-011)', () => {
   const listings = [
     'Wie [Listing 9](#lst-reading-fields) zeigt.',
     '',
-    'Listing: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>',
+    'Listing 1: [Reading the fields](../src/fields.ts#L12-L30) (fields.ts, L12-L30)<a id="lst-reading-fields"></a>',
     '',
     '<!-- listing: ../src/fields.ts#read-fields -->',
     '',
@@ -370,7 +370,7 @@ describe('listings (R-REN-011)', () => {
     '}',
     '```',
     '',
-    'Listing: Die ganze Datei',
+    'Listing 2: Die ganze Datei',
     '<!-- listing: ../src/my%20server.ts -->',
     '```ts',
     'const a = 1;',
@@ -382,7 +382,7 @@ describe('listings (R-REN-011)', () => {
     '',
   ].join('\n');
 
-  test('a paragraph "Listing:" before the comment of the source and the code is its numbered caption, which shows the text of its link and the source', () => {
+  test('a paragraph "Listing 1:" before the comment of the source and the code is its caption, which shows the text of its link and the cite of the file', () => {
     const body = renderBody(listings, layoutOf(), hyphenatorOf('de-AT'));
     expect(body.listings).toEqual([
       { id: 'lst-reading-fields', label: 'Listing 1', text: 'Reading the fields', line: 2 },
@@ -393,8 +393,8 @@ describe('listings (R-REN-011)', () => {
         '<span class="caption-text">Reading the fields</span><span class="caption-source"> (fields.ts, L12-L30)</span></p>',
     );
     expect(body.html).toContain('<pre class="listing"><code class="language-typescript">export function readFields() {\n  return 1;\n}\n</code></pre>');
-    // Without a link, the comment names the source; a snippet has no lines of the file.
-    expect(body.html).toContain('<span class="caption-text">Die ganze Datei</span><span class="caption-source"> (my server.ts)</span></p>');
+    // A caption without the cite of the file shows none: the renderer adds no cite of its own.
+    expect(body.html).toContain('<span class="caption-text">Die ganze Datei</span></p>');
     expect(body.html).toContain(`<p data-line="18">Lis${softHyphen}ting: kein Code folgt</p>`);
     expect(body.html).toContain('Wie <a href="#lst-reading-fields">Listing 1</a> zeigt.');
     expect(body.html).not.toContain('<a id=');
@@ -410,17 +410,16 @@ describe('listings (R-REN-011)', () => {
     ]);
   });
 
-  test('a link to one line names the line, and the layout leaves out the source', () => {
-    const markdown = 'Listing: [Eine Zeile](../src/a.ts#L7)\n\n<!-- listing: ../src/a.ts#eins -->\n\n```ts\nx();\n```\n';
-    expect(renderBody(markdown, layoutOf()).html).toContain('<span class="caption-text">Eine Zeile</span><span class="caption-source"> (a.ts, L7)</span></p>');
-    const html = renderBody(markdown, layoutOf({ listings: { lineNumbers: false, source: false } })).html;
-    expect(html).toContain('<span class="caption-text">Eine Zeile</span></p>');
-    expect(html).not.toContain('caption-source');
+  test('the cite of a file whose name looks like an address stays text, and the list of listings has the caption without the cite', () => {
+    const markdown = 'Listing 1: [Der Server](../src/server.py) (server.py)\n\n<!-- listing: ../src/server.py -->\n\n```python\nrun()\n```\n';
+    const body = renderBody(markdown, layoutOf());
+    expect(body.html).toContain('<span class="caption-text">Der Server</span><span class="caption-source"> (server.py)</span></p>');
+    expect(body.listings.map((listing) => listing.text)).toEqual(['Der Server']);
   });
 
   test('the layout puts the number of each line from 1 before the code of each listing, and not before other code', () => {
     const markdown = `${listings}\n\`\`\`ts\nother();\n\`\`\`\n`;
-    const html = renderBody(markdown, layoutOf({ listings: { lineNumbers: true, source: true } })).html;
+    const html = renderBody(markdown, layoutOf({ listings: { lineNumbers: true } })).html;
     expect(html).toContain(
       '<code class="language-typescript"><span class="line-number" data-number="1" aria-hidden="true"></span>export function readFields() {\n' +
         '<span class="line-number" data-number="2" aria-hidden="true"></span>  return 1;\n' +
@@ -433,7 +432,7 @@ describe('listings (R-REN-011)', () => {
   test('the numbers of the lines go inside the element of a highlighter, as in the Markdown preview of VS Code', () => {
     const md: MarkdownIt = new MarkdownIt({ html: true, highlight: (code): string => `<div>${md.utils.escapeHtml(code)}</div>` });
     paperPlugin(md);
-    const env = { nimblescapePaper: { layout: layoutOf({ listings: { lineNumbers: true, source: true } }), found: emptyFound() } };
+    const env = { nimblescapePaper: { layout: layoutOf({ listings: { lineNumbers: true } }), found: emptyFound() } };
     const html = md.render('Listing: Zwei Zeilen\n\n<!-- listing: a.ts -->\n\n```ts\na();\nb();\n```\n', env);
     expect(html).toContain(
       '<code class="language-ts"><div><span class="line-number" data-number="1" aria-hidden="true"></span>a();\n' +

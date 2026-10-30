@@ -48,7 +48,7 @@ This document replaces it where the two differ.
 | 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; the command line is open |
 | 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark and the name wait for a decision |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
-| 20 | Listings of Markdown Notes: numbered captions `Listing:` with the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
+| 20 | Listings of Markdown Notes: numbered captions `Listing:` with the cite of the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
 | 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
 | 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `markdownpaper format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | done |
 
@@ -285,10 +285,9 @@ repository of the document ([decision 3](#decisions)).
   `required` and `default` when needed.
 - `headings`: `numbered`, `depth`, and `unnumbered`, regular expressions of
   headings without a number. `contents.depth`: the depth of the table of
-  contents. `hyphenate`. `listings`: `lineNumbers`, the numbers of the lines
-  before the code of a listing (`false` by default), and `source`, the file
-  and the lines of the source after its caption (`true` by default)
-  ([R-REN-011](#r-ren-011)). `pdfName`: the name of the PDF with fields, for
+  contents. `hyphenate`. `listings.lineNumbers`: the numbers of the lines
+  before the code of a listing (`false` by default,
+  [R-REN-011](#r-ren-011)). `pdfName`: the name of the PDF with fields, for
   example `{{matrikelnummer}}_{{author}}_{{type}}`. `terms`
   ([R-LAY-005](#r-lay-005)).
 - Every path is relative to the layout folder and stays inside it.
@@ -478,8 +477,12 @@ the headings below them ([decision 10](#decisions)):
 
   The markers of the other lists are `<!-- lot -->` and `<!-- lol -->`. The
   numbers stand in the texts of the links; each figure, table and listing of
-  a list needs its anchor `fig-…`, `tab-…` or `lst-…`. On GitHub the lists
-  are lists of links.
+  a list needs its anchor `fig-…`, `tab-…` or `lst-…`, which the formatter of
+  Markdown Notes gives each caption of a kind whose list marker the file
+  holds. On GitHub the lists are lists of links. A list that the format
+  writes for the first time gets these anchors in its entries at the next
+  format, because the steps of Markdown Notes run before the step of the
+  paper.
 - The pages show the list of the file with the page of the target of each
   entry, which Paged.js writes with `target-counter`; the rest of the
   section does not show. An entry of the table of contents gets the level of
@@ -658,12 +661,13 @@ Mermaid and PlantUML ([decision 17](#decisions)).
 ### R-REN-011
 
 **Listings.** Markdown Notes writes listings of source code with `/listing`
-([R-CODE-001](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-code-001)): a caption line, the comment of the source
-and a fenced code block, whose code its formatter keeps current
+([R-CODE-001](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-code-001)): a caption line with the cite of
+the source, the comment of the source and a fenced code block, whose code
+and cite its formatter keeps current
 ([R-CODE-002](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-code-002)):
 
 ````markdown
-Listing 1: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
+Listing 1: [Reading the fields](../src/fields.ts#L12-L30) (fields.ts, L12-L30)<a id="lst-reading-fields"></a>
 
 <!-- listing: ../src/fields.ts#read-fields -->
 
@@ -684,12 +688,13 @@ export function readFields(lines: readonly string[]): Map<string, string> {
   the tables, through the whole document; in the appendix see
   [R-REN-006](#r-ren-006).
 - The caption is a link to its source: the target names the file and the
-  lines, `#L12-L30`, one line `#L12`, or the whole file without `#L`. A page
-  cannot open the source, so the page shows the text of the caption without
-  the link, and after it the file and the lines in parentheses: "Reading the
-  fields (fields.ts, L12-L30)", "(fields.ts)" for a whole file. A caption
-  without a link takes the file from the comment. The layout turns this off
-  with `"listings": { "source": false }` ([R-LAY-002](#r-lay-002)).
+  lines, `#L12-L30`, one line `#L12`, or the whole file without `#L`. After
+  the link, the file holds the cite of the source in parentheses, "(fields.ts,
+  L12-L30)", "(fields.ts)" for a whole file ([decision 25](#decisions)). A
+  page cannot open the source, so the page shows the text of the caption
+  without the link, and the cite of the file after it: "Reading the fields
+  (fields.ts, L12-L30)". The renderer adds no cite of its own, and the list
+  of listings has the caption without the cite.
 - With `"listings": { "lineNumbers": true }` the page shows the number of
   each line before the code of each listing, from 1 in each listing; the
   default is no numbers ([decision 24](#decisions)). Other code blocks get no
@@ -700,13 +705,14 @@ export function readFields(lines: readonly string[]): Map<string, string> {
   ([R-REN-009](#r-ren-009)). A listing without an anchor has the ID
   `listing-1`.
 - The style sheet of a layout finds the caption by the classes `caption
-  listing-caption`, the source by `caption-source`, the code block by
+  listing-caption`, the cite by `caption-source`, the code block by
   `listing`, and the numbers of the lines by `line-number`
   ([R-LAY-003](#r-lay-003)). The captions get no soft hyphens
   ([R-REN-007](#r-ren-007)).
 - GitHub and the Markdown preview of a notes document show the caption as a
-  link to the source, and hide the comment and the anchor; the clean editing
-  view of Markdown Notes also hides the brackets and the target of the link.
+  link to the source with the cite, and hide the comment and the anchor; the
+  clean editing view of Markdown Notes also hides the brackets, the target of
+  the link and the cite.
 
 ## PDF
 
@@ -1146,11 +1152,11 @@ requirement ([R-GEN-007](#r-gen-007)).
 24. **Numbers of the lines of a listing** ([R-REN-011](#r-ren-011)): an option
     of the layout, `listings.lineNumbers`, off by default; the numbers start
     at 1 in each listing.
-25. **The caption of a listing is a link to its source**
-    ([R-REN-011](#r-ren-011)): Markdown Notes writes the caption as a link to
-    the file and the lines of the source. The pages show the text of the
-    caption without the link, and after it the file and the lines of the
-    source, which an option of the layout turns off.
+25. **The caption of a listing is a link to its source, with the cite in the
+    file** ([R-REN-011](#r-ren-011), [R-GEN-008](#r-gen-008)): Markdown Notes
+    writes the caption as a link to the file and the lines of the source,
+    and after it the cite of the file and the lines, and keeps both current.
+    The pages show the text of the caption without the link, and the cite.
 26. **Document driven** ([R-GEN-008](#r-gen-008)): the file holds what the
     reader reads as text, and the formatter keeps it current: the numbers of
     the captions and of the links, the lists of the special sections, the
@@ -1186,8 +1192,6 @@ requirement ([R-GEN-007](#r-gen-007)).
 - The npm name `@nimblescape/markdownpaper` ([decision 5](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
-- Listings ([R-REN-011](#r-ren-011)): whether the file and the lines of the
-  source after the caption are on by default (the proposal: on).
 - Values of the front matter in the text (planned in Markdown Notes): `/ref`
   inserts a field between hidden markers, `<!--{title}-->value<!--{/title}-->`,
   and the formatter writes the value anew from the front matter. The pages

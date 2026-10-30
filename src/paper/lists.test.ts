@@ -22,7 +22,7 @@ const layout: Layout = {
   unnumbered: [],
   contentsDepth: 2,
   hyphenate: false,
-  listings: { lineNumbers: false, source: true },
+  listings: { lineNumbers: false },
   pdfName: '{{file}}',
   terms: termsFor('de-AT'),
 };

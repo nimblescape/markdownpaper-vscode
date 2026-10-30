@@ -45,10 +45,10 @@ The first version.
   `--check` exits with 1 when the format would change a file.
 - Listings of nimblescape Markdown Notes: a paragraph `Listing 1: …` before the
   comment of the source and the code block is the caption of the listing,
-  "Listing 1: …", with the file and the lines of the source after it, such as
-  "(fields.ts, L12-L30)", and without the link of the caption. The layout
-  option `listings.lineNumbers` shows the number of each line before the code;
-  `listings.source` turns off the source after the caption.
+  "Listing 1: …", without the link of the caption and with the cite of the
+  source of the file after it, such as "(fields.ts, L12-L30)". The layout
+  option `listings.lineNumbers` shows the number of each line before the
+  code.
 - A Markdown file whose front matter names a layout is a paper document. The
   Markdown preview of VS Code shows its pages as the PDF prints them, as white
   paper also in a dark theme, and updates them after a pause in typing and

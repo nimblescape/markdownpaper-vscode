@@ -57,7 +57,7 @@ a script element or an event attribute of a template is removed.
   "headings": { "numbered": true, "depth": 3, "unnumbered": ["^Anhang"] },
   "contents": { "depth": 3 },
   "hyphenate": true,
-  "listings": { "lineNumbers": false, "source": true },
+  "listings": { "lineNumbers": false },
   "pdfName": "{{matrikelnummer}}_{{author}}_{{type}}",
   "terms": { "BIB": ["Literaturverzeichnis", "Quellen"] }
 }
@@ -80,7 +80,6 @@ a script element or an event attribute of a template is removed.
 | `contents.depth` | The deepest level of a heading in the table of contents. | `3` |
 | `hyphenate` | `false`: no soft hyphens. | `true` |
 | `listings.lineNumbers` | `true`: the number of each line before the code of a listing, from 1 in each listing. | `false` |
-| `listings.source` | `false`: no file and lines of the source after the caption of a listing, such as "(fields.ts, L12-L30)". | `true` |
 | `pdfName` | The name of the PDF file without `.pdf`, with fields as `{{field}}`; `{{file}}` is the name of the Markdown file. Characters other than letters, digits, `-`, `_` and `.` fall away, a space becomes `-`. | `"{{file}}"` |
 | `terms` | Words of the language that this layout changes (section 4). | |
 
@@ -132,7 +131,7 @@ gives the style sheet these parts:
 | `nav.list-of-figures`, `nav.list-of-tables`, `nav.list-of-listings`, `.caption-entry` | The list of figures, of tables and of listings. |
 | `figure.figure`, `figcaption`, `.caption-label`, `.caption-separator`, `.caption-text` | A figure and its caption, which comes before the image. |
 | `p.table-caption` | The caption of a table, directly before the table. |
-| `p.listing-caption`, `.caption-source`, `pre.listing`, `.line-number` | The caption of a listing before its code, the file and the lines of its source after the caption, the code, and the number of each line, an element without text whose number `::before { content: attr(data-number); }` shows. |
+| `p.listing-caption`, `.caption-source`, `pre.listing`, `.line-number` | The caption of a listing before its code, the cite of its source after the caption, such as "(fields.ts, L12-L30)", the code, and the number of each line, an element without text whose number `::before { content: attr(data-number); }` shows. |
 | `.footnote`, `.footnote-paragraph`, `::footnote-call`, `::footnote-marker`, `@footnote` | The footnotes at the foot of the page. |
 | `section.references` | The reference list. |
 | `h1.section-apx`, `h2.appendix`, `.appendix-label` | The appendix part, an appendix, and its label. |

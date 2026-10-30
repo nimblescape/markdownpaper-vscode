@@ -195,10 +195,10 @@ such a link.
 The slash command `/listing` of Markdown Notes adds code of a source file of
 the repository as a listing: a caption line `Listing 1:`, a comment that names
 the source and a code block, whose code the formatter of Markdown Notes keeps
-current:
+current, with the cite of the source after the caption:
 
 ````markdown
-Listing 1: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
+Listing 1: [Reading the fields](../src/fields.ts#L12-L30) (fields.ts, L12-L30)<a id="lst-reading-fields"></a>
 
 <!-- listing: ../src/fields.ts#read-fields -->
 
@@ -210,10 +210,10 @@ export function readFields(lines: readonly string[]): Map<string, string> {
 ````
 
 The page shows "Listing 1: Reading the fields (fields.ts, L12-L30)" above the
-code: the text of the caption without the link, and the file and the lines of
-the source. A link such as `[Listing 1](#lst-reading-fields)` shows the number
-of the pages. A layout can leave out the source after the caption and can show
-the number of each line before the code ([Layouts](#layouts)).
+code: the text of the caption without the link, and the cite of the file. A
+link such as `[Listing 1](#lst-reading-fields)` shows the number of the pages.
+A layout can show the number of each line before the code
+([Layouts](#layouts)).
 
 ## Appendix
 

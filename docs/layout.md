@@ -166,7 +166,7 @@ gives the style sheet these parts:
 | `figure.figure`, `figcaption`, `.caption-label`, `.caption-separator`, `.caption-text` | A figure and its caption, which comes before the image. |
 | `p.table-caption` | The caption of a table, directly before the table. |
 | `p.listing-caption`, `.caption-source`, `pre.listing`, `.line-number` | The caption of a listing before its code, the cite of its source after the caption, such as "(fields.ts, L12-L30)", the code, and the number of each line, an element without text whose number `::before { content: attr(data-number); }` shows. |
-| `.footnote`, `.footnote-paragraph`, `::footnote-call`, `::footnote-marker`, `@footnote` | The footnotes at the foot of the page. |
+| `.footnote`, `.footnote-paragraph`, `::footnote-call`, `::footnote-marker`, `@footnote` | The footnotes at the foot of the page. Paged.js copies the classes of a footnote to its call in the text, the element `[data-footnote-call]` with the number as `::after`: a rule for the text of the footnote names `.footnote:not([data-footnote-call])`, so that the number in the text keeps the size of its text and gets no `::before`. |
 | `section.references` | The reference list. |
 | `h1.section-apx`, `h2.appendix`, `.appendix-label` | The appendix part, an appendix, and its label. |
 | `.no-hyphens` | A part without soft hyphens. |
@@ -235,10 +235,10 @@ folder for each layout, each with its own `layout.json`, up to two folder
 levels deep. The name of a folder is the name of its layout. `markdownpaper
 create` and "New Project" list these layouts, and
 `--layout github:<owner>/<repository>/<folder>@<branch, tag or commit>`
-chooses one; the new project gets a copy in `layouts/<folder>/`. A new version
-of a layout that changes its pages goes into a new folder, for example
-`thesis-v2/` beside `thesis-v1/`, so the documents of the older version keep
-their pages.
+chooses one; the new project gets a copy in `layouts/<folder>/`. Keep one
+folder for each kind of work, without a version in its name, for example
+`thesis/` and `concept/`: a project keeps its copy, so a change of the layout
+in its repository does not change the pages of an existing project.
 
 ## 9. A layout from a Word template
 

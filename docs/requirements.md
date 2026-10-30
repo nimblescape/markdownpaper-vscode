@@ -430,10 +430,10 @@ names Markdown Paper, and the page of the topic,
 layout repository ([decision 29](#decisions)). The papers of one repository
 can have different layouts, for example the thesis paper and the concept
 paper of `scalarion/transcribe`. The PHT layouts are one folder for each
-version, for example `thesis-v2/`, where each chapter starts on a new page,
-and `concept-v2/`, the same pages for the concept paper, where a chapter
-follows the text before it; both have the look of the PHT template and its
-citation style.
+kind of work, without a version in the name ([decision 44](#decisions)):
+`thesis/`, where each chapter starts on a new page, and `concept/`, the pages
+of the concept paper, where a chapter follows the text before it; both have
+the look of the PHT templates and the citation style of the PHT.
 
 - A layout repository holds one layout at its root, or several layout
   folders, each with its own `layout.json`, up to two folder levels deep. The
@@ -441,9 +441,11 @@ citation style.
 - A layout on GitHub has the name
   `github:<owner>/<repository>/<folder>`, with `@<branch, tag or commit>` for
   another version than the default branch, for example
-  `github:majikmate/markdownpaper-layout-pht/thesis-v2`. A new project copies
+  `github:majikmate/markdownpaper-layout-pht/thesis`. A new project copies
   it into `layouts/<folder>/` ([R-NEW-004](#r-new-004)), so its documents
-  name the copy, for example `layout: thesis-v2`.
+  name the copy, for example `layout: thesis`. The copy stays as it is when
+  the layout changes in its repository, so the pages of a project change only
+  when its copy changes.
 - The name of a layout on GitHub in the front matter, without a copy, and the
   form of a layout in an npm package are not decided yet (see the
   [open questions](#open-questions)).
@@ -1657,6 +1659,13 @@ requirement ([R-GEN-007](#r-gen-007)).
     selection is the argument for which an AI agent researches the evidence;
     a hidden start marker before it and `(RESEARCH)` at its end mark the
     argument in the file.
+44. **One layout for each kind of work** ([R-LAY-007](#r-lay-007)): a layout
+    repository keeps one folder for each kind of work, without a version in
+    its name; the PHT layouts are `thesis/` and `concept/`, and their older
+    versions are removed. A project keeps the pages of its copy of a layout. In
+    the thesis layout of the PHT, the caption of a figure stands above the
+    figure, as in APA 7 and as the captions of tables and listings, although
+    the Word template has it below the figure.
 
 ## Open questions
 
@@ -1665,7 +1674,7 @@ requirement ([R-GEN-007](#r-gen-007)).
 - The name of a layout on GitHub in the front matter, without a copy in
   `layouts/` ([R-LAY-007](#r-lay-007)). The proposal: a document names a
   layout with a release tag, so its pages stay the same:
-  `layout: github:majikmate/markdownpaper-layout-pht/thesis-v2@v1.0.0`. Until
+  `layout: github:majikmate/markdownpaper-layout-pht/thesis@v1.0.0`. Until
   the release there is no release tag, so a document names a branch or a
   commit ([decision 36](#decisions)). The form for an npm package is open
   too.

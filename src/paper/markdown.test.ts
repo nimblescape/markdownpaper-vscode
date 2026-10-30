@@ -24,8 +24,10 @@ const layoutOf = (changes: Partial<Layout> = {}): Layout => ({
   numbered: true,
   depth: 3,
   unnumbered: [],
+  numberedSections: [],
   contentsDepth: 3,
   hyphenate: false,
+  references: { hyphenate: false },
   listings: { lineNumbers: false },
   pdfName: '{{file}}',
   terms: termsFor('de-AT'),
@@ -133,6 +135,17 @@ describe('special sections (R-REN-004)', () => {
     expect(body.html).toContain('class="section-bib unnumbered" data-section="BIB">Quellen und Materialien</h1>');
   });
 
+  test('a special section of headings.numberedSections gets a number as other chapters do', () => {
+    const body = renderBody('# Einleitung\n\n# Quellen\n\n## Gesetze\n\n# Literatur {BIB}\n', layoutOf({ numberedSections: ['BIB'] }));
+    expect(body.headings.map((heading) => [heading.text, heading.number, heading.section])).toEqual([
+      ['Einleitung', '1', undefined],
+      ['Quellen', '2', 'BIB'],
+      ['Gesetze', '2.1', undefined],
+      ['Literatur', '3', 'BIB'],
+    ]);
+    expect(body.html).toContain('<h1 data-line="2" id="quellen" class="section-bib" data-section="BIB"><span class="heading-number">2</span> Quellen</h1>');
+  });
+
   test('English words count in an English layout', () => {
     const body = renderBody('# Table of Contents\n\n# Introduction\n\n# References\n', layoutOf({ language: 'en-US', terms: termsFor('en-US') }));
     expect(body.headings.map((heading) => heading.section)).toEqual(['TOC', undefined, 'BIB']);
@@ -153,6 +166,15 @@ describe('special sections (R-REN-004)', () => {
     const [text, references] = html.split('<section class="references no-hyphens">');
     expect(text).toContain(softHyphen);
     expect(references).not.toContain(softHyphen);
+  });
+
+  test('the reference list gets soft hyphens with references.hyphenate, but not its web addresses', () => {
+    const hyphenate = hyphenatorOf('de-AT');
+    const markdown = '# Literaturverzeichnis\n\nWirtschaftspädagogik. [https://example.org/wirtschaftspaedagogik](https://example.org/wirtschaftspaedagogik)\n';
+    const html = renderBody(markdown, layoutOf({ hyphenate: true, references: { hyphenate: true } }), hyphenate).html;
+    expect(html).toContain('<section class="references">');
+    expect(html).toContain(`Wirt${softHyphen}schafts${softHyphen}päd${softHyphen}ago${softHyphen}gik.`);
+    expect(html).toContain('>https://example.org/wirtschaftspaedagogik</a>');
   });
 });
 

@@ -11,9 +11,11 @@ import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { PDFDocument } from 'pdf-lib';
 import { afterEach, describe, expect, it } from 'vitest';
 import { findBrowser } from '../../src/pdf/browser';
+import { Browser } from '../../src/pdf/cdp';
 
 const repository = path.resolve(import.meta.dirname, '../..');
 const command = path.join(repository, 'cli', 'dist', 'markdownpaper.js');
@@ -82,5 +84,36 @@ describe('the command markdownpaper', () => {
     const html = fs.readFileSync(path.join(folder, 'page.html'), 'utf8').replaceAll('\u00ad', '');
     expect(html).not.toContain('Eine Notiz');
     expect(html).toContain('<span class="footnote"><span class="footnote-paragraph">Eine Fußnote.</span></span>');
+  }, 150_000);
+
+  it.skipIf(!browser)('gives the last line of a justified paragraph with shrinking spaces its natural spaces (R-REN-012)', async () => {
+    const folder = temporary();
+    fs.mkdirSync(path.join(folder, 'layouts', 'word'), { recursive: true });
+    fs.writeFileSync(path.join(folder, 'layouts', 'word', 'layout.json'), JSON.stringify({ format: 'nimblescape-layout 1.0.0', language: 'en-US', hyphenate: false }));
+    fs.writeFileSync(path.join(folder, 'layouts', 'word', 'page.css'), '@page { size: A5; margin: 20mm; }\nbody { font: 11pt serif; }\np { text-align: justify; word-spacing: -0.05em; }\n');
+    const words = 'The agents change the work of teams in three ways, and the teams change the agents in turn.';
+    fs.writeFileSync(path.join(folder, 'paper.md'), `---\nlayout: word\n---\n\n${words} ${words} ${words}\n`);
+    expect(run(folder, ['pdf', 'paper.md', '--html', 'page.html'], 120_000)).toMatchObject({ code: 0 });
+    const page = await Browser.launch(browser!);
+    try {
+      const { targetId } = await page.send('Target.createTarget', { url: 'about:blank' });
+      const { sessionId } = (await page.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
+      await page.send('Page.enable', {}, sessionId);
+      const loaded = page.once('Page.loadEventFired', sessionId);
+      await page.send('Page.navigate', { url: pathToFileURL(path.join(folder, 'page.html')).href }, sessionId);
+      await loaded;
+      const expression = `new Promise((resolve) => {
+        const read = () => resolve([...document.querySelectorAll('.pagedjs_page p')].map((p) => [p.getClientRects().length, [...p.querySelectorAll('.paper-last-line')].map((span) => span.style.wordSpacing + '|' + span.textContent)]));
+        if (window.paperRendered) { read(); } else { document.addEventListener('paper-rendered', read); }
+      })`;
+      const { result } = (await page.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)) as { result: { value: [number, string[]][] } };
+      expect(result.value).toHaveLength(1);
+      const [, spans] = result.value[0];
+      expect(spans).toHaveLength(1);
+      expect(spans[0]).toMatch(/^0px\|\S.* turn\.$/);
+      expect(words.repeat(3).length).toBeGreaterThan(spans[0].length);
+    } finally {
+      await page.close();
+    }
   }, 150_000);
 });

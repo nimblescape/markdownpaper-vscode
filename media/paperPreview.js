@@ -80,18 +80,25 @@
     }
   }
 
+  function loadScript(file, what) {
+    return new Promise((resolve, reject) => {
+      const element = document.createElement('script');
+      element.src = new URL(file, base).href;
+      element.setAttribute('nonce', nonce);
+      element.onload = () => resolve();
+      element.onerror = () => reject(new Error(`${what} did not load.`));
+      document.head.appendChild(element);
+    });
+  }
+
+  // Paged.js, and the handler of the last lines of justified paragraphs (paperLastLine.js, R-REN-012).
   function loadPagedJs() {
-    if (window.Paged) {
+    if (window.Paged && window.paperLastLines) {
       return Promise.resolve();
     }
     if (!pagedJs) {
-      pagedJs = new Promise((resolve, reject) => {
-        const element = document.createElement('script');
-        element.src = new URL('paged.js', base).href;
-        element.setAttribute('nonce', nonce);
-        element.onload = () => resolve();
-        element.onerror = () => reject(new Error('Paged.js did not load.'));
-        document.head.appendChild(element);
+      pagedJs = Promise.all([loadScript('paged.js', 'Paged.js'), loadScript('paperLastLine.js', 'The script of the last lines')]).then(() => {
+        window.paperLastLines.register();
       });
     }
     return pagedJs;

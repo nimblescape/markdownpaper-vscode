@@ -79,8 +79,10 @@ a script element or an event attribute of a template is removed.
 | `headings.numbered` | `false`: the renderer numbers no heading. | `true` |
 | `headings.depth` | The deepest level of a numbered heading, 1 to 6. | `3` |
 | `headings.unnumbered` | Regular expressions; a heading whose text matches one gets no number, nor do the headings below it. | `[]` |
+| `headings.numberedSections` | The codes of the special sections (section 4) whose headings get a number as other chapters do, for example `["BIB"]` for a template that numbers its reference list. | `[]` |
 | `contents.depth` | The deepest level of a heading in the table of contents. | `3` |
 | `hyphenate` | `false`: no soft hyphens. | `true` |
+| `references.hyphenate` | `true`: the reference list gets soft hyphens as the text does, but not its web addresses. | `false` |
 | `listings.lineNumbers` | `true`: the number of each line before the code of a listing, from 1 in each listing. | `false` |
 | `pdfName` | The name of the PDF file without `.pdf`, with fields as `{{field}}`; `{{file}}` is the name of the Markdown file. Characters other than letters, digits, `-`, `_` and `.` fall away, a space becomes `-`. | `"{{file}}"` |
 | `terms` | Words of the language that this layout changes (section 4). | |
@@ -115,9 +117,10 @@ names are the words of the documents, so a German layout has German names.
 
 ## 4. Special sections and words of the language
 
-The heading of a special section has no number; the renderer finds it by its
-words in the language of the layout, or by a marker of its code at the end of
-the heading, for example `# Quellen und Materialien {BIB}`.
+The heading of a special section has no number, unless `headings.numberedSections`
+of the layout names its code; the renderer finds it by its words in the
+language of the layout, or by a marker of its code at the end of the heading,
+for example `# Quellen und Materialien {BIB}`.
 
 | Code | Section | German words | English words |
 | --- | --- | --- | --- |
@@ -206,6 +209,27 @@ print one from the template with LibreOffice
 7. Write a document with every element (headings, lists, a table with its caption, a figure with its caption, a listing, a quote, footnotes, the four lists, a reference list, an appendix) and make its PDF: `npx -y @nimblescape/markdownpaper pdf example.md`.
 8. Compare the pages with the PDF of the template, page by page as images side by side (for example `pdftoppm -r 60 -png`). Change the CSS and make the PDF again while a page differs, for example in the margins, the line spacing or the footer.
 9. Write down in a comment of `page.css` what CSS cannot do as Word does.
+
+What Word does in another way than the browser, measured on PDFs of Word for
+the PHT layouts:
+
+- Word puts the text at the top of a line and the added space of a line
+  spacing such as 1.15 lines below it; the browser puts half of it above the
+  text. Move the text up by that half with `position: relative; top: …`.
+- Word uses the larger of the space after a paragraph and the space before
+  the next one, as the margins of CSS do; a heading at the top of a page has
+  no space before it.
+- Word does not kern and makes no ligatures: `font-kerning: none;
+  font-variant-ligatures: none`.
+- Word shrinks the spaces of a justified line by up to about a fifth to fit
+  one more word or syllable: `word-spacing: -0.045em` on the justified
+  paragraphs; the renderer gives the last line of a paragraph its natural
+  spaces again ([R-REN-012](requirements.md#r-ren-012)).
+- A template that numbers its reference list needs
+  `"headings": { "numberedSections": ["BIB"] }`, and a template with
+  automatic hyphenation `"references": { "hyphenate": true }`.
+- The browser puts a line on the whole pixel (1/96 inch) above it; half a
+  pixel lower (0.375 pt) puts it on the nearest pixel.
 
 The person reads the pages in the page preview of VS Code and commits the
 layout folder.

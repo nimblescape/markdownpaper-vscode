@@ -54,6 +54,7 @@ This document replaces it where the two differ.
 | 23 | Citation styles in CSL with citeproc-js: the built-in style `apa7`, a CSL file of the layout, the CSL locales; `pht-apa7.csl` in the PHT layouts | [R-CITE-003](#r-cite-003), [R-GEN-004](#r-gen-004) | done |
 | 24 | The metadata of new sources: `markdownpaper source` with DOI, ISBN, PubMed ID, arXiv ID, web address, RIS, BibTeX, CSL JSON, HTML and PDF files, and the title search of Crossref | [R-CITE-005](#r-cite-005) | done |
 | 25 | Parameters of a layout (fields with `values`), their check and hover, and the JSON schema of `layout.json` | [R-LAY-002](#r-lay-002), [R-DOC-002](#r-doc-002), [R-DOC-003](#r-doc-003) | done |
+| 26 | Layouts close to a Word template: numbered special sections (`headings.numberedSections`), a hyphenated reference list (`references.hyphenate`), the natural spaces of the last line of a justified paragraph whose spaces shrink; the PHT concept layout in the look of its Word template | [R-REN-004](#r-ren-004), [R-REN-007](#r-ren-007), [R-REN-012](#r-ren-012), [R-LAY-002](#r-lay-002) | done |
 
 ## General
 
@@ -322,9 +323,12 @@ repository of the document ([decision 3](#decisions)).
   `schemas/layout.schema.json` of this repository. VS Code checks each
   `layouts/<name>/layout.json` with it and completes its keys; a layout of
   another repository names it with its address on GitHub.
-- `headings`: `numbered`, `depth`, and `unnumbered`, regular expressions of
-  headings without a number. `contents.depth`: the depth of the table of
-  contents. `hyphenate`. `listings.lineNumbers`: the numbers of the lines
+- `headings`: `numbered`, `depth`, `unnumbered`, regular expressions of
+  headings without a number, and `numberedSections`, the codes of the special
+  sections that get a number ([R-REN-004](#r-ren-004)). `contents.depth`: the
+  depth of the table of contents. `hyphenate`, and `references.hyphenate` for
+  the soft hyphens of the reference list ([R-REN-007](#r-ren-007)).
+  `listings.lineNumbers`: the numbers of the lines
   before the code of a listing (`false` by default,
   [R-REN-011](#r-ren-011)). `pdfName`: the name of the PDF with fields, for
   example `{{matrikelnummer}}_{{author}}_{{type}}`. `terms`
@@ -485,7 +489,9 @@ the layout.
 ### R-REN-004
 
 **Special sections and lists.** These sections have no chapter number, nor do
-the headings below them ([decision 10](#decisions)):
+the headings below them ([decision 10](#decisions)), unless
+`headings.numberedSections` of the layout names their code, for a template
+that numbers its reference list ([decision 38](#decisions)):
 
 | Code | Section |
 | --- | --- |
@@ -505,9 +511,9 @@ the headings below them ([decision 10](#decisions)):
   brackets at the end of the heading, for example `# Quellen und Materialien
   {BIB}`. The marker does not show. `BIB` and `APX` count only as chapters
   (`#`).
-- The heading gets the class `section-<code>`, the class `unnumbered` and the
-  attribute `data-section` with the code, for example `data-section="BIB"`,
-  and an appendix `data-section="APX-A"`.
+- The heading gets the class `section-<code>`, the class `unnumbered` (not
+  when it has a number) and the attribute `data-section` with the code, for
+  example `data-section="BIB"`, and an appendix `data-section="APX-A"`.
 - The file holds the list of each of these four sections, between two hidden
   markers under the heading that the author writes; the formatter writes the
   list and keeps it current ([decision 28](#decisions),
@@ -613,7 +619,9 @@ puts soft hyphens into the words of the text by the language of the layout,
 with the patterns of TeX, so the lines are the same on every computer. It
 leaves out headings, links, code, captions, the generated lists, the
 reference list, addresses, and every part with the class `no-hyphens`. A
-layout turns it off with `"hyphenate": false`.
+layout turns it off with `"hyphenate": false`, and hyphenates the reference
+list, but not its links, with `"references": { "hyphenate": true }`, as a
+Word template with automatic hyphenation does ([decision 38](#decisions)).
 
 ### R-REN-008
 
@@ -770,6 +778,20 @@ export function readFields(lines: readonly string[]): Map<string, string> {
   link to the source with the cite, and hide the comment and the anchor; the
   clean editing view of Markdown Notes also hides the brackets, the target of
   the link and the cite.
+
+### R-REN-012
+
+**Justified lines with shrinking spaces.** Word shrinks the spaces of a
+justified line to fit one more word or syllable on it. A layout does the same
+with a negative `word-spacing` on its justified paragraphs, for example
+`word-spacing: -0.045em`: the browser breaks the lines with the narrow spaces
+and then widens the spaces of each full line to the width of the text. The
+last line of a paragraph is not justified, so after Paged.js has made a page,
+the renderer gives the last line of each such paragraph that ends on the page
+its natural spaces again, in the PDF and in the page preview; when the line
+fits only with narrower spaces, they shrink only as far as the line needs. A
+change that would add a line to the paragraph does not happen
+([decision 38](#decisions)).
 
 ## PDF
 
@@ -1393,6 +1415,19 @@ requirement ([R-GEN-007](#r-gen-007)).
     several variants, for example the look of a Word template and an older
     look. The front matter names the variant; how it looks stays inside the
     layout. A JSON schema of `layout.json` describes the format.
+38. **A layout as close to its Word template as the browser allows**
+    ([R-REN-004](#r-ren-004), [R-REN-007](#r-ren-007), [R-REN-012](#r-ren-012),
+    [R-LAY-002](#r-lay-002)):
+    a layout made from a Word template keeps its measures, fonts with the
+    same metrics, and the spacing of Word, measured on a PDF of Word. Two
+    options of `layout.json` serve such templates: `headings.numberedSections`
+    numbers a special section, such as a numbered reference list, and
+    `references.hyphenate` hyphenates the reference list. A negative
+    `word-spacing` shrinks the spaces of justified lines as Word does, and the
+    last line of a paragraph keeps its natural spaces
+    ([R-REN-012](#r-ren-012)). The browser and Word choose some line breaks
+    differently, and the hyphenation patterns of TeX differ from those of
+    Word, so a few lines can still break at other places than in Word.
 
 ## Open questions
 

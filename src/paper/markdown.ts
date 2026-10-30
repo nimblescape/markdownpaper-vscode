@@ -16,7 +16,8 @@
  *   when the layout numbers them. A heading with `{-}` at its end,
  *   the heading of a special section (TOC, LOF, LOT, LOL, BIB, ADT, AST, ACC, FWD, APX: by its words in the language
  *   of the layout, or by a marker such as `{BIB}`), and a heading that a pattern of the layout names get none, nor do
- *   the headings below them.
+ *   the headings below them; the special sections of `headings.numberedSections` of the layout get a number as other
+ *   chapters do.
  * - The captions carry their numbers in the file, as the formatter of Markdown Notes writes them, and the pages keep
  *   them; only a caption without a number gets the next number of its kind. A paragraph "Figure 1: …" directly before
  *   an image alone in its paragraph is the caption of the figure, above the image; an image without it is a figure
@@ -27,7 +28,8 @@
  * - The section of the table of contents (TOC), of the list of figures (LOF), of the list of tables (LOT) or of the
  *   list of listings (LOL) shows the list that the file holds between the markers of the section, such as
  *   `<!-- toc -->` and `<!-- /toc -->`, which the formatter writes, with the page of each entry; a section without
- *   them gets the list of the renderer. The reference list (BIB) gets no soft hyphens.
+ *   them gets the list of the renderer. The reference list (BIB) gets no soft hyphens, unless the layout asks for them
+ *   with `references.hyphenate`.
  * - The headings of the level 2 in the appendix part, after the heading "Anhang" or "Appendix", are the appendices
  *   A, B, … (one appendix has no letter), whose figures, tables and listings are numbered A1, A2, … as APA 7 numbers
  *   them.
@@ -578,7 +580,7 @@ function paperRule(layout: Layout, found: Found) {
           section = `APX-${letter(appendix)}`;
           token.attrJoin('class', 'appendix');
           inline.children = [html(state, `<span class="appendix-label">${escapeHtml(number)}</span> `), ...children];
-        } else if (marker || code || appendixPart || patterns.some((pattern) => pattern.test(text))) {
+        } else if (((marker || code) && !(code && layout.numberedSections.includes(code))) || appendixPart || patterns.some((pattern) => pattern.test(text))) {
           unnumberedBelow = level;
           token.attrJoin('class', 'unnumbered');
         } else if (unnumberedBelow) {
@@ -603,7 +605,7 @@ function paperRule(layout: Layout, found: Found) {
           output.push(html(state, `<!--paper:${code}-->\n`, true));
         } else if (code === 'BIB') {
           references = level;
-          output.push(html(state, '<section class="references no-hyphens">\n', true));
+          output.push(html(state, layout.references.hyphenate ? '<section class="references">\n' : '<section class="references no-hyphens">\n', true));
         }
         continue;
       }

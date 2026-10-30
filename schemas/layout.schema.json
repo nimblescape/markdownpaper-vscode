@@ -91,6 +91,11 @@
         "unnumbered": {
           "description": "Regular expressions; a heading whose text matches one gets no number, nor do the headings below it.",
           "$ref": "#/definitions/texts"
+        },
+        "numberedSections": {
+          "description": "The codes of the special sections whose headings get a number as other chapters do, for example [\"BIB\"]. Default: [].",
+          "type": "array",
+          "items": { "enum": ["TOC", "LOF", "LOT", "LOL", "BIB", "ADT", "AST", "ACC", "FWD", "APX"] }
         }
       }
     },
@@ -103,6 +108,12 @@
     "hyphenate": {
       "description": "false: no soft hyphens. Default: true.",
       "type": "boolean"
+    },
+    "references": {
+      "type": "object",
+      "properties": {
+        "hyphenate": { "description": "true: the reference list gets soft hyphens as the text does, but not its web addresses. Default: false.", "type": "boolean" }
+      }
     },
     "listings": {
       "type": "object",

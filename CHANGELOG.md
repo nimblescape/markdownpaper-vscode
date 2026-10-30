@@ -71,6 +71,12 @@ The first version.
 - Parameters of a layout: a field of `layout.json` with `values` lets the
   author choose a variant of the layout in the front matter. VS Code checks
   `layout.json` with the JSON schema `schemas/layout.schema.json`.
+- Options for layouts made from a Word template: `headings.numberedSections`
+  gives a special section, such as the reference list, a chapter number, and
+  `references.hyphenate` hyphenates the reference list but not its links. A
+  layout can shrink the spaces of justified lines with a negative
+  `word-spacing`, as Word does; the last line of such a paragraph keeps its
+  natural spaces.
 - "New Project", "New Document" and "New Layout": a project gets `AGENTS.md`
   for AI agents, a copy of the layout, `paper/paper.md`, the drop folder
   `inbox/` for sources, the folder `bib/` for the files of the sources, and

@@ -92,10 +92,14 @@ export interface Layout {
   depth: number;
   /** unnumbered are regular expressions of headings that get no number, with the headings below them. */
   unnumbered: string[];
+  /** numberedSections are the codes of the special sections whose headings get a number as other chapters do. */
+  numberedSections: SectionCode[];
   /** contentsDepth is the deepest level of heading in the table of contents. */
   contentsDepth: number;
   /** hyphenate is true when the renderer hyphenates the text by the language. */
   hyphenate: boolean;
+  /** references are the options of the reference list: hyphenate is true when it gets soft hyphens as the text does. */
+  references: { hyphenate: boolean };
   /** listings are the options of the listings of source code: lineNumbers puts the number of each line, from 1, before the code. */
   listings: { lineNumbers: boolean };
   /** pdfName is the pattern of the name of the PDF file, with fields such as {{title}}. */
@@ -309,8 +313,10 @@ export function parseLayout(text: string, id: string, folder: string): { layout?
     numbered: headings.numbered !== false,
     depth: count(headings.depth, 3),
     unnumbered: strings(headings.unnumbered) ?? [],
+    numberedSections: [],
     contentsDepth: count(isObject(json.contents) ? json.contents.depth : undefined, 3),
     hyphenate: json.hyphenate !== false,
+    references: { hyphenate: isObject(json.references) && json.references.hyphenate === true },
     listings: { lineNumbers: isObject(json.listings) && json.listings.lineNumbers === true },
     pdfName: typeof json.pdfName === 'string' && json.pdfName.trim() !== '' ? json.pdfName : '{{file}}',
     terms,
@@ -320,6 +326,13 @@ export function parseLayout(text: string, id: string, folder: string): { layout?
       new RegExp(pattern, 'iu');
     } catch {
       problem('warning', `The pattern "${pattern}" of "headings.unnumbered" of the layout "${id}" is no regular expression.`);
+    }
+  }
+  for (const code of strings(headings.numberedSections) ?? []) {
+    if ((sectionCodes as readonly string[]).includes(code.toUpperCase())) {
+      layout.numberedSections.push(code.toUpperCase() as SectionCode);
+    } else {
+      problem('warning', `The layout "${id}" has the unknown section "${code}" in "headings.numberedSections"; the sections are ${sectionCodes.join(', ')}.`);
     }
   }
   layout.unnumbered = layout.unnumbered.filter((pattern) => {

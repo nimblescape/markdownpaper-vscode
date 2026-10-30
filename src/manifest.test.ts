@@ -160,7 +160,7 @@ test('the README, the guide and the requirements name every setting that the man
   }
 });
 
-test('the package holds the bundle, Paged.js, the script and the style of the pages in the Markdown preview, the built-in layouts, the icon and the documents only', () => {
+test('the package holds the bundle, Paged.js, the scripts and the style of the pages in the Markdown preview, the built-in layouts, the icon and the documents only', () => {
   const patterns = read('.vscodeignore')
     .split('\n')
     .filter((line) => line && !line.startsWith('#'));
@@ -169,6 +169,7 @@ test('the package holds the bundle, Paged.js, the script and the style of the pa
     '!dist/extension.js',
     '!media/paged.js',
     '!media/paged.polyfill.js',
+    '!media/paperLastLine.js',
     '!media/paperPreview.css',
     '!media/paperPreview.js',
     '!layouts/**',

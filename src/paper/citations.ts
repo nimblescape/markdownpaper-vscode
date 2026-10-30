@@ -327,17 +327,17 @@ interface Section {
  * @param layout - The layout.
  * @param database - The database, whose comment ends the reference list.
  */
-function sectionsOf(lines: readonly string[], layout: Layout, database: Database): { bibliography?: Section; appendix?: Heading; headings: Heading[] } {
+function sectionsOf(lines: readonly string[], layout: Layout, database: Database): { bibliography?: Section; appendix?: Heading } {
   const text = lines.join('\n');
   const headings = renderBody(bodyOf(text, readFrontMatter(text)), layout).headings;
   const found = headings.find((heading) => heading.section === 'BIB');
   const appendix = headings.find((heading) => heading.section === 'APX');
   if (!found) {
-    return { ...(appendix ? { appendix } : {}), headings };
+    return appendix ? { appendix } : {};
   }
   const next = headings.find((heading) => heading.line > found.line && heading.level <= found.level)?.line;
   const ends = [next, database.start > found.line ? database.start : undefined, lines.length].filter((line): line is number => line !== undefined);
-  return { bibliography: { heading: found.line, level: found.level, end: Math.min(...ends) }, ...(appendix ? { appendix } : {}), headings };
+  return { bibliography: { heading: found.line, level: found.level, end: Math.min(...ends) }, ...(appendix ? { appendix } : {}) };
 }
 
 /**
@@ -384,7 +384,7 @@ export function writeCitations(lines: readonly string[], layout: Layout, style: 
   }
   const sources = new Map(database.sources.map((source) => [source.id, source]));
   const ids = new Set(sources.keys());
-  const { bibliography, appendix, headings } = sectionsOf(lines, layout, database);
+  const { bibliography, appendix } = sectionsOf(lines, layout, database);
   const inSection = (line: number): boolean => bibliography !== undefined && line > bibliography.heading && line < bibliography.end;
   const cited = citedIds(lines, ids, inSection);
   const citations = findCitations(lines, ids).filter((citation) => !inSection(citation.line) && citation.data.unknown.length === 0);
@@ -411,9 +411,8 @@ export function writeCitations(lines: readonly string[], layout: Layout, style: 
     if (ordered.length === 0) {
       return output;
     }
-    // The title of a paper is in its front matter, so the reference list has the level of the highest headings.
-    const level = appendix ? appendix.level : headings.length > 0 ? Math.min(...headings.map((heading) => heading.level)) : 1;
-    const section = [`${'#'.repeat(level)} ${layout.terms.sections.BIB[0]}`, '', ...ordered.flatMap((entry, index) => (index === 0 ? [entry] : ['', entry])), ''];
+    // The reference list is a chapter (`#`), as the renderer finds it only there (R-REN-004).
+    const section = [`# ${layout.terms.sections.BIB[0]}`, '', ...ordered.flatMap((entry, index) => (index === 0 ? [entry] : ['', entry])), ''];
     const at = appendix ? appendix.line : database.start;
     output.splice(at, 0, ...(at > 0 && !isBlank(output[at - 1]) ? ['', ...section] : section));
     return output;

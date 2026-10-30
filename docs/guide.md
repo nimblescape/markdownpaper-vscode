@@ -131,9 +131,13 @@ editor and in the Problems view after a pause in typing:
 
 - a layout that does not exist, or a problem of its `layout.json`;
 - a required field of the layout without a value;
-- a link to `#fig-…`, `#tab-…` or `#sec-…`, or a link whose text is a word
-  and a number such as `[Kapitel 2.1](#methoden)`, whose figure, table or
-  heading does not exist.
+- a link to `#fig-…`, `#tab-…`, `#lst-…` or `#sec-…`, or a link whose text
+  is a word and a number such as `[Kapitel 2.1](#methoden)`, whose figure,
+  table, listing or heading does not exist;
+- a citation style that cannot be applied, a line of the database of the
+  sources that is no source, a title of a citation that is no data of a
+  citation, each `(RESEARCH)`, a paragraph of the reference list that is no
+  entry, and a cited source without an entry ([Citations](#citations)).
 
 The pointer on the key of a field shows its description from `layout.json`.
 `npx -y @nimblescape/markdownpaper check paper/paper.md` prints the same

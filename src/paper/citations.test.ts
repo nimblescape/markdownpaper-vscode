@@ -136,6 +136,12 @@ describe('the format step of the citations (R-CITE-002, R-CITE-004)', () => {
     expect(formatted[at + 8]).toBe('# Appendix');
   });
 
+  test('writes a new reference list as a chapter, also in a file whose chapters are "##", and does not add it again', () => {
+    const formatted = writeCitations(file(['## Einleitung', '', 'Text ([Hong](#hong2024)).']), layout, style);
+    expect(formatted.slice(at + 3, at + 6)).toEqual(['', '# Literaturverzeichnis', '']);
+    expect(writeCitations(formatted, layout, style)).toEqual(formatted);
+  });
+
   test('writes the entries of the cited sources in the order of the style, removes those of sources that the text no longer cites, and keeps other paragraphs', () => {
     const lines = file([
       '# Literaturverzeichnis',

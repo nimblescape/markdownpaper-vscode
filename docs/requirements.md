@@ -52,6 +52,7 @@ This document replaces it where the two differ.
 | 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
 | 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `markdownpaper format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | done |
 | 23 | Citation styles in CSL with citeproc-js: the built-in style `apa7`, a CSL file of the layout, the CSL locales; `pht-apa7.csl` in the PHT layouts | [R-CITE-003](#r-cite-003), [R-GEN-004](#r-gen-004) | done |
+| 24 | The metadata of new sources: `markdownpaper source` with DOI, ISBN, PubMed ID, arXiv ID, web address, RIS, BibTeX, CSL JSON, HTML and PDF files, and the title search of Crossref | [R-CITE-005](#r-cite-005) | in progress |
 
 ## General
 
@@ -87,6 +88,9 @@ Marketplace does not accept extensions that use one.
   from the disk.
 - The extension collects no telemetry and connects to no address. It starts
   a program only for "Export PDF": the browser of [R-PDF-002](#r-pdf-002).
+  Only the command `markdownpaper source` connects to addresses: to the
+  services of the metadata of sources in [R-CITE-005](#r-cite-005), and only
+  for the identifiers and files that its call names.
 - The pages run only the scripts of the extensions of VS Code
   ([R-PRV-004](#r-prv-004)) and, in the PDF, those of the renderer
   ([R-REN-001](#r-ren-001)); a script in a Markdown file or in a layout does
@@ -155,9 +159,11 @@ the language of the layout ([R-LAY-005](#r-lay-005)).
 ### R-GEN-007
 
 **This specification.** This document holds all requirements of Markdown
-Paper, the plan and the decisions ([decision 12](#decisions)). Each decision
-is also a requirement in it, and a change of the code changes this document
-in the same commit.
+Paper, the plan and the decisions ([decision 12](#decisions)). Everything that
+is built or decided is in it: each decision is also a requirement, each
+function of the extension and of the command is described, and a change of
+the code changes this document in the same commit
+([decision 34](#decisions)).
 
 - A requirement is the clean summary of a decision: what the extension or
   the command does. It holds no texts of the discussion, such as quotes of
@@ -200,7 +206,8 @@ matter: YAML between two lines `---`.
 - The other fields are the fields of the layout ([R-LAY-002](#r-lay-002)).
   The templates show them, and the PDF name uses them.
 - The field `lang`, for example `lang: de-AT`, changes the language of the
-  layout for this file: the hyphenation and the words of the renderer.
+  layout for this file: the hyphenation, the words of the renderer and the
+  CSL locale of the citations ([R-CITE-003](#r-cite-003)).
 - A new document gets a YAML comment as its first line in the front matter,
   with the command that prints its rules:
   `# nimblescape Markdown Paper. The rules of this file: npx -y @nimblescape/markdownpaper instructions document`.
@@ -224,6 +231,11 @@ in the text editor as warnings after a pause in typing, and with
   text is a word and a number, such as `[Kapitel 2.1](#methoden)`, must find
   its figure, table, listing or heading ([R-REN-009](#r-ren-009)), and so must
   each entry of the list of a special section ([R-REN-004](#r-ren-004)).
+- The checks of the sources and the citations: a citation style that cannot
+  be applied ([R-CITE-003](#r-cite-003)), the lines of the database that are
+  no source ([R-CITE-001](#r-cite-001)), the titles of citations and each
+  `(RESEARCH)` ([R-CITE-002](#r-cite-002)), and the paragraphs of the
+  reference list ([R-CITE-004](#r-cite-004)). All of them are warnings.
 - The Markdown preview of a paper document adds the problems of the renderer,
   for example a template that does not exist. Each problem shows once.
 - `markdownpaper check` prints each problem as `file:line:column: severity:
@@ -242,9 +254,10 @@ required.
 when it uses a feature of Markdown Paper, and a notes document when it uses
 only features of Markdown Notes or none ([decision 17](#decisions)).
 
-- The features of Markdown Paper are the field `layout` of the front matter
-  ([R-DOC-001](#r-doc-001)) and, when they are built, the citations
-  ([R-CITE-002](#r-cite-002)).
+- The feature of Markdown Paper that makes a file a paper document is the
+  field `layout` of the front matter ([R-DOC-001](#r-doc-001)). Whether the
+  citations ([R-CITE-002](#r-cite-002)) also make a file a paper document is
+  an [open question](#open-questions).
 - The features of Markdown Notes, such as notes, footnotes, figures and
   tables with their anchors, and links of `/ref`, do not make a file a paper
   document.
@@ -883,7 +896,8 @@ passage.
 
 ### R-NEW-001
 
-**New document.** "New Document" and `markdownpaper new document <file>
+**New document.** "New Document" (in the Command Palette and in the context
+menu of a folder in the Explorer) and `markdownpaper new document <file>
 --layout <name>` write a Markdown file with the front matter of the layout:
 the comment line of [R-DOC-001](#r-doc-001), the field `layout`, and each field
 with its description as a YAML comment, and the start text of the layout. The
@@ -891,7 +905,8 @@ values come from options or questions.
 
 ### R-NEW-002
 
-**New layout.** "New Layout" and `markdownpaper new layout <folder>` copy a
+**New layout.** "New Layout" (in the Command Palette and in the context menu
+of a folder in the Explorer) and `markdownpaper new layout <folder>` copy a
 layout, the built-in layout `plain` by default, into a new folder, with the
 name and the language of the new layout in `layout.json`.
 
@@ -935,8 +950,9 @@ as a scaffold of Vite does ([decision 4](#decisions)):
 gives the command `markdownpaper` for people and AI agents, with Node.js 22 or
 later, also through `npx` without an installation ([decision 4](#decisions)).
 
-- `pdf`, `check`, `format` ([R-CLI-002](#r-cli-002)), `create`,
-  `new document|layout|project`, `instructions`.
+- `pdf`, `check`, `format` ([R-CLI-002](#r-cli-002)), `source`
+  ([R-CITE-005](#r-cite-005)), `create`, `new document|layout|project`,
+  `instructions`.
 - `--help` prints the use, `--version` the version and the version of the
   layout format.
 - The exit code is 0 for success, 1 for problems of a document or for a file
@@ -981,9 +997,9 @@ notes and the paper are two packages. The plan:
 
 **Instructions for AI agents.** `markdownpaper instructions [topic]` prints
 the rules of a topic as Markdown; without a topic, the list of the topics.
-The topics are `document` (writing a document), `layout` (the layout folder,
-also from a Word template) and `render` (making the PDF and checking its
-pages); with the citations, `citations` and the style `apa7` follow. The
+The topics are `document` (writing a document, also its sources and
+citations), `layout` (the layout folder, also from a Word template) and
+`render` (making the PDF and checking its pages). The
 documents in `docs/` are the source of the instructions, and the files and
 `layout.json` name the command, so an agent finds it.
 
@@ -1016,9 +1032,12 @@ cited or not, in one HTML comment at the end of the file, its database:
   `inbox/`. It takes the metadata of a source with a DOI from doi.org as CSL
   JSON, else from the source itself, for example a PDF in `inbox/`, or from
   the record of the source in the database where it found it
-  ([decision 33](#decisions)).
+  ([decision 33](#decisions)), with the command `markdownpaper source`
+  ([R-CITE-005](#r-cite-005)).
   An agent must not write metadata from memory: each field comes from doi.org
   or from the source, and a field that it cannot take from there stays out.
+  The ID of the downloaded metadata is replaced by the ID of the next item.
+  A web page that can change gets the day of the access (`accessed`).
 - The ID of a source is in small letters, without spaces and accents
   ([decision 22](#decisions)):
   - a source by persons: the family name of the first author and the year,
@@ -1054,10 +1073,15 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
   `page 3`, `page 13-14`, `chapter 2`. A citation without a title is in
   parentheses, without a place. The parentheses stand outside the link.
 - The formatter writes the text of each link from the metadata, the title and
-  the style; it reads nothing from the old text.
+  the style; it reads nothing from the old text. A link in code, in an HTML
+  comment or in a fenced code block is no citation.
+- The checks warn of a title with words that are no CSL term or value, such
+  as `"S. 3"`, and the formatter keeps the text of such a link.
 - `(RESEARCH)` asks an AI agent to find a source for the statement before it,
   to add it to the database, and to replace `(RESEARCH)` with its citation.
-  The slash command `/research` inserts it.
+  When no source supports the statement, the agent keeps `(RESEARCH)` and
+  says so. The checks warn of each `(RESEARCH)`. The slash command `/research`
+  inserts it.
 - The slash commands of the sources ([decision 15](#decisions)): a command
   named by a noun adds an entry, `/cite` adds a reference. `/source` picks a
   file of the folder `bib/` ([R-NEW-003](#r-new-003)) and adds the source to
@@ -1092,7 +1116,13 @@ not in its front matter and not in the DOCTYPE comment of Markdown Notes.
   the places with their short German labels such as `S. 13 – 14`, `Kap. 2`,
   `Abb. 1`, the day before the month (`2018, 1. Oktober`) and
   `Abgerufen am … von …` whenever a source has the day of the access
-  ([decision 32](#decisions)).
+  ([decision 32](#decisions)). A no-break space stands in `o. D.`, after a
+  short label such as `S.`, and on both sides of the dash between two pages,
+  so that a line does not break there.
+- The text that the style writes is Markdown: italic parts between `*`, and
+  the characters of Markdown in the metadata, such as `*`, `_` and `[`, with a
+  backslash. A DOI and an address stay plain text, which GitHub and the pages
+  show as links.
 - In a citation in the sentence, the last two names are joined by the word
   "and" of the language, as APA writes it: `Festman und Schwieter (2019)`,
   but `(Festman & Schwieter, 2019)` in parentheses. Italic parts that only a
@@ -1109,9 +1139,67 @@ under the heading of the reference list, the section `BIB` of
   style, one for each cited source. An entry of a source that the text no
   longer cites goes.
 - A document with citations and without the section gets the section before
-  the appendix part, with the heading of the language of the layout.
+  the appendix part, else before the database, as a chapter (`#`) with the
+  first heading of `BIB` in the language of the layout, for example
+  `# Literaturverzeichnis` ([R-REN-004](#r-ren-004)).
 - The formatter changes only text whose edges the markup marks: the text of a
   link to a source and a paragraph that starts with the anchor of a source.
+  Other paragraphs of the reference list stay, after the entries, for example
+  a note on the day of the access of all links. In a reference list with a sub-heading or with
+  a note of Markdown Notes, the formatter writes each entry without a note
+  anew in its place and adds, moves or removes none.
+- The checks warn of a paragraph of the reference list that is no entry of a
+  source of the database, and of a cited source without an entry before the
+  format writes it.
+
+### R-CITE-005
+
+**The metadata of new sources.** `markdownpaper source <file.md> <input>...`
+adds sources to the database of a document, with the metadata from the place
+that publishes it, in the ways that Zotero fills the metadata of a source, so
+that no AI agent writes metadata from memory ([decision 35](#decisions)). An
+input is an identifier or a file:
+
+| Input | Example | Where the metadata comes from |
+| --- | --- | --- |
+| DOI | `10.3390/bs9040039` | doi.org as CSL JSON; doi.org asks the registry of the DOI: Crossref, DataCite, mEDRA or JaLC |
+| ISBN | `978-3-8252-4753-9` | the catalog of the German National Library (DNB), else the union catalog K10plus, else Open Library |
+| PubMed ID | `37189997`, `pmid:37189997` | PubMed of the NCBI; a record with a DOI: doi.org, with the PubMed ID added |
+| arXiv ID | `2308.00352`, `arXiv:2308.00352` | doi.org with the DOI that arXiv gives each paper, `10.48550/arXiv.2308.00352`; the command names the DOI of a published version that arXiv knows |
+| Web address | `https://…` | the page: its tags `citation_*` of Google Scholar, else Dublin Core, else JSON-LD of schema.org, else its title, author and date as a web page with the day of the access; a page whose tags have a DOI: doi.org |
+| RIS, BibTeX or CSL JSON file | `inbox/export.ris`, `.bib`, `.json` | the file, the export of a database or of a reference manager, with all its sources; a source with a DOI: doi.org |
+| HTML file | `inbox/page.html` | a page that the agent saved, read as a web address |
+| PDF file | `inbox/paper.pdf` | the DOI in the metadata of the PDF, then doi.org |
+
+- An address of doi.org, of arxiv.org or of PubMed counts as its identifier.
+- A PDF without a DOI in its metadata adds nothing: the command lists the
+  DOIs and arXiv IDs that the file holds elsewhere, because they can be the
+  references of the paper, and the agent gives the one of the title page.
+- The command keeps only the fields of CSL JSON that describe a source,
+  turns the types of Crossref and of MARC records into CSL types, joins a
+  title and its subtitle with ": ", leaves out a first edition, the address
+  of a source with a DOI and the day of a lookup.
+- Each new source gets its ID by [decision 22](#decisions); `--id <id>` gives
+  the ID of the one new source of a call, for example of a law. A source
+  whose DOI, ISBN, or title and year the database has already is not added
+  again. The command makes the database at the end of the file when the file
+  has none ([R-CITE-001](#r-cite-001)).
+- For each input, the command prints the ID, where the metadata came from,
+  and the fields that a source of its type needs and did not get, for
+  example `publisher` of a book; the agent takes such a field from the source
+  itself, or leaves it out.
+- `--offline` asks no service and keeps the metadata of the files.
+  `--dry-run` prints the new lines and writes nothing. `--search <words>`
+  lists up to ten works of Crossref whose title matches, with their DOIs,
+  and adds nothing; the agent then adds the right one by its DOI.
+- The exit code is 0 when each input gave a source, 1 when an input gave
+  none, and 2 for a wrong call.
+- The command connects to these hosts, which the cloud environment of an AI
+  agent must allow: `doi.org`, `api.crossref.org`, `data.crosscite.org`,
+  `data.medra.org`, `japanlinkcenter.org`, `services.dnb.de`,
+  `sru.k10plus.de`, `openlibrary.org`, `api.ncbi.nlm.nih.gov`,
+  `export.arxiv.org`, and the host of a web address that the call names. Each
+  request names the command and its repository in the header `User-Agent`.
 
 ## Settings
 
@@ -1244,6 +1332,13 @@ requirement ([R-GEN-007](#r-gen-007)).
 33. **Sources without Zotero** ([R-CITE-001](#r-cite-001)): an AI agent
     searches and collects the sources; Markdown Paper has no integration of
     Zotero or of another reference manager.
+34. **Everything in the requirements** ([R-GEN-007](#r-gen-007)): every
+    function that is built and every decision is in this document, as a clean
+    summary, in the same commit as the change of the code.
+35. **The metadata of new sources** ([R-CITE-005](#r-cite-005)): the command
+    `markdownpaper source` fills the metadata in the ways that Zotero does:
+    identifiers through the services that publish their metadata, the
+    metadata in web pages, the exports of databases, and the DOI in a PDF.
 
 ## Open questions
 

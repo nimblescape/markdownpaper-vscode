@@ -35,7 +35,7 @@ This document replaces it where the two differ.
 | 4 | The renderer: HTML and Paged.js, the notes left out, numbered headings, footnotes at the foot of the page, hyphenation | [R-REN-001](#r-ren-001) to [R-REN-003](#r-ren-003), [R-REN-007](#r-ren-007), [R-REN-008](#r-ren-008) | done |
 | 5 | The special sections without numbers, the table of contents, the list of figures, the list of tables, the captions, the appendix | [R-REN-004](#r-ren-004) to [R-REN-006](#r-ren-006) | done |
 | 6 | The PDF with an installed Chrome, Chromium or Edge, only PDF | [R-PDF-001](#r-pdf-001) to [R-PDF-004](#r-pdf-004) | done |
-| 7 | The page preview | [R-PRV-001](#r-prv-001) to [R-PRV-004](#r-prv-004) | done |
+| 7 | The page preview, first as a view of its own | [R-PRV-001](#r-prv-001) to [R-PRV-004](#r-prv-004) | done; moves into the Markdown preview of VS Code in step 16 |
 | 8 | The scaffold: new document, new layout, new project with `inbox/` and `bib/` | [R-NEW-001](#r-new-001) to [R-NEW-003](#r-new-003) | done |
 | 9 | The command `markdownpaper` with `pdf`, `check`, `create`, `new` and `instructions` | [R-CLI-001](#r-cli-001), [R-CLI-003](#r-cli-003) | done |
 | 10 | The anchors of figures and tables, the links to them and to headings, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-003](#r-ren-003), [R-REN-009](#r-ren-009) | done |
@@ -44,10 +44,11 @@ This document replaces it where the two differ.
 | 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | planned; the work of Markdown Notes moves here |
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006) | instructions done; the first layout planned |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when Hannes asks |
-| 16 | Paper documents and notes documents: the page preview is the Markdown preview of a paper document, and a notes document keeps the Markdown preview of VS Code | [R-DOC-004](#r-doc-004), [R-PRV-005](#r-prv-005) | done |
-| 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the page preview and in the PDF | [R-REN-010](#r-ren-010) | planned |
+| 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | in progress |
+| 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | planned |
 | 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark and the name wait for Hannes |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
+| 20 | Listings of Markdown Notes: numbered captions `Listing:` and links `lst-…` | [R-REN-009](#r-ren-009) | planned |
 
 ## General
 
@@ -563,14 +564,18 @@ extensions of VS Code add to the Markdown preview, for example the diagrams of
 Mermaid and PlantUML (Hannes, 2026-10-30, 03:40: "it shall recognize all
 markdown plugins though, ie, mermaid, plantuml, footnotes, etc.").
 
-- The renderer takes the markdown-it plugins of the extensions that contribute
-  `markdown.markdownItPlugins`, as the Markdown preview of VS Code does: the
-  extension activates them and gives their function `extendMarkdownIt` to the
-  renderer, which calls it on its markdown-it before its own steps.
-- The page loads the scripts and the style sheets that these extensions
-  contribute with `markdown.previewScripts` and `markdown.previewStyles`.
-  Paged.js makes the pages after these scripts have drawn their content, for
-  example the diagrams of Mermaid.
+- In the page preview, the plugins work because the pages are in the
+  Markdown preview of VS Code ([R-PRV-005](#r-prv-005)).
+- For the PDF, the renderer takes the markdown-it plugins of the extensions
+  that contribute `markdown.markdownItPlugins`, as the Markdown preview of
+  VS Code does: the extension activates them and gives their function
+  `extendMarkdownIt` to the renderer, which calls it on its markdown-it before
+  its own steps. The page of the PDF loads the scripts and the style sheets
+  that these extensions contribute with `markdown.previewScripts` and
+  `markdown.previewStyles`, and Paged.js makes the pages after these scripts
+  have drawn their content. The PDF leaves out the plugin, the scripts and the
+  style sheets of the Markdown extension of VS Code itself and of Markdown
+  Notes, because the PDF shows no notes ([R-REN-002](#r-ren-002)).
 - Footnotes are part of the renderer ([R-REN-008](#r-ren-008)).
 - The renderer itself stays without an API of VS Code
   ([R-REN-001](#r-ren-001)): it takes the plugins, the scripts and the style
@@ -627,58 +632,83 @@ metadata, and "nimblescape Markdown Paper" as its creator.
 
 ### R-PRV-001
 
-**Pages beside the editor.** "Show Page Preview" in the title bar of a paper
-document ([R-DOC-004](#r-doc-004)), and in the Command Palette for any
-Markdown file, shows the pages of the document in its layout beside the text
-editor, as the PDF prints them. Each file has one page preview, and VS Code
-restores it after a restart. A file of the clean editing view of Markdown
-Notes shows the pages of its file ([R-GEN-003](#r-gen-003)).
+**The pages in the Markdown preview.** The Markdown preview of VS Code shows
+the pages of a paper document ([R-DOC-004](#r-doc-004)) in its layout, as the
+PDF prints them ([R-PRV-005](#r-prv-005)). "Show Page Preview" in the title
+bar of a paper document opens the Markdown preview beside the text editor;
+the keys and buttons of the Markdown preview of VS Code work as for any
+Markdown file, and VS Code restores the preview after a restart. A file of
+the clean editing view of Markdown Notes shows the pages of its text
+([R-GEN-003](#r-gen-003)).
 
 ### R-PRV-002
 
-**Updates.** The page preview makes the pages again after a pause in typing
-(the setting `previewDelay`, [R-SET-001](#r-set-001)), and after a change of a
+**Updates.** The preview makes the pages again after a pause in typing (the
+setting `previewDelay`, [R-SET-001](#r-set-001)), and after a change of a
 file of the layout. It makes the new pages beside the old ones and then shows
 them, so the pages do not flicker, and it keeps the place on the page.
 
 ### R-PRV-003
 
-**From a page to the line.** A click on a block of a page shows its line in
-the text editor. Each block of the HTML names its line in the file
-(`data-line`).
+**From a page to the line, and back.** The pages keep the lines of the file
+on their blocks (`data-line`), so the Markdown preview of VS Code works on the
+pages as on any Markdown file: a double click on a page shows its line in the
+text editor, and the preview follows the scrolling of the text editor and the
+other way round.
 
 ### R-PRV-004
 
 **Links and safety.** A link to a place in the document goes to that place on
-the pages. A link to a web address or an e-mail address opens outside VS Code.
-The page preview loads only the files of the workspace and of the extensions,
-and runs only the scripts of the renderer, Paged.js, and the preview scripts of
-the Markdown extensions of VS Code ([R-REN-010](#r-ren-010)), as the Markdown
-preview of VS Code runs them.
+the pages. A link to a web address, an e-mail address or a file works as in
+the Markdown preview of VS Code. The page preview runs in the Markdown
+preview of VS Code with its rules of safety: only the scripts of the
+extensions of VS Code run, among them the script of the pages and Paged.js of
+this extension; a script in a Markdown file or in a layout does not run.
 
 ### R-PRV-005
 
-**The Markdown preview of a paper.** The page preview is the Markdown preview
-of a paper document ([R-DOC-004](#r-doc-004)): it shows the document rendered
-in its layout (Hannes, 2026-10-30, 03:40: "preview shall show the rendered
-paper according to the layout", "it is the markdown preview of a paper").
+**The Markdown preview of a paper.** The Markdown preview of a paper document
+shows its pages: there is no other view for the pages (Hannes, 2026-10-30,
+03:40: "preview shall show the rendered paper according to the layout", "it
+is the markdown preview of a paper"; [decision 17](#decisions),
+[decision 20](#decisions)). A notes document keeps the Markdown preview as
+VS Code shows it.
 
-- There is no second preview for a paper document: the page preview takes
-  the place of the Markdown preview of VS Code ([decision 20](#decisions)).
-- The keys of the Markdown preview of VS Code open the page preview of a
-  paper document as VS Code opens its own preview: Ctrl+Shift+V in the group
-  of the text editor, and again back to the text, Ctrl+K V beside the text
-  editor (on macOS Cmd). For a notes document, the keys keep their work.
-- While the active editor shows a paper document, the extension sets the
-  context key `hasCustomMarkdownPreview`, which VS Code gives to an extension
-  whose preview replaces its own: the buttons and menu items of the Markdown
-  preview of VS Code hide, and "Show Page Preview" shows. The item "Open
-  Preview" of the context menu of a Markdown file in the Explorer opens the
-  page preview of a paper document and the Markdown preview of VS Code for
-  another file.
-- The extension knows whether the file of the active editor is a paper
-  document by the context key `nimblescape.markdownPaper.paperDocument`, and
-  updates it after each change of the text.
+- The extension gives VS Code a markdown-it plugin, as other extensions do
+  (`markdown.markdownItPlugins`). For a paper document, the plugin adds the
+  steps of the renderer ([R-REN-002](#r-ren-002) to [R-REN-009](#r-ren-009))
+  and a hidden element with the layout: its style sheets, its templates
+  filled with the fields, and the language.
+- The script of the pages (`markdown.previewScripts`) finds that element after
+  each update of the preview, waits until the scripts of other extensions
+  have drawn their content, for example the diagrams of Mermaid, and lets
+  Paged.js make the pages from a copy of the content of the preview.
+- The pages stand before the content of the preview, which stays in the page
+  but hidden, so that the scripts of other extensions keep their elements and
+  VS Code finds the lines on the pages. After the new pages show, the script
+  lets VS Code read the lines of the pages again.
+- While a paper document shows, the style sheets of the Markdown preview of
+  VS Code and of the theme do not apply, and the pages are white paper also
+  in a dark theme.
+
+### R-PRV-006
+
+**The functions of plugins on the pages.** Every function that a Markdown
+plugin gives the Markdown preview works on the pages as well (Hannes,
+2026-10-30, 03:55: "all plugin functionality shall work in the rendered aper
+as well, such as marking a passage and adding a comment to it etc. as it
+would in the rendered markdown preview"). For Markdown Notes: the highlights
+of the notes, a click on a highlight that selects its note, and "Add Note"
+above a selected passage.
+
+- The pages are copies of the blocks of the preview, with their attributes,
+  among them `data-line`; a script that listens on the document, not on one
+  element, works on them.
+- After each new set of pages, the script of the pages sends the event
+  `nimblescape-paper-rendered` to `window`, with the number of the pages, so
+  that another script can mark the pages again.
+- Markdown Notes adapts its preview script to the pages where it needs to
+  ([R-GEN-003](#r-gen-003)).
 
 ## New files
 
@@ -726,6 +756,12 @@ structure"; 22:02: "it can scaffold, similar as a vite scaffold works"):
   it in a terminal; `--yes` asks nothing, for AI agents.
 - No command writes a file over an existing file; then it writes nothing and
   names the files.
+- A project can hold more than one document in `paper/`, for example
+  `paper/paper.md` for the thesis and `paper/concept.md` for its concept
+  paper, which share `bib/` (the project `bachelor/` of the repository
+  `scalarion/transcribe`, 2026-10-30). A project can have more folders than
+  the scaffold writes, for example `instructions/` for the documents of the
+  school, `research/` for working notes and `archive/`.
 
 ## Command line
 
@@ -798,6 +834,14 @@ cited or not, in one HTML comment at the end of the file, its database
   ([R-NEW-003](#r-new-003)).
 - No line holds `-->`: a `>` in a text is written as `>`.
 - An AI agent adds a source there, for example from a PDF in `inbox/`.
+- The ID of a source by persons is the family name of the first author and
+  the year, for example `hong2024`. For other sources, a proposal waits for
+  Hannes (2026-10-30, from the work on `scalarion/transcribe`): an
+  organization is its name as cited and the year (`oecd2019`), a law or a
+  regulation its reference with hyphens (`bgbl-ii-262-2015`, `eu-2024-1689`),
+  a source without a date has no year (`wirtschaftskammeroesterreich`), and a
+  second file of one source is the ID, a hyphen and an addition
+  (`bgbl-242-1962-fassung-2027-08-01.pdf`).
 - The checks report a line that is no JSON object, a source without a valid
   `id`, a second source with the same `id`, and a comment without its end.
 - The clean editing view of Markdown Notes leaves the database out (a hidden
@@ -955,15 +999,17 @@ Decision 20 is the technique that Claude chose for decision 17 of Hannes.
     package; `layouts/` of the repository counts first.
 19. **No logic in a layout** ([R-LAY-008](#r-lay-008), 2026-10-30, about
     03:36): style sheets, templates and fields only, no scripts.
-20. **The page preview takes the place of the Markdown preview of VS Code**
-    ([R-PRV-005](#r-prv-005), 2026-10-30, 03:50, the technique chosen by
-    Claude for decision 17): VS Code changes the content of its own preview
-    in place after each change of the text and finds the lines by the blocks
-    it made, so pages of Paged.js inside it would break the scroll with the
-    text editor and the double click to the line. The page preview therefore
-    stays a view of the extension, opens with the keys of the Markdown
-    preview, and hides the buttons of the Markdown preview with the context
-    key `hasCustomMarkdownPreview`, which VS Code has for this case.
+20. **The pages are in the Markdown preview of VS Code**
+    ([R-PRV-005](#r-prv-005), [R-PRV-006](#r-prv-006), 2026-10-30, 04:00, the
+    technique chosen by Claude for decision 17 and the ask of Hannes at
+    03:55). The functions of other plugins, such as "Add Note" of Markdown
+    Notes, work only in the Markdown preview of VS Code, which gives their
+    scripts their place, their links and the lines of the file. So the pages
+    are made there, and the measures of [R-PRV-005](#r-prv-005) keep the
+    scroll with the text editor and the double click to the line working. A
+    first version at 03:50 had a view of its own that took the place of the
+    Markdown preview, with its keys and the context key
+    `hasCustomMarkdownPreview`; Hannes' ask at 03:55 replaced it.
 21. **Only PDF** ([R-PDF-004](#r-pdf-004), 2026-10-30, about 03:37): no Word
     file.
 
@@ -981,11 +1027,13 @@ Decision 20 is the technique that Claude chose for decision 17 of Hannes.
 - The npm name `@nimblescape/markdownpaper` ([decision 5](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
-- Listings (open in Markdown Notes, no decision of Hannes yet): `/listing`
-  for a code block from marks in source code, with the caption `Listing:` and
-  the anchor `lst-…`. When Hannes decides it, the renderer numbers these links
-  as in [R-REN-009](#r-ren-009), and a list of listings may join `LOF` and
-  `LOT`.
+- Listings: Markdown Notes has `/listing` since 2026-10-30, 04:00 (commit
+  ba8fa36 of its PR #1, R-CODE-001 to R-CODE-003 of its spec; the tags of
+  R-CODE-003 wait for Hannes): a caption line `Listing: …` with an anchor
+  `lst-…`, the comment `<!-- listing: ../src/x.ts#Symbol -->` and a fenced
+  code block. The renderer will number them and their links as in
+  [R-REN-009](#r-ren-009) (plan step 20); whether a list of listings joins
+  `LOF` and `LOT` is open.
 - Values of the front matter in the text (planned in Markdown Notes): `/ref`
   inserts a field between hidden markers, `<!--{title}-->value<!--{/title}-->`,
   and the formatter writes the value anew from the front matter. The pages

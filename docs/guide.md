@@ -113,6 +113,10 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
 [Hong et al. (2024)](#hong2024 "narrative") describe three ways.
 ```
 
+Two works of the same authors in one pair of parentheses get a comma between
+their links, `([Levitt, 1972](#levitt1972), [1976](#levitt1976))`: the format
+writes only the year of the second, as APA does.
+
 In VS Code with nimblescape Markdown Notes, type `/cite` in a paper document
 and choose a source from the list, which you can search by author, title and
 year: the citation goes in at the place, in parentheses. Add the title

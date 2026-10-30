@@ -1358,6 +1358,11 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
   comment or in a fenced code block is no citation.
 - The checks warn of a title with words that are no CSL term or value, such
   as `"S. 3"`, and the formatter keeps the text of such a link.
+- Two citations in one pair of parentheses stand apart with `; `. A comma
+  `, ` joins a work of the same authors to the citation before it, as APA
+  writes "(Levitt, 1972, 1976)": the formatter writes only the year and the
+  place of the joined citation, `([Levitt, 1972](#levitt1972), [1976](#levitt1976))`.
+  After a citation of other authors, a joined citation keeps its names.
 - `(RESEARCH)` asks an AI agent to research the evidence for an argument
   ([decision 43](#decisions)). The author selects the argument in the text
   editor and types `/research`, which works only with selected text of a
@@ -1433,8 +1438,9 @@ not in its front matter and not in the DOCTYPE comment of Markdown Notes.
   publication as the gazette writes them (`BGBl.` and `Nr. 134/1963`);
   `references`, the version that the text cites (`BGBl. II Nr. 303/2012`),
   left out for the first version; and `issued`, the day of that version, or
-  of the law without a version. A citation names the title and the year of
-  `issued`: `(Lehrplan der Volksschule, 2012)`.
+  of the law without a version. Without its day, only the year, `issued`
+  leaves out "vom …", because the number holds the year. A citation names the
+  title and the year of `issued`: `(Lehrplan der Volksschule, 2012)`.
 - The text that the style writes is Markdown: italic parts between `*`, and
   the characters of Markdown in the metadata, such as `*`, `_` and `[`, with a
   backslash. A DOI and an address stay plain text, which GitHub and the pages

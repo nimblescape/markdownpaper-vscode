@@ -2254,7 +2254,8 @@
     <!-- PHT: a law or an ordinance as the guide writes it: "Lehrplan der Volksschule. BGBl. Nr. 134/1963 in der
          Fassung BGBl. II Nr. 303/2012 vom 13. September 2012." The fields: title, the first publication in
          container-title and number ("BGBl." and "Nr. 134/1963"), the version that the text cites in references
-         ("BGBl. II Nr. 303/2012"), and the day of that version, or of the law without a version, in issued. -->
+         ("BGBl. II Nr. 303/2012"), and the day of that version, or of the law without a version, in issued; an issued
+         without its day, only the year, leaves "vom …" out. -->
     <group delimiter=" " suffix=".">
       <text variable="title" suffix="."/>
       <group delimiter=" ">
@@ -2265,14 +2266,20 @@
         <text value="in der Fassung"/>
         <text variable="references"/>
       </group>
-      <group delimiter=" ">
-        <text value="vom"/>
-        <date variable="issued">
-          <date-part form="ordinal" name="day" suffix=" "/>
-          <date-part name="month" suffix=" "/>
-          <date-part name="year"/>
-        </date>
-      </group>
+      <!-- "vom" and the day only for a date with its day: the number of a version already holds its year. The
+           condition has-day is an extension of citeproc-js (CSL-M), which Markdown Paper and Zotero use. -->
+      <choose>
+        <if has-day="issued">
+          <group delimiter=" ">
+            <text value="vom"/>
+            <date variable="issued">
+              <date-part form="ordinal" name="day" suffix=" "/>
+              <date-part name="month" suffix=" "/>
+              <date-part name="year"/>
+            </date>
+          </group>
+        </if>
+      </choose>
     </group>
   </macro>
   <macro name="bibliography">

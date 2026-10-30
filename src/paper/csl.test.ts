@@ -55,6 +55,9 @@ describe('the entry of a source in the style of the PHT (R-CITE-003)', () => {
     expect(entryOf(lehrplan)).toBe('Lehrplan der Volksschule. BGBl. Nr. 134/1963 in der Fassung BGBl. II Nr. 303/2012 vom 13. September 2012.');
     const law: Source = { id: 'bgbl-i-1-2000', type: 'legislation', title: 'Beispielgesetz', 'container-title': 'BGBl. I', number: 'Nr. 1/2000', issued: { 'date-parts': [[2000, 1, 3]] } };
     expect(entryOf(law)).toBe('Beispielgesetz. BGBl. I Nr. 1/2000 vom 3. Jänner 2000.');
+    // A version whose day the source does not give: the number holds its year, so "vom" is left out.
+    const version: Source = { ...law, references: 'BGBl. I Nr. 5/2010', issued: { 'date-parts': [[2010]] } };
+    expect(entryOf(version)).toBe('Beispielgesetz. BGBl. I Nr. 1/2000 in der Fassung BGBl. I Nr. 5/2010.');
     expect(
       citationsOf(
         [lehrplan, law],

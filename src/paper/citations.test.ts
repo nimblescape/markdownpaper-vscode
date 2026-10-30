@@ -161,6 +161,14 @@ describe('the format step of the citations (R-CITE-002, R-CITE-004)', () => {
     expect(writeCitations(formatted, layout, style)).toEqual(formatted);
   });
 
+  test('a comma joins a work of the same author to the citation before it, as APA writes "(Shao, 2025, 2026)"', () => {
+    const shao2026 = '{"id":"shao2026","type":"report","author":[{"family":"Shao","given":"Yijia"}],"issued":{"date-parts":[[2026]]},"title":"Agents at work"}';
+    const lines = file(['Text ([a](#shao2025), [b](#shao2026 "page 4"); [c](#hong2024)). Two authors ([d](#hong2024), [e](#shao2026)).'], [hong, shao, shao2026]);
+    expect(writeCitations(lines, layout, style)[at]).toBe(
+      'Text ([Shao, 2025](#shao2025), [2026, S. 4](#shao2026 "page 4"); [Hong et al., 2024](#hong2024)). Two authors ([Hong et al., 2024](#hong2024), [Shao, 2026](#shao2026)).',
+    );
+  });
+
   test('puts a new reference list before the appendix part, with the heading of the language of the layout', () => {
     const lines = file(['# Introduction', '', 'Text ([Hong](#hong2024)).', '', '# Appendix', '', '## Guide', '', 'Questions.']);
     const formatted = writeCitations(lines, { ...layout, language: 'en-US', terms: termsFor('en-US') }, style);

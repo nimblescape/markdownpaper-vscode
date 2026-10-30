@@ -580,7 +580,13 @@ export function writeCitations(lines: readonly string[], layout: Layout, style: 
     style,
     layout.language,
     database.sources,
-    citations.map((citation) => ({ id: citation.id, form: citation.data.form, ...(citation.data.term && citation.data.value ? { label: citation.data.term, locator: citation.data.value } : {}) })),
+    citations.map((citation, index) => ({
+      id: citation.id,
+      form: citation.data.form,
+      ...(citation.data.term && citation.data.value ? { label: citation.data.term, locator: citation.data.value } : {}),
+      // A comma between two links joins a work of the same author to the one before: "(Levitt, 1972, 1976)".
+      joined: index > 0 && citations[index - 1].line === citation.line && lines[citation.line].slice(citations[index - 1].end, citation.start) === ', ',
+    })),
     cited,
   );
   const output = [...lines];

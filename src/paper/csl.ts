@@ -63,6 +63,11 @@ export interface Cite {
   form: Form;
   label?: string;
   locator?: string;
+  /**
+   * joined is true for a citation that a comma joins to the citation before it in one pair of parentheses: a work of
+   * the same author or authors then has only its year and its place, as APA writes "(Levitt, 1972, 1976)".
+   */
+  joined?: boolean;
 }
 
 /** CitationStyle is a CSL style: its name in layout.json and the XML of the style. */
@@ -245,11 +250,17 @@ export function cite(style: CitationStyle, language: string, sources: readonly S
   const ids = [...new Set([...(cited ?? []), ...cites.map((one) => one.id)].filter((id) => known.has(id)))];
   engine.updateItems(ids);
   const and = engine.getTerm('and');
-  const citations = cites.map((one) => {
+  const namesOf = (id: string) => tidy(engine.makeCitationCluster([{ id, 'author-only': true }]));
+  const citations = cites.map((one, index) => {
     if (!known.has(one.id)) {
       return '';
     }
     const place = one.locator ? { locator: one.locator, label: one.label ?? 'page' } : {};
+    const before = cites[index - 1];
+    if (one.joined && one.form === 'parenthetical' && before && known.has(before.id) && namesOf(before.id) === namesOf(one.id) && !namesOf(one.id).includes('[NO_PRINTED_FORM]')) {
+      const year = tidy(engine.makeCitationCluster([{ id: one.id, 'suppress-author': true, ...place }]));
+      return /^\(.*\)$/.test(year) ? year.slice(1, -1) : year;
+    }
     if (one.form === 'narrative') {
       const names = tidy(engine.makeCitationCluster([{ id: one.id, 'author-only': true }])).replace(/ & (?!.* & )/, ` ${and} `);
       if (names === '' || names.includes('[NO_PRINTED_FORM]')) {

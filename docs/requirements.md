@@ -38,7 +38,7 @@ This document replaces it where the two differ.
 | 7 | The page preview | [R-PRV-001](#r-prv-001) to [R-PRV-004](#r-prv-004) | done |
 | 8 | The scaffold: new document, new layout, new project with `inbox/` and `bib/` | [R-NEW-001](#r-new-001) to [R-NEW-003](#r-new-003) | done |
 | 9 | The command `markdownpaper` with `pdf`, `check`, `create`, `new` and `instructions` | [R-CLI-001](#r-cli-001), [R-CLI-003](#r-cli-003) | done |
-| 10 | The anchors of figures and tables and the links to them, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-009](#r-ren-009) | done |
+| 10 | The anchors of figures, tables and headings and the links to them, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-009](#r-ren-009) | done |
 | 11 | The interface of Markdown Notes: the file behind the clean editing view | [R-GEN-003](#r-gen-003) | done |
 | 12 | One formatter command: `markdownpaper format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | planned; needs the library of `@nimblescape/markdownnotes` |
 | 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | planned; the work of Markdown Notes moves here |
@@ -170,8 +170,8 @@ in the text editor as warnings after a pause in typing, and with
 - A problem of `layout.json` shows at the field `layout` and names the file.
 - Each required field of the layout must have a value; else a warning at the
   field, or at the field `layout` when the field is missing.
-- Each link to `#fig-…` or `#tab-…` must find its figure or table
-  ([R-REN-009](#r-ren-009)).
+- Each link to `#fig-…`, `#tab-…` or `#sec-…` must find its figure, table or
+  heading ([R-REN-009](#r-ren-009)).
 - The page preview adds the problems of the renderer, for example a template
   that does not exist. Each problem shows once.
 - `markdownpaper check` prints each problem as `file:line:column: severity:
@@ -433,36 +433,46 @@ look.
 
 ### R-REN-009
 
-**Links to figures and tables.** The slash commands of Markdown Notes write
-figures, tables and links to them (Hannes, 2026-10-30, 02:32 and 02:45;
-[decision 15](#decisions)): `/figure` picks an image of the folder and inserts
-the figure with its caption and its anchor, `/table` inserts a table with its
-caption and its anchor, and `/ref` inserts a link to a figure or a table. The
-anchor stands at the end of the line of the image or of the caption:
+**Links to figures, tables and headings.** The slash commands of Markdown
+Notes write figures, tables and links to them (Hannes, 2026-10-30, 02:32 and
+02:45; [decision 15](#decisions)): `/figure` picks an image of the folder and
+inserts the figure with its caption and its anchor, `/table` inserts a table
+with its caption and its anchor, and `/ref` inserts a link to a figure, a
+table or a heading ("/ref also adds chapter numbers", Hannes, 2026-10-30, about
+03:20). The anchor stands at the end of the line of the image or of the
+caption, and at the end of the text of a heading:
 
 ```markdown
+## Methoden<a id="sec-methods"></a>
+
 ![Der Plan der Studie](images/plan.png) <a id="fig-plan"></a>
 
 Table: Noten nach Schulstufe <a id="tab-grades"></a>
 
-[Abbildung 1](#fig-plan) zeigt den Plan, [Tabelle 1](#tab-grades) die Noten.
+[Abbildung 1](#fig-plan) zeigt den Plan, [Tabelle 1](#tab-grades) die Noten,
+[Kapitel 2.1](#sec-methods) die Methoden.
 ```
 
-- The anchor gives the figure or the table its ID, and does not show.
-- The renderer writes the label of the target as the text of each link to it
-  whose text is a word and a number: "Abbildung 1", "Tabelle A1". The page
-  always shows the number of the renderer, also in an appendix. A link with
-  other words, such as `[den Plan](#fig-plan)`, keeps its text.
-- A link to `#fig-…` or `#tab-…` without its figure or table is a warning
+- The anchor gives the figure, the table or the heading its ID, and does not
+  show; the table of contents shows the heading without it.
+- The renderer writes the text of each link whose text is a word and a
+  number anew: the label of a figure or a table ("Abbildung 1", "Tabelle
+  A1"), the label of an appendix ("Anhang A"), and for another heading the
+  word of the link and the number of the heading ("Kapitel 2.1"). The page
+  always shows the number of the renderer. A link with other words, such as
+  `[den Plan](#fig-plan)`, and a link to a heading without a number, for
+  example of a special section, keep their text.
+- A link to `#fig-…`, `#tab-…` or `#sec-…` without its target is a warning
   ([R-DOC-002](#r-doc-002)).
 - The formatter of Markdown Notes writes the numbers of the links in the order
   of the file; the format step of the paper ([R-CLI-002](#r-cli-002)) will
   write them by the rules of the layout, so the file shows the numbers of the
   pages.
 - Markdown Notes defines the form of the anchors and of the links in
-  [R-XREF-001](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-001)
+  [R-XREF-001](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-001),
+  [R-XREF-002](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-002)
   and
-  [R-XREF-002](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-002):
+  [R-XREF-003](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-003):
   it writes an anchor only at the end of the line of the image or of the
   caption, with a name from up to three words of the caption, for example
   `tab-participants-grade`, and its clean editing view hides the anchors. The
@@ -792,13 +802,15 @@ above follow them.
   installed browser ([decision 6](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
-- Links to headings and listings (open in Markdown Notes, no decision of
-  Hannes yet): `/ref` for a heading with its section number, such as
-  `[Section 2.1](#sec-…)` with the anchor at the end of the heading, and
-  `/listing` for a code block from marks in source code, with the caption
-  `Listing:` and the anchor `lst-…`. When Hannes decides them, the renderer
-  numbers these links by the rules of the layout as in
-  [R-REN-009](#r-ren-009), and a list of listings may join `LOF` and `LOT`.
+- Listings (open in Markdown Notes, no decision of Hannes yet): `/listing`
+  for a code block from marks in source code, with the caption `Listing:` and
+  the anchor `lst-…`. When Hannes decides it, the renderer numbers these links
+  as in [R-REN-009](#r-ren-009), and a list of listings may join `LOF` and
+  `LOT`.
+- Values of the front matter in the text (planned in Markdown Notes): `/ref`
+  inserts a field between hidden markers, `<!--{title}-->value<!--{/title}-->`,
+  and the formatter writes the value anew from the front matter. The pages
+  show the value.
 - The layout of the PHT thesis: today it lives in the skill
   `markdown-to-paper` of the repository `scalarion/transcribe`; it becomes a
   layout folder of that repository ([R-LAY-006](#r-lay-006)).

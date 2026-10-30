@@ -228,7 +228,7 @@ describe('checks of the front matter (R-DOC-002)', () => {
   test('a link to a figure or a table that does not exist is a warning at its line (R-REN-009)', async () => {
     const host = hostOf({ 'file:///repo/layouts/thesis/layout.json': thesis });
     const checked = await checkDocument(host, 'file:///repo/a.md', '---\nlayout: thesis\ntitle: T\nauthor: A\n---\n\nSiehe [Abbildung 1](#fig-weg).\n');
-    expect(checked.problems).toEqual([{ severity: 'warning', message: 'The link #fig-weg names no figure and no table of the file.', line: 6, file: 'file:///repo/a.md' }]);
+    expect(checked.problems).toEqual([{ severity: 'warning', message: 'The link #fig-weg names no figure, table or heading of the file.', line: 6, file: 'file:///repo/a.md' }]);
   });
 });
 

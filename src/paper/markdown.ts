@@ -12,7 +12,8 @@
  *   with their `<wbr>`, as version 1 of the format of the notes defines them.
  * - Each other footnote becomes an element `<span class="footnote">` at the place of its first reference, which
  *   Paged.js puts at the foot of the page of that reference (`float: footnote`).
- * - The headings get an ID, and a number such as 1.1 when the layout numbers them. A heading with `{-}` at its end,
+ * - The headings get an ID, the anchor of `/ref` of Markdown Notes at their end or else one from their text, and a
+ *   number such as 1.1 when the layout numbers them. A heading with `{-}` at its end,
  *   the heading of a special section (TOC, LOF, LOT, BIB, ADT, AST, ACC, FWD, APX: by its words in the language of
  *   the layout, or by a marker such as `{BIB}`), and a heading that a pattern of the layout names get none, nor do
  *   the headings below them.
@@ -181,8 +182,11 @@ function withoutTrailingSpace(tokens: Token[]): Token[] {
   return result;
 }
 
-/** referenceText matches the text of a link to a figure or a table that the renderer writes anew: a word and a number. */
-const referenceText = /^\p{L}+\.?\s+[A-Z]?\d+$/u;
+/**
+ * referenceText matches the text of a link to a figure, a table or a heading that the renderer writes anew: a word and
+ * a number, such as "Abbildung 1", "Tabelle A1", "Kapitel 2.1" or "Anhang B".
+ */
+const referenceText = /^(\p{L}+\.?)\s+(?:[A-Z]?\d+(?:\.\d+)*|[A-Z])$/u;
 
 /**
  * matches tells whether the text of a heading is one of the terms, without regard to case.
@@ -382,6 +386,11 @@ function paperRule(layout: Layout, found: Found) {
           references = 0;
         }
         const inline = tokens[index + 1];
+        // The anchor of /ref of Markdown Notes at the end of the heading, `<a id="sec-methods"></a>`, is its ID.
+        const anchor = trailingAnchor(inline.children ?? []);
+        if (anchor) {
+          inline.children = withoutTrailingSpace((inline.children ?? []).slice(0, anchor.start));
+        }
         const children = inline.children ?? [];
         const last = children[children.length - 1];
         let marker: string | undefined;
@@ -398,7 +407,10 @@ function paperRule(layout: Layout, found: Found) {
           unnumberedBelow = 0;
         }
         let number = '';
-        const id = unique(slug(text));
+        if (anchor) {
+          ids.add(anchor.id);
+        }
+        const id = anchor ? anchor.id : unique(slug(text));
         token.attrSet('id', id);
         let section: string | undefined = code;
         if (code) {
@@ -513,18 +525,27 @@ function paperRule(layout: Layout, found: Found) {
       output.push(html(state, '</section>\n', true));
     }
     state.tokens = output;
-    // A link to a figure or a table whose text is a word and a number gets the label of its target: "Abbildung 1".
+    // A link whose text is a word and a number gets the label of its target: the label of a figure or a table
+    // ("Abbildung 1"), the label of an appendix ("Anhang A"), or the word of the link and the number of a heading
+    // ("Kapitel 2.1"). A heading without a number keeps the text of its links.
     const labels = new Map([...found.figures, ...found.tables].map((caption) => [caption.id, caption.label]));
+    const headings = new Map(found.headings.map((heading) => [heading.id, heading]));
     for (const link of links) {
       const target = decodeURIComponent(link.open.attrGet('href')?.slice(1) ?? '');
-      const label = labels.get(target);
-      if (label === undefined) {
-        if (/^(?:fig|tab)-/.test(target) && !ids.has(target)) {
-          found.problems.push({ severity: 'warning', message: `The link #${target} names no figure and no table of the file.`, line: link.line });
+      const heading = headings.get(target);
+      if (!labels.has(target) && !heading) {
+        if (/^(?:fig|tab|sec)-/.test(target) && !ids.has(target)) {
+          found.problems.push({ severity: 'warning', message: `The link #${target} names no figure, table or heading of the file.`, line: link.line });
         }
         continue;
       }
-      if (link.text.length > 0 && link.text.every((child) => child.type === 'text') && referenceText.test(link.text.map((child) => child.content).join('').trim())) {
+      const words = /^(\p{L}+\.?)\s/u;
+      const text = link.text.map((child) => child.content).join('').trim();
+      if (link.text.length === 0 || !link.text.every((child) => child.type === 'text') || !referenceText.test(text)) {
+        continue;
+      }
+      const label = labels.get(target) ?? (heading?.appendix ? heading.number : heading?.number ? `${words.exec(text)?.[1] ?? ''} ${heading.number}` : undefined);
+      if (label !== undefined) {
         link.text[0].content = label;
         for (const child of link.text.slice(1)) {
           child.content = '';

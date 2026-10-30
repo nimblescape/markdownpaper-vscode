@@ -225,7 +225,37 @@ describe('links to figures and tables (R-REN-009)', () => {
     expect(body.html).toContain('<span class="caption-text">Rohdaten</span></p>');
     expect(body.html).toContain('Wie <a href="#tab-roh">Tabelle A1</a> zeigt; <a href="#tab-fehlt">Table 3</a>.');
     expect(body.html).not.toContain('<a id=');
-    expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #tab-fehlt names no figure and no table of the file.', line: 21 }]);
+    expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #tab-fehlt names no figure, table or heading of the file.', line: 21 }]);
+  });
+
+  test('the anchor of /ref at the end of a heading is its ID, and a link to it gets the number of the heading or the label of the appendix', () => {
+    const markdown = [
+      '# Inhaltsverzeichnis',
+      '',
+      '# Einleitung',
+      '',
+      '## Methoden<a id="sec-methods"></a>',
+      '',
+      'Siehe [Kapitel 1.4](#sec-methods), [Chapter 9](#sec-methods), [die Methoden](#sec-methods), [Anhang C](#sec-guide) und [Kapitel 3](#sec-toc).',
+      '',
+      '# Literaturverzeichnis {BIB} <a id="sec-toc"></a>',
+      '',
+      '# Anhang',
+      '',
+      '## Leitfaden <a id="sec-guide"></a>',
+      '',
+      '## Daten',
+      '',
+      '[Kapitel 5](#sec-weg)',
+      '',
+    ].join('\n');
+    const body = renderBody(markdown, layoutOf());
+    expect(body.html).toContain('<h2 data-line="4" id="sec-methods"><span class="heading-number">1.1</span> Methoden</h2>');
+    expect(body.html).toContain('<a href="#sec-methods">Kapitel 1.1</a>, <a href="#sec-methods">Chapter 1.1</a>, <a href="#sec-methods">die Methoden</a>, <a href="#sec-guide">Anhang A</a> und <a href="#sec-toc">Kapitel 3</a>');
+    expect(body.headings.find((heading) => heading.id === 'sec-toc')).toMatchObject({ text: 'Literaturverzeichnis', section: 'BIB' });
+    expect(body.html).toContain('<a href="#sec-methods"><span class="contents-number">1.1</span><span class="contents-text">Methoden</span></a>');
+    expect(body.html).not.toContain('<a id=');
+    expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #sec-weg names no figure, table or heading of the file.', line: 16 }]);
   });
 });
 

@@ -49,6 +49,11 @@ date: "30 October 2026"
   it: `# Abstract {-}`. The marker does not show.
 - The headings of the special sections get no number, nor do the headings
   below them (section 3).
+- An anchor at the end of a heading names it for links, as the slash command
+  `/ref` of nimblescape Markdown Notes writes it:
+  `## Methoden<a id="sec-methods"></a>`. A link whose text is a word and a
+  number, such as `[Kapitel 2.1](#sec-methods)`, shows the number of the
+  heading on the pages; a link to an appendix shows its label, "Anhang A".
 
 ## 3. Special sections and generated lists
 
@@ -128,8 +133,8 @@ An anchor at the end of the caption names the table for links, as the slash
 command `/table` of nimblescape Markdown Notes writes it:
 `Table: Teilnehmende nach Schulstufe <a id="tab-teilnehmende"></a>`. A link
 `[Tabelle 1](#tab-teilnehmende)` gets the label of the table, as for figures.
-`check` and the page preview warn about a link to `#fig-…` or `#tab-…` whose
-figure or table does not exist.
+`check` and the page preview warn about a link to `#fig-…`, `#tab-…` or
+`#sec-…` whose figure, table or heading does not exist.
 
 ## 6. Footnotes
 

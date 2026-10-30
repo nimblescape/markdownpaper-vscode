@@ -24,7 +24,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Checks and hover](#checks-and-hover) | text editor, command line | available | [R-DOC-002](requirements.md#r-doc-002), [R-DOC-003](requirements.md#r-doc-003) |
 | [Headings](#headings) | pages | available | [R-REN-003](requirements.md#r-ren-003) |
 | [Special sections](#special-sections) | pages | available | [R-REN-004](requirements.md#r-ren-004) |
-| [Figures and tables](#figures-and-tables) | pages | available | [R-REN-005](requirements.md#r-ren-005), [R-REN-009](requirements.md#r-ren-009) |
+| [Figures and tables](#figures-and-tables), links to headings | pages | available | [R-REN-005](requirements.md#r-ren-005), [R-REN-009](requirements.md#r-ren-009) |
 | [Appendix](#appendix) | pages | available | [R-REN-006](requirements.md#r-ren-006) |
 | [Footnotes](#footnotes) | pages | available | [R-REN-008](requirements.md#r-ren-008) |
 | [Hyphenation](#hyphenation) | pages | available | [R-REN-007](requirements.md#r-ren-007) |
@@ -95,7 +95,8 @@ editor and in the Problems view after a pause in typing:
 
 - a layout that does not exist, or a problem of its `layout.json`;
 - a required field of the layout without a value;
-- a link to `#fig-…` or `#tab-…` whose figure or table does not exist.
+- a link to `#fig-…`, `#tab-…` or `#sec-…` whose figure, table or heading does
+  not exist.
 
 The pointer on the key of a field shows its description from `layout.json`.
 `npx -y @nimblescape/markdownpaper check paper/paper.md` prints the same
@@ -107,6 +108,12 @@ The headings get numbers such as 1, 1.1 and 1.1.1, to the depth of the layout.
 Do not write the numbers. A heading with `{-}` at its end gets no number, nor
 do the headings below it: `# Vorbemerkung {-}`. A file whose headings start
 with numbers keeps them.
+
+An anchor at the end of a heading, which the slash command `/ref` of
+Markdown Notes writes, names the heading for links:
+`## Methoden<a id="sec-methods"></a>`. A link such as
+`[Kapitel 2.1](#sec-methods)` shows the number of the heading on the pages,
+and a link to an appendix its label, "Anhang A".
 
 ## Special sections
 

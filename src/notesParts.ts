@@ -6,8 +6,8 @@
  * The parts of the paper in the editor of Markdown Notes, through its interface
  * ([R-GEN-003](../docs/requirements.md#r-gen-003)): the clean editing view leaves out the database of the sources
  * ([R-CITE-001](../docs/requirements.md#r-cite-001)) and the start markers of the arguments to research, and the
- * slash command `/research` marks a selected argument for an AI agent
- * ([R-CITE-002](../docs/requirements.md#r-cite-002)). Markdown Notes knows nothing of them; without Markdown Notes, or
+ * slash command `/research` marks a selected argument for an AI agent, and `/cite` of [cite.ts](cite.ts) inserts a
+ * citation ([R-CITE-002](../docs/requirements.md#r-cite-002)). Markdown Notes knows nothing of them; without Markdown Notes, or
  * with a version without a function, the part is missing.
  */
 
@@ -66,9 +66,10 @@ export const researchCommand: SlashCommand = {
 /**
  * registerNotesParts adds the parts of the paper to Markdown Notes. A part that Markdown Notes does not have or refuses
  * is left out; the others stay.
+ * @param slashCommands - More slash commands, such as `/cite`, which need the context of the extension.
  * @returns The registration, which removes the parts when it is disposed.
  */
-export function registerNotesParts(): vscode.Disposable {
+export function registerNotesParts(slashCommands: readonly SlashCommand[] = []): vscode.Disposable {
   return registerWithNotes((api: NotesApiV1) => {
     const parts: vscode.Disposable[] = [];
     const add = (register: () => vscode.Disposable | undefined) => {
@@ -84,6 +85,9 @@ export function registerNotesParts(): vscode.Disposable {
     add(() => api.registerHiddenBlocks?.({ find: hiddenDatabase }));
     add(() => api.registerHiddenMarkers?.({ find: researchMarkers }));
     add(() => api.registerSlashCommand?.(researchCommand));
+    for (const command of slashCommands) {
+      add(() => api.registerSlashCommand?.(command));
+    }
     return vscode.Disposable.from(...parts);
   });
 }

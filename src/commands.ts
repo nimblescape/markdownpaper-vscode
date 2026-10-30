@@ -162,7 +162,7 @@ async function startOf(layout: Layout): Promise<string | undefined> {
  * fetcher returns the network of the extension: the fetch of VS Code, which uses the proxy settings of VS Code.
  * @param userAgent - The value of the header User-Agent.
  */
-const fetcher =
+export const fetcher =
   (userAgent: string): Fetcher =>
   async (url, accept, headers = {}) => {
     const response = await fetch(url, { headers: { ...headers, Accept: accept, 'User-Agent': userAgent } });

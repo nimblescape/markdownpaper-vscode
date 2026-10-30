@@ -39,9 +39,11 @@ gives the same renderer to people and AI agents on the command line:
   contribute to the Markdown preview, as the preview does, and the page runs
   their scripts from their folders; a script in a Markdown file or in a
   layout does not run.
-- **Network.** The extension's own code connects to no address and collects
-  no telemetry. A document or a layout that names an image or a font on the
-  web makes the Markdown preview and the browser load it.
+- **Network.** The extension collects no telemetry. Its own code connects
+  only to GitHub: "New Project" lists the layouts on GitHub, and "Update
+  Layout" reads the newest version of a copied layout, with the GitHub sign-in
+  of VS Code when one exists. A document or a layout that names an image or a
+  font on the web makes the Markdown preview and the browser load it.
 - **Restricted Mode and virtual workspaces.** In Restricted Mode the page
   preview, the checks and the commands work, and only the settings of the
   user can name the program of the browser
@@ -105,6 +107,13 @@ gives the same renderer to people and AI agents on the command line:
 - **Notes.** The notes of nimblescape Markdown Notes do not show on the pages.
   The page preview and the PDF of a file in its clean editing view show the
   file itself. The clean editing view hides the database of the sources.
+- **Citations and Zotero.** With Markdown Notes, type `/cite` in a paper
+  document and choose a source: the citation goes in at the place, in the
+  citation style of the layout. After "Connect Zotero" (with an API key of
+  zotero.org), the list also shows the items of your Zotero library; a chosen
+  item goes into the database of the document, and its PDF file into `bib/`.
+  "Update Sources from Zotero" takes the changes of Zotero into the sources of
+  the document.
 - **Research.** With Markdown Notes, select an argument in a paper document
   and type `/research`: the argument gets a hidden start marker and
   `(RESEARCH)` at its end, where an AI agent puts the citations of the
@@ -156,10 +165,11 @@ describes every feature.
   source text of a diagram.
 - A layout has no scripts. Its templates know fields and parts that show
   only with a field, no other logic.
-- The slash command `/cite` is planned, also with the sources of Zotero;
-  until then, an AI agent adds the sources with `markdownpaper source`, an AI
-  agent or you write the links of the citations, and the format writes their
-  text and the reference list. `/research` needs nimblescape Markdown Notes.
+- `/cite` and `/research` need nimblescape Markdown Notes. `/cite` reads the
+  personal library of Zotero through the web API of zotero.org, not the
+  group libraries, and copies a PDF only when Zotero stores it on
+  zotero.org. AI agents and the command line do not use Zotero: an agent adds
+  sources with `markdownpaper source`.
 
 ---
 

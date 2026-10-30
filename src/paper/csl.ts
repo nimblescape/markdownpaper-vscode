@@ -63,6 +63,11 @@ export interface Cite {
   form: Form;
   label?: string;
   locator?: string;
+  /**
+   * joined is true for a citation that a comma joins to the citation before it in one pair of parentheses: a work of
+   * the same author or authors then has only its year and its place, as APA writes "(Levitt, 1972, 1976)".
+   */
+  joined?: boolean;
 }
 
 /** CitationStyle is a CSL style: its name in layout.json and the XML of the style. */
@@ -198,6 +203,24 @@ function engineOf(style: CitationStyle, language: string): Cached {
   return cached;
 }
 
+/**
+ * titleNarrative returns a narrative citation of a source whose style writes no names, such as a law: the title in the
+ * place of the names, and the rest of the parenthetical citation in parentheses, as APA writes it
+ * (Schulorganisationsgesetz (1962, § 65)).
+ * @param parenthetical - The text of the parenthetical citation, with or without its parentheses.
+ * @param title - The title of the source.
+ */
+function titleNarrative(parenthetical: string, title: string | undefined): string {
+  const text = /^\(.*\)$/.test(parenthetical) ? parenthetical.slice(1, -1) : parenthetical;
+  for (const name of [title && markdownEscape(title), title && `*${markdownEscape(title)}*`]) {
+    if (name && text.startsWith(`${name}, `)) {
+      return `${name} (${text.slice(name.length + 2)})`;
+    }
+  }
+  const comma = text.indexOf(', ');
+  return comma > 0 ? `${text.slice(0, comma)} (${text.slice(comma + 2)})` : `(${text})`;
+}
+
 /** Cited is the text of the citations and the entries of the reference list in one style. */
 export interface Cited {
   /** citations are the texts of the cites, in their order: without the parentheses of the style for a parenthetical one. */
@@ -227,13 +250,22 @@ export function cite(style: CitationStyle, language: string, sources: readonly S
   const ids = [...new Set([...(cited ?? []), ...cites.map((one) => one.id)].filter((id) => known.has(id)))];
   engine.updateItems(ids);
   const and = engine.getTerm('and');
-  const citations = cites.map((one) => {
+  const namesOf = (id: string) => tidy(engine.makeCitationCluster([{ id, 'author-only': true }]));
+  const citations = cites.map((one, index) => {
     if (!known.has(one.id)) {
       return '';
     }
     const place = one.locator ? { locator: one.locator, label: one.label ?? 'page' } : {};
+    const before = cites[index - 1];
+    if (one.joined && one.form === 'parenthetical' && before && known.has(before.id) && namesOf(before.id) === namesOf(one.id) && !namesOf(one.id).includes('[NO_PRINTED_FORM]')) {
+      const year = tidy(engine.makeCitationCluster([{ id: one.id, 'suppress-author': true, ...place }]));
+      return /^\(.*\)$/.test(year) ? year.slice(1, -1) : year;
+    }
     if (one.form === 'narrative') {
       const names = tidy(engine.makeCitationCluster([{ id: one.id, 'author-only': true }])).replace(/ & (?!.* & )/, ` ${and} `);
+      if (names === '' || names.includes('[NO_PRINTED_FORM]')) {
+        return titleNarrative(tidy(engine.makeCitationCluster([{ id: one.id, ...place }])), known.get(one.id)?.title);
+      }
       const year = tidy(engine.makeCitationCluster([{ id: one.id, 'suppress-author': true, ...place }]));
       return `${names} ${/^\(.*\)$/.test(year) ? year : `(${year})`}`;
     }

@@ -31,7 +31,8 @@ const layoutJson = (fields: Record<string, unknown>): string => `${JSON.stringif
 /** versions are the files of the folder `thesis/` at the two commits. */
 const versions: Record<string, Record<string, string>> = {
   [before]: { 'layout.json': layoutJson({ hyphenate: true }), 'page.css': 'p {}\n', 'cover.html': '<p>Cover</p>\n', 'old.css': 'a {}\n', 'document.md': '# Start\n', 'document.pdf': '%PDF-1' },
-  [after]: { 'layout.json': layoutJson({ hyphenate: false, pdfName: '{{title}}' }), 'page.css': 'p { margin: 0; }\n', 'cover.html': '<p>Cover</p>\n', 'fonts/new.ttf': 'font', 'document.md': '# Start\n', 'document.pdf': '%PDF-2' },
+  // The file of the repository has an array on one line, which the copy keeps.
+  [after]: { 'layout.json': layoutJson({ hyphenate: false, pdfName: '{{title}}', stylesheets: ['page.css'] }).replace(/\[\n\s+"page\.css"\n\s+\]/, '["page.css"]'), 'page.css': 'p { margin: 0; }\n', 'cover.html': '<p>Cover</p>\n', 'fonts/new.ttf': 'font', 'document.md': '# Start\n', 'document.pdf': '%PDF-2' },
 };
 
 /** github returns a fetcher with the two commits, where the branch main is at the commit `head`. */
@@ -72,6 +73,9 @@ describe('the origin of a copy (R-LAY-010)', () => {
     const project = newProjectFiles({ layout, source: files, language: 'de-AT', values: {} }, undefined);
     expect(readOrigin(textOf(project.find((file) => file.path === 'layouts/thesis/layout.json')?.content))).toEqual(origin);
     expect(readOrigin(textOf(newLayoutFiles(files, { name: 'Mine' }).find((file) => file.path === 'layout.json')?.content))).toBeUndefined();
+    // The copy keeps the form of the layout.json of the layout, such as an array on one line.
+    const copied = newLayoutFiles(new Map([['layout.json', encoder.encode(versions[after]['layout.json'])]]), { name: 'Thesis', origin });
+    expect(textOf(copied[0].content)).toContain('"stylesheets": ["page.css"]');
   });
 
   test('an origin needs a name of a layout on GitHub, a ref and a commit of 40 hexadecimal digits', () => {
@@ -95,8 +99,11 @@ describe('the update of a copy (R-LAY-010)', () => {
     expect(update.remove).toEqual(['old.css']);
     expect([...update.write.keys()].sort()).toEqual(['fonts/new.ttf', 'layout.json', 'page.css']);
     expect(update.conflicts).toEqual([]);
-    const json = JSON.parse(decoder.decode(update.write.get('layout.json')));
-    expect(json).toEqual({ format: formatText, name: 'Thesis', language: 'de-AT', document: 'document.md', preview: 'document.pdf', hyphenate: false, pdfName: '{{title}}', origin: { ...origin, commit: after } });
+    const text = decoder.decode(update.write.get('layout.json'));
+    expect(JSON.parse(text)).toEqual({ format: formatText, name: 'Thesis', language: 'de-AT', document: 'document.md', preview: 'document.pdf', hyphenate: false, pdfName: '{{title}}', stylesheets: ['page.css'], origin: { ...origin, commit: after } });
+    // The copy keeps the form of the file of the repository, and only adds the origin.
+    expect(versions[after]['layout.json']).toContain('"stylesheets": ["page.css"]');
+    expect(text).toBe(versions[after]['layout.json'].replace(/\n}\n$/, `,\n  "origin": ${JSON.stringify({ ...origin, commit: after }, null, 2).replace(/\n/g, '\n  ')}\n}\n`));
   });
 
   test('the changes of the project stay where the repository changed nothing, also its language', async () => {

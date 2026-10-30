@@ -285,6 +285,19 @@ write the text of a citation or of an entry yourself.
      organization by its full name and the year
      (`worldeconomicforum2025`); a law by its place of publication
      (`bgbl-ii-262-2015`); no year without a date.
+   - A law or an ordinance has no DOI: write its line from its text in the
+     official legal information system, such as the RIS of Austria
+     (ris.bka.gv.at) or EUR-Lex. Its type is `legislation` for a law and
+     `regulation` for an ordinance; `title` is its title; `container-title`
+     and `number` are the gazette and the number of its first publication as
+     the gazette writes them (`"BGBl."` and `"Nr. 134/1963"`, `"BGBl. II"`
+     and `"Nr. 262/2015"`, `"ABl. L"` and `"2024/1689"`); `references` is the
+     version that the text cites (`"BGBl. II Nr. 303/2012"`), left out for
+     the first version; `issued` is the day of that version, or of the law
+     without a version, with day, month and year, or only the year when the
+     source does not give the day; and `URL` and `accessed`
+     name the page of the text. The PHT style writes
+     `Lehrplan der Volksschule. BGBl. Nr. 134/1963 in der Fassung BGBl. II Nr. 303/2012 vom 13. September 2012.`
    - Each source stays on one line. Write `>` in a text as `\u003e`.
    - A web page that can change gets the day of the access:
      `"accessed":{"date-parts":[[2026,10,30]]}`; the command adds it.
@@ -294,10 +307,14 @@ write the text of a citation or of an entry yourself.
    - As a part of the sentence: `[Hong et al. (2024)](#hong2024 "narrative") zeigen …`.
    - Two sources in one pair of parentheses:
      `([Hong et al., 2024](#hong2024); [Shao, 2025](#shao2025))`.
+   - Two works of the same authors, with a comma between the links:
+     `([Levitt, 1972](#levitt1972), [1976](#levitt1976))`; the format writes
+     only the year of the second.
 3. **Give the place** in the source in the title of the link, with a CSL term
    and its value: `page 3`, `page 13-14`, `chapter 2`, `section 4.1`,
-   `figure 1`, `table 2`, `paragraph 5`. Add `narrative` for a citation in the
-   sentence: `"narrative page 3"`.
+   `figure 1`, `table 2`, `paragraph 5`, and in a law `section 65` (§ 65),
+   `article-locator 4` (Art. 4) or `appendix 1`. Add `narrative` for a
+   citation in the sentence: `"narrative page 3"`.
 4. **Format the file** (section 12). The format writes the text of each link,
    and the entries of the cited sources under the heading of the reference
    list (section 8); without the section, it adds one before the appendix part.

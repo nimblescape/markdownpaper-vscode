@@ -117,7 +117,7 @@ test('format writes the citations and the reference list in the style of a CSL f
   fs.writeFileSync(path.join(folder, 'a.md'), `---\nlayout: pht\n---\n\n# Einleitung\n\nText ([x](#huber "page 13-14")).\n\n<!-- nimblescape-sources\n${source}\n-->\n`);
   expect(await run(['format', 'a.md'], io())).toBe(0);
   expect(read('a.md')).toBe(
-    `---\nlayout: pht\n---\n\n# Einleitung\n\nText ([Huber, o.\u00a0D., S. 13\u00a0–\u00a014](#huber "page 13-14")).\n\n# Literaturverzeichnis\n\n<a id="huber"></a>Huber, A. (o.\u00a0D.). *Musik*.\n\n<!-- nimblescape-sources\n${source}\n-->\n`,
+    `---\nlayout: pht\n---\n\n# Einleitung\n\nText ([Huber, o.\u00a0D., S.\u00a013\u00a0–\u00a014](#huber "page 13-14")).\n\n# Literaturverzeichnis\n\n<a id="huber"></a>Huber, A. (o.\u00a0D.). *Musik*.\n\n<!-- nimblescape-sources\n${source}\n-->\n`,
   );
   fs.writeFileSync(path.join(folder, 'a.md'), read('a.md').replace('"page 13-14"', '"S. 13"'));
   expect(await run(['check', 'a.md'], io())).toBe(1);

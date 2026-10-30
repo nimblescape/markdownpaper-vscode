@@ -6,13 +6,15 @@
  * The editor wiring of nimblescape Markdown Paper: the activation starts the checks of the front matter, the context
  * key of paper documents, the format step of the paper in the formatter of Markdown Notes
  * ([formatStep.ts](formatStep.ts)), the parts of the paper in the editor of Markdown Notes
- * ([notesParts.ts](notesParts.ts)) and the commands, and returns the export of the extension: the markdown-it plugin
+ * ([notesParts.ts](notesParts.ts)), the citations from the editor and from Zotero ([cite.ts](cite.ts)) and the
+ * commands, and returns the export of the extension: the markdown-it plugin
  * of the pages in the Markdown preview of VS Code ([markdownPreview.ts](markdownPreview.ts)), which VS Code reads, and
  * the functions that the tests in VS Code read.
  */
 
 import type MarkdownIt from 'markdown-it';
 import * as vscode from 'vscode';
+import { citeCommand, citeContext, connectZoteroCommand, updateSourcesCommand } from './cite';
 import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, updateLayoutCommand } from './commands';
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
@@ -33,6 +35,8 @@ export const commands = {
   newDocument: 'nimblescape.markdownPaper.newDocument',
   newLayout: 'nimblescape.markdownPaper.newLayout',
   updateLayout: 'nimblescape.markdownPaper.updateLayout',
+  connectZotero: 'nimblescape.markdownPaper.connectZotero',
+  updateSources: 'nimblescape.markdownPaper.updateSourcesFromZotero',
 };
 
 /** Api is the export of the extension: the plugin for the Markdown preview of VS Code, and a function for the tests. */
@@ -45,6 +49,8 @@ export interface Api {
   formatStep: FormatStep;
   /** research is the slash command `/research`, which Markdown Notes offers on selected text. */
   research: SlashCommand;
+  /** cite is the slash command `/cite`, which Markdown Notes offers in the text editor. */
+  cite: SlashCommand;
 }
 
 /**
@@ -77,13 +83,15 @@ export function activate(context: vscode.ExtensionContext): Api {
     previewFile: () => preview.fileOfActive(),
     version: (context.extension.packageJSON as { version?: string }).version,
   };
+  const citations = citeContext(context, formatStep);
+  const cite = citeCommand(citations);
   context.subscriptions.push(
     checks,
     papers,
     preview,
     formatStep,
     registerFormatStep(formatStep),
-    registerNotesParts(),
+    registerNotesParts([cite]),
     // "Show Page Preview": the Markdown preview of VS Code beside the text editor, which shows the pages of a paper.
     vscode.commands.registerCommand(commands.showPagePreview, async (uri?: unknown) => {
       const target = uri instanceof vscode.Uri ? uri : vscode.window.activeTextEditor?.document.uri;
@@ -98,12 +106,15 @@ export function activate(context: vscode.ExtensionContext): Api {
     vscode.commands.registerCommand(commands.newDocument, (uri?: unknown) => newDocumentCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.newLayout, (uri?: unknown) => newLayoutCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.updateLayout, (uri?: unknown) => updateLayoutCommand(commandContext, uri)),
+    vscode.commands.registerCommand(commands.connectZotero, () => connectZoteroCommand(citations)),
+    vscode.commands.registerCommand(commands.updateSources, (uri?: unknown) => updateSourcesCommand(citations, uri)),
   );
   return {
     extendMarkdownIt: (md) => preview.extendMarkdownIt(md),
     problemsOf: (file) => checks.problemsOf(file),
     formatStep,
     research: researchCommand,
+    cite,
   };
 }
 

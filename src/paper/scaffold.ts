@@ -11,6 +11,7 @@
 
 import { readFrontMatter } from './frontMatter';
 import { type Origin, readOrigin } from './gallery';
+import { editJsonText } from './jsonText';
 import { type FieldSpec, formatText, type Layout, layoutFile } from './layout';
 
 /** NewFile is a file to write: its path, relative to the folder of the new project or layout, and its content. */
@@ -213,7 +214,8 @@ export function newLayoutFiles(source: ReadonlyMap<string, Uint8Array>, options:
       continue;
     }
     if (path === layoutFile) {
-      const json = JSON.parse(decoder.decode(content)) as Record<string, unknown>;
+      const text = decoder.decode(content);
+      const json = JSON.parse(text) as Record<string, unknown>;
       json.format = formatText;
       json.name = options.name;
       if (options.language) {
@@ -223,7 +225,8 @@ export function newLayoutFiles(source: ReadonlyMap<string, Uint8Array>, options:
       if (options.origin) {
         json.origin = options.origin;
       }
-      files.push({ path, content: `${JSON.stringify(json, null, 2)}\n` });
+      // The copy keeps the form of the file, so that it differs from the other layout only in these fields.
+      files.push({ path, content: editJsonText(text, json) });
     } else {
       files.push({ path, content });
     }

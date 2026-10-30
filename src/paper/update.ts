@@ -9,12 +9,13 @@
  * reads the newest commit of that branch and compares three versions of each file by the IDs of their contents, as Git
  * computes them: the copy, the file at the commit of the copy, and the file at the newest commit. A file that only the
  * repository changed gets its new version, a file that only the project changed stays, and a file that both changed is
- * a conflict. `layout.json` is compared field by field, so the copy keeps its own language. The module uses no API of
- * VS Code.
+ * a conflict. `layout.json` is compared field by field, so the copy keeps its own language, and keeps the form of the
+ * file of the repository. The module uses no API of VS Code.
  */
 
 import { createHash } from 'node:crypto';
 import { downloadFiles, findRemote, type Origin, parseRemote, readOrigin } from './gallery';
+import { editJsonText, type Json, sameJson } from './jsonText';
 import { formatText, layoutFile } from './layout';
 import type { Fetcher } from './lookup';
 
@@ -43,20 +44,6 @@ export interface Update {
   conflicts: string[];
 }
 
-/** Json is an object of JSON. */
-type Json = Record<string, unknown>;
-
-/**
- * same tells whether two values of JSON are equal, with the keys of their objects in any order.
- * @param a - The first value.
- * @param b - The second value.
- */
-function same(a: unknown, b: unknown): boolean {
-  const sorted = (value: unknown): unknown =>
-    Array.isArray(value) ? value.map(sorted) : typeof value === 'object' && value !== null ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, sorted((value as Json)[key])])) : value;
-  return JSON.stringify(sorted(a)) === JSON.stringify(sorted(b));
-}
-
 /**
  * mergeLayoutJson merges the fields of the `layout.json` of the copy, of the repository at the commit of the copy, and
  * of the repository at the new commit. A field that only the repository changed gets its new value, a field that only
@@ -81,11 +68,11 @@ export function mergeLayoutJson(copy: Json, base: Json, next: Json, force: boole
       continue;
     }
     let value = copy[key];
-    if (!same(base[key], next[key]) && !same(copy[key], next[key])) {
-      if (!same(copy[key], base[key])) {
+    if (!sameJson(base[key], next[key]) && !sameJson(copy[key], next[key])) {
+      if (!sameJson(copy[key], base[key])) {
         conflicts.push(key);
       }
-      if (same(copy[key], base[key]) || force) {
+      if (sameJson(copy[key], base[key]) || force) {
         value = next[key];
         changed = true;
       }
@@ -172,7 +159,8 @@ export async function planUpdate(fetch: Fetcher, files: ReadonlyMap<string, Uint
   if (merged.changed) {
     update.changed.unshift(layoutFile);
   }
-  update.write.set(layoutFile, encoder.encode(`${JSON.stringify({ ...merged.json, origin: update.origin }, null, 2)}\n`));
+  // The new layout.json keeps the form of the file of the repository, so that the copy differs from it only in its fields.
+  update.write.set(layoutFile, encoder.encode(editJsonText(decoder.decode(nextJson), { ...merged.json, origin: update.origin })));
   for (const [path, content] of await downloadFiles(fetch, next, download)) {
     update.write.set(path, content);
   }

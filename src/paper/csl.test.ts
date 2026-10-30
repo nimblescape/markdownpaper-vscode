@@ -41,6 +41,35 @@ const festman: Source = {
 };
 
 describe('the entry of a source in the style of the PHT (R-CITE-003)', () => {
+  test('of a law and of an ordinance in the form of the guide, with the version that the text cites, and their places', () => {
+    // The ordinance is the example of the guide of the PHT; the law is made up.
+    const lehrplan: Source = {
+      id: 'bgbl-134-1963',
+      type: 'regulation',
+      title: 'Lehrplan der Volksschule',
+      'container-title': 'BGBl.',
+      number: 'Nr. 134/1963',
+      references: 'BGBl. II Nr. 303/2012',
+      issued: { 'date-parts': [[2012, 9, 13]] },
+    };
+    expect(entryOf(lehrplan)).toBe('Lehrplan der Volksschule. BGBl. Nr. 134/1963 in der Fassung BGBl. II Nr. 303/2012 vom 13. September 2012.');
+    const law: Source = { id: 'bgbl-i-1-2000', type: 'legislation', title: 'Beispielgesetz', 'container-title': 'BGBl. I', number: 'Nr. 1/2000', issued: { 'date-parts': [[2000, 1, 3]] } };
+    expect(entryOf(law)).toBe('Beispielgesetz. BGBl. I Nr. 1/2000 vom 3. Jänner 2000.');
+    // A version whose day the source does not give: the number holds its year, so "vom" is left out.
+    const version: Source = { ...law, references: 'BGBl. I Nr. 5/2010', issued: { 'date-parts': [[2010]] } };
+    expect(entryOf(version)).toBe('Beispielgesetz. BGBl. I Nr. 1/2000 in der Fassung BGBl. I Nr. 5/2010.');
+    expect(
+      citationsOf(
+        [lehrplan, law],
+        [
+          { id: 'bgbl-134-1963', form: 'parenthetical' },
+          { id: 'bgbl-i-1-2000', form: 'parenthetical', label: 'article-locator', locator: '4' },
+          { id: 'bgbl-i-1-2000', form: 'narrative', label: 'appendix', locator: '1' },
+        ],
+      ),
+    ).toEqual(['Lehrplan der Volksschule, 2012', 'Beispielgesetz, 2000, Art. 4', 'Beispielgesetz (2000, Anh. 1)']);
+  });
+
   test('of a book, an edited book and a chapter in an edited book', () => {
     expect(entryOf(kriesche)).toBe('Kriesche, J., & Kahlert, J. (2019). *Lehrer werden mit Methode*. Julius Klinkhardt.');
     const edited: Source = {
@@ -64,7 +93,7 @@ describe('the entry of a source in the style of the PHT (R-CITE-003)', () => {
       publisher: 'Barbara Budrich',
     };
     expect(entryOf(chapter)).toBe(
-      'Damberger, T. (2017). Die Rolle der Lehrerpersönlichkeit angesichts der Möglichkeiten digitaler Technik. In E. Hübner & L. Weiss (Hrsg.), *Personalität in Schule und Lehrerbildung: Perspektiven in Zeiten der Ökonomisierung und Digitalisierung* (S. 51\u00a0–\u00a070). Barbara Budrich.',
+      'Damberger, T. (2017). Die Rolle der Lehrerpersönlichkeit angesichts der Möglichkeiten digitaler Technik. In E. Hübner & L. Weiss (Hrsg.), *Personalität in Schule und Lehrerbildung: Perspektiven in Zeiten der Ökonomisierung und Digitalisierung* (S.\u00a051\u00a0–\u00a070). Barbara Budrich.',
     );
   });
 
@@ -153,16 +182,16 @@ describe('the text of a citation in the style of the PHT (R-CITE-002, R-CITE-003
       'Raggl, 2015',
       'Raggl (2015)',
       'Festman & Schwieter, 2019',
-      'Festman und Schwieter (2019, S. 341\u00a0–\u00a0342)',
-      'Knitel et al., 2019, S. 10',
+      'Festman und Schwieter (2019, S.\u00a0341\u00a0–\u00a0342)',
+      'Knitel et al., 2019, S.\u00a010',
       'Knitel et al. (2019)',
       'Huber, o. D.',
       'Gehörbildung, 2010',
-      'Raggl, 2015, Kap. 2',
-      'Raggl, 2015, Abschn. 4.1',
-      'Raggl, 2015, Abb. 1',
-      'Raggl, 2015, Tab. 2',
-      'Raggl, 2015, Abs. 5',
+      'Raggl, 2015, Kap.\u00a02',
+      'Raggl, 2015, Abschn.\u00a04.1',
+      'Raggl, 2015, Abb.\u00a01',
+      'Raggl, 2015, Tab.\u00a02',
+      'Raggl, 2015, Abs.\u00a05',
       '',
     ]);
   });
@@ -178,6 +207,17 @@ describe('the text of a citation in the style of the PHT (R-CITE-002, R-CITE-003
     expect(cited.citations).toEqual(['Raggl, 2015b', 'Festman & Schwieter, 2019', 'Raggl (2015a)']);
     expect(cited.entries.map((entry) => entry.id)).toEqual(['festman2019', 'raggl2015a', 'raggl2015b']);
     expect(cited.entries.map((entry) => entry.text)).toEqual(['Festman, J., & Schwieter, J. (2019). *F*.', 'Raggl, A. (2015a). *Alter*.', 'Raggl, A. (2015b). *Zeit*.']);
+  });
+
+  test('a narrative citation of a law, which has no author, has the title in the place of the names', () => {
+    const law: Source = { id: 'schog', type: 'legislation', title: 'Schulorganisationsgesetz', issued: { 'date-parts': [[1962]] } };
+    const cites: Cite[] = [
+      { id: 'schog', form: 'narrative' },
+      { id: 'schog', form: 'narrative', label: 'section', locator: '65' },
+      { id: 'schog', form: 'parenthetical', label: 'section', locator: '65' },
+    ];
+    expect(citationsOf([law], cites)).toEqual(['Schulorganisationsgesetz (1962)', 'Schulorganisationsgesetz (1962, §\u00a065)', 'Schulorganisationsgesetz, 1962, §\u00a065']);
+    expect(citationsOf([law], cites.slice(0, 1), apa7)).toEqual(['Schulorganisationsgesetz (1962)']);
   });
 });
 

@@ -253,7 +253,7 @@ export async function render(host: Host, document: string, text: string): Promis
 <html lang="${escapeHtml(layout.language)}">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="${escapeHtml(policy)}">
+<meta http-equiv="Content-Security-Policy" content="${policy}">
 <title>${escapeHtml(title)}</title>
 <base href="${escapeHtml(host.resource(folderOf(document)))}">
 ${(host.screenStyles ?? []).map((href) => `<link rel="stylesheet" media="screen" href="${escapeHtml(href)}">`).join('\n')}

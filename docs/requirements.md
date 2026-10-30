@@ -1042,7 +1042,8 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
 ### R-CITE-003
 
 **The citation style.** The layout names the citation style with
-`citationStyle`. For now the only style is APA 7 in the German form of the
+`citationStyle`, and only the layout: a document does not repeat the style,
+not in its front matter and not in the DOCTYPE comment of Markdown Notes. For now the only style is APA 7 in the German form of the
 guide of the PHT, "Zitationsrichtlinien für Abschlussarbeiten an der PHT,
 Zitation nach APA 7", version 2.0: one, two and three or more authors, `o. D.`,
 the letters `a`, `b`, the places with German labels such as `S. 13 – 14`, the

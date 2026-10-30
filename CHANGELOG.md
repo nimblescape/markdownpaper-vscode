@@ -126,3 +126,9 @@ The first version.
   without one, the pages leave the start marker out, and the clean editing
   view of Markdown Notes hides the start marker and the database of the
   sources.
+- Alerts of GitHub: a block quote whose first line is `[!NOTE]`, `[!TIP]`,
+  `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]` becomes the element of an alert
+  as GitHub writes it, which a layout draws as a box, for example the hint of
+  a Word template under a heading; the built-in layout `plain` draws it as
+  GitHub does. A hint at the start of the reference list stays before the
+  entries.

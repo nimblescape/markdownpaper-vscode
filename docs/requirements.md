@@ -891,6 +891,30 @@ part, the page number 1 on the first page of the body, and the numbers I, II,
   it, so the renderer sets the number of each page after the layout of the
   page.
 
+### R-REN-014
+
+**Hints as alerts of GitHub.** A block quote whose first line is only the
+mark of an alert of GitHub, `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`,
+`[!WARNING]` or `[!CAUTION]`, is an alert, as GitHub shows it: a box with a
+title. A hint of a template under a heading, such as the text in a blue box of
+a Word template that tells the author what a chapter holds, is such an alert
+with the text of the template word for word ([decision 45](#decisions)):
+
+```markdown
+> [!NOTE]
+> Bitte achten Sie darauf, dass der Bezug zum Berufsfeld Schule oder zum Schulunterricht im Titel sichtbar ist.
+```
+
+- The renderer writes an alert as GitHub writes it: `<div class="markdown-alert
+  markdown-alert-note">` with `<p class="markdown-alert-title">Note</p>` and
+  the text after the mark. The layout draws it, for example as the box of the
+  template without its title ([R-LAY-003](#r-lay-003)). Another block quote
+  stays a quotation (`blockquote`).
+- The built-in layout `plain` draws an alert with a line on its left in the
+  color of its kind and its title, as GitHub does.
+- A hint at the start of the reference list stays before its entries
+  ([R-CITE-004](#r-cite-004)).
+
 ## PDF
 
 ### R-PDF-001
@@ -1361,11 +1385,13 @@ under the heading of the reference list, the section `BIB` of
 - The formatter changes only text whose edges the markup marks: the text of a
   link to a source and a paragraph that starts with the anchor of a source.
   Other paragraphs of the reference list stay, after the entries, for example
-  a note on the day of the access of all links. In a reference list with a sub-heading or with
+  a note on the day of the access of all links. A hint at the start of the
+  reference list, an alert of GitHub such as the hint of a template
+  ([R-REN-014](#r-ren-014)), stays before the entries. In a reference list with a sub-heading or with
   a note of Markdown Notes, the formatter writes each entry without a note
   anew in its place and adds, moves or removes none.
 - The checks warn of a paragraph of the reference list that is no entry of a
-  source of the database, and of a cited source without an entry before the
+  source of the database, other than a hint and an HTML comment, and of a cited source without an entry before the
   format writes it.
 
 ### R-CITE-005

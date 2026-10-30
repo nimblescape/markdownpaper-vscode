@@ -5,7 +5,8 @@
 
 // Tests in a real VS Code (npm run test:vscode, .vscode-test.mjs): mocha runs them in the extension host. They write a
 // layout and Markdown files into a temporary folder, and check the commands of the extension, the checks of the front
-// matter and their hover (R-DOC-002, R-DOC-003), the format step of the paper (R-REN-004, R-CLI-002), the plugin of
+// matter and their hover (R-DOC-002, R-DOC-003), the format step of the paper (R-REN-004, R-CLI-002), the slash
+// command /research (R-CITE-002), the plugin of
 // the pages in the Markdown preview of VS Code for a paper document and none for a notes document (R-PRV-001,
 // R-PRV-005, R-DOC-004), and "Export PDF" (R-PDF-001), with the diagrams of Mermaid and the math of KaTeX of the
 // built-in Markdown extensions (R-REN-010), when a Chrome, Chromium or Edge is installed, as on the runners of GitHub.
@@ -115,6 +116,33 @@ describe('nimblescape Markdown Paper', function () {
     const notes = write('paper/notes-only.md', '# Inhaltsverzeichnis\n');
     await vscode.workspace.openTextDocument(notes);
     assert.equal(extension.formatStep.applies(['# Inhaltsverzeichnis', ''], notes), false);
+  });
+
+  it('/research puts the start marker before the selected argument of a paper document and "(RESEARCH)" at its end, and a notes document gets no marks (R-CITE-002)', async () => {
+    const extension = await api();
+    const file = write('paper/research.md', '---\nlayout: plain\n---\n\nAgents change the work of teams.\n\nFeedback changes learning more than praise does.\n');
+    const editor = await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(file));
+    /** selected returns the range of a part of the text of the editor. */
+    const selected = (part: string) => {
+      const start = editor.document.positionAt(editor.document.getText().indexOf(part));
+      return new vscode.Range(start, start.translate(0, part.length));
+    };
+    assert.equal(await extension.research.run(editor, selected('change the work')), true);
+    assert.equal(await extension.research.run(editor, selected('Feedback changes learning more than praise does.')), true);
+    assert.equal(
+      editor.document.getText(),
+      '---\nlayout: plain\n---\n\nAgents <wbr><!--[research-->change the work (RESEARCH) of teams.\n\n<wbr><!--[research-->Feedback changes learning more than praise does (RESEARCH).\n',
+    );
+    // Each "(RESEARCH)" is a warning of its own, also with the same message.
+    await waitFor(() => {
+      const lines = extension.problemsOf(file).filter((problem) => problem.message.startsWith('"(RESEARCH)"')).map((problem) => problem.range.start.line);
+      return lines.join() === '4,6' ? true : undefined;
+    }, 'a warning at each "(RESEARCH)"');
+    const notes = write('paper/research-notes.md', 'Agents change the work of teams.\n');
+    const notesEditor = await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(notes));
+    const start = new vscode.Position(0, 'Agents '.length);
+    assert.equal(await extension.research.run(notesEditor, new vscode.Range(start, start.translate(0, 'change the work'.length))), false);
+    assert.equal(notesEditor.document.getText(), 'Agents change the work of teams.\n');
   });
 
   it('the Markdown preview of a paper document gets the layout and the steps of the renderer, with the content of the other plugins, and a notes document keeps its preview (R-PRV-001, R-PRV-005, R-DOC-004)', async () => {

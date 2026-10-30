@@ -203,6 +203,8 @@ Feedback has a strong effect on learning ([Hattie & Timperley, 2007, p. 81](#hat
 
 Feedback has a strong effect on learning ([Hattie & Timperley, 2007, p. 81](#hattie2007 "page 81")). The formatter writes the text of each citation and the entries of the references when you save the file, in the citation style of the layout, APA 7. A citation of a source without data gets a yellow line in VS Code.
 
+To let an AI agent find the sources for an argument, select the argument and type `/research`. The argument gets a hidden mark before it and `(RESEARCH)` at its end. The agent finds sources that support the argument, adds them, and puts their citations in the place of `(RESEARCH)`. Until then, `(RESEARCH)` shows on the pages, and VS Code marks it with a yellow line.
+
 # Notes and collaboration
 
 Markdown Notes adds notes to a place in the text, for example a question to the supervisor or a task for later. A note is a footnote with an ID such as `note-7k2q` and a header line with the name and the time. The pages and the PDF do not show notes. GitHub shows them as footnotes at the end of the file.

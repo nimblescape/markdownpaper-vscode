@@ -41,7 +41,7 @@ This document replaces it where the two differ.
 | 10 | The anchors of figures and tables, the links to them and to headings, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-003](#r-ren-003), [R-REN-009](#r-ren-009) | done |
 | 11 | The interface of Markdown Notes: the file behind the clean editing view | [R-GEN-003](#r-gen-003) | done |
 | 12 | One formatter command: `markdownpaper format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | the steps of the paper done (step 22); the steps of Markdown Notes on the command line need the library of `@nimblescape/markdownnotes` |
-| 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | the database, the citations, the reference list and their checks done, in the format step and in `markdownpaper format`; the slash commands and the database hidden in the clean editing view of Markdown Notes planned |
+| 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | the database, the citations, the reference list and their checks done, in the format step and in `markdownpaper format`; the database hidden in the clean editing view of Markdown Notes and `/research` done in step 30; `/cite` in step 29 |
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006), [R-LAY-007](#r-lay-007) | done: the instructions, and the PHT layouts `thesis/` and `concept/` |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
@@ -58,7 +58,7 @@ This document replaces it where the two differ.
 | 27 | The parts of a document (front part, body, appendix part) as elements for their own pages, and a table of contents without the front part (`contents.front`); the PHT thesis layout in the look of its Word template | [R-REN-013](#r-ren-013), [R-REN-004](#r-ren-004), [R-LAY-002](#r-lay-002) | done |
 | 28 | The empty paper document and its preview PDF in each layout; the list of the layouts of `create` and "New Project" with the layouts on GitHub; `markdownpaper layouts` and `markdownpaper preview` | [R-LAY-009](#r-lay-009), [R-NEW-004](#r-new-004), [R-LAY-007](#r-lay-007) | done; the PHT layouts have their empty paper documents and previews |
 | 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, and the merge of a chosen item into the database | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | planned; the open questions of the discussion document come first |
-| 30 | `/research` on a selected argument: the start marker and `(RESEARCH)`, the rules for AI agents and the checks; the slash command needs the slash commands on selected text of Markdown Notes | [R-CITE-002](#r-cite-002), [R-GEN-003](#r-gen-003) | the rules for AI agents and the checks done; the slash command planned |
+| 30 | `/research` on a selected argument: the start marker and `(RESEARCH)`, the rules for AI agents, the checks, the slash command on selected text, and the start marker and the database hidden in the clean editing view of Markdown Notes | [R-CITE-002](#r-cite-002), [R-GEN-003](#r-gen-003) | done |
 
 ## General
 
@@ -110,11 +110,11 @@ interface from its activation, as the Git extension of VS Code does:
 without it.
 
 - Version 1: `fileOf(uri)` returns the file behind a document of the clean
-  editing view of Markdown Notes (scheme `markdown-notes`), so that the page
+  editing view of Markdown Notes (scheme `markdownnotes`), so that the page
   preview, the checks and "Export PDF" read the file itself, with its
-  footnotes. Without the interface, the file is the open document with the
-  same path.
-- Planned in the same version: `registerFormatStep(step)` with `applies(lines,
+  footnotes. Markdown Paper asks `fileOf` for each document that is no file.
+  Without the interface, the file is the open document with the same path.
+- Also in version 1: `registerFormatStep(step)` with `applies(lines,
   file)` and `format(lines, file)`, a step of the formatter of Markdown Notes,
   for [R-CLI-002](#r-cli-002) and [R-CITE-004](#r-cite-004);
   `registerHiddenBlocks({ find(lines) })`, blocks at the end of a file that the
@@ -127,13 +127,16 @@ without it.
   Markdown Paper adds its format step with `registerFormatStep`
   ([R-CLI-002](#r-cli-002)); an older version of Markdown Notes without it
   gets no step.
-- Needed from Markdown Notes for `/research` ([decision 43](#decisions)): a
-  slash command of another extension that works on selected text, as `/note`
-  does: `registerSlashCommand` with `selection: true` offers the command only
-  when a typed slash replaced selected text, and `run(editor, range)` gets the
-  range of the selected text, which Markdown Notes puts back; and the clean
-  editing view hides the start marker `<wbr><!--[research-->` as it hides the
-  start marker of a note.
+- For `/research` ([decision 43](#decisions)), Markdown Notes has since
+  commit `657ff6c` of its pull request 1: `registerSlashCommand` with
+  `selection: true`, which offers the command only when a typed slash
+  replaced selected text, puts the text back, and gives `run(editor, range)`
+  the range of that text; and `registerHiddenMarkers({ find(lines) })`, parts
+  of lines that the clean editing view leaves out and keeps at their text.
+  Markdown Paper registers the database of the sources as a hidden block
+  ([R-CITE-001](#r-cite-001)), each start marker `<wbr><!--[research-->`
+  outside code as a hidden marker, and `/research`. A version of Markdown
+  Notes without a function gets no such part.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
@@ -1245,7 +1248,7 @@ cited or not, in one HTML comment at the end of the file, its database:
 - The checks report a line that is no JSON object, a source without a valid
   `id`, a second source with the same `id`, and a comment without its end.
 - The clean editing view of Markdown Notes leaves the database out (a hidden
-  block of [R-GEN-003](#r-gen-003)).
+  block of [R-GEN-003](#r-gen-003)), when only empty lines follow it.
 
 ### R-CITE-002
 
@@ -1270,10 +1273,13 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
   as `"S. 3"`, and the formatter keeps the text of such a link.
 - `(RESEARCH)` asks an AI agent to research the evidence for an argument
   ([decision 43](#decisions)). The author selects the argument in the text
-  editor and types `/research`, which works only with selected text. The
-  selection gets the hidden start marker `<wbr><!--[research-->` before it,
-  and `(RESEARCH)` at its end, before a period at the end of the selection,
-  where the citation goes:
+  editor and types `/research`, which works only with selected text of a
+  paper document. The selection gets the hidden start marker
+  `<wbr><!--[research-->` before it, and `(RESEARCH)` at its end, before a
+  punctuation mark (`.`, `,`, `;`, `:`, `!`, `?`) at the end of the
+  selection, where the citation goes. A selection over more than one
+  paragraph, or with a mark of `/research` in it, gets a message and no
+  marks:
 
   ```markdown
   <wbr><!--[research-->Feedback changes learning more than praise does (RESEARCH).
@@ -1285,9 +1291,9 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
   with `markdownpaper source` ([R-CITE-005](#r-cite-005)), removes the start
   marker, and replaces `(RESEARCH)` with the citations. When no source
   supports the argument, the agent keeps both marks and says so. The checks
-  warn of each `(RESEARCH)` and of a start marker without a `(RESEARCH)` after
-  it in its paragraph. The pages and the PDF show `(RESEARCH)` and leave the
-  start marker out.
+  warn of each `(RESEARCH)` outside code and of a start marker without a
+  `(RESEARCH)` after it in its paragraph. The pages and the PDF show
+  `(RESEARCH)` and leave the start marker out.
 - The slash commands of the sources ([decision 15](#decisions),
   [decision 42](#decisions)): `/cite` inserts a citation of a source of the
   database, and with Zotero also of an item of Zotero

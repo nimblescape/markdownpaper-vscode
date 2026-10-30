@@ -5,7 +5,8 @@
 /**
  * The editor wiring of nimblescape Markdown Paper: the activation starts the checks of the front matter, the context
  * key of paper documents, the format step of the paper in the formatter of Markdown Notes
- * ([formatStep.ts](formatStep.ts)) and the commands, and returns the export of the extension: the markdown-it plugin
+ * ([formatStep.ts](formatStep.ts)), the parts of the paper in the editor of Markdown Notes
+ * ([notesParts.ts](notesParts.ts)) and the commands, and returns the export of the extension: the markdown-it plugin
  * of the pages in the Markdown preview of VS Code ([markdownPreview.ts](markdownPreview.ts)), which VS Code reads, and
  * the functions that the tests in VS Code read.
  */
@@ -16,6 +17,8 @@ import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectComma
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
 import { PaperPreview } from './markdownPreview';
+import type { SlashCommand } from './notesApi';
+import { registerNotesParts, researchCommand } from './notesParts';
 import { PaperDocuments } from './paperDocuments';
 import { checkedSettings, type Settings, settingsSection } from './settings';
 
@@ -39,6 +42,8 @@ export interface Api {
   problemsOf(file: vscode.Uri): readonly vscode.Diagnostic[];
   /** formatStep is the format step of the paper, which the formatter of Markdown Notes runs. */
   formatStep: FormatStep;
+  /** research is the slash command `/research`, which Markdown Notes offers on selected text. */
+  research: SlashCommand;
 }
 
 /**
@@ -77,6 +82,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     preview,
     formatStep,
     registerFormatStep(formatStep),
+    registerNotesParts(),
     // "Show Page Preview": the Markdown preview of VS Code beside the text editor, which shows the pages of a paper.
     vscode.commands.registerCommand(commands.showPagePreview, async (uri?: unknown) => {
       const target = uri instanceof vscode.Uri ? uri : vscode.window.activeTextEditor?.document.uri;
@@ -95,6 +101,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     extendMarkdownIt: (md) => preview.extendMarkdownIt(md),
     problemsOf: (file) => checks.problemsOf(file),
     formatStep,
+    research: researchCommand,
   };
 }
 

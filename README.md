@@ -102,7 +102,11 @@ gives the same renderer to people and AI agents on the command line:
   document or a layout.
 - **Notes.** The notes of nimblescape Markdown Notes do not show on the pages.
   The page preview and the PDF of a file in its clean editing view show the
-  file itself.
+  file itself. The clean editing view hides the database of the sources.
+- **Research.** With Markdown Notes, select an argument in a paper document
+  and type `/research`: the argument gets a hidden start marker and
+  `(RESEARCH)` at its end, where an AI agent puts the citations of the
+  sources that it finds.
 
 ## Usage
 
@@ -150,10 +154,10 @@ describes every feature.
   source text of a diagram.
 - A layout has no scripts. Its templates know fields and parts that show
   only with a field, no other logic.
-- The slash commands `/cite` and `/research` for the citations are planned,
-  `/cite` also with the sources of Zotero; until then, an AI agent adds the
-  sources with `markdownpaper source`, an AI agent or you write the links of
-  the citations, and the format writes their text and the reference list.
+- The slash command `/cite` is planned, also with the sources of Zotero;
+  until then, an AI agent adds the sources with `markdownpaper source`, an AI
+  agent or you write the links of the citations, and the format writes their
+  text and the reference list. `/research` needs nimblescape Markdown Notes.
 
 ---
 

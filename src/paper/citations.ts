@@ -295,6 +295,24 @@ const headingLine = /^ {0,3}#{1,6}(?:[ \t]|$)/;
 export const researchText = '(RESEARCH)';
 export const researchMark = '<!--[research-->';
 
+/** researchSearch matches a start marker of an argument to research, with the `<wbr>` before it. */
+const researchSearch = /(?:<wbr>)?<!--\[research-->/g;
+
+/** closingMark matches the punctuation mark at the end of a selected argument, before which its citation goes. */
+const closingMark = /[.,;:!?]$/;
+
+/** Marker is a part of a line: the index of the line, and the start and the end of the part in it. */
+export interface Marker {
+  line: number;
+  start: number;
+  end: number;
+}
+
+/** ResearchEdit is the place of the start marker and of `(RESEARCH)` in a selected argument, as offsets in its text. */
+export interface ResearchEdit {
+  start: number;
+  end: number;
+}
 /**
  * textLines returns the indexes of the lines of a text that hold Markdown text: not the front matter, a fenced code
  * block or a comment of HTML that starts at the start of a line, such as the database.
@@ -333,6 +351,56 @@ function textLines(lines: readonly string[]): number[] {
  * @param text - The text of the line.
  */
 const codeSpans = (text: string): [number, number][] => [...text.matchAll(codeSearch)].map((match) => [match.index, match.index + match[0].length]);
+
+/**
+ * researchMarkers returns the start markers of the arguments to research in a text, each with the `<wbr>` before it,
+ * outside code, which the clean editing view of Markdown Notes leaves out
+ * ([R-GEN-003](../../docs/requirements.md#r-gen-003)).
+ * @param lines - The lines of the text.
+ */
+export function researchMarkers(lines: readonly string[]): Marker[] {
+  const markers: Marker[] = [];
+  for (const line of textLines(lines)) {
+    const text = lines[line];
+    if (!text.includes(researchMark)) {
+      continue;
+    }
+    const code = codeSpans(text);
+    for (const match of text.matchAll(researchSearch)) {
+      const start = match.index;
+      const end = start + match[0].length;
+      if (!code.some(([a, b]) => a < end && start < b)) {
+        markers.push({ line, start, end });
+      }
+    }
+  }
+  return markers;
+}
+
+/**
+ * researchEdit returns where `/research` puts the start marker and `(RESEARCH)` in a selected argument
+ * ([R-CITE-002](../../docs/requirements.md#r-cite-002)): the marker before its first character, and `(RESEARCH)` after
+ * its last word, before a punctuation mark at its end, where the citation goes. It returns the reason as a text when
+ * the selection is no argument: no text, more than one paragraph, or a mark of `/research` in it.
+ * @param selected - The selected text.
+ */
+export function researchEdit(selected: string): ResearchEdit | string {
+  const start = selected.length - selected.trimStart().length;
+  let argument = selected.slice(start).trimEnd();
+  if (argument === '') {
+    return 'Select the argument to research, then type /research.';
+  }
+  if (/\n[ \t]*\r?\n/.test(argument)) {
+    return 'Select an argument in one paragraph.';
+  }
+  if (argument.includes(researchMark) || argument.includes(researchText)) {
+    return 'The selected text has a mark of /research already.';
+  }
+  if (closingMark.test(argument)) {
+    argument = argument.slice(0, -1).trimEnd();
+  }
+  return argument === '' ? 'Select the argument to research, then type /research.' : { start, end: start + argument.length };
+}
 
 /**
  * findCitations returns the citations of a text: the links to a place of the page whose target is a source of the
@@ -525,7 +593,13 @@ export function citationProblems(lines: readonly string[], layout: Layout): Prob
   const at = (line: number, column = 0, end = lines[line]?.length ?? 0) => ({ line, column, length: Math.max(end - column, 0) });
   const text = new Set(textLines(lines));
   for (const line of text) {
+    // A mark in a code span is text, for example in an explanation of /research.
+    const code = codeSpans(lines[line]);
+    const inCode = (column: number) => code.some(([a, b]) => a <= column && column < b);
     for (let column = lines[line].indexOf(researchText); column >= 0; column = lines[line].indexOf(researchText, column + 1)) {
+      if (inCode(column)) {
+        continue;
+      }
       problems.push({
         severity: 'warning',
         message: '"(RESEARCH)" asks an AI agent to find sources that support the argument before it, to add them to the sources, and to cite them here.',
@@ -534,6 +608,9 @@ export function citationProblems(lines: readonly string[], layout: Layout): Prob
     }
     // The argument of a start marker ends at a "(RESEARCH)" in the same paragraph.
     for (let column = lines[line].indexOf(researchMark); column >= 0; column = lines[line].indexOf(researchMark, column + 1)) {
+      if (inCode(column)) {
+        continue;
+      }
       let end = line;
       let rest = lines[line].slice(column + researchMark.length);
       while (!rest.includes(researchText) && text.has(end + 1) && lines[end + 1].trim() !== '') {

@@ -5,7 +5,7 @@
 /**
  * The interface to the extension nimblescape Markdown Notes ([R-GEN-003](../docs/requirements.md#r-gen-003)): its
  * clean editing view shows a Markdown file with notes without their markup, in a document of its own scheme
- * (`markdown-notes`). The page preview and "Export PDF" must read the file itself, with its footnotes, so they ask
+ * (`markdownnotes`). The page preview and "Export PDF" must read the file itself, with its footnotes, so they ask
  * Markdown Notes for the file of such a document: `getAPI(1).fileOf(uri)` of its export, as the Git extension of
  * VS Code gives its API. A version of Markdown Notes without the API, or none at all, still works: then the file is
  * the open document with the same path in another scheme.
@@ -17,7 +17,7 @@ import * as vscode from 'vscode';
 export const notesExtensionId = 'nimblescape.nimblescape-markdownnotes';
 
 /** cleanScheme is the scheme of the documents of the clean editing view of Markdown Notes. */
-export const cleanScheme = 'markdown-notes';
+export const cleanScheme = 'markdownnotes';
 
 /** NotesApiV1 is version 1 of the API of Markdown Notes, as its src/extension.ts defines it. */
 export interface NotesApiV1 {
@@ -29,6 +29,40 @@ export interface NotesApiV1 {
    * result. An older version of Markdown Notes does not have it.
    */
   registerFormatStep?(step: { applies(lines: readonly string[], file: vscode.Uri): boolean; format(lines: readonly string[], file: vscode.Uri): readonly string[] }): vscode.Disposable;
+  /**
+   * registerHiddenBlocks makes the clean editing view leave out blocks of whole lines at the end of a file, such as the
+   * database of the sources. An older version of Markdown Notes does not have it.
+   */
+  registerHiddenBlocks?(blocks: { find(lines: readonly string[]): readonly { first: number; last: number }[] }): vscode.Disposable;
+  /**
+   * registerHiddenMarkers makes the clean editing view leave out parts of lines, such as the start marker of an
+   * argument to research. An older version of Markdown Notes does not have it.
+   */
+  registerHiddenMarkers?(markers: { find(lines: readonly string[]): readonly { line: number; start: number; end: number }[] }): vscode.Disposable;
+  /**
+   * registerSlashCommand adds a slash command to the text editors of Markdown files. A command with `selection` shows
+   * only when the typed slash replaced selected text, and `run` gets the range of that text; an older version of
+   * Markdown Notes ignores `selection` and gives the empty range at the place of the command.
+   */
+  registerSlashCommand?(command: SlashCommand): vscode.Disposable;
+}
+
+/** SlashCommand is a slash command of the text editor that Markdown Notes offers for this extension. */
+export interface SlashCommand {
+  /** label is the command: a slash and small letters, for example `/research`. */
+  label: string;
+  /** description is the short text beside the label in the list of suggestions. */
+  description?: string;
+  /** detail is the longer text of the chosen suggestion. */
+  detail?: string;
+  /** selection is true for a command on selected text. */
+  selection?: boolean;
+  /**
+   * run runs the command after VS Code removed the typed command from the text.
+   * @param editor - The text editor, also of the clean editing view, whose edits go into the file.
+   * @param range - The range of the selected text, for a command on selected text.
+   */
+  run(editor: vscode.TextEditor, range: vscode.Range): unknown;
 }
 
 /** NotesExports is the export of the extension Markdown Notes, as far as this extension reads it. */
@@ -49,17 +83,47 @@ export function notesApi(): NotesApiV1 | undefined {
 }
 
 /**
+ * registerWithNotes runs a registration with the API of Markdown Notes after Markdown Notes started, when it is
+ * installed and has the API. Without it, nothing is registered.
+ * @param register - Registers the parts of this extension and returns their registration, or undefined for none.
+ * @returns The registration, which removes the parts when it is disposed.
+ */
+export function registerWithNotes(register: (api: NotesApiV1) => vscode.Disposable | undefined): vscode.Disposable {
+  let registration: vscode.Disposable | undefined;
+  let disposed = false;
+  const extension = vscode.extensions.getExtension(notesExtensionId);
+  void Promise.resolve(extension?.isActive ? undefined : extension?.activate())
+    .then(() => {
+      const api = notesApi();
+      if (!disposed && api) {
+        registration = register(api);
+      }
+    })
+    .catch(() => {
+      // Markdown Notes did not start, or refused a part: this extension works without it.
+    });
+  return new vscode.Disposable(() => {
+    disposed = true;
+    registration?.dispose();
+  });
+}
+
+/**
  * fileOf returns the URI of the file that a document shows: the document itself, or for a document of the clean
  * editing view of Markdown Notes its file.
  * @param document - The URI of the document.
  */
 export function fileOf(document: vscode.Uri): vscode.Uri {
-  if (document.scheme !== cleanScheme) {
+  if (document.scheme === 'file' || document.scheme === 'untitled') {
     return document;
   }
+  // Markdown Notes knows the scheme of its view; this extension knows it for a version without the API.
   const file = notesApi()?.fileOf(document);
   if (file) {
     return file;
+  }
+  if (document.scheme !== cleanScheme) {
+    return document;
   }
   const open = vscode.workspace.textDocuments.find((candidate) => candidate.uri.scheme !== cleanScheme && candidate.uri.path === document.path);
   return open?.uri ?? document;

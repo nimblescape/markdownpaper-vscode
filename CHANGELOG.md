@@ -119,3 +119,10 @@ The first version.
   a saved HTML page, and the DOI in the metadata of a PDF. Each new source
   gets its ID; a source that the database has already is not added again.
   `--search <words>` lists works of Crossref with their DOIs.
+- `/research` in VS Code with nimblescape Markdown Notes: on selected text of a
+  paper document, it puts a hidden start marker before the argument and
+  `(RESEARCH)` at its end, where an AI agent puts the citations of the sources
+  that it finds. The checks warn of each `(RESEARCH)` and of a start marker
+  without one, the pages leave the start marker out, and the clean editing
+  view of Markdown Notes hides the start marker and the database of the
+  sources.

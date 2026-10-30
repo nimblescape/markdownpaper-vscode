@@ -166,7 +166,7 @@ gives the style sheet these parts:
 | `figure.figure`, `figcaption`, `.caption-label`, `.caption-separator`, `.caption-text` | A figure and its caption, which comes before the image. |
 | `p.table-caption` | The caption of a table, directly before the table. |
 | `p.listing-caption`, `.caption-source`, `pre.listing`, `.line-number` | The caption of a listing before its code, the cite of its source after the caption, such as "(fields.ts, L12-L30)", the code, and the number of each line, an element without text whose number `::before { content: attr(data-number); }` shows. |
-| `.footnote`, `.footnote-paragraph`, `::footnote-call`, `::footnote-marker`, `@footnote` | The footnotes at the foot of the page. |
+| `.footnote`, `.footnote-paragraph`, `::footnote-call`, `::footnote-marker`, `@footnote` | The footnotes at the foot of the page. Paged.js copies the classes of a footnote to its call in the text, the element `[data-footnote-call]` with the number as `::after`: a rule for the text of the footnote names `.footnote:not([data-footnote-call])`, so that the number in the text keeps the size of its text and gets no `::before`. |
 | `section.references` | The reference list. |
 | `h1.section-apx`, `h2.appendix`, `.appendix-label` | The appendix part, an appendix, and its label. |
 | `.no-hyphens` | A part without soft hyphens. |

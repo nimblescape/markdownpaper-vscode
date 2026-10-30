@@ -1433,6 +1433,11 @@ waits for the answers to the questions of the discussion document.
   author confirms the change; nothing is removed from the line; the ID of the
   line never changes, so no citation breaks. An item that the database does
   not have becomes a new line with an ID by [decision 22](#decisions).
+- The PDF attachment of a chosen item goes to `bib/<ID>.pdf`
+  ([R-NEW-003](#r-new-003)) without a question. The author keeps a PDF with a
+  paywall out of a public repository, for example with a private repository.
+  The web API gives the file only when Zotero syncs the files to the storage
+  of zotero.org.
 - The extension reads Zotero through the Zotero web API
   (`https://api.zotero.org`), with an API key that the author makes on
   zotero.org and gives to the extension once; the extension keeps the key in
@@ -1659,9 +1664,9 @@ requirement ([R-GEN-007](#r-gen-007)).
   commit ([decision 36](#decisions)). The form for an npm package is open
   too.
 - Zotero in `/cite` ([R-CITE-006](#r-cite-006)): how an item finds its line
-  in the database, the Zotero key in the line, the copy of the PDF of an item
-  into `bib/`, and a command that updates all sources at once; the questions
-  are in the discussion document of [decision 42](#decisions).
+  in the database, the Zotero key in the line, and a command that updates all
+  sources at once; the questions are in the discussion document of
+  [decision 42](#decisions).
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
   `markdownpaper` has no extensions of VS Code, so its PDF shows a diagram as
   its source text. It can bring Mermaid itself; PlantUML needs Java or a

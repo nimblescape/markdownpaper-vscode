@@ -57,7 +57,7 @@ This document replaces it where the two differ.
 | 26 | Layouts close to a Word template: numbered special sections (`headings.numberedSections`), a hyphenated reference list (`references.hyphenate`), the natural spaces of the last line of a justified paragraph whose spaces shrink; the PHT concept layout in the look of its Word template | [R-REN-004](#r-ren-004), [R-REN-007](#r-ren-007), [R-REN-012](#r-ren-012), [R-LAY-002](#r-lay-002) | done |
 | 27 | The parts of a document (front part, body, appendix part) as elements for their own pages, and a table of contents without the front part (`contents.front`); the PHT thesis layout in the look of its Word template | [R-REN-013](#r-ren-013), [R-REN-004](#r-ren-004), [R-LAY-002](#r-lay-002) | done |
 | 28 | The empty paper document and its preview PDF in each layout; the list of the layouts of `create` and "New Project" with the layouts on GitHub; `markdownpaper layouts` and `markdownpaper preview` | [R-LAY-009](#r-lay-009), [R-NEW-004](#r-new-004), [R-LAY-007](#r-lay-007) | done; the PHT layouts have their empty paper documents and previews |
-| 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, and the merge of a chosen item into the database | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | planned; the open questions of the discussion document come first |
+| 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, the merge of a chosen item into the database with its key of Zotero, and "Update Sources from Zotero" | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | planned; the rules that find the line of an item come first |
 | 30 | `/research` on a selected argument: the start marker and `(RESEARCH)`, the rules for AI agents, the checks, the slash command on selected text, and the start marker and the database hidden in the clean editing view of Markdown Notes | [R-CITE-002](#r-cite-002), [R-GEN-003](#r-gen-003) | done |
 | 31 | The hints of a template as alerts of GitHub, drawn as boxes by the layout; the hints of the PHT concept template in its empty paper document | [R-REN-014](#r-ren-014), [R-CITE-004](#r-cite-004) | done |
 | 32 | The origin of a copy of a layout on GitHub in its `layout.json`, and its update from the repository: `markdownpaper update` and "Update Layout" | [R-LAY-010](#r-lay-010), [R-LAY-007](#r-lay-007) | done |
@@ -1505,8 +1505,8 @@ input is an identifier or a file:
 
 **Sources from Zotero in `/cite`.** In VS Code, `/cite` reads the library of
 the Zotero of the author, so that the author cites the sources of Zotero and
-writes no metadata ([decision 42](#decisions)). This is planned; the design
-waits for the answers to the questions of the discussion document.
+writes no metadata ([decision 42](#decisions)). This is planned; the rules
+that find the line of an item in the database wait for a decision.
 
 - `/cite` shows one list of the sources of the database of the document and,
   when Zotero is set up, of the items of Zotero; a source that
@@ -1518,6 +1518,14 @@ waits for the answers to the questions of the discussion document.
   author confirms the change; nothing is removed from the line; the ID of the
   line never changes, so no citation breaks. An item that the database does
   not have becomes a new line with an ID by [decision 22](#decisions).
+- The line of a merged item keeps its library and its item key of Zotero in
+  the CSL field `zotero`, for example `"zotero":"users/1234567/ABCD1234"`, or
+  `groups/<id>/<key>` for a group library, because an item key is unique only
+  in one library. The next merge finds the line by this field first. The
+  formatter and the citation style ignore it.
+- The command "Update Sources from Zotero" merges every line of the database
+  of the open file that matches an item of Zotero, by the same rules, and asks
+  once for the changed values of all lines before it writes them.
 - The PDF attachment of a chosen item goes to `bib/<ID>.pdf`
   ([R-NEW-003](#r-new-003)) without a question. The author keeps a PDF with a
   paywall out of a public repository, for example with a private repository.
@@ -1729,7 +1737,10 @@ requirement ([R-GEN-007](#r-gen-007)).
     author confirms, and nothing is removed. The database gets its sources
     from Zotero through `/cite` or from an AI agent through `markdownpaper
     source`, which stays. AI agents and the command `markdownpaper` do not use
-    Zotero. The discussion document is
+    Zotero. The line of a merged item keeps the library and the item key of
+    Zotero (`"zotero":"users/1234567/ABCD1234"`), and the command "Update
+    Sources from Zotero" merges all matching lines at once, after one
+    confirmation. The discussion document is
     [Zotero integration of Markdown Paper](https://claude.ai/artifact/2Q4BZy6wJzcqRn9SjTDFa3).
 43. **`/research` on a selected argument** ([R-CITE-002](#r-cite-002),
     [R-GEN-003](#r-gen-003)): `/research` works only with selected text. The

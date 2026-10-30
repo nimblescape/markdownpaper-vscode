@@ -96,6 +96,8 @@ export interface Layout {
   numberedSections: SectionCode[];
   /** contentsDepth is the deepest level of heading in the table of contents. */
   contentsDepth: number;
+  /** contentsFront is false when the table of contents leaves out the chapters of the front part. */
+  contentsFront: boolean;
   /** hyphenate is true when the renderer hyphenates the text by the language. */
   hyphenate: boolean;
   /** references are the options of the reference list: hyphenate is true when it gets soft hyphens as the text does. */
@@ -315,6 +317,7 @@ export function parseLayout(text: string, id: string, folder: string): { layout?
     unnumbered: strings(headings.unnumbered) ?? [],
     numberedSections: [],
     contentsDepth: count(isObject(json.contents) ? json.contents.depth : undefined, 3),
+    contentsFront: !(isObject(json.contents) && json.contents.front === false),
     hyphenate: json.hyphenate !== false,
     references: { hyphenate: isObject(json.references) && json.references.hyphenate === true },
     listings: { lineNumbers: isObject(json.listings) && json.listings.lineNumbers === true },

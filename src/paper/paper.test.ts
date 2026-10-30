@@ -87,7 +87,7 @@ describe('layout.json (R-LAY-002)', () => {
   test('the defaults of the format and of the language fill the fields that the file leaves out', () => {
     const { layout, problems } = parseLayout(JSON.stringify({ format: formatText }), 'mine', 'file:///repo/layouts/mine/');
     expect(problems).toEqual([]);
-    expect(layout).toMatchObject({ id: 'mine', name: 'mine', language: 'en-US', stylesheets: ['page.css'], before: [], numbered: true, depth: 3, numberedSections: [], hyphenate: true, references: { hyphenate: false }, pdfName: '{{file}}' });
+    expect(layout).toMatchObject({ id: 'mine', name: 'mine', language: 'en-US', stylesheets: ['page.css'], before: [], numbered: true, depth: 3, numberedSections: [], contentsFront: true, hyphenate: true, references: { hyphenate: false }, pdfName: '{{file}}' });
     expect(layout?.terms.sections.TOC).toContain('Table of Contents');
   });
 
@@ -119,10 +119,11 @@ describe('layout.json (R-LAY-002)', () => {
     expect(problems.map((problem) => problem.severity)).toEqual(['warning', 'warning', 'warning', 'warning']);
   });
 
-  test('a layout can number special sections and hyphenate the reference list', () => {
-    const { layout, problems } = parseLayout(JSON.stringify({ format: formatText, headings: { numberedSections: ['bib', 'XYZ'] }, references: { hyphenate: true } }), 'x', 'file:///x/');
+  test('a layout can number special sections, hyphenate the reference list and leave the front part out of the table of contents', () => {
+    const { layout, problems } = parseLayout(JSON.stringify({ format: formatText, headings: { numberedSections: ['bib', 'XYZ'] }, references: { hyphenate: true }, contents: { front: false } }), 'x', 'file:///x/');
     expect(layout?.numberedSections).toEqual(['BIB']);
     expect(layout?.references).toEqual({ hyphenate: true });
+    expect(layout?.contentsFront).toBe(false);
     expect(problems.map((problem) => problem.message)).toEqual(['The layout "x" has the unknown section "XYZ" in "headings.numberedSections"; the sections are TOC, LOF, LOT, LOL, BIB, ADT, AST, ACC, FWD, APX.']);
   });
 
@@ -166,6 +167,14 @@ describe('hyphenation (R-REN-007)', () => {
     expect(html).toContain(' https://example.com/Wirtschaftspädagogik ');
     expect(html).toContain('<a href="x">Wirtschaftspädagogik</a>');
     expect(html).toContain('<code>Wirtschaftspädagogik</code>');
+  });
+
+  test('words joined by a slash get soft hyphens, paths do not', () => {
+    const hyphenate = hyphenatorOf('de-AT')!;
+    expect(hyphenate('(zentrale Forschungsfrage/n)')).toBe(`(zen${softHyphen}tra${softHyphen}le For${softHyphen}schungs${softHyphen}fra${softHyphen}ge/n)`);
+    for (const path of ['/usr/share/Wirtschaftspädagogik', './Wirtschaftspädagogik', '~/Wirtschaftspädagogik', 'bilder/Wirtschaftspädagogik.png']) {
+      expect(hyphenate(path)).toBe(path);
+    }
   });
 
   test('a language without patterns gets no hyphenation', () => {

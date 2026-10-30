@@ -2,8 +2,14 @@
 // © 2026 Hannes Stauss (scalarion@nimblescape.com)
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
-// The last line of a justified paragraph whose spaces shrink (docs/requirements.md, R-REN-012), in the pages of the
-// PDF and of the Markdown preview. Word shrinks the spaces of a justified line to fit one more word or syllable; a
+// The handlers of the renderer for Paged.js, in the pages of the PDF and of the Markdown preview:
+//
+// - The page numbers (docs/requirements.md, R-REN-013). Paged.js restarts the page numbers on the page of an element
+//   with `counter-reset: page 1`, with a rule `counter-reset` on that page. Chrome no longer carries a counter that a
+//   page resets on to the next pages, so they would count on from the pages before. After Paged.js has made a page,
+//   the handler counts the pages as Paged.js does for `target-counter()` and gives each page its number with
+//   `counter-set`, which the next pages keep.
+// - The last line of a justified paragraph whose spaces shrink (R-REN-012). Word shrinks the spaces of a justified line to fit one more word or syllable; a
 // layout does the same with a negative `word-spacing`: the browser breaks the lines with the narrow spaces and then
 // widens the spaces of each full line to the width of the text. The last line of a paragraph is not justified, so it
 // would keep the narrow spaces, which Word does not do. After Paged.js has made a page, the handler gives the last line
@@ -105,22 +111,42 @@
     }
   }
 
+  /** The value of the counter `page` in a computed value of counter-reset or counter-increment, or undefined. */
+  function pageValue(value) {
+    const found = /(?:^|\s)page\s+(-?\d+)/.exec(value || '');
+    return found ? Number(found[1]) : undefined;
+  }
+
   let registered = false;
 
-  window.paperLastLines = {
+  window.paperHandlers = {
     naturalLastLines,
-    /** Registers the handler with Paged.js, once, when Paged.js is there. */
+    /** Registers the handlers with Paged.js, once, when Paged.js is there. */
     register() {
       if (registered || !window.Paged || !window.Paged.Handler) {
         return;
       }
       registered = true;
+      class PageNumbers extends window.Paged.Handler {
+        constructor(chunker, polisher, caller) {
+          super(chunker, polisher, caller);
+          this.number = 0;
+        }
+
+        afterPageLayout(pageElement) {
+          const style = getComputedStyle(pageElement);
+          const reset = pageValue(style.counterReset);
+          const increment = pageValue(style.counterIncrement);
+          this.number = reset !== undefined ? reset + (increment || 0) : this.number + (increment === undefined ? 0 : increment);
+          pageElement.style.counterSet = `page ${this.number}`;
+        }
+      }
       class LastLines extends window.Paged.Handler {
         finalizePage(page) {
           naturalLastLines(page);
         }
       }
-      window.Paged.registerHandlers(LastLines);
+      window.Paged.registerHandlers(PageNumbers, LastLines);
     },
   };
 })();

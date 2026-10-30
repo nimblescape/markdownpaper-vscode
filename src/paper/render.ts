@@ -13,14 +13,15 @@
  * 3. Turn the Markdown text into HTML ([markdown.ts](markdown.ts)), with soft hyphens by the language of the layout.
  * 4. Write the page: a policy that lets only the scripts of the renderer run, the base address of the folder of the
  *    file for its images, the style sheets, the fields as CSS variables and as attributes of `<body>`, the fixed pages
- *    and the text, the script of the last lines of justified paragraphs
- *    ([R-REN-012](../../docs/requirements.md#r-ren-012)), and the scripts of Paged.js.
+ *    and the text, the script of the handlers of the renderer for the page numbers and the last lines of justified
+ *    paragraphs ([R-REN-012](../../docs/requirements.md#r-ren-012), [R-REN-013](../../docs/requirements.md#r-ren-013)),
+ *    and the scripts of Paged.js.
  *
  * The host reads the files and maps their addresses to the addresses that the page loads: the extension through
  * VS Code and its webview, the command line from the disk. The module uses no API of VS Code.
  */
 
-import lastLineJs from '../../media/paperLastLine.js?raw';
+import handlersJs from '../../media/paperHandlers.js?raw';
 import { baseCss } from './baseCss';
 import { extensionCss } from './extensionStyles';
 import { bodyOf, type FrontMatter, readFrontMatter } from './frontMatter';
@@ -375,7 +376,7 @@ ${composed.styles.map((css, index) => `<style data-paper="layout" data-file="${e
 ${composed.variables}
 </style>
 <script nonce="${host.nonce}">
-${lastLineJs.replace(/<\/script/gi, '<\\/script')}
+${handlersJs.replace(/<\/script/gi, '<\\/script')}
 </script>
 <script nonce="${host.nonce}">
 window.PagedConfig = {
@@ -384,8 +385,9 @@ window.PagedConfig = {
   // Paged.js makes the pages when the page has not changed for 200 milliseconds and no diagram of Mermaid waits, at
   // the latest after 10 seconds.
   before: function () {
-    // The last lines of the justified paragraphs whose spaces shrink get their natural spaces (R-REN-012).
-    window.paperLastLines.register();
+    // The handlers of the renderer: the page numbers (R-REN-013), and the natural spaces of the last lines of the
+    // justified paragraphs whose spaces shrink (R-REN-012).
+    window.paperHandlers.register();
     return new Promise(function (resolve) {
       function start() {
         var end = Date.now() + 10000;

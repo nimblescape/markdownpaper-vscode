@@ -31,6 +31,7 @@ const layout: Layout = {
   unnumbered: [],
   numberedSections: [],
   contentsDepth: 3,
+  contentsFront: true,
   hyphenate: false,
   references: { hyphenate: false },
   listings: { lineNumbers: false },

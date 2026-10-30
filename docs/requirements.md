@@ -55,6 +55,7 @@ This document replaces it where the two differ.
 | 24 | The metadata of new sources: `markdownpaper source` with DOI, ISBN, PubMed ID, arXiv ID, web address, RIS, BibTeX, CSL JSON, HTML and PDF files, and the title search of Crossref | [R-CITE-005](#r-cite-005) | done |
 | 25 | Parameters of a layout (fields with `values`), their check and hover, and the JSON schema of `layout.json` | [R-LAY-002](#r-lay-002), [R-DOC-002](#r-doc-002), [R-DOC-003](#r-doc-003) | done |
 | 26 | Layouts close to a Word template: numbered special sections (`headings.numberedSections`), a hyphenated reference list (`references.hyphenate`), the natural spaces of the last line of a justified paragraph whose spaces shrink; the PHT concept layout in the look of its Word template | [R-REN-004](#r-ren-004), [R-REN-007](#r-ren-007), [R-REN-012](#r-ren-012), [R-LAY-002](#r-lay-002) | done |
+| 27 | The parts of a document (front part, body, appendix part) as elements for their own pages, and a table of contents without the front part (`contents.front`); the PHT thesis layout in the look of its Word template | [R-REN-013](#r-ren-013), [R-REN-004](#r-ren-004), [R-LAY-002](#r-lay-002) | done |
 
 ## General
 
@@ -326,7 +327,9 @@ repository of the document ([decision 3](#decisions)).
 - `headings`: `numbered`, `depth`, `unnumbered`, regular expressions of
   headings without a number, and `numberedSections`, the codes of the special
   sections that get a number ([R-REN-004](#r-ren-004)). `contents.depth`: the
-  depth of the table of contents. `hyphenate`, and `references.hyphenate` for
+  depth of the table of contents; `contents.front: false`: a table of contents
+  without the chapters of the front part ([R-REN-013](#r-ren-013)).
+  `hyphenate`, and `references.hyphenate` for
   the soft hyphens of the reference list ([R-REN-007](#r-ren-007)).
   `listings.lineNumbers`: the numbers of the lines
   before the code of a listing (`false` by default,
@@ -618,7 +621,9 @@ hyphenation dictionary for every language on every computer. The renderer
 puts soft hyphens into the words of the text by the language of the layout,
 with the patterns of TeX, so the lines are the same on every computer. It
 leaves out headings, links, code, captions, the generated lists, the
-reference list, addresses, and every part with the class `no-hyphens`. A
+reference list, addresses, paths, and every part with the class `no-hyphens`.
+Words joined by a slash, such as "Forschungsfrage/n", are words of the text;
+a path starts with a slash or has a file name with an extension. A
 layout turns it off with `"hyphenate": false`, and hyphenates the reference
 list, but not its links, with `"references": { "hyphenate": true }`, as a
 Word template with automatic hyphenation does ([decision 38](#decisions)).
@@ -792,6 +797,36 @@ its natural spaces again, in the PDF and in the page preview; when the line
 fits only with narrower spaces, they shrink only as far as the line needs. A
 change that would add a line to the paragraph does not happen
 ([decision 38](#decisions)).
+
+### R-REN-013
+
+**The parts of a document.** A document has up to three parts, each from a
+chapter (`#`) on, and each part is an element of its own, so that a layout can
+give it its own pages, for example a footer without a page number in the front
+part, the page number 1 on the first page of the body, and the numbers I, II,
+… in the appendix part ([decision 39](#decisions)):
+
+| Part | Element | Chapters |
+| --- | --- | --- |
+| Front part | `div.paper-part.paper-front` | The special sections `ADT`, `AST`, `ACC`, `FWD`, `TOC`, `LOF`, `LOT` and `LOL` before the first other chapter |
+| Body | `div.paper-part.paper-body` | The chapters, from the first other chapter on, with the reference list |
+| Appendix part | `div.paper-part.paper-appendix` | The appendix part, from its heading (`APX`) on ([R-REN-006](#r-ren-006)) |
+
+- Text before the first chapter is in no part.
+- A special section of the front part gets no number, also when
+  `headings.numberedSections` names its code ([R-REN-004](#r-ren-004)); in the
+  body it gets one, for example a list of figures after the chapters.
+- With `contents.front: false` in `layout.json`, the table of contents lists
+  no chapter of the front part, in the list of the formatter and in the list of
+  the renderer.
+- An entry of the table of contents for a heading of the front part or of the
+  appendix part has the class `contents-front` or `contents-appendix`, so that
+  the layout can show its page in other numbers, such as I, II, ….
+- A `counter-reset: page 1` on a part makes its first page the page 1, and the
+  pages after it count on from there, in the footers and in the table of
+  contents. The browser does not carry a reset on one page to the pages after
+  it, so the renderer sets the number of each page after the layout of the
+  page.
 
 ## PDF
 
@@ -1428,6 +1463,14 @@ requirement ([R-GEN-007](#r-gen-007)).
     ([R-REN-012](#r-ren-012)). The browser and Word choose some line breaks
     differently, and the hyphenation patterns of TeX differ from those of
     Word, so a few lines can still break at other places than in Word.
+39. **The parts of a document** ([R-REN-013](#r-ren-013)): the renderer puts
+    the front part, the body and the appendix part each into an element, so
+    that a layout can give each part its own page style, as Word templates do
+    with their sections: the PHT thesis template has no page number before the
+    first chapter, starts the body with page 1 and numbers the appendix I, II,
+    …. A special section of the front part is never numbered, and
+    `contents.front: false` leaves the front part out of the table of contents,
+    as the PHT template does.
 
 ## Open questions
 

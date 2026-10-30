@@ -25,7 +25,7 @@
 
 import { bodyOf, readFrontMatter } from './frontMatter';
 import type { Layout } from './layout';
-import { type Body, renderBody } from './markdown';
+import { type Body, inContents, renderBody } from './markdown';
 
 /** listCodes are the codes of the sections with a list, and the names of their markers. */
 const listCodes = { TOC: 'toc', LOF: 'lof', LOT: 'lot', LOL: 'lol' } as const;
@@ -42,12 +42,12 @@ const escapeText = (text: string): string => text.replace(/[\\[\]*_`<]/g, '\\$&'
  * entriesOf returns the lines of the list of a section, from what the renderer found in the file.
  * @param code - The code of the section.
  * @param body - What the renderer found.
- * @param depth - The deepest level of a heading in the table of contents.
+ * @param layout - The layout of the file.
  */
-function entriesOf(code: ListCode, body: Body, depth: number): string[] {
+function entriesOf(code: ListCode, body: Body, layout: Layout): string[] {
   if (code === 'TOC') {
     return body.headings
-      .filter((heading) => heading.level <= depth && heading.section !== 'TOC')
+      .filter((heading) => inContents(heading, layout))
       .map((heading) => {
         const text = heading.appendix ? `${heading.number}: ${heading.text}` : heading.number ? `${heading.number} ${heading.text}` : heading.text;
         return `- [${escapeText(text)}](#${heading.id})`;
@@ -77,7 +77,7 @@ export function writeLists(lines: readonly string[], layout: Layout): string[] {
     const first = /^\s*(?:=+|-+)\s*$/.test(result[heading.line + 1] ?? '') && !/^\s*#/.test(result[heading.line]) ? heading.line + 2 : heading.line + 1;
     const start = result.findIndex((line, index) => index >= first && index < end && new RegExp(`^\\s*<!--\\s*${marker}\\s*-->\\s*$`, 'i').test(line));
     const stop = start < 0 ? -1 : result.findIndex((line, index) => index > start && index < end && new RegExp(`^\\s*<!--\\s*/${marker}\\s*-->\\s*$`, 'i').test(line));
-    const entries = entriesOf(heading.section, body, layout.contentsDepth);
+    const entries = entriesOf(heading.section, body, layout);
     if (start >= 0 && stop >= 0) {
       result.splice(start + 1, stop - start - 1, ...entries);
     } else {

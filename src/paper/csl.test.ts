@@ -217,6 +217,7 @@ describe('the citation style of a layout (R-CITE-003, R-LAY-002)', () => {
     unnumbered: [],
     numberedSections: [],
     contentsDepth: 3,
+    contentsFront: true,
     hyphenate: false,
     references: { hyphenate: false },
     listings: { lineNumbers: false },

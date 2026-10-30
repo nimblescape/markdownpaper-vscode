@@ -9,7 +9,7 @@
 !dist/extension.js
 !media/paged.js
 !media/paged.polyfill.js
-!media/paperLastLine.js
+!media/paperHandlers.js
 !media/paperPreview.css
 !media/paperPreview.js
 !layouts/**

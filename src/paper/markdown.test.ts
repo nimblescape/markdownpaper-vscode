@@ -26,6 +26,7 @@ const layoutOf = (changes: Partial<Layout> = {}): Layout => ({
   unnumbered: [],
   numberedSections: [],
   contentsDepth: 3,
+  contentsFront: true,
   hyphenate: false,
   references: { hyphenate: false },
   listings: { lineNumbers: false },
@@ -146,6 +147,32 @@ describe('special sections (R-REN-004)', () => {
     expect(body.html).toContain('<h1 data-line="2" id="quellen" class="section-bib" data-section="BIB"><span class="heading-number">2</span> Quellen</h1>');
   });
 
+  test('the front matter, the body and the appendix part are each in an element, and a special section of the front part gets no number (R-REN-013)', () => {
+    const markdown = ['# Abstract', 'A.', '# Inhaltsverzeichnis', '# Abbildungsverzeichnis', '# Einleitung', 'B.', '# Abbildungsverzeichnis {LOF}', '# Literaturverzeichnis', 'C.', '# Anhang', '## Leitfaden', 'D.', ''].join('\n\n');
+    const body = renderBody(markdown, layoutOf({ numberedSections: ['LOF', 'BIB'] }));
+    expect(body.headings.map((heading) => [heading.text, heading.number, heading.section])).toEqual([
+      ['Abstract', '', 'AST'],
+      ['Inhaltsverzeichnis', '', 'TOC'],
+      ['Abbildungsverzeichnis', '', 'LOF'],
+      ['Einleitung', '1', undefined],
+      ['Abbildungsverzeichnis', '2', 'LOF'],
+      ['Literaturverzeichnis', '3', 'BIB'],
+      ['Anhang', '', 'APX'],
+      ['Leitfaden', 'Anhang', 'APX-A'],
+    ]);
+    expect(body.html.startsWith('<div class="paper-part paper-front">\n<h1 ')).toBe(true);
+    expect(body.html).toMatch(/<\/nav>\n<\/div>\n<div class="paper-part paper-body">\n<h1 data-line="\d+" id="einleitung">/);
+    expect(body.html).toMatch(/<\/section>\n<\/div>\n<div class="paper-part paper-appendix">\n<h1 data-line="\d+" id="anhang"/);
+    expect(body.html.endsWith('<p data-line="22">D.</p>\n</div>\n')).toBe(true);
+    expect(body.html.match(/<div class="paper-part/g)).toHaveLength(3);
+    expect(body.html.match(/<\/div>/g)).toHaveLength(3);
+  });
+
+  test('a document of chapters alone has the body part, and the text before its first chapter is in no part', () => {
+    const html = renderBody('Vorab.\n\n# Einleitung\n\nText.\n', layoutOf()).html;
+    expect(html.trim()).toBe('<p data-line="0">Vorab.</p>\n<div class="paper-part paper-body">\n<h1 data-line="2" id="einleitung"><span class="heading-number">1</span> Einleitung</h1>\n<p data-line="4">Text.</p>\n</div>');
+  });
+
   test('English words count in an English layout', () => {
     const body = renderBody('# Table of Contents\n\n# Introduction\n\n# References\n', layoutOf({ language: 'en-US', terms: termsFor('en-US') }));
     expect(body.headings.map((heading) => heading.section)).toEqual(['TOC', undefined, 'BIB']);
@@ -155,7 +182,7 @@ describe('special sections (R-REN-004)', () => {
     const html = renderBody('# Abstract\n\n# Inhaltsverzeichnis\n\nOld text.\n\n# Einleitung\n\n## Frage\n', layoutOf()).html;
     expect(html).not.toContain('Old text');
     expect(html).toContain('<nav class="contents no-hyphens"><ol>');
-    expect(html).toContain('<li class="contents-level-1 unnumbered"><a href="#abstract"><span class="contents-text">Abstract</span></a></li>');
+    expect(html).toContain('<li class="contents-level-1 unnumbered contents-front"><a href="#abstract"><span class="contents-text">Abstract</span></a></li>');
     expect(html).not.toContain('href="#inhaltsverzeichnis"');
     expect(html).toContain('<li class="contents-level-2"><a href="#frage"><span class="contents-number">1.1</span><span class="contents-text">Frage</span></a></li>');
   });
@@ -230,7 +257,7 @@ describe('lists of the special sections (R-REN-004)', () => {
         '<li class="contents-level-1"><a href="#einleitung"><span class="contents-number">1</span><span class="contents-text">Einleitung</span></a></li>\n' +
         '<li class="contents-level-2"><a href="#methoden"><span class="contents-number">1.1</span><span class="contents-text">Methoden</span></a></li>\n' +
         '<li class="contents-level-1 unnumbered"><a href="#literaturverzeichnis"><span class="contents-text">Literaturverzeichnis</span></a></li>\n' +
-        '<li class="contents-level-2 appendix"><a href="#daten"><span class="contents-text"><span class="appendix-label">Anhang A</span><span class="appendix-separator">: </span>Daten</span></a></li>\n' +
+        '<li class="contents-level-2 appendix contents-appendix"><a href="#daten"><span class="contents-text"><span class="appendix-label">Anhang A</span><span class="appendix-separator">: </span>Daten</span></a></li>\n' +
         '<li class="contents-level-1"><a href="#weg"><span class="contents-number">2</span><span class="contents-text">Weg</span></a></li>\n</ol></nav>',
     );
     expect(body.html).toContain(

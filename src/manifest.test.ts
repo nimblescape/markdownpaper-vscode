@@ -169,7 +169,7 @@ test('the package holds the bundle, Paged.js, the scripts and the style of the p
     '!dist/extension.js',
     '!media/paged.js',
     '!media/paged.polyfill.js',
-    '!media/paperLastLine.js',
+    '!media/paperHandlers.js',
     '!media/paperPreview.css',
     '!media/paperPreview.js',
     '!layouts/**',

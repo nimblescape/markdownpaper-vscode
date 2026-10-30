@@ -33,6 +33,12 @@
  * - The headings of the level 2 in the appendix part, after the heading "Anhang" or "Appendix", are the appendices
  *   A, B, … (one appendix has no letter), whose figures, tables and listings are numbered A1, A2, … as APA 7 numbers
  *   them.
+ * - The document has up to three parts, each from a heading of the level 1 on, in its own element: the front part
+ *   (`div.paper-part.paper-front`), the chapters of the front matter (ADT, AST, ACC, FWD, TOC, LOF, LOT, LOL) before the
+ *   first other chapter; the body (`div.paper-part.paper-body`) with the chapters; and the appendix part
+ *   (`div.paper-part.paper-appendix`). A layout can give each part its own pages, for example without a page number
+ *   in the front part. A special section of the front part gets no number, also when the layout numbers its kind
+ *   ([R-REN-013](../../docs/requirements.md#r-ren-013)).
  * - Each block names its line in the file (`data-line`), so that a click on a page shows that line in the editor.
  *
  * `paperPlugin` adds the rule to a markdown-it instance: to the one of `renderBody` for the PDF and the command line, and
@@ -69,6 +75,15 @@ const generatedLists = ['TOC', 'LOF', 'LOT', 'LOL'] as const;
 
 type GeneratedList = (typeof generatedLists)[number];
 
+/**
+ * frontSections are the special sections of the front matter: the chapters of the level 1 with these codes before the
+ * first other chapter are the front part of the document.
+ */
+const frontSections: readonly SectionCode[] = ['ADT', 'AST', 'ACC', 'FWD', 'TOC', 'LOF', 'LOT', 'LOL'];
+
+/** Part is a part of the document: the front matter, the body with the chapters, or the appendix part. */
+export type Part = 'front' | 'body' | 'appendix';
+
 /** byHand matches a heading that starts with a number, such as "1 Introduction" or "2.3. Method". */
 const byHand = /^\d+(?:\.\d+)*\.?\s/;
 
@@ -84,6 +99,8 @@ export interface Heading {
   section?: string;
   /** appendix is true for the heading of one appendix, whose number is its label, for example "Anhang A". */
   appendix?: boolean;
+  /** part is the part of the document that the heading is in ([R-REN-013](../../docs/requirements.md#r-ren-013)). */
+  part?: Part;
   /** anchor is the ID of an anchor at the end of the heading, `<a id="sec-methods"></a>`, if any. */
   anchor?: string;
   line: number;
@@ -517,6 +534,12 @@ function paperRule(layout: Layout, found: Found) {
     const listLinks = new Map<Token, { list: GeneratedList; line: number }>();
     /** references is the level of the heading of the reference list while the rule is in it, else 0. */
     let references = 0;
+    /**
+     * part is the part of the document that the rule is in, from its first heading of the level 1 on. Each part is in
+     * an element `<div class="paper-part paper-front">`, `paper-body` or `paper-appendix`, so that a layout can give
+     * each part its own pages.
+     */
+    let part: Part | undefined;
     /** links are the links to a place in the file, which can name a figure or a table. */
     const links: { open: Token; text: Token[]; line: number }[] = [];
     const output: Token[] = [];
@@ -556,6 +579,14 @@ function paperRule(layout: Layout, found: Found) {
         const code = sectionOf(text, level, marker, terms);
         if (level === 1) {
           appendixPart = code === 'APX';
+          const next: Part = appendixPart ? 'appendix' : (part === undefined || part === 'front') && code && frontSections.includes(code) ? 'front' : 'body';
+          if (next !== part) {
+            if (part) {
+              output.push(html(state, '</div>\n', true));
+            }
+            output.push(html(state, `<div class="paper-part paper-${next}">\n`, true));
+            part = next;
+          }
         }
         if (unnumberedBelow && level <= unnumberedBelow) {
           unnumberedBelow = 0;
@@ -580,7 +611,7 @@ function paperRule(layout: Layout, found: Found) {
           section = `APX-${letter(appendix)}`;
           token.attrJoin('class', 'appendix');
           inline.children = [html(state, `<span class="appendix-label">${escapeHtml(number)}</span> `), ...children];
-        } else if (((marker || code) && !(code && layout.numberedSections.includes(code))) || appendixPart || patterns.some((pattern) => pattern.test(text))) {
+        } else if (((marker || code) && !(code && part === 'body' && layout.numberedSections.includes(code))) || appendixPart || patterns.some((pattern) => pattern.test(text))) {
           unnumberedBelow = level;
           token.attrJoin('class', 'unnumbered');
         } else if (unnumberedBelow) {
@@ -596,7 +627,7 @@ function paperRule(layout: Layout, found: Found) {
         if (section) {
           token.attrSet('data-section', section);
         }
-        found.headings.push({ level, id, number, text, ...(section ? { section } : {}), ...(appendixPart && level === 2 ? { appendix: true } : {}), ...(anchor ? { anchor: anchor.id } : {}), line: token.map?.[0] ?? 0 });
+        found.headings.push({ level, id, number, text, ...(section ? { section } : {}), ...(appendixPart && level === 2 ? { appendix: true } : {}), ...(part ? { part } : {}), ...(anchor ? { anchor: anchor.id } : {}), line: token.map?.[0] ?? 0 });
         output.push(token, inline, tokens[index + 2]);
         index += 2;
         if (code && (generatedLists as readonly string[]).includes(code)) {
@@ -759,6 +790,9 @@ function paperRule(layout: Layout, found: Found) {
     if (references) {
       output.push(html(state, '</section>\n', true));
     }
+    if (part) {
+      output.push(html(state, '</div>\n', true));
+    }
     state.tokens = output;
     // A link whose text is a word and a number gets the label of its target: the label of a figure or a table
     // ("Abbildung 1"), the label of an appendix ("Anhang A"), or the word of the link and the number of a heading
@@ -891,7 +925,7 @@ function listOfFile(code: GeneratedList, entries: readonly Entry[], found: Found
     const href = `#${escapeHtml(entry.href)}`;
     if (code === 'TOC') {
       const heading = headings.get(entry.href);
-      const classes = `contents-level-${heading?.level ?? 1}${heading?.appendix ? ' appendix' : /^\d/.test(entry.text) ? '' : ' unnumbered'}`;
+      const classes = `contents-level-${heading?.level ?? 1}${heading?.appendix ? ' appendix' : /^\d/.test(entry.text) ? '' : ' unnumbered'}${partClass(heading)}`;
       const appendix = heading?.appendix ? /^(.+?):\s+(.+)$/.exec(entry.text) : null;
       const numbered = /^(\d+(?:\.\d+)*\.?)\s+(.+)$/.exec(entry.text);
       const text = appendix
@@ -911,24 +945,42 @@ function listOfFile(code: GeneratedList, entries: readonly Entry[], found: Found
 }
 
 /**
+ * partClass returns the class of an entry of the table of contents for the part of its heading: ` contents-front` or
+ * ` contents-appendix`, so that a layout can show the page of an entry of the appendix part in its own numbers, else
+ * nothing.
+ * @param heading - The heading of the entry, if the document has it.
+ */
+const partClass = (heading: Heading | undefined): string => (heading?.part === 'front' || heading?.part === 'appendix' ? ` contents-${heading.part}` : '');
+
+/**
+ * inContents is true for a heading that the table of contents lists: each heading to the depth of the layout, but not
+ * its own heading, and not the headings of the front part when the layout says `contents.front: false`.
+ * @param heading - The heading.
+ * @param layout - The layout of the document.
+ */
+export function inContents(heading: Heading, layout: Layout): boolean {
+  return heading.level <= layout.contentsDepth && heading.section !== 'TOC' && (layout.contentsFront || heading.part !== 'front');
+}
+
+/**
  * list returns the HTML of the list of a special section: the table of contents, the list of figures, of tables or of
  * listings. The style sheet adds the page numbers with `target-counter`. The list is the one of the file when it has
- * one between the markers of the section; else the renderer makes it: the table of contents lists every heading to its
- * depth, but not its own heading.
+ * one between the markers of the section; else the renderer makes it: the table of contents lists the headings of
+ * `inContents`.
  * @param code - The code of the list.
  * @param found - What the rule found.
- * @param depth - The deepest level of heading in the table of contents.
+ * @param layout - The layout of the document.
  */
-function list(code: GeneratedList, found: Found, depth: number): string {
+function list(code: GeneratedList, found: Found, layout: Layout): string {
   const entries = found.lists[code];
   if (entries) {
     return listOfFile(code, entries, found);
   }
   if (code === 'TOC') {
     const items = found.headings
-      .filter((heading) => heading.level <= depth && heading.section !== 'TOC')
+      .filter((heading) => inContents(heading, layout))
       .map((heading) => {
-        const classes = `contents-level-${heading.level}${heading.appendix ? ' appendix' : heading.number ? '' : ' unnumbered'}`;
+        const classes = `contents-level-${heading.level}${heading.appendix ? ' appendix' : heading.number ? '' : ' unnumbered'}${partClass(heading)}`;
         const entry = heading.appendix
           ? `<span class="contents-text"><span class="appendix-label">${escapeHtml(heading.number)}</span><span class="appendix-separator">: </span>${escapeHtml(heading.text)}</span>`
           : (heading.number ? `<span class="contents-number">${escapeHtml(heading.number)}</span>` : '') + `<span class="contents-text">${escapeHtml(heading.text)}</span>`;
@@ -954,7 +1006,7 @@ function list(code: GeneratedList, found: Found, depth: number): string {
  */
 export function finishBody(html: string, found: Found, layout: Layout, hyphenate?: (text: string) => string): string {
   const hyphenated = hyphenate ? hyphenateHtml(html, hyphenate) : html;
-  return hyphenated.replace(/<!--paper:(TOC|LOF|LOT|LOL)-->\n?/g, (_all, code: GeneratedList) => list(code, found, layout.contentsDepth));
+  return hyphenated.replace(/<!--paper:(TOC|LOF|LOT|LOL)-->\n?/g, (_all, code: GeneratedList) => list(code, found, layout));
 }
 
 /**

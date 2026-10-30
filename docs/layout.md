@@ -81,6 +81,7 @@ a script element or an event attribute of a template is removed.
 | `headings.unnumbered` | Regular expressions; a heading whose text matches one gets no number, nor do the headings below it. | `[]` |
 | `headings.numberedSections` | The codes of the special sections (section 4) whose headings get a number as other chapters do, for example `["BIB"]` for a template that numbers its reference list. | `[]` |
 | `contents.depth` | The deepest level of a heading in the table of contents. | `3` |
+| `contents.front` | `false`: the table of contents lists no chapter of the front part (`.paper-front`, section 5). | `true` |
 | `hyphenate` | `false`: no soft hyphens. | `true` |
 | `references.hyphenate` | `true`: the reference list gets soft hyphens as the text does, but not its web addresses. | `false` |
 | `listings.lineNumbers` | `true`: the number of each line before the code of a listing, from 1 in each listing. | `false` |
@@ -154,9 +155,10 @@ gives the style sheet these parts:
 | `--field-<field>` | Each field as a CSS variable with a string, for the margin boxes: `@bottom-left { content: var(--field-author); }`. |
 | `.paper-template-<name>` | The section of a template, for example `.paper-template-cover`; give it `break-after: page` for a page of its own. |
 | `main.paper-text` | The text. |
+| `.paper-part.paper-front`, `.paper-part.paper-body`, `.paper-part.paper-appendix` | The parts of the text, each from a chapter (`#`) on: the front part, the chapters of the front matter (`ADT`, `AST`, `ACC`, `FWD`, `TOC`, `LOF`, `LOT`, `LOL`) before the first other chapter; the body with the chapters; the appendix part from its heading on. Give a part a named page for its own footer or page numbers: `main.paper-text .paper-front { page: front; }`, `.paper-body { counter-reset: page 1; }`, and in `@page appendix` the footer `counter(page, upper-roman)`. A special section of the front part gets no number. |
 | `h1` to `h6`, `.heading-number` | The headings and their numbers. |
 | `.section-toc`, `.section-bib`, … | The heading of a special section, with `data-section` = its code. |
-| `nav.contents`, `.contents-level-1` to `-6`, `.contents-number`, `.contents-text` | The table of contents; the renderer adds the page of each entry as `a::after`. |
+| `nav.contents`, `.contents-level-1` to `-6`, `.contents-number`, `.contents-text`, `.contents-front`, `.contents-appendix` | The table of contents; the renderer adds the page of each entry as `a::after`. An entry of the front part or of the appendix part has the class of its part, for example for the page in other numbers: `nav li.contents-appendix a::after { content: target-counter(attr(href), page, upper-roman); }`. |
 | `nav.list-of-figures`, `nav.list-of-tables`, `nav.list-of-listings`, `.caption-entry` | The list of figures, of tables and of listings. |
 | `figure.figure`, `figcaption`, `.caption-label`, `.caption-separator`, `.caption-text` | A figure and its caption, which comes before the image. |
 | `p.table-caption` | The caption of a table, directly before the table. |

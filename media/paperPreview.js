@@ -91,14 +91,15 @@
     });
   }
 
-  // Paged.js, and the handler of the last lines of justified paragraphs (paperLastLine.js, R-REN-012).
+  // Paged.js, and the handlers of the renderer: the page numbers and the last lines of justified paragraphs
+  // (paperHandlers.js, R-REN-012, R-REN-013).
   function loadPagedJs() {
-    if (window.Paged && window.paperLastLines) {
+    if (window.Paged && window.paperHandlers) {
       return Promise.resolve();
     }
     if (!pagedJs) {
-      pagedJs = Promise.all([loadScript('paged.js', 'Paged.js'), loadScript('paperLastLine.js', 'The script of the last lines')]).then(() => {
-        window.paperLastLines.register();
+      pagedJs = Promise.all([loadScript('paged.js', 'Paged.js'), loadScript('paperHandlers.js', 'The handlers of the renderer')]).then(() => {
+        window.paperHandlers.register();
       });
     }
     return pagedJs;

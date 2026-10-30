@@ -34,6 +34,9 @@ const patterns: Record<string, Hyphenate> = {
   it: it.hyphenateSync,
 };
 
+/** address matches a token that is an address, an e-mail address or a path. */
+const address = /:\/\/|www\.|@|^[.~]{0,2}\/|\/[^/]*\.\w{1,5}\b/;
+
 /**
  * hyphenatorOf returns the hyphenation of the words of a language, or undefined for a language without patterns.
  * @param language - The language tag, for example de-AT.
@@ -49,8 +52,9 @@ export function hyphenatorOf(language: string): ((text: string) => string) | und
     text
       .split(/(\s+)/)
       .map((token) =>
-        // Addresses, e-mail addresses and paths stay as they are.
-        /:\/\/|www\.|@|\//.test(token)
+        // Addresses, e-mail addresses and paths stay as they are. A path starts with a slash or has a file name with an
+        // extension; words joined by a slash, such as "Forschungsfrage/n" or "und/oder", are words of the text.
+        address.test(token)
           ? token
           : token
               .replace(/&#?\w+;|\p{L}+/gu, (part) => (part.startsWith('&') ? part : word(part)))

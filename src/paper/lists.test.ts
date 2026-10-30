@@ -22,6 +22,7 @@ const layout: Layout = {
   unnumbered: [],
   numberedSections: [],
   contentsDepth: 2,
+  contentsFront: true,
   hyphenate: false,
   references: { hyphenate: false },
   listings: { lineNumbers: false },
@@ -134,6 +135,14 @@ describe('the lists of the special sections in the file (R-REN-004, R-GEN-008)',
     expect(body.problems).toEqual([]);
     expect(body.html).toContain('<li class="contents-level-2"><a href="#methoden-und-daten"><span class="contents-number">1.1</span><span class="contents-text">Methoden und Daten</span></a></li>');
     expect(body.html).toContain('<span class="caption-label">Abbildung 1</span><span class="caption-separator">: </span><span class="caption-text">Die [Rollen]</span>');
+  });
+
+  test('with contents.front false, the table of contents leaves out the chapters of the front part (R-REN-013)', () => {
+    const written = writeLists(paper, { ...layout, contentsFront: false });
+    expect(written.slice(5, 12)).toEqual(['<!-- toc -->', '- [1 Einleitung](#einleitung)', '- [1.1 Methoden und Daten](#methoden-und-daten)', '- [Literaturverzeichnis](#literaturverzeichnis)', '- [Anhang](#anhang)', '- [Anhang A: Leitfaden](#leitfaden)', '- [Anhang B: Daten](#daten)']);
+    const html = renderBody(['# Abstract', '# Inhaltsverzeichnis', '# Einleitung', ''].join('\n\n'), { ...layout, contentsFront: false }).html;
+    expect(html).toContain('<nav class="contents no-hyphens"><ol>\n<li class="contents-level-1"><a href="#einleitung">');
+    expect(html).not.toContain('href="#abstract"');
   });
 
   test('a file without a special section with a list keeps its lines', () => {

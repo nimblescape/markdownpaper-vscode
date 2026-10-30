@@ -18,7 +18,8 @@ The first version.
 - The renderer turns a Markdown document into one HTML page, which Paged.js
   turns into pages, for the preview and for the PDF alike. It numbers the
   headings, puts footnotes at the foot of their page, hyphenates the text by
-  the language of the layout with soft hyphens, and leaves out the notes of
+  the language of the layout with soft hyphens, also words joined by a slash
+  such as "Forschungsfrage/n" but not paths, and leaves out the notes of
   nimblescape Markdown Notes.
 - Special sections without a chapter number, found by the words of their
   headings in the language of the layout or by a marker such as `{BIB}`: the
@@ -77,6 +78,11 @@ The first version.
   layout can shrink the spaces of justified lines with a negative
   `word-spacing`, as Word does; the last line of such a paragraph keeps its
   natural spaces.
+- The parts of a document: the front part, the body and the appendix part,
+  each in an element, so that a layout gives each part its own pages, such as
+  no page number in the front part and the numbers I, II, … in the appendix
+  part; a `counter-reset: page 1` on a part starts its pages at 1;
+  `contents.front: false` leaves the front part out of the table of contents.
 - "New Project", "New Document" and "New Layout": a project gets `AGENTS.md`
   for AI agents, a copy of the layout, `paper/paper.md`, the drop folder
   `inbox/` for sources, the folder `bib/` for the files of the sources, and

@@ -131,7 +131,8 @@ The first version.
   as GitHub writes it, which a layout draws as a box, for example the hint of
   a Word template under a heading; the built-in layout `plain` draws it as
   GitHub does. A hint at the start of the reference list stays before the
-  entries.
+  entries and keeps the form of its box: the hanging indent of the reference
+  list is only for the entries, `.references > p`.
 - The update of a copy of a layout on GitHub: a new project writes the field
   `origin` (the layout, the ref and the commit) into the `layout.json` of its
   copy. `markdownpaper update` and "Update Layout" read the newest commit of

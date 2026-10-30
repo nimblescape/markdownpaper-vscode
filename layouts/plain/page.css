@@ -349,8 +349,9 @@ nav .appendix-label {
   display: inline;
 }
 
-/* The reference list: hanging indent, left-aligned. */
-.references p {
+/* The reference list: hanging indent, left-aligned. The entries are the paragraphs directly in the section; an alert in
+   the section keeps its own form. */
+.references > p {
   text-align: left;
   padding-left: 1.27cm;
   text-indent: -1.27cm;

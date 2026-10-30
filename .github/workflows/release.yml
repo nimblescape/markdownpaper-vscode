@@ -5,7 +5,7 @@
 # Release and publish a version on a manual start from the branch main, with
 # the version as input. The version job checks the version, sets it in
 # package.json and package-lock.json and in cli/package.json and
-# cli/package-lock.json (the npm package @nimblescape/markdown-notes, which has the
+# cli/package-lock.json (the npm package of cli/, which has the
 # same version), adds its section to CHANGELOG.md from the notes of the start
 # when the file has none, and pushes the commit "Release <version>" to the
 # temporary branch release/run-<run ID>, not to main. A push with the token of
@@ -165,7 +165,7 @@ jobs:
           node - <<'JS'
           const fs = require("node:fs");
           const version = process.env.VERSION;
-          // The extension and the npm package of the formatter in cli/ have the same version.
+          // The extension and the npm package in cli/ have the same version.
           for (const folder of [".", "cli"]) {
             const manifest = fs.readFileSync(`${folder}/package.json`, "utf8");
             const current = JSON.parse(manifest).version;

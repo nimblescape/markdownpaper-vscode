@@ -14,7 +14,7 @@ export default defineConfig([
     label: 'vscode',
     files: 'out/test/vscode/*.test.js',
     version: process.env.VSCODE_TEST_VERSION || 'stable',
-    // The built-in extensions stay on, among them the Markdown extension, whose preview the tests render.
+    // The built-in extensions stay on, among them the Markdown extension, which gives Markdown files their language.
     launchArgs: ['--disable-extensions', '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes'],
     mocha: {
       ui: 'bdd',

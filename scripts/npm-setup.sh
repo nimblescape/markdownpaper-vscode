@@ -3,7 +3,7 @@
 # © 2026 Hannes Stauss (scalarion@nimblescape.com)
 # Licensed under the MIT License. See LICENSE in the repository root for details.
 
-# The npmjs.com setup of the npm package @nimblescape/markdown-notes of cli/ (CONTRIBUTING.md, "npmjs.com setup"):
+# The npmjs.com setup of the npm package @nimblescape/markdownpaper of cli/ (CONTRIBUTING.md, "npmjs.com setup"):
 # the GitHub environment `npm` with its deployment rules, the first version of the package, and the trusted publisher
 # of the package, which lets the job publish-npm of the release workflow publish without a token. npmjs.com sets up a
 # trusted publisher only for a package that exists, so the first version is published once by hand, from the GitHub

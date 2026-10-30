@@ -15,7 +15,8 @@
 #
 # The repository is the GitHub repository of the remote `origin` of the clone
 # that holds the script, and the extension ID is publisher.name of its
-# package.json; by the naming scheme, name and repository are the same. The
+# package.json; by the naming scheme, the repository of the extension
+# nimblescape.nimblescape-<name> is <name>-vscode. The
 # script shows what it sets up and asks before it changes anything. It changes
 # nothing that already exists, so it can run again. The app is the one of the
 # variable AZURE_CLIENT_ID, or the app named by APP_NAME (default
@@ -37,10 +38,10 @@ owner="${repo%%/*}"
 name="${repo#*/}"
 environment="marketplace"
 
-# The extension ID from package.json; its name must be the name of the repository.
+# The extension ID from package.json; the repository of nimblescape-<name> must be <name>-vscode.
 root=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 extension=$(node -p 'const p = require(process.argv[1]); `${p.publisher}.${p.name}`' "$root/package.json")
-[ "${extension#*.}" = "$name" ] || { echo "The extension $extension in package.json does not match the repository $repo." >&2; exit 1; }
+[ "${extension#*.nimblescape-}-vscode" = "$name" ] || { echo "The extension $extension in package.json does not match the repository $repo." >&2; exit 1; }
 
 # The subject of the token that GitHub Actions issues to a job of the
 # environment: owner and repository with their IDs, as GitHub writes it for

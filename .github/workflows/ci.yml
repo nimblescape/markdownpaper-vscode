@@ -8,12 +8,13 @@
 # installs the locked development tools without install scripts, checks the
 # types, runs the unit tests and the tests in a real VS Code (stable),
 # packages the VSIX with vsce, which first bundles the extension and the
-# command markdown-notes with esbuild and also validates the manifest and the
-# README, and packs the npm package @nimblescape/markdown-notes of cli/ with
+# command markdownpaper with esbuild and also validates the manifest and the
+# README, and packs the npm package @nimblescape/markdownpaper of cli/ with
 # npm pack. Both stay workflow artifacts for inspection. The job "command"
-# runs the tests of the built command markdown-notes on Linux and macOS, with
+# runs the tests of the built command markdownpaper on Linux and macOS, with
 # the oldest Node.js that the command supports (engines of cli/package.json)
-# and the newest LTS release. This workflow publishes nothing: the release
+# and the newest LTS release. The tests of the PDF use the Google Chrome that the
+# runners of GitHub have installed. This workflow publishes nothing: the release
 # workflow calls it for the commit of a version and publishes the VSIX and the
 # npm package of that call. A change of this file changes the release process:
 # its pull request needs a dry run (rule 4). The workflow "VS Code versions"
@@ -105,7 +106,7 @@ jobs:
           if-no-files-found: error
 
   command:
-    name: Command markdown-notes on ${{ matrix.os }} with Node.js ${{ matrix.node }}
+    name: Command markdownpaper on ${{ matrix.os }} with Node.js ${{ matrix.node }}
     # The workflow "VS Code versions" tests only the parts that depend on VS Code.
     if: ${{ !inputs.vscode-version }}
     strategy:
@@ -130,6 +131,6 @@ jobs:
       - name: Install the locked development tools without install scripts
         run: npm ci --ignore-scripts
 
-      # The tests run the built cli/dist/markdown-notes.js with this Node.js.
-      - name: Run the tests of the command markdown-notes
+      # The tests run the built cli/dist/markdownpaper.js with this Node.js.
+      - name: Run the tests of the command markdownpaper
         run: npm run test:cli

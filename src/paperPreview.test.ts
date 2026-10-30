@@ -67,6 +67,7 @@ function writePage(): string {
   fs.writeFileSync(path.join(folder, 'markdown-language-features', 'markdown.css'), 'body { padding: 0 26px; font-size: 14px; }\n');
   fs.copyFileSync(path.join(repository, 'media', 'paperPreview.js'), path.join(folder, 'paperPreview.js'));
   fs.copyFileSync(path.join(repository, 'media', 'paperPreview.css'), path.join(folder, 'paperPreview.css'));
+  fs.copyFileSync(path.join(repository, 'media', 'paperLastLine.js'), path.join(folder, 'paperLastLine.js'));
   fs.copyFileSync(path.join(repository, 'node_modules', 'pagedjs', 'dist', 'paged.js'), path.join(folder, 'paged.js'));
   const file = path.join(folder, 'preview.html');
   fs.writeFileSync(

@@ -480,9 +480,10 @@ the headings below them ([decision 10](#decisions)):
   a list needs its anchor `fig-…`, `tab-…` or `lst-…`, which the formatter of
   Markdown Notes gives each caption of a kind whose list marker the file
   holds. On GitHub the lists are lists of links. A list that the format
-  writes for the first time gets these anchors in its entries at the next
-  format, because the steps of Markdown Notes run before the step of the
-  paper.
+  writes for the first time gets these anchors in the same format: Markdown
+  Notes runs its steps and the steps of other extensions again while the text
+  changes, at most three rounds, so the step of the paper writes the entries
+  with the anchors ([R-CLI-002](#r-cli-002)).
 - The pages show the list of the file with the page of the target of each
   entry, which Paged.js writes with `target-counter`; the rest of the
   section does not show. An entry of the table of contents gets the level of
@@ -945,7 +946,11 @@ notes and the paper are two packages. The plan:
   reads when the file opens and when its front matter or a file of a layout
   changes; a format before that leaves out the step of the paper once.
 - Today `markdownpaper format` runs the steps of the paper; the steps of
-  Markdown Notes join it when its library is published. `--check` writes
+  Markdown Notes join it when its library is published. Then it runs the
+  steps of Markdown Notes and the steps of the paper again while the text
+  changes, at most three rounds, as Markdown Notes does in VS Code, so that
+  `--check` passes after one format. The steps of the paper keep a text that
+  they formatted already as it is. `--check` writes
   nothing and exits with 1 when the format would change a file, for a check
   in CI ([R-GEN-008](#r-gen-008)).
 - The step of the lists writes the four lists of

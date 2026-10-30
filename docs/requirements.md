@@ -153,6 +153,9 @@ in the same commit.
   messages, their dates and times, or the choices that were not taken
   ([decision 23](#decisions)). The discussion stays in discussion documents
   outside the repository.
+- The same holds for every file of the repository: the other documents, the
+  lists of features, the code comments and the titles of the tests state a
+  request as a short summary, without quotes, names, dates or times.
 
 ## Documents
 
@@ -991,9 +994,10 @@ requirement ([R-GEN-007](#r-gen-007)).
     name as cited and the year, a law or a regulation its Fundstelle with
     hyphens, a source without a date has no year, and a second file of one
     source is the ID, a hyphen and an addition.
-23. **Clean requirements** ([R-GEN-007](#r-gen-007)): the requirements hold
-    only the clean summary of the decisions, without the texts of the
-    discussion; the details stay in discussion documents.
+23. **Clean requirements** ([R-GEN-007](#r-gen-007)): the requirements and
+    every other file of the repository hold only the clean summary of the
+    decisions, without the texts of the discussion; the details stay in
+    discussion documents.
 
 ## Open questions
 

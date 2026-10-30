@@ -139,9 +139,10 @@ brackets at the end of the heading, for example `# Quellen und Materialien
 
 | Code | Section | German | English |
 | --- | --- | --- | --- |
-| `TOC` | Table of contents, generated | Inhaltsverzeichnis | Table of Contents |
-| `LOF` | List of figures, generated | Abbildungsverzeichnis | List of Figures |
-| `LOT` | List of tables, generated | Tabellenverzeichnis | List of Tables |
+| `TOC` | Table of contents, a list | Inhaltsverzeichnis | Table of Contents |
+| `LOF` | List of figures, a list | Abbildungsverzeichnis | List of Figures |
+| `LOT` | List of tables, a list | Tabellenverzeichnis | List of Tables |
+| `LOL` | List of listings, a list | Listingverzeichnis | List of Listings |
 | `BIB` | Reference list | Literaturverzeichnis | Bibliography, References |
 | `ADT` | Affidavit | Eidesstattliche Erklärung | Affidavit |
 | `AST` | Abstract | Abstrakt, Kurzfassung | Abstract |
@@ -149,31 +150,40 @@ brackets at the end of the heading, for example `# Quellen und Materialien
 | `FWD` | Foreword | Vorwort | Foreword, Preface |
 | `APX` | Appendix part, with `APX-A`, `APX-B`, … | Anhang | Appendix |
 
-The renderer fills the table of contents, the list of figures and the list of
-tables with their entries and page numbers; leave their sections empty. The
-table of contents does not list itself.
+The file holds the four lists as lists of links between two hidden markers,
+such as `<!-- toc -->` and `<!-- /toc -->`, under their headings, and the
+pages show them with the page of each entry. The format step of the paper
+will write these lists and keep them current (planned); until then a section
+without the markers gets the list of the renderer. The table of contents does
+not list itself.
 
 ## Figures and tables
 
-An image alone in its paragraph is a figure, and its text is its caption:
+A paragraph `Figure 1:` directly before an image is the caption of the
+figure, which the page shows above the image:
 
 ```markdown
-![Die Rollen von Agenten im Team](images/rollen.png) <a id="fig-rollen"></a>
+Figure 1: Die Rollen von Agenten im Team <a id="fig-rollen"></a>
+
+![Die Rollen von Agenten im Team](images/rollen.png)
 ```
 
-The page shows "Abbildung 1: Die Rollen von Agenten im Team". A paragraph
-`Table:` directly before a table is the caption of the table:
+The page shows "Abbildung 1: Die Rollen von Agenten im Team"; an image
+without a caption has no number. A paragraph `Table 1:` directly before a
+table is the caption of the table:
 
 ```markdown
-Table: Teilnehmende nach Schulstufe <a id="tab-teilnehmende"></a>
+Table 1: Teilnehmende nach Schulstufe <a id="tab-teilnehmende"></a>
 
 | Schulstufe | Anzahl |
 | --- | --- |
 | 10 | 12 |
 ```
 
-The anchor at the end of the line, which the slash commands `/figure` and
-`/table` of Markdown Notes write, names the figure or the table. A link to it
+The file holds the numbers of the captions, which the formatter of Markdown
+Notes writes, and the pages keep them. The anchor at the end of the line,
+which the slash commands `/figure` and `/table` of Markdown Notes write, names
+the figure or the table. A link to it
 whose text is a word and a number, such as `[Abbildung 1](#fig-rollen)`, shows
 the number of the pages; the slash command `/ref` of Markdown Notes writes
 such a link.
@@ -181,12 +191,12 @@ such a link.
 ## Listings
 
 The slash command `/listing` of Markdown Notes adds code of a source file of
-the repository as a listing: a caption line `Listing:`, a comment that names
+the repository as a listing: a caption line `Listing 1:`, a comment that names
 the source and a code block, whose code the formatter of Markdown Notes keeps
 current:
 
 ````markdown
-Listing: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
+Listing 1: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
 
 <!-- listing: ../src/fields.ts#read-fields -->
 

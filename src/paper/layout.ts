@@ -37,14 +37,14 @@ export interface FieldSpec {
 
 /**
  * SectionCode is the code of a special section of a document ([R-REN-004](../../docs/requirements.md#r-ren-004)):
- * TOC the table of contents, LOF the list of figures, LOT the list of tables, BIB the reference list, ADT the
- * affidavit, AST the abstract, ACC the acknowledgments, FWD the foreword, and APX the appendix part with the
+ * TOC the table of contents, LOF the list of figures, LOT the list of tables, LOL the list of listings, BIB the
+ * reference list, ADT the affidavit, AST the abstract, ACC the acknowledgments, FWD the foreword, and APX the appendix part with the
  * appendices A, B, …. None of them gets a chapter number, and the table of contents does not list itself.
  */
-export type SectionCode = 'TOC' | 'LOF' | 'LOT' | 'BIB' | 'ADT' | 'AST' | 'ACC' | 'FWD' | 'APX';
+export type SectionCode = 'TOC' | 'LOF' | 'LOT' | 'LOL' | 'BIB' | 'ADT' | 'AST' | 'ACC' | 'FWD' | 'APX';
 
 /** sectionCodes are the codes of the special sections. */
-export const sectionCodes: readonly SectionCode[] = ['TOC', 'LOF', 'LOT', 'BIB', 'ADT', 'AST', 'ACC', 'FWD', 'APX'];
+export const sectionCodes: readonly SectionCode[] = ['TOC', 'LOF', 'LOT', 'LOL', 'BIB', 'ADT', 'AST', 'ACC', 'FWD', 'APX'];
 
 /** Terms are the words of a language that the renderer writes or finds in the headings of a document. */
 export interface Terms {
@@ -121,6 +121,7 @@ const termsOf: Record<string, Terms> = {
       TOC: ['Inhaltsverzeichnis', 'Inhalt'],
       LOF: ['Abbildungsverzeichnis'],
       LOT: ['Tabellenverzeichnis'],
+      LOL: ['Listingverzeichnis', 'Verzeichnis der Listings'],
       BIB: ['Literaturverzeichnis', 'Literatur', 'Quellenverzeichnis', 'Quellen', 'Bibliographie', 'Bibliografie'],
       ADT: ['Eidesstattliche Erklärung', 'Eidesstattliche Versicherung'],
       AST: ['Abstrakt', 'Abstract', 'Kurzfassung', 'Zusammenfassung'],
@@ -138,6 +139,7 @@ const termsOf: Record<string, Terms> = {
       TOC: ['Table of Contents', 'Contents'],
       LOF: ['List of Figures', 'List of Illustrations'],
       LOT: ['List of Tables'],
+      LOL: ['List of Listings'],
       BIB: ['Bibliography', 'References', 'Works Cited'],
       ADT: ['Affidavit', 'Statutory Declaration', 'Declaration'],
       AST: ['Abstract', 'Summary'],

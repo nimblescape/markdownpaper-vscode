@@ -21,7 +21,8 @@ export const baseCss = `.footnote {
 }
 nav.contents a::after,
 nav.list-of-figures a::after,
-nav.list-of-tables a::after {
+nav.list-of-tables a::after,
+nav.list-of-listings a::after {
   content: target-counter(attr(href), page);
 }
 img {

@@ -69,9 +69,10 @@ section in curly brackets at the end of the heading, for example
 
 | Code | Section | German headings | English headings |
 | --- | --- | --- | --- |
-| `TOC` | Table of contents, generated | Inhaltsverzeichnis, Inhalt | Table of Contents, Contents |
-| `LOF` | List of figures, generated | Abbildungsverzeichnis | List of Figures, List of Illustrations |
-| `LOT` | List of tables, generated | Tabellenverzeichnis | List of Tables |
+| `TOC` | Table of contents, a list | Inhaltsverzeichnis, Inhalt | Table of Contents, Contents |
+| `LOF` | List of figures, a list | Abbildungsverzeichnis | List of Figures, List of Illustrations |
+| `LOT` | List of tables, a list | Tabellenverzeichnis | List of Tables |
+| `LOL` | List of listings, a list | Listingverzeichnis, Verzeichnis der Listings | List of Listings |
 | `BIB` | Reference list | Literaturverzeichnis, Literatur, Quellenverzeichnis, Quellen, Bibliographie | Bibliography, References, Works Cited |
 | `ADT` | Affidavit | Eidesstattliche Erklärung | Affidavit, Statutory Declaration |
 | `AST` | Abstract | Abstrakt, Abstract, Kurzfassung, Zusammenfassung | Abstract, Summary |
@@ -79,34 +80,58 @@ section in curly brackets at the end of the heading, for example
 | `FWD` | Foreword | Vorwort | Foreword, Preface |
 | `APX` | Appendix part: `APX-A`, `APX-B`, … for its appendices | Anhang, Anhänge | Appendix, Appendices |
 
-A layout can change the words. The table of contents, the list of figures and
-the list of tables are generated: leave their sections empty, because the
-renderer replaces what stands there. The table of contents lists the headings
-after its own heading, to the depth of the layout, with their pages; it does
-not list itself. The list of figures and the list of tables list the captions
-with their pages.
+A layout can change the words. The four lists stand in the file, as lists of
+links between two hidden markers under their heading. The formatter writes
+them and keeps them current; do not change them by hand:
+
+```markdown
+# Inhaltsverzeichnis
+
+<!-- toc -->
+- [1 Einleitung](#einleitung)
+- [1.1 Methoden](#methoden)
+<!-- /toc -->
+
+# Abbildungsverzeichnis
+
+<!-- lof -->
+- [Abbildung 1: Teilnehmende nach Schulstufe](#fig-teilnehmende)
+<!-- /lof -->
+```
+
+The markers of the list of tables and of the list of listings are
+`<!-- lot -->` and `<!-- lol -->`. The pages show each list with the page of
+each entry, and nothing else of its section. The table of contents lists the
+headings after its own heading, to the depth of the layout; it does not list
+itself. A section without the markers gets the list of the renderer.
 
 ## 4. Figures
 
-An image alone in its paragraph is a figure. Its text in the square brackets
-is the caption, and the renderer numbers it:
+A paragraph `Figure 1:` directly before an image alone in its paragraph is
+the caption of the figure:
 
 ```markdown
+Figure 1: Die Rollen von Agenten im Team
+
 ![Die Rollen von Agenten im Team](images/rollen.png)
 ```
 
-The page shows "Abbildung 1: Die Rollen von Agenten im Team" (in English
-"Figure 1: …"), and the list of figures lists it. An image with an empty text,
-`![](images/logo.png)`, is a figure without a caption and without a number.
-An image within a line of text stays in the line. Write the path of an image
-relative to the Markdown file.
+The page shows "Abbildung 1: Die Rollen von Agenten im Team" above the image,
+and the list of figures lists it. The word of the language, `Abbildung 1:`,
+works too. The file holds the number of each caption, which the formatter of
+nimblescape Markdown Notes writes; the pages keep it. An image alone in its
+paragraph without a caption, such as a logo, is a figure without a caption
+and without a number. An image within a line of text stays in the line. Write
+the path of an image relative to the Markdown file.
 
-An anchor at the end of the line of the image gives the figure a name for
-links, as the slash command `/figure` of nimblescape Markdown Notes writes it;
-`/ref` writes a link to it:
+An anchor at the end of the caption gives the figure a name for links, as the
+slash command `/figure` of nimblescape Markdown Notes writes it; `/ref` writes
+a link to it:
 
 ```markdown
-![Der Plan der Studie](images/plan.png) <a id="fig-plan"></a>
+Figure 1: Der Plan der Studie <a id="fig-plan"></a>
+
+![Der Plan der Studie](images/plan.png)
 
 [Abbildung 1](#fig-plan) zeigt den Plan.
 ```
@@ -118,11 +143,11 @@ text.
 
 ## 5. Tables
 
-A paragraph that starts with `Table:` directly before a table is the caption
-of the table. The renderer numbers it:
+A paragraph that starts with `Table 1:` directly before a table is the
+caption of the table:
 
 ```markdown
-Table: Teilnehmende nach Schulstufe
+Table 1: Teilnehmende nach Schulstufe
 
 | Schulstufe | Anzahl |
 | --- | --- |
@@ -130,13 +155,13 @@ Table: Teilnehmende nach Schulstufe
 ```
 
 The page shows "Tabelle 1: Teilnehmende nach Schulstufe" above the table.
-The word of the language, for example `Tabelle:`, works too, and a number in
-the caption, as in `Tabelle 3:`, is replaced by the number of the renderer.
-A table without such a paragraph has no caption and no number.
+The word of the language, for example `Tabelle 1:`, works too. The pages keep
+the number of the file; a caption without a number, `Table:`, gets the next
+number. A table without such a paragraph has no caption and no number.
 
 An anchor at the end of the caption names the table for links, as the slash
 command `/table` of nimblescape Markdown Notes writes it:
-`Table: Teilnehmende nach Schulstufe <a id="tab-teilnehmende"></a>`. A link
+`Table 1: Teilnehmende nach Schulstufe <a id="tab-teilnehmende"></a>`. A link
 `[Tabelle 1](#tab-teilnehmende)` gets the label of the table, as for figures.
 `check` and the page preview warn about a link to `#fig-…`, `#tab-…`,
 `#lst-…` or `#sec-…`, or a link whose text is a word and a number, whose
@@ -145,13 +170,13 @@ figure, table, listing or heading does not exist.
 ## 6. Listings
 
 A listing is code of a source file of the repository, as the slash command
-`/listing` of nimblescape Markdown Notes writes it: a paragraph `Listing:`,
+`/listing` of nimblescape Markdown Notes writes it: a paragraph `Listing 1:`,
 the comment of the source, and a fenced code block. The caption is a link to
 the file and the lines of the source (`#L12-L30`, one line `#L12`, no `#L`
 for the whole file), and an anchor `lst-…` at its end names the listing:
 
 ````markdown
-Listing: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
+Listing 1: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
 
 <!-- listing: ../src/fields.ts#read-fields -->
 

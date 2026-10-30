@@ -14,16 +14,20 @@
  *   Paged.js puts at the foot of the page of that reference (`float: footnote`).
  * - The headings get the ID that GitHub gives them, so plain Markdown links to them work, and a number such as 1.1
  *   when the layout numbers them. A heading with `{-}` at its end,
- *   the heading of a special section (TOC, LOF, LOT, BIB, ADT, AST, ACC, FWD, APX: by its words in the language of
- *   the layout, or by a marker such as `{BIB}`), and a heading that a pattern of the layout names get none, nor do
+ *   the heading of a special section (TOC, LOF, LOT, LOL, BIB, ADT, AST, ACC, FWD, APX: by its words in the language
+ *   of the layout, or by a marker such as `{BIB}`), and a heading that a pattern of the layout names get none, nor do
  *   the headings below them.
- * - An image alone in its paragraph is a figure, with its text as the caption: "Abbildung 1: …". A paragraph
- *   "Table: …" directly before a table is the caption of the table: "Tabelle 1: …". A paragraph "Listing: …" before a
- *   listing of Markdown Notes, a fenced code block with the comment of its source, is the caption of the listing:
- *   "Listing 1: …", with the file and the lines of the source after it, and the code gets the numbers of its lines
- *   when the layout asks for them ([R-REN-011](../../docs/requirements.md#r-ren-011)).
- * - The section of the table of contents (TOC), of the list of figures (LOF) or of the list of tables (LOT) gets its
- *   generated list; the reference list (BIB) gets no soft hyphens.
+ * - The captions carry their numbers in the file, as the formatter of Markdown Notes writes them, and the pages keep
+ *   them; only a caption without a number gets the next number of its kind. A paragraph "Figure 1: …" directly before
+ *   an image alone in its paragraph is the caption of the figure, above the image; an image without it is a figure
+ *   without a caption. A paragraph "Table 1: …" directly before a table is the caption of the table. A paragraph
+ *   "Listing 1: …" before a listing of Markdown Notes, a fenced code block with the comment of its source, is the
+ *   caption of the listing, with the file and the lines of the source after it, and the code gets the numbers of its
+ *   lines when the layout asks for them ([R-REN-011](../../docs/requirements.md#r-ren-011)).
+ * - The section of the table of contents (TOC), of the list of figures (LOF), of the list of tables (LOT) or of the
+ *   list of listings (LOL) shows the list that the file holds between the markers of the section, such as
+ *   `<!-- toc -->` and `<!-- /toc -->`, which the formatter writes, with the page of each entry; a section without
+ *   them gets the list of the renderer. The reference list (BIB) gets no soft hyphens.
  * - The headings of the level 2 in the appendix part, after the heading "Anhang" or "Appendix", are the appendices
  *   A, B, … (one appendix has no letter), whose figures, tables and listings are numbered A1, A2, … as APA 7 numbers
  *   them.
@@ -58,8 +62,8 @@ const wbr = /^<wbr\s*\/?>$/i;
  */
 const headingMarker = new RegExp(`\\s*\\{(-|\\.unnumbered|${sectionCodes.join('|')})\\}\\s*$`);
 
-/** generatedLists are the special sections whose list the renderer writes. */
-const generatedLists = ['TOC', 'LOF', 'LOT'] as const;
+/** generatedLists are the special sections that show a list with the page of each entry. */
+const generatedLists = ['TOC', 'LOF', 'LOT', 'LOL'] as const;
 
 type GeneratedList = (typeof generatedLists)[number];
 
@@ -106,13 +110,34 @@ export interface Body {
   problems: Problem[];
 }
 
+/** Entry is an entry of the list of a special section in the file: the target of its link and the text of the link. */
+export interface Entry {
+  href: string;
+  text: string;
+}
+
 /** Found is what the rule finds in the tokens, for one rendering. */
 export interface Found extends Omit<Body, 'html'> {
+  /** lists are the entries of the lists that the file holds between the markers of their sections. */
+  lists: Partial<Record<(typeof generatedLists)[number], Entry[]>>;
   hyphenate?: (text: string) => string;
 }
 
 /** found returns an empty Found. */
-export const emptyFound = (): Found => ({ headings: [], figures: [], tables: [], listings: [], footnotes: 0, notes: 0, problems: [] });
+export const emptyFound = (): Found => ({ headings: [], figures: [], tables: [], listings: [], lists: {}, footnotes: 0, notes: 0, problems: [] });
+
+/** listMarker matches a marker of the list of a special section: `<!-- toc -->` at its start, `<!-- /toc -->` at its end. */
+const listMarker = /^\s*<!--\s*(\/?)(toc|lof|lot|lol)\s*-->\s*$/i;
+
+/**
+ * captionPattern returns the pattern of the start of a caption, such as "Table 2: " or "Tabelle: ", with the number as
+ * its group.
+ * @param words - The words of the caption: the English word and the word of the language.
+ */
+function captionPattern(...words: string[]): RegExp {
+  const alternatives = [...new Set(words)].map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  return new RegExp(`^(?:${alternatives})(?:\\s+([A-Z]?\\d+))?\\s*:\\s*`, 'i');
+}
 
 /** PaperEnv is what the rule needs in the environment of a rendering, as `nimblescapePaper`. */
 export interface PaperEnv {
@@ -192,6 +217,23 @@ function trailingAnchor(tokens: readonly Token[]): { id: string; start: number }
   }
   const open = end > 1 && tokens[end - 2].type === 'html_inline' && /^<\/a\s*>$/i.test(last.content) ? anchorTag.exec(tokens[end - 2].content) : null;
   return open && !open[2] ? { id: open[1], start: end - 2 } : undefined;
+}
+
+/**
+ * imageOf returns the children of a paragraph with only an image, without the anchor at its end, and the anchor, or
+ * undefined for another block.
+ * @param tokens - The tokens of the text.
+ * @param index - The index of the start of the paragraph.
+ */
+function imageOf(tokens: readonly Token[], index: number): { kept: Token[]; anchor?: { id: string; start: number } } | undefined {
+  if (tokens[index]?.type !== 'paragraph_open' || tokens[index + 1]?.type !== 'inline') {
+    return undefined;
+  }
+  const all = tokens[index + 1].children ?? [];
+  const anchor = trailingAnchor(all);
+  const kept = anchor ? all.slice(0, anchor.start) : all;
+  const children = kept.filter((child) => !(child.type === 'text' && child.content.trim() === '') && child.type !== 'softbreak');
+  return children.length === 1 && children[0].type === 'image' ? { kept, anchor } : undefined;
 }
 
 /**
@@ -457,9 +499,28 @@ function paperRule(layout: Layout, found: Found) {
     let figureCount = 0;
     let tableCount = 0;
     let listingCount = 0;
-    /** generated is the generated list whose section the rule is in, until the next heading of its level or above. */
+    /**
+     * numberOf returns the number of a caption and the count of its kind: the number that the file gives it, else the
+     * next number, with the letter of the appendix in the appendix part.
+     * @param given - The number in the file, or undefined.
+     * @param count - The count of the captions of the kind so far.
+     */
+    const numberOf = (given: string | undefined, count: number): [string, number] => {
+      if (given) {
+        return [given, Number(/\d+$/.exec(given)?.[0] ?? count)];
+      }
+      return [appendixPart && appendix >= 0 ? `${letter(appendix)}${count + 1}` : String(count + 1), count + 1];
+    };
+    const figureCaption = captionPattern('Figure', terms.figure);
+    const tableCaption = captionPattern('Table', terms.table);
+    const listingCaption = captionPattern('Listing', terms.listing);
+    /** generated is the list section that the rule is in, until the next heading of its level or above. */
     let generated: GeneratedList | undefined;
     let generatedLevel = 0;
+    /** inList is true between the markers of the list of the section. */
+    let inList = false;
+    /** listLinks are the links of the lists of the sections, which the rule checks as entries. */
+    const listLinks = new Map<Token, { list: GeneratedList; line: number }>();
     /** references is the level of the heading of the reference list while the rule is in it, else 0. */
     let references = 0;
     /** links are the links to a place in the file, which can name a figure or a table. */
@@ -478,6 +539,7 @@ function paperRule(layout: Layout, found: Found) {
         const level = Number(token.tag.slice(1));
         if (generated && level <= generatedLevel) {
           generated = undefined;
+          inList = false;
         }
         if (references && level <= references) {
           output.push(html(state, '</section>\n', true));
@@ -543,8 +605,8 @@ function paperRule(layout: Layout, found: Found) {
         found.headings.push({ level, id, number, text, ...(section ? { section } : {}), ...(appendixPart && level === 2 ? { appendix: true } : {}), ...(anchor ? { anchor: anchor.id } : {}), line: token.map?.[0] ?? 0 });
         output.push(token, inline, tokens[index + 2]);
         index += 2;
-        if (code === 'TOC' || code === 'LOF' || code === 'LOT') {
-          generated = code;
+        if (code && (generatedLists as readonly string[]).includes(code)) {
+          generated = code as GeneratedList;
           generatedLevel = level;
           output.push(html(state, `<!--paper:${code}-->\n`, true));
         } else if (code === 'BIB') {
@@ -554,18 +616,68 @@ function paperRule(layout: Layout, found: Found) {
         continue;
       }
       if (generated) {
-        // The generated list replaces the text of its section.
+        // The list of the file between the markers of the section gives its entries; the rest of the section does
+        // not show.
+        const marker = token.type === 'html_block' ? listMarker.exec(token.content) : null;
+        if (marker && marker[2].toUpperCase() === generated) {
+          inList = marker[1] === '';
+          if (inList) {
+            found.lists[generated] = [];
+          }
+        } else if (inList && token.type === 'inline') {
+          const children = token.children ?? [];
+          const open = children.findIndex((child) => child.type === 'link_open' && child.attrGet('href')?.startsWith('#'));
+          if (open >= 0) {
+            const close = children.findIndex((child, position) => position > open && child.type === 'link_close');
+            found.lists[generated]?.push({ href: children[open].attrGet('href')?.slice(1) ?? '', text: plainText(children.slice(open + 1, close < 0 ? undefined : close)).trim() });
+            listLinks.set(children[open], { list: generated, line: token.map?.[0] ?? 0 });
+          }
+        }
         continue;
       }
-      // A figure: a paragraph with only an image, whose text is the caption, and maybe the anchor of the figure.
       if (token.type === 'paragraph_open' && tokens[index + 1]?.type === 'inline') {
         const inline = tokens[index + 1];
         const anchor = trailingAnchor(inline.children ?? []);
         const kept = anchor ? (inline.children ?? []).slice(0, anchor.start) : (inline.children ?? []);
-        const children = kept.filter((child) => !(child.type === 'text' && child.content.trim() === '') && child.type !== 'softbreak');
-        if (children.length === 1 && children[0].type === 'image') {
-          const image = children[0];
-          const caption = plainText(image.children ?? []);
+        const text = plainText(kept);
+        const image = imageOf(tokens, index);
+        // A figure: a paragraph "Figure 1: …" directly before an image alone in its paragraph, with the anchor of the
+        // figure at the end of one of the two. The caption stands above the image, as in APA 7.
+        const figure = figureCaption.exec(text);
+        const next = imageOf(tokens, index + 3);
+        if (figure && next && !image) {
+          let number: string;
+          [number, figureCount] = numberOf(figure[1], figureCount);
+          const named = anchor ?? next.anchor;
+          if (named) {
+            ids.add(named.id);
+          }
+          const id = named ? named.id : unique(`figure-${number.toLowerCase()}`);
+          const label = `${terms.figure} ${number}`;
+          const kids = withoutTrailingSpace(kept);
+          const first = kids.find((child) => child.type === 'text');
+          if (first) {
+            first.content = first.content.replace(figureCaption, '');
+          }
+          token.tag = 'figure';
+          token.attrJoin('class', 'figure');
+          token.attrSet('id', id);
+          inline.children = [
+            html(state, `<figcaption><span class="caption-label">${escapeHtml(label)}</span><span class="caption-separator">: </span><span class="caption-text">`),
+            ...kids,
+            html(state, '</span></figcaption>'),
+          ];
+          tokens[index + 2].hidden = true;
+          tokens[index + 3].hidden = true;
+          tokens[index + 4].children = withoutTrailingSpace(next.kept);
+          tokens[index + 5].tag = 'figure';
+          found.figures.push({ id, label, text: plainText(kids), line: token.map?.[0] ?? 0 });
+          output.push(...tokens.slice(index, index + 6));
+          index += 5;
+          continue;
+        }
+        // An image alone in its paragraph, without a caption before it: a figure without a caption and a number.
+        if (image) {
           token.tag = 'figure';
           token.attrJoin('class', 'figure');
           tokens[index + 2].tag = 'figure';
@@ -574,27 +686,12 @@ function paperRule(layout: Layout, found: Found) {
             ids.add(anchor.id);
             token.attrSet('id', anchor.id);
           }
-          if (caption !== '') {
-            figureCount++;
-            const number = appendixPart && appendix >= 0 ? `${letter(appendix)}${figureCount}` : String(figureCount);
-            const id = anchor ? anchor.id : unique(`figure-${number.toLowerCase()}`);
-            const label = `${terms.figure} ${number}`;
-            token.attrSet('id', id);
-            const rendered = state.md.renderer.renderInline(image.children ?? [], state.md.options, state.env);
-            inline.children = [
-              ...inline.children,
-              html(state, `<figcaption><span class="caption-label">${escapeHtml(label)}</span><span class="caption-separator">: </span><span class="caption-text">${rendered}</span></figcaption>`),
-            ];
-            found.figures.push({ id, label, text: caption, line: token.map?.[0] ?? 0 });
-          }
         }
-        // A caption of a table: "Table: …" directly before the table, and maybe the anchor of the table at its end.
-        const text = plainText(kept);
-        const words = [...new Set(['Table', terms.table])].map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-        const tableCaption = new RegExp(`^(?:${words})(?:\\s+[A-Z]?\\d+)?\\s*:\\s*`, 'i');
-        if (tokens[index + 3]?.type === 'table_open' && tableCaption.test(text)) {
-          tableCount++;
-          const number = appendixPart && appendix >= 0 ? `${letter(appendix)}${tableCount}` : String(tableCount);
+        // A caption of a table: "Table 1: …" directly before the table, and maybe the anchor of the table at its end.
+        const table = tableCaption.exec(text);
+        if (tokens[index + 3]?.type === 'table_open' && table) {
+          let number: string;
+          [number, tableCount] = numberOf(table[1], tableCount);
           let id: string;
           if (anchor) {
             ids.add(anchor.id);
@@ -617,14 +714,13 @@ function paperRule(layout: Layout, found: Found) {
           ];
           found.tables.push({ id, label, text: text.replace(tableCaption, ''), line: token.map?.[0] ?? 0 });
         }
-        // A caption of a listing: "Listing: …" directly before the comment of the source and the code block.
-        const listingWords = [...new Set(['Listing', terms.listing])].map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-        const listingCaption = new RegExp(`^(?:${listingWords})(?:\\s+[A-Z]?\\d+)?\\s*:\\s*`, 'i');
+        // A caption of a listing: "Listing 1: …" directly before the comment of the source and the code block.
         const comment = tokens[index + 3]?.type === 'html_block' ? listingComment.exec(tokens[index + 3].content) : null;
         const fence = comment ? tokens[index + 4] : tokens[index + 3];
-        if (fence?.type === 'fence' && listingCaption.test(text)) {
-          listingCount++;
-          const number = appendixPart && appendix >= 0 ? `${letter(appendix)}${listingCount}` : String(listingCount);
+        const listing = listingCaption.exec(text);
+        if (fence?.type === 'fence' && listing) {
+          let number: string;
+          [number, listingCount] = numberOf(listing[1], listingCount);
           let id: string;
           if (anchor) {
             ids.add(anchor.id);
@@ -670,6 +766,15 @@ function paperRule(layout: Layout, found: Found) {
     const labels = new Map([...found.figures, ...found.tables, ...found.listings].map((caption) => [caption.id, caption.label]));
     const headings = new Map(found.headings.flatMap((heading) => [[heading.id, heading], ...(heading.anchor ? [[heading.anchor, heading] as const] : [])]));
     for (const link of links) {
+      const entry = listLinks.get(link.open);
+      if (entry) {
+        // An entry of a list must find its heading, figure, table or listing.
+        const href = link.open.attrGet('href')?.slice(1) ?? '';
+        if (!labels.has(href) && !headings.has(href) && !ids.has(href)) {
+          found.problems.push({ severity: 'warning', message: `The entry #${href} of the ${entry.list} names no heading, figure, table or listing of the file.`, line: entry.line });
+        }
+        continue;
+      }
       const href = link.open.attrGet('href')?.slice(1) ?? '';
       let target = href;
       try {
@@ -775,15 +880,57 @@ export function paperPlugin(md: MarkdownIt): void {
   };
 }
 
+/** listClasses are the classes of the element of each list. */
+const listClasses: Record<GeneratedList, string> = { TOC: 'contents', LOF: 'list-of-figures', LOT: 'list-of-tables', LOL: 'list-of-listings' };
+
 /**
- * list returns the HTML of a generated list: the table of contents, the list of figures or the list of tables. The
- * style sheet adds the page numbers with `target-counter`. The table of contents lists every heading to its depth,
- * but not its own heading.
+ * listOfFile returns the HTML of the list of a special section from its entries in the file, with the elements and
+ * classes of the list of the renderer: a heading gets the level of its heading, and the number of the text of an entry
+ * its own element; the text of an entry of figures, tables or listings is a label and a caption, such as
+ * "Figure 1: Participants".
+ * @param code - The code of the list.
+ * @param entries - The entries of the file.
+ * @param found - What the rule found.
+ */
+function listOfFile(code: GeneratedList, entries: readonly Entry[], found: Found): string {
+  const headings = new Map(found.headings.flatMap((heading) => [[heading.id, heading], ...(heading.anchor ? [[heading.anchor, heading] as const] : [])]));
+  const items = entries.map((entry) => {
+    const href = `#${escapeHtml(entry.href)}`;
+    if (code === 'TOC') {
+      const heading = headings.get(entry.href);
+      const classes = `contents-level-${heading?.level ?? 1}${heading?.appendix ? ' appendix' : /^\d/.test(entry.text) ? '' : ' unnumbered'}`;
+      const appendix = heading?.appendix ? /^(.+?):\s+(.+)$/.exec(entry.text) : null;
+      const numbered = /^(\d+(?:\.\d+)*\.?)\s+(.+)$/.exec(entry.text);
+      const text = appendix
+        ? `<span class="contents-text"><span class="appendix-label">${escapeHtml(appendix[1])}</span><span class="appendix-separator">: </span>${escapeHtml(appendix[2])}</span>`
+        : numbered
+          ? `<span class="contents-number">${escapeHtml(numbered[1])}</span><span class="contents-text">${escapeHtml(numbered[2])}</span>`
+          : `<span class="contents-text">${escapeHtml(entry.text)}</span>`;
+      return `<li class="${classes}"><a href="${href}">${text}</a></li>`;
+    }
+    const caption = /^(.+?):\s+(.+)$/.exec(entry.text);
+    const text = caption
+      ? `<span class="caption-label">${escapeHtml(caption[1])}</span><span class="caption-separator">: </span><span class="caption-text">${escapeHtml(caption[2])}</span>`
+      : `<span class="caption-text">${escapeHtml(entry.text)}</span>`;
+    return `<li><a href="${href}"><span class="caption-entry">${text}</span></a></li>`;
+  });
+  return `<nav class="${listClasses[code]} no-hyphens"><ol>\n${items.join('\n')}\n</ol></nav>\n`;
+}
+
+/**
+ * list returns the HTML of the list of a special section: the table of contents, the list of figures, of tables or of
+ * listings. The style sheet adds the page numbers with `target-counter`. The list is the one of the file when it has
+ * one between the markers of the section; else the renderer makes it: the table of contents lists every heading to its
+ * depth, but not its own heading.
  * @param code - The code of the list.
  * @param found - What the rule found.
  * @param depth - The deepest level of heading in the table of contents.
  */
 function list(code: GeneratedList, found: Found, depth: number): string {
+  const entries = found.lists[code];
+  if (entries) {
+    return listOfFile(code, entries, found);
+  }
   if (code === 'TOC') {
     const items = found.headings
       .filter((heading) => heading.level <= depth && heading.section !== 'TOC')
@@ -796,13 +943,13 @@ function list(code: GeneratedList, found: Found, depth: number): string {
       });
     return `<nav class="contents no-hyphens"><ol>\n${items.join('\n')}\n</ol></nav>\n`;
   }
-  const captions = code === 'LOF' ? found.figures : found.tables;
+  const captions = code === 'LOF' ? found.figures : code === 'LOT' ? found.tables : found.listings;
   const items = captions.map(
     (caption) =>
       `<li><a href="#${caption.id}"><span class="caption-entry"><span class="caption-label">${escapeHtml(caption.label)}</span><span class="caption-separator">: </span>` +
       `<span class="caption-text">${escapeHtml(caption.text)}</span></span></a></li>`,
   );
-  return `<nav class="${code === 'LOF' ? 'list-of-figures' : 'list-of-tables'} no-hyphens"><ol>\n${items.join('\n')}\n</ol></nav>\n`;
+  return `<nav class="${listClasses[code]} no-hyphens"><ol>\n${items.join('\n')}\n</ol></nav>\n`;
 }
 
 /**
@@ -814,7 +961,7 @@ function list(code: GeneratedList, found: Found, depth: number): string {
  */
 export function finishBody(html: string, found: Found, layout: Layout, hyphenate?: (text: string) => string): string {
   const hyphenated = hyphenate ? hyphenateHtml(html, hyphenate) : html;
-  return hyphenated.replace(/<!--paper:(TOC|LOF|LOT)-->\n?/g, (_all, code: GeneratedList) => list(code, found, layout.contentsDepth));
+  return hyphenated.replace(/<!--paper:(TOC|LOF|LOT|LOL)-->\n?/g, (_all, code: GeneratedList) => list(code, found, layout.contentsDepth));
 }
 
 /**

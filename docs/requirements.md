@@ -49,6 +49,8 @@ This document replaces it where the two differ.
 | 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark and the name wait for a decision |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` with the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
+| 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
+| 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `markdownpaper format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | planned |
 
 ## General
 
@@ -137,8 +139,8 @@ extension or the npm package until the owner asks for it.
 
 **Language.** The code, the settings, the commands and the documentation use
 English terms: "table of contents", "list of figures", "list of tables",
-"reference list", "appendix". The words that the renderer writes into a
-document, such as "Inhaltsverzeichnis", "Abbildung 1" or "Anhang A", come from
+"list of listings", "reference list", "appendix". The words that the renderer
+writes into a document, such as "Inhaltsverzeichnis", "Abbildung 1" or "Anhang A", come from
 the language of the layout ([R-LAY-005](#r-lay-005)).
 
 ### R-GEN-007
@@ -156,6 +158,26 @@ in the same commit.
 - The same holds for every file of the repository: the other documents, the
   lists of features, the code comments and the titles of the tests state a
   request as a short summary, without quotes, names, dates or times.
+
+### R-GEN-008
+
+**Document driven.** The Markdown file holds everything that the reader reads
+as text, so that it is complete on GitHub and for AI agents without a
+renderer ([decision 26](#decisions)):
+
+- The file holds the numbers of the captions (`Figure 1:`, `Table 2:`,
+  `Listing 3:`), the numbers in the links to figures, tables, listings and
+  headings, the lists of the special sections
+  ([R-REN-004](#r-ren-004)), the code of the listings and the reference list.
+- The formatter writes these parts and keeps them current, only from the
+  file and its source files, the same in VS Code and on the command line, so
+  that a check of the format in CI finds a file whose parts are old.
+- The headings keep no numbers in the file, because a number changes the ID
+  that GitHub gives a heading, and links from other files would break. The
+  renderer numbers the headings ([R-REN-003](#r-ren-003)).
+- The renderer adds only the look: the layout, the numbers of the headings,
+  the page numbers, the numbers of the lines of a listing and the source
+  after the caption of a listing. It does not number a caption again.
 
 ## Documents
 
@@ -191,7 +213,8 @@ in the text editor as warnings after a pause in typing, and with
   field, or at the field `layout` when the field is missing.
 - Each link to `#fig-…`, `#tab-…`, `#lst-…` or `#sec-…`, and each link whose
   text is a word and a number, such as `[Kapitel 2.1](#methoden)`, must find
-  its figure, table, listing or heading ([R-REN-009](#r-ren-009)).
+  its figure, table, listing or heading ([R-REN-009](#r-ren-009)), and so must
+  each entry of the list of a special section ([R-REN-004](#r-ren-004)).
 - The Markdown preview of a paper document adds the problems of the renderer,
   for example a template that does not exist. Each problem shows once.
 - `markdownpaper check` prints each problem as `file:line:column: severity:
@@ -305,6 +328,7 @@ the language of the layout; German and English are built in:
 | `TOC` | Inhaltsverzeichnis, Inhalt | Table of Contents, Contents |
 | `LOF` | Abbildungsverzeichnis | List of Figures, List of Illustrations |
 | `LOT` | Tabellenverzeichnis | List of Tables |
+| `LOL` | Listingverzeichnis, Verzeichnis der Listings | List of Listings |
 | `BIB` | Literaturverzeichnis, Literatur, Quellenverzeichnis, Quellen, Bibliographie, Bibliografie | Bibliography, References, Works Cited |
 | `ADT` | Eidesstattliche Erklärung, Eidesstattliche Versicherung | Affidavit, Statutory Declaration, Declaration |
 | `AST` | Abstrakt, Abstract, Kurzfassung, Zusammenfassung | Abstract, Summary |
@@ -404,14 +428,15 @@ the layout.
 
 ### R-REN-004
 
-**Special sections and generated lists.** These sections have no chapter
-number, nor do the headings below them ([decision 10](#decisions)):
+**Special sections and lists.** These sections have no chapter number, nor do
+the headings below them ([decision 10](#decisions)):
 
 | Code | Section |
 | --- | --- |
-| `TOC` | Table of contents (Inhaltsverzeichnis), generated |
-| `LOF` | List of figures (Abbildungsverzeichnis), generated |
-| `LOT` | List of tables (Tabellenverzeichnis), generated |
+| `TOC` | Table of contents (Inhaltsverzeichnis), a list |
+| `LOF` | List of figures (Abbildungsverzeichnis), a list |
+| `LOT` | List of tables (Tabellenverzeichnis), a list |
+| `LOL` | List of listings (Listingverzeichnis), a list |
 | `BIB` | Reference list (Literaturverzeichnis, Bibliography) |
 | `ADT` | Affidavit (Eidesstattliche Erklärung) |
 | `AST` | Abstract (Abstrakt) |
@@ -427,35 +452,76 @@ number, nor do the headings below them ([decision 10](#decisions)):
 - The heading gets the class `section-<code>`, the class `unnumbered` and the
   attribute `data-section` with the code, for example `data-section="BIB"`,
   and an appendix `data-section="APX-A"`.
-- The renderer generates the table of contents, the list of figures and the
-  list of tables in their sections, and replaces what stands there
-  ([decision 7](#decisions)). Each entry is a link with
-  the page of its target, which Paged.js writes with `target-counter`.
-- The table of contents lists the headings to the depth of the layout, with
-  their numbers, also the special sections and the appendices, but not its
-  own heading.
-- The list of figures and the list of tables list the label and the text of
-  each caption ([R-REN-005](#r-ren-005)).
+- The file holds the list of each of these four sections, between two hidden
+  markers under the heading that the author writes; the formatter writes the
+  list and keeps it current ([decision 28](#decisions),
+  [R-GEN-008](#r-gen-008)):
+
+  ```markdown
+  # Inhaltsverzeichnis
+
+  <!-- toc -->
+  - [1 Einleitung](#einleitung)
+  - [1.1 Methoden](#methoden)
+  - [Anhang A: Interviewleitfaden](#interviewleitfaden)
+  <!-- /toc -->
+
+  # Abbildungsverzeichnis
+
+  <!-- lof -->
+  - [Abbildung 1: Teilnehmende nach Schulstufe](#fig-teilnehmende)
+  <!-- /lof -->
+  ```
+
+  The markers of the other lists are `<!-- lot -->` and `<!-- lol -->`. The
+  numbers stand in the texts of the links; each figure, table and listing of
+  a list needs its anchor `fig-…`, `tab-…` or `lst-…`. On GitHub the lists
+  are lists of links.
+- The pages show the list of the file with the page of the target of each
+  entry, which Paged.js writes with `target-counter`; the rest of the
+  section does not show. An entry of the table of contents gets the level of
+  its heading, and its number its own element, for the indent of the layout.
+  An entry whose target is not in the file is a warning
+  ([R-DOC-002](#r-doc-002)).
+- A section without the markers gets the list of the renderer, until the
+  formatter writes the list (plan step 22): the table of contents lists the
+  headings to the depth of the layout, with their numbers, also the special
+  sections and the appendices, but not its own heading; the list of figures,
+  the list of tables and the list of listings list the label and the text of
+  each caption ([R-REN-005](#r-ren-005), [R-REN-011](#r-ren-011)).
 - The reference list gets no soft hyphens, and the layout gives its entries
   their indent.
 
 ### R-REN-005
 
-**Figures and tables.** The renderer numbers the figures and the tables that
-have a caption, and the lists of [R-REN-004](#r-ren-004) list them.
+**Figures and tables.** A figure and a table have their caption in a
+paragraph directly before them, with the number that the formatter of
+Markdown Notes writes ([decision 8](#decisions), [decision 27](#decisions)),
+and the lists of [R-REN-004](#r-ren-004) list them.
 
-- An image alone in its paragraph is a figure, and its text in the square
-  brackets is its caption ([decision 8](#decisions)):
-  `![Die Rollen von Agenten im Team](images/rollen.png)` shows "Abbildung 1:
-  Die Rollen von Agenten im Team" below the image. An image with an empty text
-  is a figure without a caption and without a number. An image within a line
-  of text stays in the line.
-- A paragraph that starts with `Table:` directly before a table is the caption
-  of the table ([decision 8](#decisions)): `Table: Teilnehmende nach
-  Schulstufe` shows "Tabelle 1: Teilnehmende nach Schulstufe" above the table.
-  The word of the language, for example `Tabelle:`, works too, and a number in
-  the caption, as in `Tabelle 3:`, is replaced by the number of the renderer.
-  GitHub shows the caption as a paragraph above the table.
+- A paragraph that starts with `Figure 1:` directly before an image alone in
+  its paragraph is the caption of the figure, and the page shows it above the
+  image, as APA 7 does:
+
+  ```markdown
+  Figure 1: Teilnehmende nach Schulstufe
+
+  ![Teilnehmende nach Schulstufe](images/teilnehmende.png)
+  ```
+
+  An image alone in its paragraph without such a paragraph is a figure
+  without a caption and without a number. An image within a line of text
+  stays in the line.
+- A paragraph that starts with `Table 1:` directly before a table is the
+  caption of the table: `Table 1: Teilnehmende nach Schulstufe` shows
+  "Tabelle 1: Teilnehmende nach Schulstufe" above the table.
+- The word of the language works too, for example `Abbildung 1:` and
+  `Tabelle 1:`. GitHub shows a caption as a paragraph above its figure or
+  table.
+- The pages keep the number of the caption in the file and do not number it
+  again ([R-GEN-008](#r-gen-008)). A caption without a number, such as
+  `Table:`, gets the next number of its kind, so that a file without the
+  format still has numbers.
 - The label is the word of the language and the number: "Abbildung 1",
   "Figure 1", "Tabelle 2". Figures and tables count apart, through the whole
   document; in the appendix see [R-REN-006](#r-ren-006).
@@ -501,17 +567,20 @@ write figures, tables and links to them ([decision 13](#decisions), [decision
 15](#decisions)): `/figure` picks an image of the folder and inserts the figure
 with its caption and its anchor, `/table` inserts a table with its caption and
 its anchor, and `/ref` inserts a link to a figure, a table or a heading, with
-the number of a chapter. The anchor stands at the end of the line of the image
-or of the caption. A heading needs no anchor: a link to a heading is a plain
+the number of a chapter. The anchor stands at the end of the line of the
+caption; the renderer also reads the anchor of a figure at the end of the line
+of the image. A heading needs no anchor: a link to a heading is a plain
 Markdown link to the ID of the heading ([R-REN-003](#r-ren-003), [decision
 16](#decisions)):
 
 ```markdown
 ## Methoden
 
-![Der Plan der Studie](images/plan.png) <a id="fig-plan"></a>
+Figure 1: Der Plan der Studie <a id="fig-plan"></a>
 
-Table: Noten nach Schulstufe <a id="tab-grades"></a>
+![Der Plan der Studie](images/plan.png)
+
+Table 1: Noten nach Schulstufe <a id="tab-grades"></a>
 
 [Abbildung 1](#fig-plan) zeigt den Plan, [Tabelle 1](#tab-grades) die Noten,
 [Kapitel 2.1](#methoden) die Methoden.
@@ -523,18 +592,20 @@ Table: Noten nach Schulstufe <a id="tab-grades"></a>
   not show, and the table of contents shows the heading without it.
 - The renderer writes the text of each link whose text is a word and a
   number anew: the label of a figure, a table or a listing ("Abbildung 1",
-  "Tabelle A1", "Listing 2"), the label of an appendix ("Anhang A"), and for another heading the
-  word of the link and the number of the heading ("Kapitel 2.1"). The page
-  always shows the number of the renderer. A link with other words, such as
-  `[den Plan](#fig-plan)`, and a link to a heading without a number, for
-  example of a special section, keep their text.
+  "Tabelle A1", "Listing 2"), the label of an appendix ("Anhang A"), and for
+  another heading the word of the link and the number of the heading
+  ("Kapitel 2.1"). So the page always shows the number of the caption or of
+  the heading, also in a file whose links are old. A link with other words,
+  such as `[den Plan](#fig-plan)`, and a link to a heading without a number,
+  for example of a special section, keep their text.
 - A link to `#fig-…`, `#tab-…`, `#lst-…` or `#sec-…`, or a link whose text
   is a word and a number, without its target is a warning
   ([R-DOC-002](#r-doc-002)).
-- The formatter of Markdown Notes writes the numbers of the links in the order
-  of the file; the format step of the paper ([R-CLI-002](#r-cli-002)) will
-  write them by the rules of the layout, so the file shows the numbers of the
-  pages.
+- The formatter of Markdown Notes writes the numbers of the captions and of
+  the links in the order of the file ([R-GEN-008](#r-gen-008)); the format
+  step of the paper ([R-CLI-002](#r-cli-002)) will write the numbers of the
+  headings in the links by the rules of the layout, so the file shows the
+  numbers of the pages.
 - Markdown Notes defines the form of the anchors and of the links in
   [R-XREF-001](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-001),
   [R-XREF-002](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-002)
@@ -588,7 +659,7 @@ and a fenced code block, whose code its formatter keeps current
 ([R-CODE-002](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-code-002)):
 
 ````markdown
-Listing: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
+Listing 1: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
 
 <!-- listing: ../src/fields.ts#read-fields -->
 
@@ -602,8 +673,9 @@ export function readFields(lines: readonly string[]): Map<string, string> {
 - A paragraph that starts with `Listing:` before a fenced code block, with
   the comment of the source between them or not, is the caption of the
   listing: the page shows "Listing 1: Reading the fields" above the code. The
-  word of the language works too, and a number in the caption, as in
-  `Listing 3:`, is replaced by the number of the renderer, as for a table
+  word of the language works too. The pages keep the number of the caption
+  in the file, `Listing 1:`, which the formatter of Markdown Notes writes, and
+  a caption without a number gets the next number, as for a table
   ([R-REN-005](#r-ren-005)). The listings count apart from the figures and
   the tables, through the whole document; in the appendix see
   [R-REN-006](#r-ren-006).
@@ -854,8 +926,8 @@ notes and the paper are two packages. The plan:
   formatter of Markdown Notes as a library, `formatMarkdown(lines)` of
   `@nimblescape/markdownnotes` ([R-GEN-003](#r-gen-003)), and then the steps of
   the paper: the citations and the reference list ([R-CITE-004](#r-cite-004)),
-  and the numbers of the links to figures and tables
-  ([R-REN-009](#r-ren-009)).
+  the lists of the special sections ([R-REN-004](#r-ren-004)), and the
+  numbers of the headings in the links ([R-REN-009](#r-ren-009)).
 - `markdownnotes format` stays the formatter of files without a paper.
 - In VS Code, the extension registers the steps of the paper as a format step
   of Markdown Notes, so "Format Document" and format on save run all steps in
@@ -1001,12 +1073,13 @@ requirement ([R-GEN-007](#r-gen-007)).
 6. **The installed browser prints the PDF** ([R-PDF-002](#r-pdf-002)): an
    installed Chrome, Chromium or Edge first, and a download of Chromium only
    when none is found. The package holds no Chromium.
-7. **Generated lists** ([R-REN-004](#r-ren-004)): table of contents, list of
-   figures, list of tables; English terms in code and documentation
+7. **Lists of the special sections** ([R-REN-004](#r-ren-004)): table of
+   contents, list of figures, list of tables, and list of listings
+   ([decision 28](#decisions)); English terms in code and documentation
    ([R-GEN-006](#r-gen-006)).
-8. **Captions** ([R-REN-005](#r-ren-005)): the text of an image is its
-   caption; a table gets its caption from a paragraph `Table: …` directly
-   before it, which GitHub shows as well.
+8. **Captions** ([R-REN-005](#r-ren-005)): a table gets its caption from a
+   paragraph `Table 1: …` directly before it, which GitHub shows as well; a
+   figure the same way ([decision 27](#decisions)).
 9. **Appendix** ([R-REN-006](#r-ren-006)): the appendix part `# Anhang` with
    one `##` heading for each appendix.
 10. **Special sections without chapter numbers** ([R-REN-004](#r-ren-004)):
@@ -1063,6 +1136,21 @@ requirement ([R-GEN-007](#r-gen-007)).
     the file and the lines of the source. The pages show the text of the
     caption without the link, and after it the file and the lines of the
     source, which an option of the layout turns off.
+26. **Document driven** ([R-GEN-008](#r-gen-008)): the file holds what the
+    reader reads as text, and the formatter keeps it current: the numbers of
+    the captions and of the links, the lists of the special sections, the
+    code of the listings and the reference list. The headings keep no
+    numbers in the file. The renderer adds only the look.
+27. **The caption of a figure is a paragraph before the image**
+    ([R-REN-005](#r-ren-005)): `Figure 1: …`, as for a table, shown above
+    the image as APA 7 does; an image without it has no caption and no
+    number.
+28. **The lists of the special sections are in the file**
+    ([R-REN-004](#r-ren-004)): the formatter writes the table of contents,
+    the list of figures, the list of tables and the list of listings as lists
+    of links between hidden markers, such as `<!-- toc -->` and
+    `<!-- /toc -->`, under a heading that the author writes; the renderer
+    adds the page numbers.
 
 ## Open questions
 

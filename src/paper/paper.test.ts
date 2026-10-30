@@ -181,7 +181,7 @@ describe('the page (R-REN-001, R-REN-008)', () => {
   });
 
   test('a file without a layout gets the built-in layout plain, and the field lang changes its language', async () => {
-    const rendered = await render(hostOf({}), 'file:///repo/notes.md', '---\nlang: de-AT\n---\n# Abbildungsverzeichnis\n\n# Teil\n\n![Bild](b.png)\n');
+    const rendered = await render(hostOf({}), 'file:///repo/notes.md', '---\nlang: de-AT\n---\n# Abbildungsverzeichnis\n\n# Teil\n\nFigure: Bild\n\n![Bild](b.png)\n');
     expect(rendered.layout.id).toBe('plain');
     expect(rendered.layout.language).toBe('de-AT');
     expect(rendered.body.figures[0].label).toBe('Abbildung 1');

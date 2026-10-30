@@ -96,9 +96,10 @@ the heading, for example `# Quellen und Materialien {BIB}`.
 
 | Code | Section | German words | English words |
 | --- | --- | --- | --- |
-| `TOC` | Table of contents, generated | Inhaltsverzeichnis, Inhalt | Table of Contents, Contents |
-| `LOF` | List of figures, generated | Abbildungsverzeichnis | List of Figures, List of Illustrations |
-| `LOT` | List of tables, generated | Tabellenverzeichnis | List of Tables |
+| `TOC` | Table of contents, a list | Inhaltsverzeichnis, Inhalt | Table of Contents, Contents |
+| `LOF` | List of figures, a list | Abbildungsverzeichnis | List of Figures, List of Illustrations |
+| `LOT` | List of tables, a list | Tabellenverzeichnis | List of Tables |
+| `LOL` | List of listings, a list | Listingverzeichnis, Verzeichnis der Listings | List of Listings |
 | `BIB` | Reference list | Literaturverzeichnis, Literatur, Quellenverzeichnis, Quellen, Bibliographie | Bibliography, References, Works Cited |
 | `ADT` | Affidavit | Eidesstattliche Erklärung | Affidavit, Statutory Declaration |
 | `AST` | Abstract | Abstrakt, Abstract, Kurzfassung, Zusammenfassung | Abstract, Summary |
@@ -128,8 +129,8 @@ gives the style sheet these parts:
 | `h1` to `h6`, `.heading-number` | The headings and their numbers. |
 | `.section-toc`, `.section-bib`, … | The heading of a special section, with `data-section` = its code. |
 | `nav.contents`, `.contents-level-1` to `-6`, `.contents-number`, `.contents-text` | The table of contents; the renderer adds the page of each entry as `a::after`. |
-| `nav.list-of-figures`, `nav.list-of-tables`, `.caption-entry` | The list of figures and the list of tables. |
-| `figure.figure`, `figcaption`, `.caption-label`, `.caption-separator`, `.caption-text` | A figure and its caption. |
+| `nav.list-of-figures`, `nav.list-of-tables`, `nav.list-of-listings`, `.caption-entry` | The list of figures, of tables and of listings. |
+| `figure.figure`, `figcaption`, `.caption-label`, `.caption-separator`, `.caption-text` | A figure and its caption, which comes before the image. |
 | `p.table-caption` | The caption of a table, directly before the table. |
 | `p.listing-caption`, `.caption-source`, `pre.listing`, `.line-number` | The caption of a listing before its code, the file and the lines of its source after the caption, the code, and the number of each line, an element without text whose number `::before { content: attr(data-number); }` shows. |
 | `.footnote`, `.footnote-paragraph`, `::footnote-call`, `::footnote-marker`, `@footnote` | The footnotes at the foot of the page. |
@@ -177,7 +178,7 @@ print one from the template with LibreOffice
 4. Write the cover page as `cover.html` with the fields of the front matter, and the other fixed pages, for example the affidavit, and list them in `before` or `after`.
 5. List the fields that the templates and the PDF name use in `fields` of `layout.json`, each with a description for the people and agents who write documents.
 6. Copy the fonts into `fonts/` with their license files, and the logo into `images/`.
-7. Write a document with every element (headings, lists, a table with its caption, a figure, a quote, footnotes, the generated lists, a reference list, an appendix) and make its PDF: `npx -y @nimblescape/markdownpaper pdf example.md`.
+7. Write a document with every element (headings, lists, a table with its caption, a figure with its caption, a listing, a quote, footnotes, the four lists, a reference list, an appendix) and make its PDF: `npx -y @nimblescape/markdownpaper pdf example.md`.
 8. Compare the pages with the PDF of the template, page by page as images side by side (for example `pdftoppm -r 60 -png`). Change the CSS and make the PDF again while a page differs, for example in the margins, the line spacing or the footer.
 9. Write down in a comment of `page.css` what CSS cannot do as Word does.
 

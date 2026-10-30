@@ -67,12 +67,13 @@ gives the same renderer to people and AI agents on the command line:
   pages: the diagrams of Mermaid, the math of KaTeX, and the highlights and
   "Add Note" of Markdown Notes. The pages are white paper also in a dark
   theme.
-- **Numbers and lists.** The headings get numbers such as 1.1. A heading of
-  the table of contents, of the list of figures or of the list of tables gets
-  its list with the page numbers. An image alone in its paragraph is a
-  figure, whose text is its caption: `![Die Rollen](images/rollen.png)` shows
-  "Abbildung 1: Die Rollen". A paragraph `Table: …` directly before a table
-  is its caption. Links to figures and tables show the numbers of the pages.
+- **Numbers and lists.** The headings get numbers such as 1.1. The table of
+  contents, the list of figures, the list of tables and the list of listings
+  show the lists of the file with the page numbers. A paragraph
+  `Figure 1: …` directly before an image, `Table 1: …` before a table and
+  `Listing 1: …` before a listing is its caption, with the number that the
+  file holds. Links to figures, tables and listings show the numbers of the
+  pages.
 - **Special sections.** The table of contents, the lists, the reference
   list, the affidavit, the abstract, the acknowledgments, the foreword and the
   appendix get no chapter number. The words of their headings come from the

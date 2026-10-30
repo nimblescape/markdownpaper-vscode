@@ -160,7 +160,7 @@ hr {
   margin: 1em 0;
 }
 
-/* Figures: the image, and its caption below it. */
+/* Figures: the caption above the image, as in APA 7. */
 figure.figure {
   margin: 1em 0;
   text-align: center;
@@ -175,7 +175,7 @@ figure.figure img {
 
 figcaption {
   font-size: 9.5pt;
-  margin-top: 2mm;
+  margin-bottom: 2mm;
   text-align: center;
 }
 

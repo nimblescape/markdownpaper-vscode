@@ -32,8 +32,9 @@ npx -y @nimblescape/markdownpaper pdf paper/paper.md
 1. It reads the front matter and finds the layout (`instructions layout`).
 2. It turns the Markdown text into HTML: notes of nimblescape Markdown Notes
    leave the text, footnotes go to the foot of their page, headings get their
-   numbers, figures, tables and listings their captions, and the special
-   sections their lists (`instructions document`).
+   numbers, figures, tables and listings their captions with the numbers of
+   the file, and the special sections show the lists of the file with the
+   page of each entry (`instructions document`).
 3. It hyphenates the text by the language of the layout with soft hyphens, not
    in headings, links, code, captions, the generated lists and the reference
    list. Chromium breaks a line only there, so the lines are the same on every

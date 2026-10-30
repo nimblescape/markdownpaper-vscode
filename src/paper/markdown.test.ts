@@ -156,22 +156,95 @@ describe('special sections (R-REN-004)', () => {
   });
 });
 
+describe('lists of the special sections (R-REN-004)', () => {
+  test('a special section shows the list of the file between its markers, with the elements of the list of the renderer', () => {
+    const markdown = [
+      '# Inhaltsverzeichnis',
+      '',
+      '<!-- toc -->',
+      '- [1 Einleitung](#einleitung)',
+      '- [1.1 Methoden](#methoden)',
+      '- [Literaturverzeichnis](#literaturverzeichnis)',
+      '- [Anhang A: Daten](#daten)',
+      '- [2 Weg](#weg)',
+      '<!-- /toc -->',
+      '',
+      '# Verzeichnis der Listings',
+      '',
+      '<!-- lol -->',
+      '- [Listing 1: Lesen](#lst-lesen)',
+      '<!-- /lol -->',
+      '',
+      '# Abbildungsverzeichnis',
+      '',
+      'Kein Eintrag.',
+      '',
+      '# Einleitung',
+      '',
+      '## Methoden',
+      '',
+      'Listing 1: Lesen <a id="lst-lesen"></a>',
+      '',
+      '```ts',
+      'a();',
+      '```',
+      '',
+      'Figure 1: Bild',
+      '',
+      '![Bild](b.png)',
+      '',
+      '# Literaturverzeichnis',
+      '',
+      '# Anhang',
+      '',
+      '## Daten',
+      '',
+      '## Mehr',
+      '',
+    ].join('\n');
+    const body = renderBody(markdown, layoutOf());
+    expect(body.html).toContain(
+      '<nav class="contents no-hyphens"><ol>\n' +
+        '<li class="contents-level-1"><a href="#einleitung"><span class="contents-number">1</span><span class="contents-text">Einleitung</span></a></li>\n' +
+        '<li class="contents-level-2"><a href="#methoden"><span class="contents-number">1.1</span><span class="contents-text">Methoden</span></a></li>\n' +
+        '<li class="contents-level-1 unnumbered"><a href="#literaturverzeichnis"><span class="contents-text">Literaturverzeichnis</span></a></li>\n' +
+        '<li class="contents-level-2 appendix"><a href="#daten"><span class="contents-text"><span class="appendix-label">Anhang A</span><span class="appendix-separator">: </span>Daten</span></a></li>\n' +
+        '<li class="contents-level-1"><a href="#weg"><span class="contents-number">2</span><span class="contents-text">Weg</span></a></li>\n</ol></nav>',
+    );
+    expect(body.html).toContain(
+      '<nav class="list-of-listings no-hyphens"><ol>\n<li><a href="#lst-lesen"><span class="caption-entry"><span class="caption-label">Listing 1</span>' +
+        '<span class="caption-separator">: </span><span class="caption-text">Lesen</span></span></a></li>\n</ol></nav>',
+    );
+    // A section without the markers gets the list of the renderer, and the rest of a section does not show.
+    expect(body.html).toContain('<nav class="list-of-figures no-hyphens"><ol>\n<li><a href="#figure-1">');
+    expect(body.html).not.toContain('Kein Eintrag');
+    expect(body.html).not.toContain('<!--');
+    expect(body.problems).toEqual([{ severity: 'warning', message: 'The entry #weg of the TOC names no heading, figure, table or listing of the file.', line: 7 }]);
+  });
+});
+
 describe('figures and tables (R-REN-005)', () => {
-  test('an image alone in its paragraph is a figure with its text as the numbered caption, listed in the list of figures', () => {
-    const body = renderBody('# Abbildungsverzeichnis\n\n# Teil\n\n![Die Rollen](rollen.png)\n\nText ![Icon](icon.png) im Satz.\n\n![](logo.png)\n', layoutOf());
+  test('a paragraph "Figure 1:" directly before an image alone in its paragraph is the caption of the figure, above the image, listed in the list of figures', () => {
+    const markdown = '# Abbildungsverzeichnis\n\n# Teil\n\nFigure 1: Die Rollen\n\n![Rollen im Team](rollen.png)\n\nText ![Icon](icon.png) im Satz.\n\n![Das Logo](logo.png)\n';
+    const body = renderBody(markdown, layoutOf());
     expect(body.figures).toEqual([{ id: 'figure-1', label: 'Abbildung 1', text: 'Die Rollen', line: 4 }]);
-    expect(body.html).toContain('<figure data-line="4" class="figure" id="figure-1"><img src="rollen.png" alt="Die Rollen"><figcaption><span class="caption-label">Abbildung 1</span><span class="caption-separator">: </span><span class="caption-text">Die Rollen</span></figcaption></figure>');
-    expect(body.html).toContain('<p data-line="6">Text <img src="icon.png" alt="Icon"> im Satz.</p>');
-    expect(body.html).toContain('<figure data-line="8" class="figure"><img src="logo.png" alt=""></figure>');
+    expect(body.html).toContain(
+      '<figure data-line="4" class="figure" id="figure-1"><figcaption><span class="caption-label">Abbildung 1</span><span class="caption-separator">: </span>' +
+        '<span class="caption-text">Die Rollen</span></figcaption><img src="rollen.png" alt="Rollen im Team"></figure>\n<p data-line="8">',
+    );
+    expect(body.html).toContain('<p data-line="8">Text <img src="icon.png" alt="Icon"> im Satz.</p>');
+    // An image without a caption line is a figure without a caption and without a number.
+    expect(body.html).toContain('<figure data-line="10" class="figure"><img src="logo.png" alt="Das Logo"></figure>');
     expect(body.html).toContain('<nav class="list-of-figures no-hyphens"><ol>\n<li><a href="#figure-1"><span class="caption-entry"><span class="caption-label">Abbildung 1</span>');
   });
 
-  test('a paragraph "Table:" directly before a table is its numbered caption, listed in the list of tables', () => {
+  test('a paragraph "Table 1:" directly before a table is its caption with the number of the file, listed in the list of tables', () => {
     const markdown = '# Tabellenverzeichnis\n\n# Teil\n\nTable: Teilnehmende\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\nTabelle 7: Zweite\n\n| c |\n| - |\n| 3 |\n\nTable: no table follows\n';
     const body = renderBody(markdown, layoutOf());
+    // The number of the file stays; a caption without a number gets the next number.
     expect(body.tables.map((table) => [table.label, table.text])).toEqual([
       ['Tabelle 1', 'Teilnehmende'],
-      ['Tabelle 2', 'Zweite'],
+      ['Tabelle 7', 'Zweite'],
     ]);
     expect(body.html).toContain('<p data-line="4" id="table-1" class="caption table-caption"><span class="caption-label">Tabelle 1</span><span class="caption-separator">: </span><span class="caption-text">Teilnehmende</span></p>');
     expect(body.html).toContain('<p data-line="16">Table: no table follows</p>');
@@ -179,12 +252,12 @@ describe('figures and tables (R-REN-005)', () => {
   });
 
   test('the appendices are A, B, and their figures and tables are numbered A1, B1 (R-REN-006)', () => {
-    const markdown = '# Teil\n\n![Eins](1.png)\n\n# Anhang\n\n## Leitfaden\n\n![Zwei](2.png)\n\n## Transkript\n\nTable: Kodes\n\n| a |\n| - |\n| 1 |\n';
+    const markdown = '# Teil\n\nFigure: Eins\n\n![Eins](1.png)\n\n# Anhang\n\n## Leitfaden\n\nFigure: Zwei\n\n![Zwei](2.png)\n\n## Transkript\n\nTable: Kodes\n\n| a |\n| - |\n| 1 |\n';
     const body = renderBody(markdown, layoutOf());
     expect(body.figures.map((figure) => figure.label)).toEqual(['Abbildung 1', 'Abbildung A1']);
     expect(body.tables.map((table) => table.label)).toEqual(['Tabelle B1']);
     expect(body.headings.filter((heading) => heading.appendix).map((heading) => heading.number)).toEqual(['Anhang A', 'Anhang B']);
-    expect(body.html).toContain('<h2 data-line="6" id="leitfaden" class="appendix" data-section="APX-A"><span class="appendix-label">Anhang A</span> Leitfaden</h2>');
+    expect(body.html).toContain('<h2 data-line="8" id="leitfaden" class="appendix" data-section="APX-A"><span class="appendix-label">Anhang A</span> Leitfaden</h2>');
   });
 });
 
@@ -193,7 +266,13 @@ describe('links to figures and tables (R-REN-009)', () => {
     const markdown = [
       'Siehe [Table 1](#tab-noten), [Figure 2](#fig-plan) und [den Plan](#fig-plan).',
       '',
-      '![Der Plan](plan.png) <a id="fig-plan"></a>',
+      'Figure 1: Der Plan <a id="fig-plan"></a>',
+      '',
+      '![Plan der Studie](plan.png)',
+      '',
+      'Abbildung: Der Ablauf',
+      '',
+      '![Ablauf](ablauf.png) <a id="fig-ablauf"></a>',
       '',
       'Table: Noten <a id="tab-noten"></a>',
       '',
@@ -212,22 +291,31 @@ describe('links to figures and tables (R-REN-009)', () => {
       '| - |',
       '| 2 |',
       '',
-      'Wie [Tabelle 9](#tab-roh) zeigt; [Table 3](#tab-fehlt).',
+      'Wie [Tabelle 9](#tab-roh) zeigt; [Table 3](#tab-fehlt); [Figure 5](#fig-ablauf).',
       '',
     ].join('\n');
     const body = renderBody(markdown, layoutOf());
-    expect(body.figures).toEqual([{ id: 'fig-plan', label: 'Abbildung 1', text: 'Der Plan', line: 2 }]);
+    // The anchor of a figure stands at the end of its caption or of its image.
+    expect(body.figures).toEqual([
+      { id: 'fig-plan', label: 'Abbildung 1', text: 'Der Plan', line: 2 },
+      { id: 'fig-ablauf', label: 'Abbildung 2', text: 'Der Ablauf', line: 6 },
+    ]);
     expect(body.tables.map((table) => [table.id, table.label, table.text])).toEqual([
       ['tab-noten', 'Tabelle 1', 'Noten'],
       ['tab-roh', 'Tabelle A1', 'Rohdaten'],
     ]);
     expect(body.html).toContain('<a href="#tab-noten">Tabelle 1</a>, <a href="#fig-plan">Abbildung 1</a> und <a href="#fig-plan">den Plan</a>');
-    expect(body.html).toContain('<figure data-line="2" class="figure" id="fig-plan"><img src="plan.png" alt="Der Plan"><figcaption>');
-    expect(body.html).toContain('<p data-line="4" id="tab-noten" class="caption table-caption"><span class="caption-label">Tabelle 1</span><span class="caption-separator">: </span><span class="caption-text">Noten</span></p>');
+    expect(body.html).toContain(
+      '<figure data-line="2" class="figure" id="fig-plan"><figcaption><span class="caption-label">Abbildung 1</span><span class="caption-separator">: </span>' +
+        '<span class="caption-text">Der Plan</span></figcaption><img src="plan.png" alt="Plan der Studie"></figure>',
+    );
+    expect(body.html).toContain('<figure data-line="6" class="figure" id="fig-ablauf"><figcaption><span class="caption-label">Abbildung 2</span>');
+    expect(body.html).toContain('<img src="ablauf.png" alt="Ablauf"></figure>');
+    expect(body.html).toContain('<p data-line="10" id="tab-noten" class="caption table-caption"><span class="caption-label">Tabelle 1</span><span class="caption-separator">: </span><span class="caption-text">Noten</span></p>');
     expect(body.html).toContain('<span class="caption-text">Rohdaten</span></p>');
-    expect(body.html).toContain('Wie <a href="#tab-roh">Tabelle A1</a> zeigt; <a href="#tab-fehlt">Table 3</a>.');
+    expect(body.html).toContain('Wie <a href="#tab-roh">Tabelle A1</a> zeigt; <a href="#tab-fehlt">Table 3</a>; <a href="#fig-ablauf">Abbildung 2</a>.');
     expect(body.html).not.toContain('<a id=');
-    expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #tab-fehlt names no figure, table, listing or heading of the file.', line: 21 }]);
+    expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #tab-fehlt names no figure, table, listing or heading of the file.', line: 27 }]);
   });
 
   test('a Markdown link to a heading gets the number of the heading or the label of the appendix, also through an anchor at the end of the heading', () => {
@@ -312,6 +400,14 @@ describe('listings (R-REN-011)', () => {
     expect(body.html).not.toContain('<a id=');
     expect(body.html).not.toContain('href="../src');
     expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #lst-fehlt names no figure, table, listing or heading of the file.', line: 20 }]);
+  });
+
+  test('a listing keeps the number of its caption in the file', () => {
+    const body = renderBody('Listing 4: Vier\n\n```ts\na();\n```\n\nListing: Fünf\n\n```ts\nb();\n```\n', layoutOf());
+    expect(body.listings.map((listing) => [listing.id, listing.label])).toEqual([
+      ['listing-4', 'Listing 4'],
+      ['listing-5', 'Listing 5'],
+    ]);
   });
 
   test('a link to one line names the line, and the layout leaves out the source', () => {

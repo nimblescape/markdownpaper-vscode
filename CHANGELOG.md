@@ -23,20 +23,23 @@ The first version.
 - Special sections without a chapter number, found by the words of their
   headings in the language of the layout or by a marker such as `{BIB}`: the
   table of contents (`TOC`), the list of figures (`LOF`), the list of tables
-  (`LOT`), the reference list (`BIB`), the affidavit (`ADT`), the abstract
-  (`AST`), the acknowledgments (`ACC`), the foreword (`FWD`) and the appendix
-  (`APX`, with the appendices `APX-A`, `APX-B`). The table of contents, the
-  list of figures and the list of tables are generated, with the page
-  numbers.
-- Figures and tables: an image alone in its paragraph is a figure whose text
-  is its caption, "Abbildung 1: …"; a paragraph `Table: …` directly before a
-  table is its caption, "Tabelle 1: …". In the appendix they are numbered A1,
-  B1. An anchor such as `<a id="fig-plan"></a>` at the end of the line names a
+  (`LOT`), the list of listings (`LOL`), the reference list (`BIB`), the
+  affidavit (`ADT`), the abstract (`AST`), the acknowledgments (`ACC`), the
+  foreword (`FWD`) and the appendix (`APX`, with the appendices `APX-A`,
+  `APX-B`). The four lists show the list of links that the file holds
+  between hidden markers, such as `<!-- toc -->`, with the page numbers; a
+  section without the markers gets the list of the renderer.
+- Figures and tables: a paragraph `Figure 1: …` directly before an image is
+  the caption of the figure, above the image; a paragraph `Table 1: …`
+  directly before a table is its caption. The pages keep the numbers of the
+  file, which the formatter of Markdown Notes writes, and a caption without a
+  number gets the next number. In the appendix they are numbered A1, B1. An
+  anchor such as `<a id="fig-plan"></a>` at the end of the line names a
   figure or a table, and a link to it, such as `[Abbildung 1](#fig-plan)`,
   shows the number of the pages. A heading has the ID of GitHub, so a plain
   Markdown link such as `[Kapitel 2.1](#methoden)` shows the number of the
   heading.
-- Listings of nimblescape Markdown Notes: a paragraph `Listing: …` before the
+- Listings of nimblescape Markdown Notes: a paragraph `Listing 1: …` before the
   comment of the source and the code block is the caption of the listing,
   "Listing 1: …", with the file and the lines of the source after it, such as
   "(fields.ts, L12-L30)", and without the link of the caption. The layout

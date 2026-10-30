@@ -18,11 +18,15 @@
  *   the layout, or by a marker such as `{BIB}`), and a heading that a pattern of the layout names get none, nor do
  *   the headings below them.
  * - An image alone in its paragraph is a figure, with its text as the caption: "Abbildung 1: …". A paragraph
- *   "Table: …" directly before a table is the caption of the table: "Tabelle 1: …".
+ *   "Table: …" directly before a table is the caption of the table: "Tabelle 1: …". A paragraph "Listing: …" before a
+ *   listing of Markdown Notes, a fenced code block with the comment of its source, is the caption of the listing:
+ *   "Listing 1: …", with the file and the lines of the source after it, and the code gets the numbers of its lines
+ *   when the layout asks for them ([R-REN-011](../../docs/requirements.md#r-ren-011)).
  * - The section of the table of contents (TOC), of the list of figures (LOF) or of the list of tables (LOT) gets its
  *   generated list; the reference list (BIB) gets no soft hyphens.
  * - The headings of the level 2 in the appendix part, after the heading "Anhang" or "Appendix", are the appendices
- *   A, B, … (one appendix has no letter), whose figures and tables are numbered A1, A2, … as APA 7 numbers them.
+ *   A, B, … (one appendix has no letter), whose figures, tables and listings are numbered A1, A2, … as APA 7 numbers
+ *   them.
  * - Each block names its line in the file (`data-line`), so that a click on a page shows that line in the editor.
  *
  * `paperPlugin` adds the rule to a markdown-it instance: to the one of `renderBody` for the PDF and the command line, and
@@ -79,7 +83,7 @@ export interface Heading {
   line: number;
 }
 
-/** Caption is the caption of a figure or of a table. */
+/** Caption is the caption of a figure, of a table or of a listing. */
 export interface Caption {
   id: string;
   /** label is the word and the number, for example "Abbildung 1". */
@@ -95,6 +99,7 @@ export interface Body {
   headings: Heading[];
   figures: Caption[];
   tables: Caption[];
+  listings: Caption[];
   /** footnotes is the number of the footnotes of the pages; notes is the number of the removed notes. */
   footnotes: number;
   notes: number;
@@ -107,7 +112,7 @@ export interface Found extends Omit<Body, 'html'> {
 }
 
 /** found returns an empty Found. */
-export const emptyFound = (): Found => ({ headings: [], figures: [], tables: [], footnotes: 0, notes: 0, problems: [] });
+export const emptyFound = (): Found => ({ headings: [], figures: [], tables: [], listings: [], footnotes: 0, notes: 0, problems: [] });
 
 /** PaperEnv is what the rule needs in the environment of a rendering, as `nimblescapePaper`. */
 export interface PaperEnv {
@@ -339,6 +344,71 @@ function placeFootnotes(state: StateCore): number {
   return numbers.size;
 }
 
+/** listingComment matches the comment of a listing of Markdown Notes, `<!-- listing: ../src/fields.ts#read-fields -->`. */
+const listingComment = /^\s*<!--\s*listing:\s*(\S+)\s*-->\s*$/;
+
+/**
+ * sourceOf returns the file and the lines of the source of a listing for its caption, for example "fields.ts, L12-L30",
+ * from the target of the link of the caption (`../src/fields.ts#L12-L30`, one line `#L12`, the whole file without `#`),
+ * or from the comment of the listing, which names a snippet and no lines.
+ * @param target - The target, or undefined.
+ */
+function sourceOf(target: string | undefined): string | undefined {
+  if (!target) {
+    return undefined;
+  }
+  const [path, fragment = ''] = target.split('#', 2);
+  let file = path.split('?')[0].split('/').filter((part) => part !== '').at(-1) ?? '';
+  try {
+    file = decodeURIComponent(file);
+  } catch {
+    // A name with a wrong escape stays as it is.
+  }
+  if (file === '') {
+    return undefined;
+  }
+  const lines = /^L\d+(?:-L\d+)?$/.test(fragment) ? fragment : '';
+  return lines ? `${file}, ${lines}` : file;
+}
+
+/** ListingMeta is the mark of the code block of a listing for the renderer of code blocks, in the meta of its token. */
+interface ListingMeta {
+  paperListing?: { lineNumbers: boolean };
+}
+
+/**
+ * listingCode gives the code block of a listing the class `listing`, and the numbers of its lines when the layout asks
+ * for them.
+ * @param html - The HTML of the code block.
+ * @param lineNumbers - True for the numbers of the lines.
+ */
+export function listingCode(html: string, lineNumbers: boolean): string {
+  const marked = html.replace(/^<pre\b([^>]*)>/, (_all, attributes: string) =>
+    /\bclass="/.test(attributes) ? `<pre${attributes.replace(/\bclass="/, 'class="listing ')}>` : `<pre class="listing"${attributes}>`,
+  );
+  return lineNumbers ? numberLines(marked) : marked;
+}
+
+/**
+ * numberLines puts the number of each line before the lines of the code of a code block, as an empty element whose
+ * number the style sheet shows, so that it works with the colors of a highlighter and on a page that continues the
+ * code block on the next page.
+ * @param html - The HTML of the code block.
+ */
+export function numberLines(html: string): string {
+  const open = /<code[^>]*>(?:<div[^>]*>)?/.exec(html);
+  const end = html.lastIndexOf('</code>');
+  if (!open || end < open.index + open[0].length) {
+    return html;
+  }
+  const start = open.index + open[0].length;
+  const lines = html.slice(start, end).split('\n');
+  // The code ends with a line break, after which only the end of an element of the highlighter can stand.
+  const last = lines.length > 1 && /^(?:<\/div>)?$/.test(lines[lines.length - 1]) ? lines.pop() : undefined;
+  const numbered = lines.map((line, index) => `<span class="line-number" data-number="${index + 1}" aria-hidden="true"></span>${line}`);
+  return `${html.slice(0, start)}${[...numbered, ...(last !== undefined ? [last] : [])].join('\n')}${html.slice(end)}`;
+}
+
 /**
  * paperRule is the rule of the renderer that runs after the rules of markdown-it and of the footnotes.
  * @param layout - The layout of the document.
@@ -386,6 +456,7 @@ function paperRule(layout: Layout, found: Found) {
     })();
     let figureCount = 0;
     let tableCount = 0;
+    let listingCount = 0;
     /** generated is the generated list whose section the rule is in, until the next heading of its level or above. */
     let generated: GeneratedList | undefined;
     let generatedLevel = 0;
@@ -448,6 +519,7 @@ function paperRule(layout: Layout, found: Found) {
           appendix++;
           figureCount = 0;
           tableCount = 0;
+          listingCount = 0;
           number = appendixCount > 1 ? `${terms.appendix} ${letter(appendix)}` : terms.appendix;
           section = `APX-${letter(appendix)}`;
           token.attrJoin('class', 'appendix');
@@ -545,6 +617,46 @@ function paperRule(layout: Layout, found: Found) {
           ];
           found.tables.push({ id, label, text: text.replace(tableCaption, ''), line: token.map?.[0] ?? 0 });
         }
+        // A caption of a listing: "Listing: …" directly before the comment of the source and the code block.
+        const listingWords = [...new Set(['Listing', terms.listing])].map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+        const listingCaption = new RegExp(`^(?:${listingWords})(?:\\s+[A-Z]?\\d+)?\\s*:\\s*`, 'i');
+        const comment = tokens[index + 3]?.type === 'html_block' ? listingComment.exec(tokens[index + 3].content) : null;
+        const fence = comment ? tokens[index + 4] : tokens[index + 3];
+        if (fence?.type === 'fence' && listingCaption.test(text)) {
+          listingCount++;
+          const number = appendixPart && appendix >= 0 ? `${letter(appendix)}${listingCount}` : String(listingCount);
+          let id: string;
+          if (anchor) {
+            ids.add(anchor.id);
+            id = anchor.id;
+          } else {
+            id = unique(`listing-${number.toLowerCase()}`);
+          }
+          const label = `${terms.listing} ${number}`;
+          // The caption is a link to the source, which a page cannot open: the page shows its text, and the file and
+          // the lines of the source after it.
+          let kids = withoutTrailingSpace(kept);
+          const link = kids.find((child) => child.type === 'link_open' && !child.attrGet('href')?.startsWith('#'));
+          const source = sourceOf(link?.attrGet('href') ?? comment?.[1]);
+          if (link) {
+            const open = kids.indexOf(link);
+            const close = kids.findIndex((child, position) => position > open && child.type === 'link_close');
+            kids = kids.filter((_child, position) => position !== open && position !== close);
+          }
+          const first = kids.find((child) => child.type === 'text');
+          if (first) {
+            first.content = first.content.replace(listingCaption, '');
+          }
+          token.attrSet('id', id);
+          token.attrJoin('class', 'caption listing-caption');
+          inline.children = [
+            html(state, `<span class="caption-label">${escapeHtml(label)}</span><span class="caption-separator">: </span><span class="caption-text">`),
+            ...kids,
+            html(state, `</span>${layout.listings.source && source ? `<span class="caption-source"> (${escapeHtml(source)})</span>` : ''}`),
+          ];
+          fence.meta = { ...(fence.meta as object | undefined), paperListing: { lineNumbers: layout.listings.lineNumbers } } satisfies ListingMeta;
+          found.listings.push({ id, label, text: plainText(kids), line: token.map?.[0] ?? 0 });
+        }
       }
       output.push(token);
     }
@@ -555,7 +667,7 @@ function paperRule(layout: Layout, found: Found) {
     // A link whose text is a word and a number gets the label of its target: the label of a figure or a table
     // ("Abbildung 1"), the label of an appendix ("Anhang A"), or the word of the link and the number of a heading
     // ("Kapitel 2.1"). A heading without a number keeps the text of its links.
-    const labels = new Map([...found.figures, ...found.tables].map((caption) => [caption.id, caption.label]));
+    const labels = new Map([...found.figures, ...found.tables, ...found.listings].map((caption) => [caption.id, caption.label]));
     const headings = new Map(found.headings.flatMap((heading) => [[heading.id, heading], ...(heading.anchor ? [[heading.anchor, heading] as const] : [])]));
     for (const link of links) {
       const href = link.open.attrGet('href')?.slice(1) ?? '';
@@ -570,8 +682,8 @@ function paperRule(layout: Layout, found: Found) {
       const reference = link.text.length > 0 && link.text.every((child) => child.type === 'text') && referenceText.test(text);
       if (!labels.has(target) && !heading) {
         // A link of a cross reference, by its target or by its text, such as "Kapitel 2.1", must find its target.
-        if ((/^(?:fig|tab|sec)-/.test(target) || reference) && !ids.has(target)) {
-          found.problems.push({ severity: 'warning', message: `The link #${target} names no figure, table or heading of the file.`, line: link.line });
+        if ((/^(?:fig|tab|lst|sec)-/.test(target) || reference) && !ids.has(target)) {
+          found.problems.push({ severity: 'warning', message: `The link #${target} names no figure, table, listing or heading of the file.`, line: link.line });
         }
         continue;
       }
@@ -654,6 +766,13 @@ export function paperPlugin(md: MarkdownIt): void {
     state.tokens.unshift(token);
   });
   md.renderer.rules[paperTokenType] = () => '';
+  // The code block of a listing gets its class, and the numbers of its lines when the layout asks for them.
+  const fence = md.renderer.rules.fence;
+  md.renderer.rules.fence = (tokens, index, options, env, self) => {
+    const rendered = fence ? fence(tokens, index, options, env, self) : self.renderToken(tokens, index, options);
+    const listing = (tokens[index].meta as ListingMeta | null)?.paperListing;
+    return listing ? listingCode(rendered, listing.lineNumbers) : rendered;
+  };
 }
 
 /**

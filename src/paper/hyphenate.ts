@@ -63,8 +63,8 @@ export function hyphenatorOf(language: string): ((text: string) => string) | und
 /** noHyphenTag matches the elements whose text gets no soft hyphens: headings, links, code, and the like. */
 const noHyphenTag = /^(?:h[1-6]|a|code|pre|kbd|samp|script|style|figcaption|math|svg|template|textarea)$/i;
 
-/** noHyphenClass matches the classes of elements whose text gets no soft hyphens: the diagrams and formulas of plugins. */
-const noHyphenClass = /\bclass="[^"]*\b(?:no-hyphens|mermaid|katex|katex-display|math|plantuml)\b/;
+/** noHyphenClass matches the classes of elements whose text gets no soft hyphens: captions, and the diagrams and formulas of plugins. */
+const noHyphenClass = /\bclass="[^"]*\b(?:no-hyphens|caption|mermaid|katex|katex-display|math|plantuml)\b/;
 
 /**
  * textTag matches the elements of running text, whose text gets soft hyphens. The text of other elements, such as the

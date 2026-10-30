@@ -138,11 +138,36 @@ An anchor at the end of the caption names the table for links, as the slash
 command `/table` of nimblescape Markdown Notes writes it:
 `Table: Teilnehmende nach Schulstufe <a id="tab-teilnehmende"></a>`. A link
 `[Tabelle 1](#tab-teilnehmende)` gets the label of the table, as for figures.
-`check` and the page preview warn about a link to `#fig-…`, `#tab-…` or
-`#sec-…`, or a link whose text is a word and a number, whose figure, table or
-heading does not exist.
+`check` and the page preview warn about a link to `#fig-…`, `#tab-…`,
+`#lst-…` or `#sec-…`, or a link whose text is a word and a number, whose
+figure, table, listing or heading does not exist.
 
-## 6. Footnotes
+## 6. Listings
+
+A listing is code of a source file of the repository, as the slash command
+`/listing` of nimblescape Markdown Notes writes it: a paragraph `Listing:`,
+the comment of the source, and a fenced code block. The caption is a link to
+the file and the lines of the source (`#L12-L30`, one line `#L12`, no `#L`
+for the whole file), and an anchor `lst-…` at its end names the listing:
+
+````markdown
+Listing: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
+
+<!-- listing: ../src/fields.ts#read-fields -->
+
+```typescript
+export function readFields(lines: readonly string[]): Map<string, string> {
+  …
+}
+```
+````
+
+The page shows "Listing 1: Reading the fields (fields.ts, L12-L30)" above the
+code, without the link. A link `[Listing 1](#lst-reading-fields)` gets the
+label of the listing. Do not change the code of a listing by hand: the
+formatter of Markdown Notes writes it from the source.
+
+## 7. Footnotes
 
 A footnote is a Markdown footnote. Its text goes to the foot of the page of
 its first reference:
@@ -158,7 +183,7 @@ references, whatever their labels are. A second reference shows the number of
 the footnote again. The definition can stand anywhere in the file; lines
 indented by four spaces after it belong to it.
 
-## 7. Reference list and appendix
+## 8. Reference list and appendix
 
 - A chapter heading `# Literaturverzeichnis` or `# References` (more words in
   section 3) starts the reference list. Its entries get no soft hyphens; the
@@ -166,7 +191,7 @@ indented by four spaces after it belong to it.
 - A chapter heading `# Anhang` or `# Appendix` after the reference list starts
   the appendix part. Each `##` heading in it is one appendix: the renderer
   labels it "Anhang A", "Anhang B" (one appendix only: "Anhang"), and numbers
-  its figures and tables A1, A2, B1, as APA 7 does.
+  its figures, tables and listings A1, A2, B1, as APA 7 does.
 
 ```markdown
 # Anhang
@@ -180,7 +205,7 @@ indented by four spaces after it belong to it.
 …
 ```
 
-## 8. Notes of nimblescape Markdown Notes
+## 9. Notes of nimblescape Markdown Notes
 
 A footnote whose label is `note-` and four small letters or digits, for
 example `[^note-7k2q]`, is a note of the authors (format of
@@ -188,12 +213,12 @@ nimblescape Markdown Notes, version 1). The pages leave the notes out: their
 references, their start markers `<wbr><!--[note-7k2q-->` and their
 definitions. Keep a note as it is unless you are asked to change it.
 
-## 9. What the pages do not show
+## 10. What the pages do not show
 
 - HTML comments, for example the comment of the format of the notes.
 - Scripts: a script in the Markdown text or in a template does not run.
 
-## 10. Checks
+## 11. Checks
 
 ```sh
 npx -y @nimblescape/markdownpaper check paper/paper.md

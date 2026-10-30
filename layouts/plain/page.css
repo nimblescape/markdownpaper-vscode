@@ -191,6 +191,33 @@ p.table-caption {
   break-after: avoid;
 }
 
+/* Listings: the caption above the code, with the source of the code after it, and the numbers of the lines. */
+p.listing-caption {
+  font-size: 9.5pt;
+  text-align: left;
+  margin: 1em 0 1.5mm 0;
+  break-after: avoid;
+}
+
+.caption-source {
+  color: #555;
+}
+
+pre.listing {
+  margin-top: 0;
+}
+
+.line-number {
+  display: inline-block;
+  width: 2.2em;
+  margin-right: 0.8em;
+  text-align: right;
+  color: #888;
+  font-style: normal;
+  font-weight: normal;
+  user-select: none;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

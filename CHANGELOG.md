@@ -36,6 +36,12 @@ The first version.
   shows the number of the pages. A heading has the ID of GitHub, so a plain
   Markdown link such as `[Kapitel 2.1](#methoden)` shows the number of the
   heading.
+- Listings of nimblescape Markdown Notes: a paragraph `Listing: …` before the
+  comment of the source and the code block is the caption of the listing,
+  "Listing 1: …", with the file and the lines of the source after it, such as
+  "(fields.ts, L12-L30)", and without the link of the caption. The layout
+  option `listings.lineNumbers` shows the number of each line before the code;
+  `listings.source` turns off the source after the caption.
 - A Markdown file whose front matter names a layout is a paper document. The
   Markdown preview of VS Code shows its pages as the PDF prints them, as white
   paper also in a dark theme, and updates them after a pause in typing and
@@ -52,8 +58,8 @@ The first version.
   extensions add to the Markdown preview, for example the diagrams of Mermaid
   and the math of KaTeX.
 - Checks of the front matter: a layout that does not exist, a missing required
-  field and a link to a figure or a table that does not exist are warnings in
-  the text editor; the pointer on a field shows its description.
+  field and a link to a figure, a table or a listing that does not exist are
+  warnings in the text editor; the pointer on a field shows its description.
 - "New Project", "New Document" and "New Layout": a project gets `AGENTS.md`
   for AI agents, a copy of the layout, `paper/paper.md`, the drop folder
   `inbox/` for sources, the folder `bib/` for the files of the sources, and

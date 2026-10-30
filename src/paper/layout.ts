@@ -54,6 +54,8 @@ export interface Terms {
   figure: string;
   /** table is the word before the number of a table, for example "Tabelle". */
   table: string;
+  /** listing is the word before the number of a listing of source code, for example "Listing". */
+  listing: string;
   /** appendix is the word before the letter of an appendix, for example "Anhang". */
   appendix: string;
 }
@@ -88,6 +90,11 @@ export interface Layout {
   contentsDepth: number;
   /** hyphenate is true when the renderer hyphenates the text by the language. */
   hyphenate: boolean;
+  /**
+   * listings are the options of the listings of source code: lineNumbers puts the number of each line, from 1, before
+   * the code; source writes the file and the lines of the source after the caption.
+   */
+  listings: { lineNumbers: boolean; source: boolean };
   /** pdfName is the pattern of the name of the PDF file, with fields such as {{title}}. */
   pdfName: string;
   /** terms are the words of the language, changed by the layout. */
@@ -123,6 +130,7 @@ const termsOf: Record<string, Terms> = {
     },
     figure: 'Abbildung',
     table: 'Tabelle',
+    listing: 'Listing',
     appendix: 'Anhang',
   },
   en: {
@@ -139,6 +147,7 @@ const termsOf: Record<string, Terms> = {
     },
     figure: 'Figure',
     table: 'Table',
+    listing: 'Listing',
     appendix: 'Appendix',
   },
 };
@@ -263,10 +272,10 @@ export function parseLayout(text: string, id: string, folder: string): { layout?
         problem('warning', `The term "${key}" of the layout "${id}" must be a text or a list of texts.`);
       } else if ((sectionCodes as readonly string[]).includes(key)) {
         terms.sections[key as SectionCode] = list;
-      } else if (key === 'figure' || key === 'table' || key === 'appendix') {
+      } else if (key === 'figure' || key === 'table' || key === 'listing' || key === 'appendix') {
         terms[key] = list[0];
       } else {
-        problem('warning', `The layout "${id}" has the unknown term "${key}"; the terms are ${[...sectionCodes, 'figure', 'table', 'appendix'].join(', ')}.`);
+        problem('warning', `The layout "${id}" has the unknown term "${key}"; the terms are ${[...sectionCodes, 'figure', 'table', 'listing', 'appendix'].join(', ')}.`);
       }
     }
   }
@@ -288,6 +297,7 @@ export function parseLayout(text: string, id: string, folder: string): { layout?
     unnumbered: strings(headings.unnumbered) ?? [],
     contentsDepth: count(isObject(json.contents) ? json.contents.depth : undefined, 3),
     hyphenate: json.hyphenate !== false,
+    listings: { lineNumbers: isObject(json.listings) && json.listings.lineNumbers === true, source: !(isObject(json.listings) && json.listings.source === false) },
     pdfName: typeof json.pdfName === 'string' && json.pdfName.trim() !== '' ? json.pdfName : '{{file}}',
     terms,
   };

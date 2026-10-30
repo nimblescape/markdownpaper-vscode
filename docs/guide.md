@@ -25,6 +25,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Headings](#headings) | pages | available | [R-REN-003](requirements.md#r-ren-003) |
 | [Special sections](#special-sections) | pages | available | [R-REN-004](requirements.md#r-ren-004) |
 | [Figures and tables](#figures-and-tables), links to headings | pages | available | [R-REN-005](requirements.md#r-ren-005), [R-REN-009](requirements.md#r-ren-009) |
+| [Listings](#listings) | pages | available | [R-REN-011](requirements.md#r-ren-011) |
 | [Appendix](#appendix) | pages | available | [R-REN-006](requirements.md#r-ren-006) |
 | [Footnotes](#footnotes) | pages | available | [R-REN-008](requirements.md#r-ren-008) |
 | [Hyphenation](#hyphenation) | pages | available | [R-REN-007](requirements.md#r-ren-007) |
@@ -177,12 +178,37 @@ whose text is a word and a number, such as `[Abbildung 1](#fig-rollen)`, shows
 the number of the pages; the slash command `/ref` of Markdown Notes writes
 such a link.
 
+## Listings
+
+The slash command `/listing` of Markdown Notes adds code of a source file of
+the repository as a listing: a caption line `Listing:`, a comment that names
+the source and a code block, whose code the formatter of Markdown Notes keeps
+current:
+
+````markdown
+Listing: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
+
+<!-- listing: ../src/fields.ts#read-fields -->
+
+```typescript
+export function readFields(lines: readonly string[]): Map<string, string> {
+  …
+}
+```
+````
+
+The page shows "Listing 1: Reading the fields (fields.ts, L12-L30)" above the
+code: the text of the caption without the link, and the file and the lines of
+the source. A link such as `[Listing 1](#lst-reading-fields)` shows the number
+of the pages. A layout can leave out the source after the caption and can show
+the number of each line before the code ([Layouts](#layouts)).
+
 ## Appendix
 
 `# Anhang` or `# Appendix` starts the appendix part, after the reference list.
 Each `##` heading in it is an appendix: "Anhang A", "Anhang B"; a single
-appendix is "Anhang". The figures and tables of an appendix are numbered A1,
-A2, B1.
+appendix is "Anhang". The figures, tables and listings of an appendix are
+numbered A1, A2, B1.
 
 ## Footnotes
 

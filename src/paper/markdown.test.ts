@@ -26,6 +26,7 @@ const layoutOf = (changes: Partial<Layout> = {}): Layout => ({
   unnumbered: [],
   contentsDepth: 3,
   hyphenate: false,
+  listings: { lineNumbers: false, source: true },
   pdfName: '{{file}}',
   terms: termsFor('de-AT'),
   ...changes,
@@ -226,7 +227,7 @@ describe('links to figures and tables (R-REN-009)', () => {
     expect(body.html).toContain('<span class="caption-text">Rohdaten</span></p>');
     expect(body.html).toContain('Wie <a href="#tab-roh">Tabelle A1</a> zeigt; <a href="#tab-fehlt">Table 3</a>.');
     expect(body.html).not.toContain('<a id=');
-    expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #tab-fehlt names no figure, table or heading of the file.', line: 21 }]);
+    expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #tab-fehlt names no figure, table, listing or heading of the file.', line: 21 }]);
   });
 
   test('a Markdown link to a heading gets the number of the heading or the label of the appendix, also through an anchor at the end of the heading', () => {
@@ -260,10 +261,105 @@ describe('links to figures and tables (R-REN-009)', () => {
     expect(body.html).toContain('<a href="#methoden"><span class="contents-number">1.1</span><span class="contents-text">Methoden</span></a>');
     // GitHub keeps the space before the anchor in the ID, so `#leitfaden` names no heading.
     expect(body.problems).toEqual([
-      { severity: 'warning', message: 'The link #sec-weg names no figure, table or heading of the file.', line: 16 },
-      { severity: 'warning', message: 'The link #leitfaden names no figure, table or heading of the file.', line: 16 },
+      { severity: 'warning', message: 'The link #sec-weg names no figure, table, listing or heading of the file.', line: 16 },
+      { severity: 'warning', message: 'The link #leitfaden names no figure, table, listing or heading of the file.', line: 16 },
     ]);
   });
+});
+
+describe('listings (R-REN-011)', () => {
+  /** listings is a file with a listing of a snippet, a listing of a whole file, and a caption without code. */
+  const listings = [
+    'Wie [Listing 9](#lst-reading-fields) zeigt.',
+    '',
+    'Listing: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>',
+    '',
+    '<!-- listing: ../src/fields.ts#read-fields -->',
+    '',
+    '```typescript',
+    'export function readFields() {',
+    '  return 1;',
+    '}',
+    '```',
+    '',
+    'Listing: Die ganze Datei',
+    '<!-- listing: ../src/my%20server.ts -->',
+    '```ts',
+    'const a = 1;',
+    '```',
+    '',
+    'Listing: kein Code folgt',
+    '',
+    '[Listing 3](#lst-fehlt)',
+    '',
+  ].join('\n');
+
+  test('a paragraph "Listing:" before the comment of the source and the code is its numbered caption, which shows the text of its link and the source', () => {
+    const body = renderBody(listings, layoutOf(), hyphenatorOf('de-AT'));
+    expect(body.listings).toEqual([
+      { id: 'lst-reading-fields', label: 'Listing 1', text: 'Reading the fields', line: 2 },
+      { id: 'listing-2', label: 'Listing 2', text: 'Die ganze Datei', line: 12 },
+    ]);
+    expect(body.html).toContain(
+      '<p data-line="2" id="lst-reading-fields" class="caption listing-caption"><span class="caption-label">Listing 1</span><span class="caption-separator">: </span>' +
+        '<span class="caption-text">Reading the fields</span><span class="caption-source"> (fields.ts, L12-L30)</span></p>',
+    );
+    expect(body.html).toContain('<pre class="listing"><code class="language-typescript">export function readFields() {\n  return 1;\n}\n</code></pre>');
+    // Without a link, the comment names the source; a snippet has no lines of the file.
+    expect(body.html).toContain('<span class="caption-text">Die ganze Datei</span><span class="caption-source"> (my server.ts)</span></p>');
+    expect(body.html).toContain(`<p data-line="18">Lis${softHyphen}ting: kein Code folgt</p>`);
+    expect(body.html).toContain('Wie <a href="#lst-reading-fields">Listing 1</a> zeigt.');
+    expect(body.html).not.toContain('<a id=');
+    expect(body.html).not.toContain('href="../src');
+    expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #lst-fehlt names no figure, table, listing or heading of the file.', line: 20 }]);
+  });
+
+  test('a link to one line names the line, and the layout leaves out the source', () => {
+    const markdown = 'Listing: [Eine Zeile](../src/a.ts#L7)\n\n<!-- listing: ../src/a.ts#eins -->\n\n```ts\nx();\n```\n';
+    expect(renderBody(markdown, layoutOf()).html).toContain('<span class="caption-text">Eine Zeile</span><span class="caption-source"> (a.ts, L7)</span></p>');
+    const html = renderBody(markdown, layoutOf({ listings: { lineNumbers: false, source: false } })).html;
+    expect(html).toContain('<span class="caption-text">Eine Zeile</span></p>');
+    expect(html).not.toContain('caption-source');
+  });
+
+  test('the layout puts the number of each line from 1 before the code of each listing, and not before other code', () => {
+    const markdown = `${listings}\n\`\`\`ts\nother();\n\`\`\`\n`;
+    const html = renderBody(markdown, layoutOf({ listings: { lineNumbers: true, source: true } })).html;
+    expect(html).toContain(
+      '<code class="language-typescript"><span class="line-number" data-number="1" aria-hidden="true"></span>export function readFields() {\n' +
+        '<span class="line-number" data-number="2" aria-hidden="true"></span>  return 1;\n' +
+        '<span class="line-number" data-number="3" aria-hidden="true"></span>}\n</code>',
+    );
+    expect(html).toContain('<pre class="listing"><code class="language-ts"><span class="line-number" data-number="1" aria-hidden="true"></span>const a = 1;\n</code></pre>');
+    expect(html).toContain('<pre><code class="language-ts">other();\n</code></pre>');
+  });
+
+  test('the numbers of the lines go inside the element of a highlighter, as in the Markdown preview of VS Code', () => {
+    const md: MarkdownIt = new MarkdownIt({ html: true, highlight: (code): string => `<div>${md.utils.escapeHtml(code)}</div>` });
+    paperPlugin(md);
+    const env = { nimblescapePaper: { layout: layoutOf({ listings: { lineNumbers: true, source: true } }), found: emptyFound() } };
+    const html = md.render('Listing: Zwei Zeilen\n\n<!-- listing: a.ts -->\n\n```ts\na();\nb();\n```\n', env);
+    expect(html).toContain(
+      '<code class="language-ts"><div><span class="line-number" data-number="1" aria-hidden="true"></span>a();\n' +
+        '<span class="line-number" data-number="2" aria-hidden="true"></span>b();\n</div></code>',
+    );
+  });
+
+  test('the listings of the appendices are numbered A1, and the captions get no soft hyphens', () => {
+    const markdown = '# Teil\n\nListing: Wirtschaftspädagogik\n\n```ts\na();\n```\n\n# Anhang\n\n## Code\n\nListing: Unterrichtsplanung\n\n```ts\nb();\n```\n';
+    const body = renderBody(markdown, layoutOf({ hyphenate: true }), hyphenatorOf('de-AT'));
+    expect(body.listings.map((listing) => [listing.id, listing.label])).toEqual([
+      ['listing-1', 'Listing 1'],
+      ['listing-a1', 'Listing A1'],
+    ]);
+    expect(body.html).toContain('<span class="caption-text">Wirtschaftspädagogik</span>');
+    expect(body.html).toContain('<span class="caption-text">Unterrichtsplanung</span>');
+  });
+});
+
+test('the caption of a table gets no soft hyphens (R-REN-007)', () => {
+  const body = renderBody('Table: Wirtschaftspädagogik\n\n| a |\n| - |\n| 1 |\n', layoutOf({ hyphenate: true }), hyphenatorOf('de-AT'));
+  expect(body.html).toContain('<span class="caption-text">Wirtschaftspädagogik</span>');
 });
 
 test('each block names its line in the file (R-PRV-003)', () => {

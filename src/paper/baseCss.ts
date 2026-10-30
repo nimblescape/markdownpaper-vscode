@@ -5,8 +5,8 @@
 /**
  * baseCss is the style sheet of the renderer before the style sheets of the layout
  * ([R-REN-008](../../docs/requirements.md#r-ren-008)): only the rules without which a part of the renderer does not work
- * in Paged.js. A footnote goes to the foot of its page with its number in the text, and the generated lists show the page
- * of each entry. A layout
+ * in Paged.js. A footnote goes to the foot of its page with its number in the text, the generated lists show the page of
+ * each entry, and the number of a line of a listing shows ([R-REN-011](../../docs/requirements.md#r-ren-011)). A layout
  * changes the look of each of them with its own rules, and decides whether a template is a page of its own.
  */
 export const baseCss = `.footnote {
@@ -26,5 +26,9 @@ nav.list-of-tables a::after {
 }
 img {
   max-width: 100%;
+}
+/* The number of a line of a listing is an element without text, so that a copy of the code leaves it out. */
+.line-number::before {
+  content: attr(data-number);
 }
 `;

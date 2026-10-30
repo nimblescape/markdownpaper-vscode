@@ -48,7 +48,7 @@ This document replaces it where the two differ.
 | 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; the command line is open |
 | 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark and the name wait for a decision |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
-| 20 | Listings of Markdown Notes: numbered captions `Listing:` and links `lst-…` | [R-REN-009](#r-ren-009) | planned |
+| 20 | Listings of Markdown Notes: numbered captions `Listing:` with the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
 
 ## General
 
@@ -189,9 +189,9 @@ in the text editor as warnings after a pause in typing, and with
 - A problem of `layout.json` shows at the field `layout` and names the file.
 - Each required field of the layout must have a value; else a warning at the
   field, or at the field `layout` when the field is missing.
-- Each link to `#fig-…`, `#tab-…` or `#sec-…`, and each link whose text is a
-  word and a number, such as `[Kapitel 2.1](#methoden)`, must find its figure,
-  table or heading ([R-REN-009](#r-ren-009)).
+- Each link to `#fig-…`, `#tab-…`, `#lst-…` or `#sec-…`, and each link whose
+  text is a word and a number, such as `[Kapitel 2.1](#methoden)`, must find
+  its figure, table, listing or heading ([R-REN-009](#r-ren-009)).
 - The Markdown preview of a paper document adds the problems of the renderer,
   for example a template that does not exist. Each problem shows once.
 - `markdownpaper check` prints each problem as `file:line:column: severity:
@@ -259,7 +259,10 @@ repository of the document ([decision 3](#decisions)).
   `required` and `default` when needed.
 - `headings`: `numbered`, `depth`, and `unnumbered`, regular expressions of
   headings without a number. `contents.depth`: the depth of the table of
-  contents. `hyphenate`. `pdfName`: the name of the PDF with fields, for
+  contents. `hyphenate`. `listings`: `lineNumbers`, the numbers of the lines
+  before the code of a listing (`false` by default), and `source`, the file
+  and the lines of the source after its caption (`true` by default)
+  ([R-REN-011](#r-ren-011)). `pdfName`: the name of the PDF with fields, for
   example `{{matrikelnummer}}_{{author}}_{{type}}`. `terms`
   ([R-LAY-005](#r-lay-005)).
 - Every path is relative to the layout folder and stays inside it.
@@ -276,8 +279,8 @@ margins, margin boxes for the header and the footer, page counters,
 gives the style sheets fixed parts: the fields as attributes of `<body>` and
 as CSS variables (`var(--field-author)` in a margin box), a class for each
 template, the classes of the headings, of the special sections, of the
-generated lists, of the captions, of the footnotes, of the reference list and
-of the appendix. A relative `url()` names a file of the layout folder, for
+generated lists, of the captions, of the listings and the numbers of their
+lines, of the footnotes, of the reference list and of the appendix. A relative `url()` names a file of the layout folder, for
 example a font.
 
 ### R-LAY-004
@@ -294,7 +297,7 @@ attributes. A relative `src` or `href` names a file of the layout folder.
 
 **Words of the language.** The renderer finds the special sections by the
 words of their headings ([R-REN-004](#r-ren-004)), and writes the word of a
-figure, of a table and of an appendix before its number. The words come from
+figure, of a table, of a listing and of an appendix before its number. The words come from
 the language of the layout; German and English are built in:
 
 | Code or word | German | English |
@@ -310,6 +313,7 @@ the language of the layout; German and English are built in:
 | `APX` | Anhang, Anhänge | Appendix, Appendices |
 | figure | Abbildung | Figure |
 | table | Tabelle | Table |
+| listing | Listing | Listing |
 | appendix | Anhang | Appendix |
 
 `terms` of `layout.json` replaces the words of a code or of a word for the
@@ -465,8 +469,8 @@ the reference list; each `##` heading in it is one appendix ([decision
 
 - The appendices are labeled with letters: "Anhang A", "Anhang B"
   (`data-section="APX-A"`, `APX-B`). A single appendix has no letter: "Anhang".
-- The figures and the tables of an appendix are numbered by its letter: A1,
-  A2, B1, as APA 7 does, also when it is the only appendix.
+- The figures, the tables and the listings of an appendix are numbered by its
+  letter: A1, A2, B1, as APA 7 does, also when it is the only appendix.
 - The table of contents lists each appendix with its label: "Anhang A:
   Interviewleitfaden".
 - The layout `plain` starts the appendix part and each appendix on a new page.
@@ -492,7 +496,7 @@ look.
 
 ### R-REN-009
 
-**Links to figures, tables and headings.** The slash commands of Markdown Notes
+**Links to figures, tables, listings and headings.** The slash commands of Markdown Notes
 write figures, tables and links to them ([decision 13](#decisions), [decision
 15](#decisions)): `/figure` picks an image of the folder and inserts the figure
 with its caption and its anchor, `/table` inserts a table with its caption and
@@ -518,14 +522,15 @@ Table: Noten nach Schulstufe <a id="tab-grades"></a>
   is a second ID of the heading for links, for files that have one; it does
   not show, and the table of contents shows the heading without it.
 - The renderer writes the text of each link whose text is a word and a
-  number anew: the label of a figure or a table ("Abbildung 1", "Tabelle
-  A1"), the label of an appendix ("Anhang A"), and for another heading the
+  number anew: the label of a figure, a table or a listing ("Abbildung 1",
+  "Tabelle A1", "Listing 2"), the label of an appendix ("Anhang A"), and for another heading the
   word of the link and the number of the heading ("Kapitel 2.1"). The page
   always shows the number of the renderer. A link with other words, such as
   `[den Plan](#fig-plan)`, and a link to a heading without a number, for
   example of a special section, keep their text.
-- A link to `#fig-…`, `#tab-…` or `#sec-…`, or a link whose text is a word
-  and a number, without its target is a warning ([R-DOC-002](#r-doc-002)).
+- A link to `#fig-…`, `#tab-…`, `#lst-…` or `#sec-…`, or a link whose text
+  is a word and a number, without its target is a warning
+  ([R-DOC-002](#r-doc-002)).
 - The formatter of Markdown Notes writes the numbers of the links in the order
   of the file; the format step of the paper ([R-CLI-002](#r-cli-002)) will
   write them by the rules of the layout, so the file shows the numbers of the
@@ -574,6 +579,58 @@ Mermaid and PlantUML ([decision 17](#decisions)).
   ([R-REN-001](#r-ren-001)): it takes the plugins, the scripts and the style
   sheets as input. On the command line there are no extensions of VS Code
   (see the [open questions](#open-questions)).
+
+### R-REN-011
+
+**Listings.** Markdown Notes writes listings of source code with `/listing`
+([R-CODE-001](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-code-001)): a caption line, the comment of the source
+and a fenced code block, whose code its formatter keeps current
+([R-CODE-002](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-code-002)):
+
+````markdown
+Listing: [Reading the fields](../src/fields.ts#L12-L30)<a id="lst-reading-fields"></a>
+
+<!-- listing: ../src/fields.ts#read-fields -->
+
+```typescript
+export function readFields(lines: readonly string[]): Map<string, string> {
+  …
+}
+```
+````
+
+- A paragraph that starts with `Listing:` before a fenced code block, with
+  the comment of the source between them or not, is the caption of the
+  listing: the page shows "Listing 1: Reading the fields" above the code. The
+  word of the language works too, and a number in the caption, as in
+  `Listing 3:`, is replaced by the number of the renderer, as for a table
+  ([R-REN-005](#r-ren-005)). The listings count apart from the figures and
+  the tables, through the whole document; in the appendix see
+  [R-REN-006](#r-ren-006).
+- The caption is a link to its source: the target names the file and the
+  lines, `#L12-L30`, one line `#L12`, or the whole file without `#L`. A page
+  cannot open the source, so the page shows the text of the caption without
+  the link, and after it the file and the lines in parentheses: "Reading the
+  fields (fields.ts, L12-L30)", "(fields.ts)" for a whole file. A caption
+  without a link takes the file from the comment. The layout turns this off
+  with `"listings": { "source": false }` ([R-LAY-002](#r-lay-002)).
+- With `"listings": { "lineNumbers": true }` the page shows the number of
+  each line before the code of each listing, from 1 in each listing; the
+  default is no numbers ([decision 24](#decisions)). Other code blocks get no
+  numbers. A number is an element without text that the style sheet shows,
+  so a copy of the code from the page preview leaves the numbers out.
+- The anchor `lst-…` names the listing for links, and a link such as
+  `[Listing 1](#lst-reading-fields)` gets its label
+  ([R-REN-009](#r-ren-009)). A listing without an anchor has the ID
+  `listing-1`.
+- The style sheet of a layout finds the caption by the classes `caption
+  listing-caption`, the source by `caption-source`, the code block by
+  `listing`, and the numbers of the lines by `line-number`
+  ([R-LAY-003](#r-lay-003)). The captions get no soft hyphens
+  ([R-REN-007](#r-ren-007)).
+- GitHub and the Markdown preview of a notes document show the caption as a
+  link to the source, and hide the comment and the anchor; the clean editing
+  view of Markdown Notes also hides the brackets and the target of the link.
 
 ## PDF
 
@@ -998,6 +1055,14 @@ requirement ([R-GEN-007](#r-gen-007)).
     every other file of the repository hold only the clean summary of the
     decisions, without the texts of the discussion; the details stay in
     discussion documents.
+24. **Numbers of the lines of a listing** ([R-REN-011](#r-ren-011)): an option
+    of the layout, `listings.lineNumbers`, off by default; the numbers start
+    at 1 in each listing.
+25. **The caption of a listing is a link to its source**
+    ([R-REN-011](#r-ren-011)): Markdown Notes writes the caption as a link to
+    the file and the lines of the source. The pages show the text of the
+    caption without the link, and after it the file and the lines of the
+    source, which an option of the layout turns off.
 
 ## Open questions
 
@@ -1018,12 +1083,8 @@ requirement ([R-GEN-007](#r-gen-007)).
 - The npm name `@nimblescape/markdownpaper` ([decision 5](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
-- Listings: Markdown Notes writes listings with `/listing` (R-CODE-001 to
-  R-CODE-003 of its requirements): a caption line `Listing: …` with an anchor
-  `lst-…`, the comment `<!-- listing: ../src/x.ts#Symbol -->` and a fenced
-  code block. The renderer will number them and their links as in
-  [R-REN-009](#r-ren-009) (plan step 20); whether a list of listings joins
-  `LOF` and `LOT` is open.
+- Listings ([R-REN-011](#r-ren-011)): whether the file and the lines of the
+  source after the caption are on by default (the proposal: on).
 - Values of the front matter in the text (planned in Markdown Notes): `/ref`
   inserts a field between hidden markers, `<!--{title}-->value<!--{/title}-->`,
   and the formatter writes the value anew from the front matter. The pages

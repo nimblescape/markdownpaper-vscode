@@ -140,3 +140,13 @@ The first version.
   both changed stops the update unless `--force` or a confirmation replaces it.
   `--check` only tells whether a newer version exists. The `layout.json` of a
   copy keeps the form of the file of the layout, with `origin` at its end.
+- `/cite` with Markdown Notes inserts a citation of a source of the database
+  of the document or of an item of the Zotero library of the author. "Connect
+  Zotero" keeps an API key of zotero.org in the secret storage of VS Code. A
+  chosen item is merged into its line of the database (found by the field
+  `zotero`, the DOI or the ISBN): missing fields are added, other values
+  change after a confirmation, and nothing is removed; a new item gets a new
+  line, and its stored PDF goes to `bib/<ID>.pdf`. "Update Sources from
+  Zotero" merges all lines of the database at once.
+- A citation in the sentence of a source without names, such as a law, has its
+  title in the place of the names: `Schulorganisationsgesetz (1962, § 65)`.

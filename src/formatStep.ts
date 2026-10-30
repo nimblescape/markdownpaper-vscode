@@ -109,11 +109,12 @@ export class PaperFormatStep implements FormatStep, vscode.Disposable {
   }
 
   /**
-   * entryOf returns the layout of a paper document for its lines and its citation style, when the cache has them.
+   * entryOf returns the layout of a paper document for its lines and its citation style, when the cache has them; also
+   * for the text of a new citation of `/cite`.
    * @param lines - The lines of the file.
    * @param file - The URI of the file.
    */
-  private entryOf(lines: readonly string[], file: vscode.Uri): { layout: Layout; style: CitationStyle } | undefined {
+  entryOf(lines: readonly string[], file: vscode.Uri): { layout: Layout; style: CitationStyle } | undefined {
     const text = lines.join('\n');
     if (!isPaperDocument(text)) {
       return undefined;

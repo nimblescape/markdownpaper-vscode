@@ -41,7 +41,7 @@ This document replaces it where the two differ.
 | 10 | The anchors of figures and tables, the links to them and to headings, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-003](#r-ren-003), [R-REN-009](#r-ren-009) | done |
 | 11 | The interface of Markdown Notes: the file behind the clean editing view | [R-GEN-003](#r-gen-003) | done |
 | 12 | One formatter command: `markdownpaper format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | the steps of the paper done (step 22); the steps of Markdown Notes on the command line need the library of `@nimblescape/markdownnotes` |
-| 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | the database, the citations, the reference list and their checks done, in the format step and in `markdownpaper format`; the database hidden in the clean editing view of Markdown Notes and `/research` done in step 30; `/cite` in step 29 |
+| 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | the database, the citations, the reference list and their checks done, in the format step and in `markdownpaper format`; the database hidden in the clean editing view of Markdown Notes and `/research` done in step 30; `/cite` done in step 29 |
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006), [R-LAY-007](#r-lay-007) | done: the instructions, and the PHT layouts `thesis/` and `concept/` |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
@@ -57,7 +57,7 @@ This document replaces it where the two differ.
 | 26 | Layouts close to a Word template: numbered special sections (`headings.numberedSections`), a hyphenated reference list (`references.hyphenate`), the natural spaces of the last line of a justified paragraph whose spaces shrink; the PHT concept layout in the look of its Word template | [R-REN-004](#r-ren-004), [R-REN-007](#r-ren-007), [R-REN-012](#r-ren-012), [R-LAY-002](#r-lay-002) | done |
 | 27 | The parts of a document (front part, body, appendix part) as elements for their own pages, and a table of contents without the front part (`contents.front`); the PHT thesis layout in the look of its Word template | [R-REN-013](#r-ren-013), [R-REN-004](#r-ren-004), [R-LAY-002](#r-lay-002) | done |
 | 28 | The empty paper document and its preview PDF in each layout; the list of the layouts of `create` and "New Project" with the layouts on GitHub; `markdownpaper layouts` and `markdownpaper preview` | [R-LAY-009](#r-lay-009), [R-NEW-004](#r-new-004), [R-LAY-007](#r-lay-007) | done; the PHT layouts have their empty paper documents and previews |
-| 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, the merge of a chosen item into the database with its key of Zotero, and "Update Sources from Zotero" | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | planned; the rules that find the line of an item come first |
+| 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, the merge of a chosen item into the database with its key of Zotero, and "Update Sources from Zotero" | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | done; the items of group libraries in the list of `/cite` are open |
 | 30 | `/research` on a selected argument: the start marker and `(RESEARCH)`, the rules for AI agents, the checks, the slash command on selected text, and the start marker and the database hidden in the clean editing view of Markdown Notes | [R-CITE-002](#r-cite-002), [R-GEN-003](#r-gen-003) | done |
 | 31 | The hints of a template as alerts of GitHub, drawn as boxes by the layout; the hints of the PHT concept template in its empty paper document | [R-REN-014](#r-ren-014), [R-CITE-004](#r-cite-004) | done |
 | 32 | The origin of a copy of a layout on GitHub in its `layout.json`, and its update from the repository: `markdownpaper update` and "Update Layout" | [R-LAY-010](#r-lay-010), [R-LAY-007](#r-lay-007) | done |
@@ -94,10 +94,12 @@ Marketplace does not accept extensions that use one.
 - Virtual workspaces: the page preview and the checks work; "Export PDF"
   needs a file on the disk, because the browser reads the file and its images
   from the disk.
-- The extension collects no telemetry. It connects only to GitHub: for the
-  layouts on GitHub in the list of "New Project" ([R-NEW-004](#r-new-004)), and
-  for "Update Layout" ([R-LAY-010](#r-lay-010)). It starts a program only for
-  "Export PDF": the browser of [R-PDF-002](#r-pdf-002).
+- The extension collects no telemetry. It connects only to GitHub, for the
+  layouts on GitHub in the list of "New Project" ([R-NEW-004](#r-new-004)) and
+  for "Update Layout" ([R-LAY-010](#r-lay-010)), and to the Zotero web API
+  (`api.zotero.org`) after the author connected Zotero, for `/cite` and
+  "Update Sources from Zotero" ([R-CITE-006](#r-cite-006)). It starts a
+  program only for "Export PDF": the browser of [R-PDF-002](#r-pdf-002).
 - The command `markdownpaper` connects to GitHub for `create`, `layouts`,
   `new project` with a layout on GitHub, and `update`. `markdownpaper source`
   connects to the services of the metadata of sources in
@@ -1382,7 +1384,12 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
 - The slash commands of the sources ([decision 15](#decisions),
   [decision 42](#decisions)): `/cite` inserts a citation of a source of the
   database, and with Zotero also of an item of Zotero
-  ([R-CITE-006](#r-cite-006)). There is no slash command that only adds a
+  ([R-CITE-006](#r-cite-006)). It works only in a paper document. It shows a
+  list of the sources, with a search by author, title and year, and inserts
+  the chosen source at its place as a citation in parentheses, with the text
+  of the citation style of the layout:
+  `([Hong et al., 2024](#hong2024))`, with a space before it after a word. A
+  title such as `"narrative"` or `"page 3"` makes it another citation. There is no slash command that only adds a
   source: the database gets its sources from Zotero through `/cite`, or from
   an AI agent through `markdownpaper source` ([R-CITE-005](#r-cite-005)).
   Markdown Paper registers `/cite` and `/research` as slash commands of
@@ -1424,7 +1431,9 @@ not in its front matter and not in the DOCTYPE comment of Markdown Notes.
   show as links.
 - In a citation in the sentence, the last two names are joined by the word
   "and" of the language, as APA writes it: `Festman und Schwieter (2019)`,
-  but `(Festman & Schwieter, 2019)` in parentheses. Italic parts that only a
+  but `(Festman & Schwieter, 2019)` in parentheses. A source whose style
+  writes no names in a citation, such as a law, has its title in the place of
+  the names: `Schulorganisationsgesetz (1962, § 65)`. Italic parts that only a
   comma separates become one italic part: `*Behavioral Science, 9*`.
 
 ### R-CITE-004
@@ -1513,13 +1522,19 @@ input is an identifier or a file:
 
 **Sources from Zotero in `/cite`.** In VS Code, `/cite` reads the library of
 the Zotero of the author, so that the author cites the sources of Zotero and
-writes no metadata ([decision 42](#decisions)). This is planned; the rules
-that find the line of an item in the database wait for a decision.
+writes no metadata ([decision 42](#decisions)).
 
 - `/cite` shows one list of the sources of the database of the document and,
   when Zotero is set up, of the items of Zotero; a source that
   both have shows once. A search box filters the list by author, title and
-  year.
+  year. Without words, the list shows the 25 items of Zotero that changed
+  last; after a pause in typing, it shows the items whose title, creators or
+  year match the words (the search `titleCreatorYear` of the web API).
+- An item finds its line in the database by these rules, in this order: the
+  line whose field `zotero` names the item, then the line with the same DOI,
+  then the line with the same ISBN (as ISBN-13). Else the item becomes a new
+  line. The same title and year do not count, because two works can share
+  them.
 - A chosen item of Zotero is merged into the database as well as the data
   allows: a field that the line of the database does not have is added; a
   field with another value in Zotero is updated from Zotero only after the
@@ -1529,20 +1544,31 @@ that find the line of an item in the database wait for a decision.
 - The line of a merged item keeps its library and its item key of Zotero in
   the CSL field `zotero`, for example `"zotero":"users/1234567/ABCD1234"`, or
   `groups/<id>/<key>` for a group library, because an item key is unique only
-  in one library. The next merge finds the line by this field first. The
-  formatter and the citation style ignore it.
-- The command "Update Sources from Zotero" merges every line of the database
-  of the open file that matches an item of Zotero, by the same rules, and asks
-  once for the changed values of all lines before it writes them.
+  in one library. A line gets the field only when it has none. The next merge
+  finds the line by this field first. The formatter and the citation style
+  ignore it. The list of `/cite` shows the personal library of the API key;
+  "Update Sources from Zotero" reads a line with the key of a group library
+  from that group.
+- The command "Update Sources from Zotero" (in the Command Palette of a paper
+  document) merges every line of the database of the open file that matches
+  an item of Zotero, by the same rules, and asks once for the changed values
+  of all lines before it writes them. It reads the whole personal library, 100
+  items with each request.
 - The PDF attachment of a chosen item goes to `bib/<ID>.pdf`
-  ([R-NEW-003](#r-new-003)) without a question. The author keeps a PDF with a
+  ([R-NEW-003](#r-new-003)) without a question, when the file does not exist:
+  the folder `bib/` nearest above the document, else `bib/` beside the nearest
+  folder `layouts/`, else in the folder of the workspace. Only a stored file
+  counts, not a link to a file on a computer. The author keeps a PDF with a
   paywall out of a public repository, for example with a private repository.
   The web API gives the file only when Zotero syncs the files to the storage
   of zotero.org.
 - The extension reads Zotero through the Zotero web API
   (`https://api.zotero.org`), with an API key that the author makes on
   zotero.org and gives to the extension once; the extension keeps the key in
-  the secret storage of VS Code. The web API reads the library that Zotero
+  the secret storage of VS Code: "Connect Zotero" asks for the key, reads the
+  user of the key, and keeps both; an empty key removes the connection. The
+  key goes only in the header `Authorization` of the requests to
+  `api.zotero.org`. The web API reads the library that Zotero
   syncs, also when Zotero does not run and in VS Code on another computer,
   for example over SSH or in Codespaces, and gives the items as CSL JSON
   (`format=csljson`). The extension does not use the local API of Zotero 7:
@@ -1748,7 +1774,8 @@ requirement ([R-GEN-007](#r-gen-007)).
     Zotero. The line of a merged item keeps the library and the item key of
     Zotero (`"zotero":"users/1234567/ABCD1234"`), and the command "Update
     Sources from Zotero" merges all matching lines at once, after one
-    confirmation. The discussion document is
+    confirmation. An item finds its line by its key of Zotero, then by the
+    DOI, then by the ISBN; else it becomes a new line. The discussion document is
     [Zotero integration of Markdown Paper](https://claude.ai/artifact/2Q4BZy6wJzcqRn9SjTDFa3).
 43. **`/research` on a selected argument** ([R-CITE-002](#r-cite-002),
     [R-GEN-003](#r-gen-003)): `/research` works only with selected text. The
@@ -1788,10 +1815,8 @@ requirement ([R-GEN-007](#r-gen-007)).
   the release there is no release tag, so a document names a branch or a
   commit ([decision 36](#decisions)). The form for an npm package is open
   too.
-- Zotero in `/cite` ([R-CITE-006](#r-cite-006)): how an item finds its line
-  in the database, the Zotero key in the line, and a command that updates all
-  sources at once; the questions are in the discussion document of
-  [decision 42](#decisions).
+- The items of the group libraries of Zotero in the list of `/cite`
+  ([R-CITE-006](#r-cite-006)).
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
   `markdownpaper` has no extensions of VS Code, so its PDF shows a diagram as
   its source text. It can bring Mermaid itself; PlantUML needs Java or a

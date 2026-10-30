@@ -122,6 +122,16 @@
         "command": "nimblescape.markdownPaper.updateLayout",
         "title": "Update Layout",
         "category": "Markdown Paper"
+      },
+      {
+        "command": "nimblescape.markdownPaper.connectZotero",
+        "title": "Connect Zotero",
+        "category": "Markdown Paper"
+      },
+      {
+        "command": "nimblescape.markdownPaper.updateSourcesFromZotero",
+        "title": "Update Sources from Zotero",
+        "category": "Markdown Paper"
       }
     ],
     "menus": {
@@ -146,6 +156,10 @@
         {
           "command": "nimblescape.markdownPaper.exportPdf",
           "when": "editorLangId == markdown || activeWebviewPanelId == 'markdown.preview'"
+        },
+        {
+          "command": "nimblescape.markdownPaper.updateSourcesFromZotero",
+          "when": "editorLangId == markdown && nimblescape.markdownPaper.paperDocument"
         }
       ],
       "explorer/context": [

@@ -6,7 +6,7 @@
 // Tests in a real VS Code (npm run test:vscode, .vscode-test.mjs): mocha runs them in the extension host. They write a
 // layout and Markdown files into a temporary folder, and check the commands of the extension, the checks of the front
 // matter and their hover (R-DOC-002, R-DOC-003), the format step of the paper (R-REN-004, R-CLI-002), the slash
-// command /research (R-CITE-002), the plugin of
+// commands /research and /cite (R-CITE-002), the plugin of
 // the pages in the Markdown preview of VS Code for a paper document and none for a notes document (R-PRV-001,
 // R-PRV-005, R-DOC-004), and "Export PDF" (R-PDF-001), with the diagrams of Mermaid and the math of KaTeX of the
 // built-in Markdown extensions (R-REN-010), when a Chrome, Chromium or Edge is installed, as on the runners of GitHub.
@@ -84,7 +84,7 @@ describe('nimblescape Markdown Paper', function () {
   it('the extension starts and has its commands', async () => {
     await api();
     const commands = await vscode.commands.getCommands(true);
-    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout']) {
+    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'connectZotero', 'updateSourcesFromZotero']) {
       assert.ok(commands.includes(`nimblescape.markdownPaper.${name}`), name);
     }
   });
@@ -143,6 +143,22 @@ describe('nimblescape Markdown Paper', function () {
     const start = new vscode.Position(0, 'Agents '.length);
     assert.equal(await extension.research.run(notesEditor, new vscode.Range(start, start.translate(0, 'change the work'.length))), false);
     assert.equal(notesEditor.document.getText(), 'Agents change the work of teams.\n');
+  });
+
+  it('/cite inserts a citation of the chosen source of the database in the citation style of the layout (R-CITE-002)', async () => {
+    const extension = await api();
+    const source = '{"id":"hong2024","type":"paper-conference","author":[{"family":"Hong","given":"Sirui"},{"family":"Zhuge","given":"Mingchen"},{"family":"Chen","given":"Jonathan"}],"issued":{"date-parts":[[2024]]},"title":"MetaGPT"}';
+    const file = write('paper/cite.md', `---\nlayout: plain\nlang: de-AT\n---\n\nAgents change the work of teams.\n\n<!-- nimblescape-sources\n${source}\n-->\n`);
+    const editor = await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(file));
+    const lines = editor.document.getText().split('\n');
+    await waitFor(() => (extension.formatStep.applies(lines, file) ? true : undefined), 'the layout of the format step');
+    const place = editor.document.positionAt(editor.document.getText().indexOf('.\n'));
+    const inserted = extension.cite.run(editor, new vscode.Range(place, place)) as Promise<boolean>;
+    // The list of /cite shows the source of the database first; Enter chooses it.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
+    assert.equal(await inserted, true);
+    assert.equal(editor.document.lineAt(5).text, 'Agents change the work of teams ([Hong et al., 2024](#hong2024)).');
   });
 
   it('the Markdown preview of a paper document gets the layout and the steps of the renderer, with the content of the other plugins, and a notes document keeps its preview (R-PRV-001, R-PRV-005, R-DOC-004)', async () => {

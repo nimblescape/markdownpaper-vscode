@@ -38,7 +38,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Instructions for AI agents](#instructions-for-ai-agents) | command line | available | [R-CLI-003](requirements.md#r-cli-003) |
 | [Settings](#settings) | VS Code | available | [R-SET-001](requirements.md#r-set-001) |
 | The format step of the paper: the four lists in the file | VS Code (format of Markdown Notes), `markdownpaper format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
-| [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format and `/research` of Markdown Notes), `markdownpaper format`, `markdownpaper source` | available; `/cite` (also with the sources of Zotero) planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-006](requirements.md#r-cite-006) |
+| [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format, `/cite` and `/research` of Markdown Notes, Zotero), `markdownpaper format`, `markdownpaper source` | available; the group libraries of Zotero in `/cite` planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-006](requirements.md#r-cite-006) |
 | [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
 | [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line planned | [R-REN-010](requirements.md#r-ren-010) |
 
@@ -112,6 +112,32 @@ in the title of the link:
 Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
 [Hong et al. (2024)](#hong2024 "narrative") describe three ways.
 ```
+
+In VS Code with nimblescape Markdown Notes, type `/cite` in a paper document
+and choose a source from the list, which you can search by author, title and
+year: the citation goes in at the place, in parentheses. Add the title
+`"narrative"` or `"page 3"` to the link for another citation.
+
+With Zotero, `/cite` also lists the items of your Zotero library. Run
+"Markdown Paper: Connect Zotero" once and give it an API key that may read
+your library; you make the key on the page of the API keys of zotero.org,
+<https://www.zotero.org/settings/keys>. VS Code keeps the key in its secret
+storage. Without words,
+the list shows the items that changed last; type words to search the library.
+A chosen item goes into the database of the document:
+
+- The item finds its line by the field `zotero` of the line (the library and
+  the item key), then by the DOI, then by the ISBN; else it gets a new line
+  with an ID such as `hong2024`, and the field `zotero`.
+- A field that the line does not have is added. A field with another value in
+  Zotero changes only after you confirm it. Nothing is removed, and the ID
+  stays, so no citation breaks.
+- The PDF attachment of the item goes to `bib/<ID>.pdf` when Zotero stores the
+  file on zotero.org and the file does not exist yet.
+
+"Markdown Paper: Update Sources from Zotero" does the same for all lines of
+the database of the open document at once, with one question for all changed
+values.
 
 "Format Document" in VS Code (with Markdown Notes) and
 `markdownpaper format` write the text of each citation and the entries of the

@@ -178,19 +178,62 @@ export function addSources(lines: readonly string[], sources: readonly Source[],
     present.push(entry);
     taken.add(id);
   }
-  const entries = added.map(sourceLine);
+  return { lines: withEntries(lines, database, added.map(sourceLine)), added, known };
+}
+
+/**
+ * withEntries returns the lines of a text with new lines of the database: before the end of its comment, or in a new
+ * comment at the end of the text.
+ * @param lines - The lines of the text.
+ * @param database - The database of the text, if it has one with an end.
+ * @param entries - The new lines.
+ */
+function withEntries(lines: readonly string[], database: Database | undefined, entries: readonly string[]): string[] {
   if (entries.length === 0) {
-    return { lines: [...lines], added, known };
+    return [...lines];
   }
   if (database) {
-    return { lines: [...lines.slice(0, database.end), ...entries, ...lines.slice(database.end)], added, known };
+    return [...lines.slice(0, database.end), ...entries, ...lines.slice(database.end)];
   }
   const body = [...lines];
   const ending = body.length > 0 && body[body.length - 1] === '';
   while (body.length > 0 && body[body.length - 1].trim() === '') {
     body.pop();
   }
-  return { lines: [...body, ...(body.length > 0 ? [''] : []), `<!-- ${sourcesName}`, ...entries, '-->', ...(ending || body.length === 0 ? [''] : [])], added, known };
+  return [...body, ...(body.length > 0 ? [''] : []), `<!-- ${sourcesName}`, ...entries, '-->', ...(ending || body.length === 0 ? [''] : [])];
+}
+
+/**
+ * updateSources returns the lines of a text with sources of its database written anew and new sources added, as the
+ * merge of the items of Zotero needs it ([R-CITE-006](../../docs/requirements.md#r-cite-006)): each line of a changed
+ * source gets its new metadata, and each new source gets a line before the end of the comment, or a new comment at
+ * the end of the text. A database without its end gets no change.
+ * @param lines - The lines of the text.
+ * @param changed - The new metadata of sources of the database, by their IDs.
+ * @param added - The new sources, each with its ID.
+ * @returns The new lines, or a problem.
+ */
+export function updateSources(lines: readonly string[], changed: ReadonlyMap<string, Source>, added: readonly Source[]): { lines: string[]; problem?: string } {
+  const database = findDatabase(lines);
+  if (database && (database.end >= lines.length || lines[database.end].trim() !== '-->')) {
+    return { lines: [...lines], problem: database.problems[0]?.message ?? 'The comment of the sources has no end.' };
+  }
+  const result = [...lines];
+  const written = new Set<string>();
+  for (let line = (database?.start ?? 0) + 1; database && line < database.end; line++) {
+    let id: unknown;
+    try {
+      id = (JSON.parse(lines[line]) as { id?: unknown }).id;
+    } catch {
+      id = undefined;
+    }
+    const source = typeof id !== 'string' || written.has(id) ? undefined : changed.get(id);
+    if (source) {
+      result[line] = sourceLine(source);
+      written.add(source.id);
+    }
+  }
+  return { lines: withEntries(result, database, added.map(sourceLine)) };
 }
 
 /** locatorTerms are the CSL terms of a place in a source, which the title of a citation names. */

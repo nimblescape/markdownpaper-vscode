@@ -179,6 +179,17 @@ describe('the text of a citation in the style of the PHT (R-CITE-002, R-CITE-003
     expect(cited.entries.map((entry) => entry.id)).toEqual(['festman2019', 'raggl2015a', 'raggl2015b']);
     expect(cited.entries.map((entry) => entry.text)).toEqual(['Festman, J., & Schwieter, J. (2019). *F*.', 'Raggl, A. (2015a). *Alter*.', 'Raggl, A. (2015b). *Zeit*.']);
   });
+
+  test('a narrative citation of a law, which has no author, has the title in the place of the names', () => {
+    const law: Source = { id: 'schog', type: 'legislation', title: 'Schulorganisationsgesetz', issued: { 'date-parts': [[1962]] } };
+    const cites: Cite[] = [
+      { id: 'schog', form: 'narrative' },
+      { id: 'schog', form: 'narrative', label: 'section', locator: '65' },
+      { id: 'schog', form: 'parenthetical', label: 'section', locator: '65' },
+    ];
+    expect(citationsOf([law], cites)).toEqual(['Schulorganisationsgesetz (1962)', 'Schulorganisationsgesetz (1962, § 65)', 'Schulorganisationsgesetz, 1962, § 65']);
+    expect(citationsOf([law], cites.slice(0, 1), apa7)).toEqual(['Schulorganisationsgesetz (1962)']);
+  });
 });
 
 describe('the built-in style apa7 and the CSL locales (R-CITE-003)', () => {

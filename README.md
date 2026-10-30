@@ -99,7 +99,9 @@ gives the same renderer to people and AI agents on the command line:
   the empty paper document of the layout, which explains how to work with the
   layout, the drop folder `inbox/` for sources, the folder `bib/` for the
   files of the sources, and `images/`. "New Document" and "New Layout" add a
-  document or a layout.
+  document or a layout. "Update Layout" updates the copy of a layout on GitHub
+  from its repository when the repository has a newer version, and keeps the
+  changes of the project.
 - **Notes.** The notes of nimblescape Markdown Notes do not show on the pages.
   The page preview and the PDF of a file in its clean editing view show the
   file itself. The clean editing view hides the database of the sources.

@@ -15,12 +15,16 @@
  *   author, or takes them from its options.
  * - `new document|layout|project` writes a new document, a new layout folder, or a new project without questions.
  * - `layouts` lists the layouts that `create` offers, and `preview <folder>` writes the preview PDF of a layout.
+ * - `update [folder]...` updates the copies of layouts on GitHub in `layouts/` from their repositories, when the branch
+ *   of a copy has a newer version.
  * - `instructions [topic]` prints the rules of a topic for AI agents.
  * - `source <file> <input>...` adds sources to the database of a file, with the metadata of the services that publish
  *   it, and `source --search <words>` lists works of Crossref.
  *
  * The exit code is 0 for success, 1 when `check` found a problem, `format --check` found a file that the format
- * changes, `pdf` wrote the PDF with problems of the document, or an input of `source` gave no source,
+ * changes, `pdf` wrote the PDF with problems of the document, an input of `source` gave no source, `update` left a
+ * copy as it is because the project and the repository changed the same files, or `update --check` found a newer
+ * version,
  * and 2 for a wrong command or option, a missing file, a file that exists already, or a PDF that could not be made.
  * The module uses no API of VS Code, and main.ts runs it in Node.js.
  */
@@ -36,12 +40,13 @@ import { citationStyleOf } from '../paper/csl';
 import { formatPaper } from '../paper/format';
 import { readFrontMatter } from '../paper/frontMatter';
 import { topicList, topics } from '../paper/instructions';
-import { downloadRemote, findRemote, findRemotes, parseRemote, previewUrl, type RemoteLayout, remoteName } from '../paper/gallery';
+import { downloadRemote, findRemote, findRemotes, type Origin, originOf, parseRemote, previewUrl, type RemoteLayout, readOrigin, remoteName } from '../paper/gallery';
 import { formatText, type Layout, layoutFile, parseLayout, type Problem } from '../paper/layout';
 import { type Fetcher, type Lookup, lookUpFile, lookUpIdentifier, searchWorks } from '../paper/lookup';
 import { identifierOf, missingFields } from '../paper/metadata';
 import { defaultLayout, documentLayout, findLayout, layoutName } from '../paper/render';
 import { mapLinks, type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, packageName, splitStart, startFiles } from '../paper/scaffold';
+import { planUpdate } from '../paper/update';
 import { type Assets, exportPdf, fileReader, folderUrl } from '../pdf/export';
 import { httpFetcher } from './net';
 
@@ -76,6 +81,10 @@ export const usage = [
   '  layouts                       list the layouts that create offers, with the layouts on GitHub and their previews',
   '  preview <layout folder>       write the preview PDF of a layout: the PDF of its empty paper document',
   '      --write                   also write the formatted empty paper document back into the layout folder',
+  '  update [layout folder]...     update a copy of a layout on GitHub from its repository when its branch has a newer',
+  '                                version; without a folder, each folder of layouts/ whose layout.json has an origin',
+  '      --check                   write nothing; exit with 1 when a layout has a newer version',
+  '      --force                   also replace the files that the project changed when the repository changed them',
   '  instructions [topic]          print the rules of a topic for AI agents; without a topic, the list',
   '  source <file.md> <input>...   add sources to the database of the file, with the metadata from doi.org, the library',
   '                                catalogs, PubMed or arXiv; an input is a DOI, an ISBN, a PubMed ID, an arXiv ID, a web',
@@ -231,11 +240,15 @@ function startOf(layout: Layout, folder: string): string | undefined {
   return layout.document && fs.existsSync(path.join(folder, layout.document)) ? fs.readFileSync(path.join(folder, layout.document), 'utf8') : undefined;
 }
 
-/** Chosen is a layout for a new project: the read layout, its files by their paths in its folder, and its empty paper document. */
+/**
+ * Chosen is a layout for a new project: the read layout, its files by their paths in its folder, its empty paper
+ * document, and for a layout on GitHub where it comes from.
+ */
 interface Chosen {
   layout: Layout;
   source: Map<string, Uint8Array>;
   start?: string;
+  origin?: Origin;
 }
 
 /** token is a token of GitHub from the environment, which raises the limit of the requests to GitHub. */
@@ -256,7 +269,7 @@ async function readRemote(io: Io, remote: RemoteLayout): Promise<Chosen> {
   io.out(`Reading ${remoteName(remote)} at ${remote.commit.slice(0, 7)} from GitHub …`);
   const source = await downloadRemote(fetcherOf(io), remote);
   const start = remote.layout.document ? source.get(remote.layout.document.replace(/^\.\//, '')) : undefined;
-  return { layout: remote.layout, source, ...(start ? { start: new TextDecoder().decode(start) } : {}) };
+  return { layout: remote.layout, source, origin: originOf(remote), ...(start ? { start: new TextDecoder().decode(start) } : {}) };
 }
 
 /**
@@ -537,7 +550,7 @@ interface ProjectAnswers {
  */
 async function writeProject(answers: ProjectAnswers, io: Io): Promise<number> {
   const target = path.resolve(io.cwd, answers.folder);
-  const { layout, source, start } = answers.layout;
+  const { layout, source, start, origin } = answers.layout;
   const language = answers.language || layout.language;
   const values: Record<string, string> = {};
   if (answers.title) {
@@ -546,7 +559,7 @@ async function writeProject(answers: ProjectAnswers, io: Io): Promise<number> {
   if (answers.author) {
     values.author = answers.author;
   }
-  const written = writeFiles(target, newProjectFiles({ layout, source, language, values }, start));
+  const written = writeFiles(target, newProjectFiles({ layout, source, language, values, ...(origin ? { origin } : {}) }, start));
   for (const file of written) {
     io.out(`  ${path.relative(io.cwd, file)}`);
   }
@@ -718,6 +731,65 @@ async function runPreview(args: readonly string[], io: Io): Promise<number> {
 }
 
 /**
+ * runUpdate runs `update`: it updates each named copy of a layout on GitHub, or each folder of `layouts/` with an
+ * origin, from the repository of the layout ([R-LAY-010](../../docs/requirements.md#r-lay-010)).
+ * @param args - The arguments after the command.
+ * @param io - The streams and the network.
+ */
+async function runUpdate(args: readonly string[], io: Io): Promise<number> {
+  const { positional, options } = parse(args, [], ['check', 'force']);
+  let folders = positional.map((folder) => path.resolve(io.cwd, folder));
+  if (folders.length === 0) {
+    const layouts = path.join(io.cwd, 'layouts');
+    const entries = fs.existsSync(layouts) ? fs.readdirSync(layouts, { withFileTypes: true }).filter((entry) => entry.isDirectory()) : [];
+    folders = entries.map((entry) => path.join(layouts, entry.name)).filter((folder) => fs.existsSync(path.join(folder, layoutFile)) && readOrigin(fs.readFileSync(path.join(folder, layoutFile), 'utf8')));
+    if (folders.length === 0) {
+      throw new UsageError(`No folder of ${path.relative(io.cwd, layouts) || 'layouts'}/ is a copy of a layout on GitHub: none has the field "origin" in its ${layoutFile}.`);
+    }
+  }
+  const short = (commit: string): string => commit.slice(0, 7);
+  let result = 0;
+  for (const folder of folders.sort()) {
+    const name = path.relative(io.cwd, folder) || '.';
+    if (!fs.existsSync(path.join(folder, layoutFile))) {
+      throw new UsageError(`The folder ${name} has no ${layoutFile}.`);
+    }
+    const update = await planUpdate(fetcherOf(io), readFolder(folder), { ...(token() ? { token: token() } : {}), force: options.force !== undefined });
+    const { origin } = update;
+    if (update.from === origin.commit || (update.changed.length === 0 && update.conflicts.length === 0 && options.check)) {
+      io.out(`${name}: up to date with ${origin.layout}@${origin.ref} (${short(update.from)})`);
+      continue;
+    }
+    if (update.conflicts.length > 0 && options.force === undefined) {
+      io.err(`${name}: the project and ${origin.layout}@${origin.ref} changed the same files: ${update.conflicts.join(', ')}. Nothing was written; --force replaces them with the files of ${short(origin.commit)}.`);
+      result = 1;
+      continue;
+    }
+    if (options.check) {
+      io.out(`${name}: ${origin.layout}@${origin.ref} has a newer version, ${short(origin.commit)}; the update changes ${update.changed.join(', ')}`);
+      result = 1;
+      continue;
+    }
+    for (const [file, content] of update.write) {
+      fs.mkdirSync(path.dirname(path.join(folder, file)), { recursive: true });
+      fs.writeFileSync(path.join(folder, file), content);
+    }
+    for (const file of update.remove) {
+      fs.rmSync(path.join(folder, file), { force: true });
+      // A folder of the layout that the removed file leaves empty goes too.
+      for (let parent = path.dirname(path.join(folder, file)); parent.startsWith(folder + path.sep) && fs.readdirSync(parent).length === 0; parent = path.dirname(parent)) {
+        fs.rmdirSync(parent);
+      }
+    }
+    io.out(`${name}: updated from ${short(update.from)} to ${short(origin.commit)} of ${origin.layout}@${origin.ref}: ${update.changed.length > 0 ? update.changed.join(', ') : 'no file of the layout changed'}`);
+    if (update.kept.length > 0) {
+      io.out(`  The changes of the project stay in: ${update.kept.join(', ')}`);
+    }
+  }
+  return result;
+}
+
+/**
  * run runs the tool with the arguments of its command line and returns its exit code.
  * @param args - The arguments, without the program and the script.
  * @param io - The streams, the questions and the assets.
@@ -750,6 +822,8 @@ export async function run(args: readonly string[], io: Io): Promise<number> {
         return await runLayouts(rest, io);
       case 'preview':
         return await runPreview(rest, io);
+      case 'update':
+        return await runUpdate(rest, io);
       case 'instructions': {
         if (rest.length === 0) {
           io.out(topicList(`npx -y ${packageName}`));

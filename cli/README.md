@@ -35,6 +35,9 @@ markdownpaper instructions document
 | `new project <folder>` | Writes a new paper project without questions. |
 | `new document <file>` | Writes a new document with the front matter of its layout (`--layout <name>`). |
 | `new layout <folder>` | Copies a layout into a new folder (`--from <name>`, `--language <tag>`). |
+| `layouts` | Lists the layouts that `create` offers, with the layouts on GitHub and their previews. |
+| `preview <layout folder>` | Writes the preview PDF of a layout, the PDF of its empty paper document; `--write` also writes the formatted document back. |
+| `update [layout folder]...` | Updates a copy of a layout on GitHub from its repository when its branch has a newer version: the files that only the repository changed get their new versions, and the changes of the project stay. Without a folder, each folder of `layouts/` whose `layout.json` has an `origin`. `--check` writes nothing and exits with 1 for a newer version; `--force` also replaces the files that both changed. |
 | `pdf <file>` | Writes the PDF beside the file, with the name that the layout gives. `--output <file.pdf>`, `--html <file.html>`, `--browser <program>`. |
 | `check <file>...` | Checks the front matter against the layout and the links to figures and tables. |
 | `format <file>...` | Writes into each file the text of the citations and the reference list in the citation style of the layout, and the lists of the special sections: the table of contents, the list of figures, of tables and of listings. `--check` writes nothing and exits with 1 when the format would change a file. |
@@ -43,8 +46,10 @@ markdownpaper instructions document
 | `--help` | Shows the help. |
 | `--version` | Shows the version of the command and of the format of the layouts. |
 
-The exit code is 0 for success, 1 when a document has problems or an input of
-`source` gave no source, and 2 for a wrong command or option, or a failure.
+The exit code is 0 for success, 1 when a document has problems, an input of
+`source` gave no source, or `update` found a newer version with `--check` or
+left a copy as it is because the project and the repository changed the same
+files, and 2 for a wrong command or option, or a failure.
 `source` connects to the services of the metadata, also through the proxy of
 `HTTPS_PROXY` and `NO_PROXY`. The environment variable
 `MARKDOWNPAPER_BROWSER` names the program of the browser.

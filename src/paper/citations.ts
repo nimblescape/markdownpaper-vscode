@@ -288,6 +288,12 @@ const noteMarkup = /<!--\[note-[a-z0-9]{4}|\[\^note-[a-z0-9]{4}\]/;
 /** headingLine matches an ATX heading. */
 const headingLine = /^ {0,3}#{1,6}(?:[ \t]|$)/;
 
+/** hintStart matches the first line of an alert of GitHub, such as `> [!NOTE]`, for example the hint of a template. */
+const hintStart = /^ {0,3}>[ \t]?\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*$/i;
+
+/** commentStart matches the first line of an HTML comment, which the pages do not show. */
+const commentStart = /^ {0,3}<!--/;
+
 /**
  * researchText asks an AI agent for the evidence of the argument from the start marker `researchMark` to it, or of the
  * sentence before it without a start marker ([R-CITE-002](../../docs/requirements.md#r-cite-002)).
@@ -571,7 +577,11 @@ export function writeCitations(lines: readonly string[], layout: Layout, style: 
   if (ordered.length === 0 && body.every(isBlank)) {
     return output;
   }
-  const blocks = [...ordered.map((entry) => [entry]), ...paragraphs.filter((paragraph) => paragraph.id === undefined || !sources.has(paragraph.id)).map((paragraph) => paragraph.lines)];
+  // A hint at the start of the reference list, such as the hint of a template, stays before the entries.
+  const firstOther = paragraphs.findIndex((paragraph) => !hintStart.test(paragraph.lines[0]));
+  const hints = firstOther < 0 ? paragraphs : paragraphs.slice(0, firstOther);
+  const others = paragraphs.slice(hints.length).filter((paragraph) => paragraph.id === undefined || !sources.has(paragraph.id));
+  const blocks = [...hints.map((paragraph) => paragraph.lines), ...ordered.map((entry) => [entry]), ...others.map((paragraph) => paragraph.lines)];
   const section = ['', ...blocks.flatMap((block, index) => (index === 0 ? block : ['', ...block]))];
   if (blocks.length > 0 && (bibliography.end < output.length || isBlank(body[body.length - 1]))) {
     section.push('');
@@ -649,7 +659,7 @@ export function citationProblems(lines: readonly string[], layout: Layout): Prob
       const id = anchorStart.exec(lines[line])?.[1];
       if (id !== undefined && sources.has(id)) {
         entries.add(id);
-      } else if (!headingLine.test(lines[line])) {
+      } else if (!headingLine.test(lines[line]) && !hintStart.test(lines[line]) && !commentStart.test(lines[line])) {
         problems.push({
           severity: 'warning',
           message: `This paragraph of the reference list is no entry of a source of the file. Add its source to the comment "${sourcesName}" and cite it; the format then writes its entry.`,

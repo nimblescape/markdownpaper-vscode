@@ -136,6 +136,38 @@ blockquote {
   line-height: 1.3;
 }
 
+/* An alert of GitHub (> [!NOTE] and the others): a box with a line on the left in the color of its kind. */
+.markdown-alert {
+  margin: 0 0 0.8em 0;
+  padding: 0.3em 0.8em;
+  border-left: 3pt solid #0969da;
+  font-size: 10pt;
+  line-height: 1.3;
+  break-inside: avoid;
+}
+
+.markdown-alert > p {
+  margin: 0 0 0.3em 0;
+}
+
+.markdown-alert > p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-alert-title {
+  font-weight: bold;
+  color: #0969da;
+}
+
+.markdown-alert-tip { border-left-color: #1a7f37; }
+.markdown-alert-tip .markdown-alert-title { color: #1a7f37; }
+.markdown-alert-important { border-left-color: #8250df; }
+.markdown-alert-important .markdown-alert-title { color: #8250df; }
+.markdown-alert-warning { border-left-color: #9a6700; }
+.markdown-alert-warning .markdown-alert-title { color: #9a6700; }
+.markdown-alert-caution { border-left-color: #cf222e; }
+.markdown-alert-caution .markdown-alert-title { color: #cf222e; }
+
 code,
 pre {
   font-family: "Liberation Mono", Consolas, Menlo, monospace;

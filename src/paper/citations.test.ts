@@ -193,6 +193,15 @@ describe('the format step of the citations (R-CITE-002, R-CITE-004)', () => {
     expect(writeCitations(formatted, layout, style)).toEqual(formatted);
   });
 
+  test('keeps a hint of the template, an alert of GitHub at the start of the reference list, before the entries, without a warning', () => {
+    const hint = ['> [!NOTE]', '> Führen Sie hier mind. 5 Werke an'];
+    const lines = file(['Text ([Hong](#hong2024)).', '', '# Literaturverzeichnis', '', ...hint, '', '<!-- Ein Kommentar. -->']);
+    const formatted = writeCitations(lines, layout, style);
+    expect(formatted.slice(at + 2, at + 10)).toEqual(['# Literaturverzeichnis', '', ...hint, '', hongEntry, '', '<!-- Ein Kommentar. -->']);
+    expect(writeCitations(formatted, layout, style)).toEqual(formatted);
+    expect(citationProblems(formatted, layout)).toEqual([]);
+  });
+
   test('writes the entries only anew in their place in a reference list with a sub-heading or a note', () => {
     const lines = file([
       'Text ([Hong](#hong2024)) and ([Shao](#shao2025)) and [Raggl](#raggl2015).',

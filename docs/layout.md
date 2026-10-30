@@ -90,6 +90,7 @@ a script element or an event attribute of a template is removed.
 | `listings.lineNumbers` | `true`: the number of each line before the code of a listing, from 1 in each listing. | `false` |
 | `pdfName` | The name of the PDF file without `.pdf`, with fields as `{{field}}`; `{{file}}` is the name of the Markdown file. Characters other than letters, digits, `-`, `_` and `.` fall away, a space becomes `-`. | `"{{file}}"` |
 | `terms` | Words of the language that this layout changes (section 4). | |
+| `origin` | Only in a copy of a layout on GitHub in a project: where it comes from, `layout` (`github:<owner>/<repository>/<folder>`), `ref` (the branch, tag or commit that the copy follows) and `commit` (the commit of the copied files). A new project writes it; `markdownpaper update` and "Update Layout" read it (section 8). A layout repository does not write it. | |
 
 All paths are relative to the layout folder and stay inside it. A higher minor
 version of the format adds fields that an older renderer leaves out; a higher
@@ -167,6 +168,7 @@ gives the style sheet these parts:
 | `p.table-caption` | The caption of a table, directly before the table. |
 | `p.listing-caption`, `.caption-source`, `pre.listing`, `.line-number` | The caption of a listing before its code, the cite of its source after the caption, such as "(fields.ts, L12-L30)", the code, and the number of each line, an element without text whose number `::before { content: attr(data-number); }` shows. |
 | `.footnote`, `.footnote-paragraph`, `::footnote-call`, `::footnote-marker`, `@footnote` | The footnotes at the foot of the page. Paged.js copies the classes of a footnote to its call in the text, the element `[data-footnote-call]` with the number as `::after`: a rule for the text of the footnote names `.footnote:not([data-footnote-call])`, so that the number in the text keeps the size of its text and gets no `::before`. |
+| `.markdown-alert`, `.markdown-alert-note` (also `-tip`, `-important`, `-warning`, `-caution`), `.markdown-alert-title` | An alert of GitHub, a block quote with `[!NOTE]` or another mark in its first line, as GitHub writes it: a `div` with the title, such as "Note", and the text. A layout draws it as a box, for example the box of a hint of a Word template, and can hide its title. An ordinary block quote stays a `blockquote`. |
 | `section.references` | The reference list. |
 | `h1.section-apx`, `h2.appendix`, `.appendix-label` | The appendix part, an appendix, and its label. |
 | `.no-hyphens` | A part without soft hyphens. |
@@ -209,6 +211,11 @@ PDF shows the pages of the layout in the list of the layouts of a new project.
   sections and the PDF. The texts of the template, such as the text of an
   affidavit, stay as the template has them; instructions of the template that
   only fit Word, such as how to update a table of contents in Word, stay out.
+- A hint of the template under a heading, such as a text in a blue box that
+  tells the author what the chapter holds, is an alert of GitHub with its text
+  word for word: `> [!NOTE]` in one line and `> ` with the text in the next.
+  GitHub shows it as a box, and the style sheet draws it as the box of the
+  template (`.markdown-alert-note`, section 5).
 - A file that `document.md` links to, for example `images/figure.svg` or the
   code of a listing in `code/`, is a file of the layout folder. A new project
   gets it at the same path, and the link in `paper/paper.md` gets `../`.
@@ -239,6 +246,22 @@ chooses one; the new project gets a copy in `layouts/<folder>/`. Keep one
 folder for each kind of work, without a version in its name, for example
 `thesis/` and `concept/`: a project keeps its copy, so a change of the layout
 in its repository does not change the pages of an existing project.
+
+A new project writes the field `origin` into the `layout.json` of its copy
+(section 3). `markdownpaper update` and "Update Layout" in VS Code update the
+copy when the branch of `origin` has a newer version: a file that only the
+repository changed gets its new version, a file that only the project changed
+stays, and a file that both changed stops the update, unless `--force` (or the
+confirmation in VS Code) replaces it. A copy made by hand, for example with
+`git archive`, gets the field by hand, with the full commit of its files:
+
+```json
+"origin": {
+  "layout": "github:majikmate/markdownpaper-layout-pht/concept",
+  "ref": "main",
+  "commit": "c2907533d7d01329769c76e8f0efa23b48fa3bd1"
+}
+```
 
 ## 9. A layout from a Word template
 

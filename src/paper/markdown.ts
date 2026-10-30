@@ -39,6 +39,9 @@
  *   (`div.paper-part.paper-appendix`). A layout can give each part its own pages, for example without a page number
  *   in the front part. A special section of the front part gets no number, also when the layout numbers its kind
  *   ([R-REN-013](../../docs/requirements.md#r-ren-013)).
+ * - A block quote whose first line is the mark of an alert of GitHub, such as `> [!NOTE]`, becomes the element of an
+ *   alert as GitHub writes it, `<div class="markdown-alert markdown-alert-note">` with its title, so a layout can draw
+ *   it as a box, for example the blue box of a hint of a template ([R-REN-014](../../docs/requirements.md#r-ren-014)).
  * - Each block names its line in the file (`data-line`), so that a click on a page shows that line in the editor.
  *
  * `paperPlugin` adds the rule to a markdown-it instance: to the one of `renderBody` for the PDF and the command line, and
@@ -426,6 +429,52 @@ function placeFootnotes(state: StateCore): number {
   return numbers.size;
 }
 
+/** alertMark matches the first line of an alert of GitHub, such as `[!NOTE]`, and gives its kind. */
+const alertMark = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*(?:\n|$)/i;
+
+/** alertTitles are the titles of the kinds of the alerts, as GitHub writes them. */
+const alertTitles: Readonly<Record<string, string>> = { note: 'Note', tip: 'Tip', important: 'Important', warning: 'Warning', caution: 'Caution' };
+
+/**
+ * placeAlerts turns each block quote whose first line is the mark of an alert of GitHub, such as `> [!NOTE]`, into the
+ * element of an alert as GitHub writes it ([R-REN-014](../../docs/requirements.md#r-ren-014)):
+ * `<div class="markdown-alert markdown-alert-note">` with the title `<p class="markdown-alert-title">Note</p>` and the
+ * text of the quote after the mark. Another block quote stays a quotation.
+ * @param state - The state of the rule.
+ */
+function placeAlerts(state: StateCore): void {
+  const tokens = state.tokens;
+  for (let index = 0; index < tokens.length; index++) {
+    const open = tokens[index];
+    const inline = tokens[index + 2];
+    const mark = open.type === 'blockquote_open' && tokens[index + 1]?.type === 'paragraph_open' && inline?.type === 'inline' ? alertMark.exec(inline.content) : null;
+    if (!mark) {
+      continue;
+    }
+    const kind = mark[1].toLowerCase();
+    const close = tokens.findIndex((token, at) => at > index && token.type === 'blockquote_close' && token.level === open.level);
+    open.type = 'alert_open';
+    open.tag = 'div';
+    open.attrSet('class', `markdown-alert markdown-alert-${kind}`);
+    tokens[close].type = 'alert_close';
+    tokens[close].tag = 'div';
+    // The mark is the first line of the paragraph: the text after its line break stays.
+    const children = inline.children ?? [];
+    const lineBreak = children.findIndex((child) => child.type === 'softbreak' || child.type === 'hardbreak');
+    if (lineBreak < 0) {
+      tokens.splice(index + 1, 3);
+    } else {
+      inline.children = children.slice(lineBreak + 1);
+      inline.content = inline.content.slice(mark[0].length);
+      const paragraph = tokens[index + 1];
+      if (paragraph.map) {
+        paragraph.map = [paragraph.map[0] + 1, paragraph.map[1]];
+      }
+    }
+    tokens.splice(index + 1, 0, html(state, `<p class="markdown-alert-title">${alertTitles[kind]}</p>\n`, true));
+  }
+}
+
 /** listingComment matches the comment of a listing of Markdown Notes, `<!-- listing: ../src/fields.ts#read-fields -->`. */
 const listingComment = /^\s*<!--\s*listing:\s*(\S+)\s*-->\s*$/;
 
@@ -479,6 +528,7 @@ function paperRule(layout: Layout, found: Found) {
   return (state: StateCore): void => {
     found.notes = removeNotes(state.tokens);
     found.footnotes = placeFootnotes(state);
+    placeAlerts(state);
     const tokens = state.tokens;
     const terms = layout.terms;
     const ids = new Set<string>();

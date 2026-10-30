@@ -8,6 +8,7 @@ import * as path from 'node:path';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { version } from '../../package.json';
 import type { Fetcher } from '../paper/lookup';
+import { blobId } from '../paper/update';
 import { type Io, run } from './cli';
 
 /** repository is the root folder of this repository. */
@@ -281,4 +282,50 @@ test('preview needs a layout folder with an empty paper document (R-LAY-009)', a
   fs.writeFileSync(path.join(folder, 'layouts/bare/layout.json'), JSON.stringify({ format: 'nimblescape-layout 1.0.0' }));
   expect(await run(['preview', 'layouts/bare'], io())).toBe(2);
   expect(err.join('\n')).toContain('The layout "bare" has no empty paper document');
+});
+
+test('create writes the origin of a layout on GitHub, and update brings the newer version of its branch and keeps the changes of the project (R-LAY-010)', async () => {
+  expect(await run(['create', 'one', '--yes', '--layout', 'github:school/layouts/thesis@main'], { ...io(), fetch: github() })).toBe(0);
+  expect(JSON.parse(read('one/layouts/thesis/layout.json')).origin).toEqual({ layout: 'github:school/layouts/thesis', ref: 'main', commit });
+  // The newer commit of main changes page.css, adds a font and removes the image.
+  const newer = 'd'.repeat(40);
+  const base = github();
+  const raw = 'https://raw.githubusercontent.com/school/layouts';
+  const paths = ['layout.json', 'page.css', 'document.md', 'document.pdf', 'images/folders.svg'];
+  const before = new Map(await Promise.all(paths.map(async (file) => [file, (await base(`${raw}/${commit}/thesis/${file}`, '*/*')).body] as const)));
+  const after = new Map([...before].filter(([file]) => file !== 'images/folders.svg'));
+  after.set('page.css', encoder.encode('p { margin: 0; }'));
+  after.set('fonts/a.ttf', encoder.encode('font'));
+  const tree = (files: Map<string, Uint8Array>): string => JSON.stringify({ tree: [...files].map(([file, content]) => ({ path: `thesis/${file}`, type: 'blob', sha: blobId(content) })) });
+  const answers = new Map<string, Uint8Array>([
+    ['https://api.github.com/repos/school/layouts/commits/main', encoder.encode(newer)],
+    [`https://api.github.com/repos/school/layouts/commits/${commit}`, encoder.encode(commit)],
+    [`https://api.github.com/repos/school/layouts/git/trees/${commit}?recursive=1`, encoder.encode(tree(before))],
+    [`https://api.github.com/repos/school/layouts/git/trees/${newer}?recursive=1`, encoder.encode(tree(after))],
+    ...[...after].map(([file, content]) => [`${raw}/${newer}/thesis/${file}`, content] as const),
+  ]);
+  const network: Fetcher = async (url, accept, headers) => {
+    const body = answers.get(url);
+    return body ? { status: 200, type: 'text/plain', url, body } : base(url, accept, headers);
+  };
+  const project: Io = { ...io(), cwd: path.join(folder, 'one'), fetch: network };
+  fs.appendFileSync(path.join(folder, 'one/layouts/thesis/document.md'), '\nMine.\n');
+  fs.writeFileSync(path.join(folder, 'one/layouts/thesis/page.css'), 'p { color: red; }');
+  expect(await run(['update', '--check'], project)).toBe(1);
+  expect(err.join('\n')).toContain('layouts/thesis: the project and github:school/layouts/thesis@main changed the same files: page.css. Nothing was written');
+  fs.writeFileSync(path.join(folder, 'one/layouts/thesis/page.css'), 'p {}');
+  expect(await run(['update', '--check'], project)).toBe(1);
+  expect(read('one/layouts/thesis/page.css')).toBe('p {}');
+  out.length = 0;
+  expect(await run(['update'], project)).toBe(0);
+  expect(out).toEqual(['layouts/thesis: updated from ccccccc to ddddddd of github:school/layouts/thesis@main: fonts/a.ttf, images/folders.svg, page.css', '  The changes of the project stay in: document.md']);
+  expect(read('one/layouts/thesis/page.css')).toBe('p { margin: 0; }');
+  expect(read('one/layouts/thesis/fonts/a.ttf')).toBe('font');
+  expect(fs.existsSync(path.join(folder, 'one/layouts/thesis/images'))).toBe(false);
+  expect(read('one/layouts/thesis/document.md')).toContain('Mine.');
+  expect(JSON.parse(read('one/layouts/thesis/layout.json')).origin.commit).toBe(newer);
+  out.length = 0;
+  expect(await run(['update', 'layouts/thesis'], project)).toBe(0);
+  expect(out).toEqual([`layouts/thesis: up to date with github:school/layouts/thesis@main (ddddddd)`]);
+  expect(await run(['update'], io())).toBe(2);
 });

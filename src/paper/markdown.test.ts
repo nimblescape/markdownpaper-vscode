@@ -325,6 +325,26 @@ describe('figures and tables (R-REN-005)', () => {
   });
 });
 
+describe('alerts of GitHub (R-REN-014)', () => {
+  test('a block quote with the mark of an alert in its first line becomes the element of the alert, as GitHub writes it', () => {
+    const markdown = '# Teil\n\n> [!NOTE]\n> Bitte achten Sie auf den *Bezug* zur Schule.\n\n[Ihr Text]\n\n> [!warning]\n>\n> Erster Absatz.\n>\n> Zweiter Absatz.\n\n> Ein Zitat.\n';
+    const html = renderBody(markdown, layoutOf()).html;
+    expect(html).toContain(
+      '<div class="markdown-alert markdown-alert-note" data-line="2">\n<p class="markdown-alert-title">Note</p>\n<p data-line="3">Bitte achten Sie auf den <em>Bezug</em> zur Schule.</p>\n</div>',
+    );
+    expect(html).toContain('<p data-line="5">[Ihr Text]</p>');
+    // A mark alone in its paragraph leaves no empty paragraph.
+    expect(html).toContain('<div class="markdown-alert markdown-alert-warning" data-line="7">\n<p class="markdown-alert-title">Warning</p>\n<p data-line="9">Erster Absatz.</p>\n<p data-line="11">Zweiter Absatz.</p>\n</div>');
+    expect(html).toContain('<blockquote data-line="13">\n<p data-line="13">Ein Zitat.</p>\n</blockquote>');
+  });
+
+  test('a mark that is not alone in the first line, or an unknown kind, leaves the quotation', () => {
+    const html = renderBody('# Teil\n\n> [!NOTE] Text in derselben Zeile.\n\n> [!HINWEIS]\n> Text.\n', layoutOf()).html;
+    expect(html).not.toContain('markdown-alert');
+    expect(html).toContain('<blockquote data-line="2">');
+  });
+});
+
 describe('links to figures and tables (R-REN-009)', () => {
   test('the anchor of /figure and /table names the figure or the table, and a link to it gets its label', () => {
     const markdown = [

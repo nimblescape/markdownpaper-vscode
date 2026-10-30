@@ -40,7 +40,7 @@ This document replaces it where the two differ.
 | 9 | The command `markdownpaper` with `pdf`, `check`, `create`, `new` and `instructions` | [R-CLI-001](#r-cli-001), [R-CLI-003](#r-cli-003) | done |
 | 10 | The anchors of figures and tables, the links to them and to headings, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-003](#r-ren-003), [R-REN-009](#r-ren-009) | done |
 | 11 | The interface of Markdown Notes: the file behind the clean editing view | [R-GEN-003](#r-gen-003) | done |
-| 12 | One formatter command: `markdownpaper format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | planned; needs the library of `@nimblescape/markdownnotes` |
+| 12 | One formatter command: `markdownpaper format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | the steps of the paper done (step 22); the steps of Markdown Notes on the command line need the library of `@nimblescape/markdownnotes` |
 | 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | planned; the work of Markdown Notes moves here |
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006) | instructions done; the first layout planned |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
@@ -50,7 +50,7 @@ This document replaces it where the two differ.
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` with the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
 | 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
-| 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `markdownpaper format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | planned |
+| 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `markdownpaper format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | done |
 
 ## General
 
@@ -113,6 +113,9 @@ without it.
   `/cite` and `/research` of [R-CITE-002](#r-cite-002). Each call returns a
   `Disposable`. Markdown Notes has them since commit `bf3b719` of its
   [pull request 1](https://github.com/nimblescape/nimblescape-markdown-notes/pull/1).
+  Markdown Paper adds its format step with `registerFormatStep`
+  ([R-CLI-002](#r-cli-002)); an older version of Markdown Notes without it
+  gets no step.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
@@ -483,12 +486,13 @@ the headings below them ([decision 10](#decisions)):
   its heading, and its number its own element, for the indent of the layout.
   An entry whose target is not in the file is a warning
   ([R-DOC-002](#r-doc-002)).
-- A section without the markers gets the list of the renderer, until the
-  formatter writes the list (plan step 22): the table of contents lists the
-  headings to the depth of the layout, with their numbers, also the special
-  sections and the appendices, but not its own heading; the list of figures,
-  the list of tables and the list of listings list the label and the text of
-  each caption ([R-REN-005](#r-ren-005), [R-REN-011](#r-ren-011)).
+- The format step of the paper writes the lists ([R-CLI-002](#r-cli-002)),
+  and a section without the markers gets the same list from the renderer:
+  the table of contents lists the headings to the depth of the layout, with
+  their numbers, also the special sections and the appendices, but not its
+  own heading; the list of figures, the list of tables and the list of
+  listings list the label and the text of each caption
+  ([R-REN-005](#r-ren-005), [R-REN-011](#r-ren-011)).
 - The reference list gets no soft hyphens, and the layout gives its entries
   their indent.
 
@@ -909,12 +913,12 @@ as a scaffold of Vite does ([decision 4](#decisions)):
 gives the command `markdownpaper` for people and AI agents, with Node.js 22 or
 later, also through `npx` without an installation ([decision 4](#decisions)).
 
-- `pdf`, `check`, `create`, `new document|layout|project`, `instructions`,
-  and later `format` ([R-CLI-002](#r-cli-002)).
+- `pdf`, `check`, `format` ([R-CLI-002](#r-cli-002)), `create`,
+  `new document|layout|project`, `instructions`.
 - `--help` prints the use, `--version` the version and the version of the
   layout format.
-- The exit code is 0 for success, 1 for problems of a document, and 2 for a
-  wrong call or a failure.
+- The exit code is 0 for success, 1 for problems of a document or for a file
+  that `format --check` would change, and 2 for a wrong call or a failure.
 - The command uses the same renderer, checks and scaffold as the extension.
 
 ### R-CLI-002
@@ -931,7 +935,18 @@ notes and the paper are two packages. The plan:
 - `markdownnotes format` stays the formatter of files without a paper.
 - In VS Code, the extension registers the steps of the paper as a format step
   of Markdown Notes, so "Format Document" and format on save run all steps in
-  one change.
+  one change. The step needs the layout of the file, which the extension
+  reads when the file opens and when its front matter or a file of a layout
+  changes; a format before that leaves out the step of the paper once.
+- Today `markdownpaper format` runs the steps of the paper; the steps of
+  Markdown Notes join it when its library is published. `--check` writes
+  nothing and exits with 1 when the format would change a file, for a check
+  in CI ([R-GEN-008](#r-gen-008)).
+- The step of the lists writes the four lists of
+  [R-REN-004](#r-ren-004) from what the renderer reads in the file: the
+  numbers of the headings by the rules of the layout, and the labels and
+  anchors of the captions. A section without the markers gets them after its
+  heading; the rest of the section stays.
 
 ### R-CLI-003
 

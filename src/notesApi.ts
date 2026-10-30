@@ -24,6 +24,11 @@ export interface NotesApiV1 {
   readonly version: 1;
   /** fileOf returns the URI of the file of a document of the clean editing view, and undefined for another URI. */
   fileOf(document: vscode.Uri): vscode.Uri | undefined;
+  /**
+   * registerFormatStep adds a step to the formatter of Markdown Notes, after its own steps, until the disposal of the
+   * result. An older version of Markdown Notes does not have it.
+   */
+  registerFormatStep?(step: { applies(lines: readonly string[], file: vscode.Uri): boolean; format(lines: readonly string[], file: vscode.Uri): readonly string[] }): vscode.Disposable;
 }
 
 /** NotesExports is the export of the extension Markdown Notes, as far as this extension reads it. */

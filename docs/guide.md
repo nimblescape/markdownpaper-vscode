@@ -37,7 +37,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [A layout from a Word template](#a-layout-from-a-word-template) | AI agent | instructions available | [R-LAY-006](requirements.md#r-lay-006) |
 | [Instructions for AI agents](#instructions-for-ai-agents) | command line | available | [R-CLI-003](requirements.md#r-cli-003) |
 | [Settings](#settings) | VS Code | available | [R-SET-001](requirements.md#r-set-001) |
-| One formatter command `markdownpaper format` | command line, VS Code | planned | [R-CLI-002](requirements.md#r-cli-002) |
+| The format step of the paper: the four lists in the file | VS Code (format of Markdown Notes), `markdownpaper format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
 | Citations, the database of the sources, the reference list, `/source`, `/cite`, `/research` | the Markdown file, text editor | planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-004](requirements.md#r-cite-004) |
 | [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
 | [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line planned | [R-REN-010](requirements.md#r-ren-010) |
@@ -153,9 +153,11 @@ brackets at the end of the heading, for example `# Quellen und Materialien
 The file holds the four lists as lists of links between two hidden markers,
 such as `<!-- toc -->` and `<!-- /toc -->`, under their headings, and the
 pages show them with the page of each entry. The format step of the paper
-will write these lists and keep them current (planned); until then a section
-without the markers gets the list of the renderer. The table of contents does
-not list itself.
+writes these lists and keeps them current: in VS Code in "Format Document"
+and the format on save of Markdown Notes, on the command line with
+`npx -y @nimblescape/markdownpaper format paper/paper.md`. A section without
+the markers gets the list of the renderer. The table of contents does not list
+itself.
 
 ## Figures and tables
 

@@ -5,11 +5,11 @@
 
 // Tests in a real VS Code (npm run test:vscode, .vscode-test.mjs): mocha runs them in the extension host. They write a
 // layout and Markdown files into a temporary folder, and check the commands of the extension, the checks of the front
-// matter and their hover (R-DOC-002, R-DOC-003), the plugin of the pages in the Markdown preview of VS Code for a
-// paper document and none for a notes document (R-PRV-001, R-PRV-005, R-DOC-004), and "Export PDF" (R-PDF-001), with
-// the diagrams of Mermaid and the math of KaTeX of the built-in Markdown extensions (R-REN-010), when a Chrome,
-// Chromium or Edge is installed, as on the runners of GitHub. The test of the script of the pages, which needs a
-// browser page, is in src/paperPreview.test.ts.
+// matter and their hover (R-DOC-002, R-DOC-003), the format step of the paper (R-REN-004, R-CLI-002), the plugin of
+// the pages in the Markdown preview of VS Code for a paper document and none for a notes document (R-PRV-001,
+// R-PRV-005, R-DOC-004), and "Export PDF" (R-PDF-001), with the diagrams of Mermaid and the math of KaTeX of the
+// built-in Markdown extensions (R-REN-010), when a Chrome, Chromium or Edge is installed, as on the runners of GitHub.
+// The test of the script of the pages, which needs a browser page, is in src/paperPreview.test.ts.
 
 import * as assert from 'node:assert/strict';
 import * as fs from 'node:fs';
@@ -103,6 +103,18 @@ describe('nimblescape Markdown Paper', function () {
     const hovers = await vscode.commands.executeCommand<vscode.Hover[]>('vscode.executeHoverProvider', file, new vscode.Position(2, 2));
     const text = hovers.flatMap((hover) => hover.contents.map((content) => (typeof content === 'string' ? content : content.value))).join('\n').replaceAll('&nbsp;', ' ');
     assert.match(text, /Der Titel der Arbeit\./);
+  });
+
+  it('the format step of the paper writes the table of contents of a paper document, for the formatter of Markdown Notes (R-REN-004, R-CLI-002)', async () => {
+    const extension = await api();
+    const file = write('paper/lists.md', '---\nlayout: plain\nlang: de-AT\n---\n\n# Inhaltsverzeichnis\n\n# Einleitung\n');
+    const lines = (await vscode.workspace.openTextDocument(file)).getText().split('\n');
+    await waitFor(() => (extension.formatStep.applies(lines, file) ? true : undefined), 'the layout of the format step');
+    assert.deepEqual(extension.formatStep.format(lines, file).slice(5, 10), ['# Inhaltsverzeichnis', '', '<!-- toc -->', '- [1 Einleitung](#einleitung)', '<!-- /toc -->']);
+    // A notes document gets no step of the paper.
+    const notes = write('paper/notes-only.md', '# Inhaltsverzeichnis\n');
+    await vscode.workspace.openTextDocument(notes);
+    assert.equal(extension.formatStep.applies(['# Inhaltsverzeichnis', ''], notes), false);
   });
 
   it('the Markdown preview of a paper document gets the layout and the steps of the renderer, with the content of the other plugins, and a notes document keeps its preview (R-PRV-001, R-PRV-005, R-DOC-004)', async () => {

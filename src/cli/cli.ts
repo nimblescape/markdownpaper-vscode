@@ -8,12 +8,14 @@
  *
  * - `pdf <file>` writes the PDF of a Markdown file in its layout, with an installed Chrome, Chromium or Edge.
  * - `check <file>...` checks the front matter of each file against its layout.
+ * - `format <file>...` runs the format steps of the paper on each file: the lists of the special sections.
  * - `create [folder]` scaffolds a new project, as `npm create vite` does: it asks for the name, the layout, the
  *   language, the title and the author, or takes them from its options.
  * - `new document|layout|project` writes a new document, a new layout folder, or a new project without questions.
  * - `instructions [topic]` prints the rules of a topic for AI agents.
  *
- * The exit code is 0 for success, 1 when `check` found a problem or `pdf` wrote the PDF with problems of the document,
+ * The exit code is 0 for success, 1 when `check` found a problem, `format --check` found a file that the format
+ * changes, or `pdf` wrote the PDF with problems of the document,
  * and 2 for a wrong command or option, a missing file, a file that exists already, or a PDF that could not be made.
  * The module uses no API of VS Code, and main.ts runs it in Node.js.
  */
@@ -23,9 +25,11 @@ import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { version } from '../../package.json';
 import { checkDocument } from '../paper/checks';
+import { readFrontMatter } from '../paper/frontMatter';
 import { topicList, topics } from '../paper/instructions';
 import { formatText, type Layout, type Problem } from '../paper/layout';
-import { defaultLayout, findLayout, layoutName } from '../paper/render';
+import { writeLists } from '../paper/lists';
+import { defaultLayout, documentLayout, findLayout, layoutName } from '../paper/render';
 import { type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, packageName } from '../paper/scaffold';
 import { type Assets, exportPdf, fileReader, folderUrl } from '../pdf/export';
 
@@ -44,6 +48,8 @@ export const usage = [
   '      --html <file.html>        also write the HTML page of the renderer, for a look at it in a browser',
   '      --browser <program>       the program of Chrome, Chromium or Edge (else MARKDOWNPAPER_BROWSER or a search)',
   '  check <file.md>...            check the front matter against the layout, and the links to figures and tables',
+  '  format <file.md>...           write the lists of the special sections, such as the table of contents',
+  '      --check                   write nothing; exit with 1 when the format would change a file',
   '  create [folder]               scaffold a new project; asks for what its options do not give',
   '      --layout <name>           the layout to copy into the project (default: plain)',
   '      --language <tag>          the language of the project, for example de-AT or en-US',
@@ -250,6 +256,43 @@ async function runCheck(args: readonly string[], io: Io): Promise<number> {
   return problems > 0 ? 1 : 0;
 }
 
+/**
+ * runFormat runs `format`: the format steps of the paper, which write the lists of the special sections into each file
+ * ([R-CLI-002](../../docs/requirements.md#r-cli-002)). The steps of Markdown Notes join when its library is published.
+ * @param args - The arguments after the command.
+ * @param io - The streams and the assets.
+ */
+async function runFormat(args: readonly string[], io: Io): Promise<number> {
+  const { positional, options } = parse(args, [], ['check']);
+  if (positional.length === 0) {
+    throw new UsageError(`${command} format needs at least one Markdown file.`);
+  }
+  let changed = 0;
+  for (const name of positional) {
+    const file = path.resolve(io.cwd, name);
+    if (!fs.existsSync(file)) {
+      throw new UsageError(`The file ${name} does not exist.`);
+    }
+    const text = fs.readFileSync(file, 'utf8');
+    const { layout } = await documentLayout({ reader: fileReader, builtinLayouts: folderUrl(io.assets.layouts) }, pathToFileURL(file).href, readFrontMatter(text));
+    const formatted = writeLists(text.split(/\r?\n/), layout).join(text.includes('\r\n') ? '\r\n' : '\n');
+    if (formatted === text) {
+      continue;
+    }
+    changed++;
+    if (options.check) {
+      io.err(`${name}: warning: The format changes the file; run ${command} format ${name}.`);
+    } else {
+      fs.writeFileSync(file, formatted);
+      io.out(`${name}: formatted`);
+    }
+  }
+  if (changed === 0) {
+    io.out(positional.length === 1 ? `${positional[0]}: no change` : `${positional.length} files: no change`);
+  }
+  return options.check && changed > 0 ? 1 : 0;
+}
+
 /** ProjectAnswers are the answers for a new project. */
 interface ProjectAnswers {
   folder: string;
@@ -381,6 +424,8 @@ export async function run(args: readonly string[], io: Io): Promise<number> {
         return await runPdf(rest, io);
       case 'check':
         return await runCheck(rest, io);
+      case 'format':
+        return await runFormat(rest, io);
       case 'create':
         return await runCreate(rest, io, true);
       case 'new':

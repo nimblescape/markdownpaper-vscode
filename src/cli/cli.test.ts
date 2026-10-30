@@ -95,6 +95,18 @@ test('check names the missing fields with the place in the file, and exits with 
   expect(await run(['check', 'missing.md'], io())).toBe(2);
 });
 
+test('format writes the lists of the special sections, and --check exits with 1 for a file that the format changes (R-CLI-002, R-REN-004)', async () => {
+  fs.writeFileSync(path.join(folder, 'a.md'), '---\nlayout: plain\nlang: de-AT\n---\n\n# Inhaltsverzeichnis\n\n# Einleitung\n');
+  expect(await run(['format', '--check', 'a.md'], io())).toBe(1);
+  expect(err).toEqual(['a.md: warning: The format changes the file; run markdownpaper format a.md.']);
+  expect(read('a.md')).not.toContain('<!-- toc -->');
+  expect(await run(['format', 'a.md'], io())).toBe(0);
+  expect(read('a.md')).toBe('---\nlayout: plain\nlang: de-AT\n---\n\n# Inhaltsverzeichnis\n\n<!-- toc -->\n- [1 Einleitung](#einleitung)\n<!-- /toc -->\n\n# Einleitung\n');
+  expect(await run(['format', '--check', 'a.md'], io())).toBe(0);
+  expect(out.at(-1)).toBe('a.md: no change');
+  expect(await run(['format', 'missing.md'], io())).toBe(2);
+});
+
 test('instructions prints the list of the topics and each topic (R-CLI-003)', async () => {
   expect(await run(['instructions'], io())).toBe(0);
   expect(out.join('\n')).toContain('document   writing a document');

@@ -4,14 +4,16 @@
 
 /**
  * The editor wiring of nimblescape Markdown Paper: the activation starts the checks of the front matter, the context
- * key of paper documents and the commands, and returns the export of the extension: the markdown-it plugin of the
- * pages in the Markdown preview of VS Code ([markdownPreview.ts](markdownPreview.ts)), which VS Code reads, and the
- * functions that the tests in VS Code read.
+ * key of paper documents, the format step of the paper in the formatter of Markdown Notes
+ * ([formatStep.ts](formatStep.ts)) and the commands, and returns the export of the extension: the markdown-it plugin
+ * of the pages in the Markdown preview of VS Code ([markdownPreview.ts](markdownPreview.ts)), which VS Code reads, and
+ * the functions that the tests in VS Code read.
  */
 
 import type MarkdownIt from 'markdown-it';
 import * as vscode from 'vscode';
 import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand } from './commands';
+import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
 import { PaperPreview } from './markdownPreview';
 import { PaperDocuments } from './paperDocuments';
@@ -35,6 +37,8 @@ export interface Api {
   extendMarkdownIt(md: MarkdownIt): MarkdownIt;
   /** problemsOf returns the warnings of the checks of a file. */
   problemsOf(file: vscode.Uri): readonly vscode.Diagnostic[];
+  /** formatStep is the format step of the paper, which the formatter of Markdown Notes runs. */
+  formatStep: FormatStep;
 }
 
 /**
@@ -54,6 +58,7 @@ export function readSettings(scope?: vscode.Uri): Settings {
 export function activate(context: vscode.ExtensionContext): Api {
   const checks = new FrontMatterChecks(context.extensionUri);
   const papers = new PaperDocuments();
+  const formatStep = new PaperFormatStep(context.extensionUri);
   const preview = new PaperPreview(
     context.extensionUri,
     () => readSettings().previewDelay,
@@ -69,6 +74,8 @@ export function activate(context: vscode.ExtensionContext): Api {
     checks,
     papers,
     preview,
+    formatStep,
+    registerFormatStep(formatStep),
     // "Show Page Preview": the Markdown preview of VS Code beside the text editor, which shows the pages of a paper.
     vscode.commands.registerCommand(commands.showPagePreview, async (uri?: unknown) => {
       const target = uri instanceof vscode.Uri ? uri : vscode.window.activeTextEditor?.document.uri;
@@ -86,6 +93,7 @@ export function activate(context: vscode.ExtensionContext): Api {
   return {
     extendMarkdownIt: (md) => preview.extendMarkdownIt(md),
     problemsOf: (file) => checks.problemsOf(file),
+    formatStep,
   };
 }
 

@@ -246,9 +246,11 @@ definitions. Keep a note as it is unless you are asked to change it.
 ## 11. Checks
 
 ```sh
+npx -y @nimblescape/markdownpaper format paper/paper.md
 npx -y @nimblescape/markdownpaper check paper/paper.md
 npx -y @nimblescape/markdownpaper pdf paper/paper.md
 ```
 
+`format` writes the lists of the special sections (section 3) into the file.
 `check` names a layout that does not exist and each missing required field.
 `pdf` writes the PDF beside the file; see `instructions render`.

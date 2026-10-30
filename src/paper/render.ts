@@ -203,12 +203,13 @@ export interface LoadedLayout {
 }
 
 /**
- * loadLayout finds the layout of a document and reads its style sheets and its templates.
+ * documentLayout finds the layout of a document, or the layout plain when the named one does not exist. The field
+ * `lang` of the front matter changes the language of the layout, with its terms.
  * @param host - The reader of the files and the places of the layouts.
  * @param document - The URL of the document.
  * @param frontMatter - The front matter of the document.
  */
-export async function loadLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 'top'>, document: string, frontMatter: FrontMatter | undefined): Promise<LoadedLayout> {
+export async function documentLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 'top'>, document: string, frontMatter: FrontMatter | undefined): Promise<{ layout: Layout; problems: Problem[] }> {
   const problems: Problem[] = [];
   const name = frontMatter?.values.layout?.trim() || defaultLayout;
   let found = await findLayout(host, document, name);
@@ -219,12 +220,22 @@ export async function loadLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 
   if (!found.layout) {
     throw new Error(`The built-in layout "${defaultLayout}" is missing: ${problems.map((problem) => problem.message).join(' ')}`);
   }
-  // The field `lang` of the front matter changes the language of the layout, with its terms.
   const lang = frontMatter?.values.lang?.trim();
   const layout: Layout =
     lang && /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/i.test(lang) && lang.toLowerCase() !== found.layout.language.toLowerCase()
       ? { ...found.layout, language: lang, terms: lang.split('-')[0].toLowerCase() === found.layout.language.split('-')[0].toLowerCase() ? found.layout.terms : termsFor(lang) }
       : found.layout;
+  return { layout, problems };
+}
+
+/**
+ * loadLayout finds the layout of a document and reads its style sheets and its templates.
+ * @param host - The reader of the files and the places of the layouts.
+ * @param document - The URL of the document.
+ * @param frontMatter - The front matter of the document.
+ */
+export async function loadLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 'top'>, document: string, frontMatter: FrontMatter | undefined): Promise<LoadedLayout> {
+  const { layout, problems } = await documentLayout(host, document, frontMatter);
   const read = async (file: string): Promise<{ url: string; text: string } | undefined> => {
     const url = `${layout.folder}${file}`;
     const bytes = await host.reader.read(url);

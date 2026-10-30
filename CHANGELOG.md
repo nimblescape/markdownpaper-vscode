@@ -39,6 +39,10 @@ The first version.
   shows the number of the pages. A heading has the ID of GitHub, so a plain
   Markdown link such as `[Kapitel 2.1](#methoden)` shows the number of the
   heading.
+- The format step of the paper writes the four lists into the file and keeps
+  them current: in VS Code in "Format Document" and the format on save of
+  nimblescape Markdown Notes, and with `markdownpaper format`, whose option
+  `--check` exits with 1 when the format would change a file.
 - Listings of nimblescape Markdown Notes: a paragraph `Listing 1: …` before the
   comment of the source and the code block is the caption of the listing,
   "Listing 1: …", with the file and the lines of the source after it, such as

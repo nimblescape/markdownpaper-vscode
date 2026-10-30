@@ -1423,8 +1423,18 @@ not in its front matter and not in the DOCTYPE comment of Markdown Notes.
   `Abb. 1`, the day before the month (`2018, 1. Oktober`) and
   `Abgerufen am … von …` whenever a source has the day of the access
   ([decision 32](#decisions)). A no-break space stands in `o. D.`, after a
-  short label such as `S.`, and on both sides of the dash between two pages,
-  so that a line does not break there.
+  short label such as `S.`, `Art.` or `§`, and on both sides of the dash
+  between two pages, so that a line does not break there.
+- The PHT style writes a law (`legislation`) or an ordinance (`regulation`)
+  in the form of the guide of the PHT:
+  `Lehrplan der Volksschule. BGBl. Nr. 134/1963 in der Fassung BGBl. II Nr. 303/2012 vom 13. September 2012.`
+  The fields are the ones that Zotero writes for a statute: `title`;
+  `container-title` and `number`, the gazette and the number of the first
+  publication as the gazette writes them (`BGBl.` and `Nr. 134/1963`);
+  `references`, the version that the text cites (`BGBl. II Nr. 303/2012`),
+  left out for the first version; and `issued`, the day of that version, or
+  of the law without a version. A citation names the title and the year of
+  `issued`: `(Lehrplan der Volksschule, 2012)`.
 - The text that the style writes is Markdown: italic parts between `*`, and
   the characters of Markdown in the metadata, such as `*`, `_` and `[`, with a
   backslash. A DOI and an address stay plain text, which GitHub and the pages
@@ -1706,7 +1716,9 @@ requirement ([R-GEN-007](#r-gen-007)).
 32. **The style of the PHT** ([R-CITE-003](#r-cite-003)): `pht-apa7.csl`, a
     copy of `apa.csl` with the rules of the guide of the PHT, in the PHT
     layouts of `majikmate/markdownpaper-layout-pht`, which is
-    under CC BY-SA 4.0.
+    under CC BY-SA 4.0. A law or an ordinance has the form of the example of
+    the guide, from the fields `title`, `container-title`, `number`,
+    `references` (the cited version) and `issued` (its day).
 33. **AI agents collect the sources without a reference manager**
     ([R-CITE-001](#r-cite-001)): an AI agent searches and collects the
     sources with `markdownpaper source`; agents and the command

@@ -4,7 +4,10 @@
        the CSL styles (https://github.com/citation-style-language/styles), changed for the guide of the Pädagogische
        Hochschule Tirol (PHT), "Zitationsrichtlinien für Abschlussarbeiten an der PHT, Zitation nach APA 7", version 2.0.
        The changes: the German terms of the PHT in the locale "de" below ("o. D.", "S. 13 – 14" with no-break spaces, "Abgerufen am",
-       the short labels of the places), the labels of all places in their short form (macro label-locator), the day
+       the short labels of the places), the labels of all places in their short form with a no-break space before the
+       place (macros label-locator and label-page), a law or an ordinance in the form of the guide (macro
+       legal-reference-pht: "Lehrplan der Volksschule. BGBl. Nr. 134/1963 in der Fassung BGBl. II Nr. 303/2012 vom
+       13. September 2012."), the day
        before the month (macro date-issued-month-day: "2018, 1. Oktober"), and the day of the access whenever the
        metadata has one (macro source-DOI-URL). apa.csl, by Brenton M. Wiernik and Andrew Dunning with Jay
        Pfaffman, is licensed under CC BY-SA 3.0; this changed style is licensed under CC BY-SA 4.0, as the share-alike
@@ -225,20 +228,21 @@
     </group>
   </macro>
   <macro name="label-locator">
-    <!-- PHT: the short label of every place, such as S., Kap., Abschn., Abs., Abb., Tab. -->
-    <group delimiter=" ">
+    <!-- PHT: the short label of every place, such as S., Kap., Abschn., Abs., Abb., Tab., Art., with a no-break space
+         before the place, so that a line does not break between "S." and the page. -->
+    <group delimiter="&#160;">
       <choose>
         <if locator="page">
           <label form="short" variable="locator"/>
         </if>
         <else-if match="any" type="bill hearing legal_case legislation regulation treaty">
-          <!-- Bluebook-style labels for legal types -->
+          <!-- Bluebook-style labels for legal types; PHT: the short label of the other places, such as Art. and Anh. -->
           <choose>
             <if locator="chapter paragraph section" match="any">
               <label form="symbol" variable="locator"/>
             </if>
             <else>
-              <label text-case="capitalize-first" variable="locator"/>
+              <label form="short" text-case="capitalize-first" variable="locator"/>
             </else>
           </choose>
         </else-if>
@@ -296,7 +300,7 @@
     </group>
   </macro>
   <macro name="label-page">
-    <group delimiter=" ">
+    <group delimiter="&#160;">
       <label form="short" variable="page"/>
       <text variable="page"/>
     </group>
@@ -2246,15 +2250,44 @@
     </layout>
   </citation>
   <!-- Bibliography -->
+  <macro name="legal-reference-pht">
+    <!-- PHT: a law or an ordinance as the guide writes it: "Lehrplan der Volksschule. BGBl. Nr. 134/1963 in der
+         Fassung BGBl. II Nr. 303/2012 vom 13. September 2012." The fields: title, the first publication in
+         container-title and number ("BGBl." and "Nr. 134/1963"), the version that the text cites in references
+         ("BGBl. II Nr. 303/2012"), and the day of that version, or of the law without a version, in issued. -->
+    <group delimiter=" " suffix=".">
+      <text variable="title" suffix="."/>
+      <group delimiter=" ">
+        <text variable="container-title"/>
+        <text variable="number"/>
+      </group>
+      <group delimiter=" ">
+        <text value="in der Fassung"/>
+        <text variable="references"/>
+      </group>
+      <group delimiter=" ">
+        <text value="vom"/>
+        <date variable="issued">
+          <date-part form="ordinal" name="day" suffix=" "/>
+          <date-part name="month" suffix=" "/>
+          <date-part name="year"/>
+        </date>
+      </group>
+    </group>
+  </macro>
   <macro name="bibliography">
     <group delimiter=" ">
       <choose>
-        <if match="any" type="bill hearing legal_case legislation regulation treaty">
+        <if match="any" type="legislation regulation">
+          <text macro="legal-reference-pht"/>
+          <text macro="source-DOI-URL"/>
+        </if>
+        <else-if match="any" type="bill hearing legal_case treaty">
           <!-- Legal items have different orders and delimiters -->
           <text macro="legal-reference" suffix="."/>
           <text macro="source-DOI-URL"/>
           <text variable="references"/>
-        </if>
+        </else-if>
         <else>
           <group delimiter=". " suffix=".">
             <text macro="author-and-contributors"/>

@@ -126,7 +126,7 @@ describe('the citations (R-CITE-002)', () => {
     expect(parseData('page 3')).toEqual({ form: 'parenthetical', term: 'page', value: '3', unknown: [] });
     expect(parseData('narrative page 13-14')).toEqual({ form: 'narrative', term: 'page', value: '13-14', unknown: [] });
     expect(parseData('chapter 2 narrative')).toEqual({ form: 'narrative', term: 'chapter', value: '2', unknown: [] });
-    expect(parseData('S. 3').unknown).toEqual(['S.', '3']);
+    expect(parseData('S.\u00a03').unknown).toEqual(['S.', '3']);
     expect(parseData('page').unknown).toEqual(['page']);
   });
 
@@ -148,7 +148,7 @@ describe('the format step of the citations (R-CITE-002, R-CITE-004)', () => {
     expect(formatted.slice(at, at + 11)).toEqual([
       '# Einleitung',
       '',
-      'Agents change teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")). [Shao (2025)](#shao2025 "narrative") describes it; [Hong et al., 2024](#hong2024).',
+      'Agents change teams ([Hong et al., 2024, S.\u00a03](#hong2024 "page 3")). [Shao (2025)](#shao2025 "narrative") describes it; [Hong et al., 2024](#hong2024).',
       '',
       '# Literaturverzeichnis',
       '',
@@ -231,8 +231,8 @@ describe('the format step of the citations (R-CITE-002, R-CITE-004)', () => {
   });
 
   test('keeps a citation with words in its title that are no data, and a text without a database', () => {
-    const lines = file(['Text ([Hong](#hong2024 "S. 3")).', '', '# Literaturverzeichnis']);
-    expect(writeCitations(lines, layout, style)[at]).toBe('Text ([Hong](#hong2024 "S. 3")).');
+    const lines = file(['Text ([Hong](#hong2024 "S.\u00a03")).', '', '# Literaturverzeichnis']);
+    expect(writeCitations(lines, layout, style)[at]).toBe('Text ([Hong](#hong2024 "S.\u00a03")).');
     expect(writeCitations(lines, layout, style)).toContain(hongEntry);
     expect(writeCitations(['Text ([Hong](#hong2024)).'], layout, style)).toEqual(['Text ([Hong](#hong2024)).']);
   });
@@ -246,7 +246,7 @@ describe('the format step of the citations (R-CITE-002, R-CITE-004)', () => {
 });
 
 test('the problems name the database, the titles of the citations, the paragraphs of the reference list and each "(RESEARCH)" (R-CITE-001, R-CITE-002)', () => {
-  const lines = file(['Text (RESEARCH) and ([Hong](#hong2024 "S. 3")) and ([Shao](#shao2025)).', '', '# Literaturverzeichnis', '', hongEntry, '', 'Huber, A. (2020). Ohne Anker.'], [hong, shao, 'not json']);
+  const lines = file(['Text (RESEARCH) and ([Hong](#hong2024 "S.\u00a03")) and ([Shao](#shao2025)).', '', '# Literaturverzeichnis', '', hongEntry, '', 'Huber, A. (2020). Ohne Anker.'], [hong, shao, 'not json']);
   expect(citationProblems(lines, layout).map((problem) => [problem.line! - at, problem.message.slice(0, 30)])).toEqual([
     [0, '"(RESEARCH)" asks an AI agent '],
     [11, 'This line of the sources is no'],

@@ -150,3 +150,6 @@ The first version.
   Zotero" merges all lines of the database at once.
 - A citation in the sentence of a source without names, such as a law, has its
   title in the place of the names: `Schulorganisationsgesetz (1962, § 65)`.
+- The instructions for AI agents name the fields of a law or an ordinance:
+  `container-title` and `number` of the first publication, `references` for
+  the cited version, and `issued` for its day.

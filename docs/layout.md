@@ -52,7 +52,8 @@ a script element or an event attribute of a template is removed.
     "title": { "description": "Der Titel der Arbeit.", "required": true },
     "subtitle": "Ein Untertitel, optional.",
     "author": { "description": "Vorname Nachname.", "required": true },
-    "kapitelumbruch": { "description": "nein: Kapitel beginnen auf keiner neuen Seite.", "default": "ja" }
+    "kapitelumbruch": { "description": "nein: Kapitel beginnen auf keiner neuen Seite.", "default": "ja" },
+    "variante": { "description": "vorlage: wie die Word-Vorlage; klassisch: wie frühere Arbeiten.", "default": "vorlage", "values": ["vorlage", "klassisch"] }
   },
   "headings": { "numbered": true, "depth": 3, "unnumbered": ["^Anhang"] },
   "contents": { "depth": 3 },
@@ -66,6 +67,7 @@ a script element or an event attribute of a template is removed.
 | Field | Value | Default |
 | --- | --- | --- |
 | `format` | `"nimblescape-layout 1.0.0"`, the format and its version. Required. | |
+| `$schema` | The JSON schema of `layout.json`, for the editor: `https://raw.githubusercontent.com/nimblescape/markdownpaper-vscode/main/schemas/layout.schema.json`. VS Code uses it for `layouts/<name>/layout.json` without this field. | |
 | `instructions` | The command that prints this document, for agents. Informative. | |
 | `name` | The name of the layout for people. | the name of the folder |
 | `language` | The language of the documents, a tag such as `de-AT` or `en-US`. It decides the hyphenation and the words of section 4. | `en-US` |
@@ -73,7 +75,7 @@ a script element or an event attribute of a template is removed.
 | `stylesheets` | The style sheets, in their order. | `["page.css"]` |
 | `before`, `after` | The templates of the fixed pages before and after the text, in their order. | `[]` |
 | `document` | The Markdown file that starts a new document. | |
-| `fields` | The fields of the front matter: each a description, or an object with `description`, `required` (`true` or `false`) and `default`. | `{}` |
+| `fields` | The fields of the front matter: each a description, or an object with `description`, `required` (`true` or `false`), `default`, and `values`, the list of names that the author chooses from (see "Parameters" below). | `{}` |
 | `headings.numbered` | `false`: the renderer numbers no heading. | `true` |
 | `headings.depth` | The deepest level of a numbered heading, 1 to 6. | `3` |
 | `headings.unnumbered` | Regular expressions; a heading whose text matches one gets no number, nor do the headings below it. | `[]` |
@@ -86,6 +88,30 @@ a script element or an event attribute of a template is removed.
 All paths are relative to the layout folder and stay inside it. A higher minor
 version of the format adds fields that an older renderer leaves out; a higher
 major version is a format that an older renderer does not read.
+
+**Parameters.** A field with `values` is a parameter of the layout: the author
+chooses one of its names in the front matter, and the layout keeps to itself
+what each name changes. One layout can so hold several variants, for example
+the look of a Word template and an older look, without a second layout folder:
+
+```json
+"variante": {
+  "description": "vorlage: wie die Word-Vorlage; klassisch: wie frühere Arbeiten.",
+  "default": "vorlage",
+  "values": ["vorlage", "klassisch"]
+}
+```
+
+The front matter says `variante: klassisch`, and the style sheets read the
+choice from the attribute `data-field-variante` on the body, on the text and on
+each template section (section 5), for example
+`body[data-field-variante="klassisch"] { font-family: "Liberation Serif", serif; }`.
+A margin that a variant changes needs a named page:
+`main.paper-text[data-field-variante="klassisch"] { page: klassisch; }` and
+`@page klassisch { margin-bottom: 22mm; }`. The `default` is one of the
+`values`. A value that is not one of them is a warning of the checks, and the
+hover of the field and the comment of a new document list the values. The
+names are the words of the documents, so a German layout has German names.
 
 ## 4. Special sections and words of the language
 

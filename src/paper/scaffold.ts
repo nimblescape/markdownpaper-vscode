@@ -41,8 +41,9 @@ export function frontMatterOf(layout: Pick<Layout, 'id' | 'fields'>, values: Rea
   const lines = ['---', `# nimblescape Markdown Paper. The rules of this file: ${command} instructions document`, `layout: ${layout.id}`];
   const entries: [string, FieldSpec][] = Object.entries(layout.fields);
   for (const [key, spec] of entries) {
-    if (spec.description) {
-      lines.push(`# ${spec.required ? '(required) ' : ''}${spec.description}`.replace(/\s+/g, ' ').trimEnd());
+    if (spec.description || spec.values) {
+      const choices = spec.values ? ` Values: ${spec.values.join(', ')}.` : '';
+      lines.push(`# ${spec.required ? '(required) ' : ''}${spec.description}${choices}`.replace(/\s+/g, ' ').trimEnd());
     }
     lines.push(`${key}: ${yamlString(values[key] ?? '')}`);
   }

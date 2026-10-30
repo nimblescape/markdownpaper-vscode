@@ -98,6 +98,17 @@ describe('layout.json (R-LAY-002)', () => {
     expect(parseLayout(JSON.stringify({ format: 'nimblescape-layout 1.4.0' }), 'x', 'file:///x/').problems[0].severity).toBe('warning');
   });
 
+  test('a field can give the values that the author chooses from, and its default is one of them', () => {
+    const field = (spec: unknown) => parseLayout(JSON.stringify({ format: formatText, fields: { schrift: spec } }), 'x', 'file:///x/');
+    const chosen = field({ description: 'Die Schrift.', default: 'arial', values: ['arial', 'times'] });
+    expect(chosen.problems).toEqual([]);
+    expect(chosen.layout?.fields.schrift).toEqual({ description: 'Die Schrift.', required: false, default: 'arial', values: ['arial', 'times'] });
+    expect(field({ description: 'Die Schrift.', default: 'serif', values: ['arial', 'times'] }).problems[0].message).toBe('The default "serif" of the field "schrift" of the layout "x" is not one of its values: arial, times.');
+    const wrong = field({ description: 'Die Schrift.', values: 'arial' });
+    expect(wrong.problems[0].message).toBe('The field "schrift" of the layout "x" must give "values" as a list of texts.');
+    expect(wrong.layout?.fields.schrift.values).toBeUndefined();
+  });
+
   test('a path outside the folder, a wrong language, a wrong term and a wrong pattern are warnings, and the rest is read', () => {
     const { layout, problems } = parseLayout(JSON.stringify({ format: formatText, before: ['../x.html', 'cover.html'], language: 'deutsch', terms: { BIB: 'Quellen', table: ['Tab.'], other: 'x' }, headings: { unnumbered: ['('] } }), 'x', 'file:///x/');
     expect(layout?.before).toEqual(['cover.html']);
@@ -223,6 +234,15 @@ describe('checks of the front matter (R-DOC-002)', () => {
       [2, 0, 5, 'The layout "thesis" needs the field "tit'],
       [1, 0, 6, 'The layout "thesis" needs the field "aut'],
     ]);
+  });
+
+  test('a value that is not one of the values of its field is a warning at the field', async () => {
+    const layout = JSON.stringify({ format: formatText, fields: { schrift: { description: 'Die Schrift.', default: 'arial', values: ['arial', 'times'] } } });
+    const host = hostOf({ 'file:///repo/layouts/fonts/layout.json': layout });
+    const checked = await checkDocument(host, 'file:///repo/a.md', '---\nlayout: fonts\nschrift: serif\n---\n');
+    expect(checked.problems).toEqual([{ severity: 'warning', message: 'The field "schrift" of the layout "fonts" is one of: arial, times.', file: 'file:///repo/a.md', line: 2, column: 0, length: 7 }]);
+    expect((await checkDocument(host, 'file:///repo/a.md', '---\nlayout: fonts\nschrift: times\n---\n')).problems).toEqual([]);
+    expect(frontMatterOf({ id: 'fonts', fields: { schrift: { description: 'Die Schrift.', required: false, values: ['arial', 'times'] } } })).toContain('# Die Schrift. Values: arial, times.\nschrift: ""');
   });
 
   test('a layout that does not exist is an error at the field layout, and a file without the field gets no check', async () => {

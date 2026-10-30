@@ -131,6 +131,7 @@ editor and in the Problems view after a pause in typing:
 
 - a layout that does not exist, or a problem of its `layout.json`;
 - a required field of the layout without a value;
+- a value of a parameter of the layout that is not one of its names;
 - a link to `#fig-…`, `#tab-…`, `#lst-…` or `#sec-…`, or a link whose text
   is a word and a number such as `[Kapitel 2.1](#methoden)`, whose figure,
   table, listing or heading does not exist;

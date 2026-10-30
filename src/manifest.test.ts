@@ -17,6 +17,7 @@ import * as esbuild from 'esbuild';
 import { expect, test, vi } from 'vitest';
 import { commands, extensionId } from './extension';
 import { drawingsCss, lightThemeColors } from './paper/extensionStyles';
+import { sectionCodes } from './paper/layout';
 import { paperDocumentKey } from './paperDocuments';
 import { defaults, settingsSection } from './settings';
 
@@ -171,6 +172,7 @@ test('the package holds the bundle, Paged.js, the script and the style of the pa
     '!media/paperPreview.css',
     '!media/paperPreview.js',
     '!layouts/**',
+    '!schemas/layout.schema.json',
     '!resources/icon.png',
     '!package.json',
     '!README.md',
@@ -183,6 +185,20 @@ test('the package holds the bundle, Paged.js, the script and the style of the pa
   for (const pattern of patterns.filter((pattern) => pattern.startsWith('!') && !pattern.startsWith('!dist/') && !pattern.startsWith('!media/paged.'))) {
     expect(fs.existsSync(path.join(repository, pattern.slice(1).replace('/**', ''))), pattern).toBe(true);
   }
+});
+
+test('the schema of layout.json checks layout.json in a layout folder, and names each part that the renderer reads (R-LAY-002)', () => {
+  expect(manifest.contributes.jsonValidation).toEqual([{ fileMatch: ['**/layouts/*/layout.json'], url: './schemas/layout.schema.json' }]);
+  const schema = JSON.parse(read('schemas/layout.schema.json'));
+  const layoutJson = read('docs/layout.md').split('## 3. `layout.json`')[1].split('## 4.')[0];
+  const parts = [...layoutJson.matchAll(/^\| `([a-zA-Z.]+)`(?:, `([a-zA-Z.]+)`)? \|/gm)].flatMap((match) => [match[1], match[2]]).filter((part) => part && !part.includes('.'));
+  expect(parts).toContain('fields');
+  for (const part of parts) {
+    expect(schema.properties, `the schema has no ${part}`).toHaveProperty(part);
+  }
+  expect(Object.keys(schema.properties.fields.additionalProperties.anyOf[1].properties)).toEqual(['description', 'required', 'default', 'values']);
+  expect(schema.properties.terms.propertyNames.enum).toEqual([...sectionCodes, 'figure', 'table', 'listing', 'appendix']);
+  expect(JSON.parse(read('layouts/plain/layout.json')).format).toMatch(new RegExp(schema.properties.format.pattern));
 });
 
 test('the package needs no dependency at run time, because the bundle holds every package', () => {

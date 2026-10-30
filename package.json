@@ -161,6 +161,14 @@
         }
       ]
     },
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "**/layouts/*/layout.json"
+        ],
+        "url": "./schemas/layout.schema.json"
+      }
+    ],
     "configuration": {
       "title": "nimblescape Markdown Paper",
       "properties": {

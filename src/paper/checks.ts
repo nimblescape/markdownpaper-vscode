@@ -55,6 +55,16 @@ export async function checkDocument(host: Pick<Host, 'reader' | 'builtinLayouts'
           ...(present ? { line: present.line, column: present.column, length: present.key.length } : { line: at.line, column: at.column, length: at.length }),
         });
       }
+      const value = (frontMatter.values[key] ?? '').trim();
+      if (spec.values && value !== '' && !spec.values.includes(value)) {
+        const present = frontMatter.fields.find((candidate) => candidate.key === key);
+        problems.push({
+          severity: 'warning',
+          message: `The field "${key}" of the layout "${layout.id}" is one of: ${spec.values.join(', ')}.`,
+          file: document,
+          ...(present ? { line: present.line, column: present.column, length: present.key.length } : { line: at.line, column: at.column, length: at.length }),
+        });
+      }
     }
     problems.push(...renderBody(bodyOf(text, frontMatter), layout).problems.map((problem) => ({ ...problem, file: document })));
     const lines = text.split(/\r?\n/);

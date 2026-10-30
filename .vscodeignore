@@ -12,6 +12,7 @@
 !media/paperPreview.css
 !media/paperPreview.js
 !layouts/**
+!schemas/layout.schema.json
 !resources/icon.png
 !package.json
 !README.md

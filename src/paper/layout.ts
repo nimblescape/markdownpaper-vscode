@@ -33,6 +33,12 @@ export interface FieldSpec {
   required: boolean;
   /** default is the value that the templates show when the document has no value. */
   default?: string;
+  /**
+   * values are the names that the author chooses from, for a field that names a variant of the layout; the style
+   * sheets read the choice from the attribute `data-field-<field>` and keep how each variant looks to themselves.
+   * undefined is a free value.
+   */
+  values?: string[];
 }
 
 /**
@@ -253,10 +259,19 @@ export function parseLayout(text: string, id: string, folder: string): { layout?
     if (typeof spec === 'string') {
       fields[key] = { description: spec, required: false };
     } else if (isObject(spec)) {
+      const values = spec.values === undefined ? undefined : strings(spec.values);
+      if (spec.values !== undefined && (!values || values.length === 0 || typeof spec.values === 'string')) {
+        problem('warning', `The field "${key}" of the layout "${id}" must give "values" as a list of texts.`);
+      }
+      const choices = values && values.length > 0 && typeof spec.values !== 'string' ? values : undefined;
+      if (choices && spec.default !== undefined && !choices.includes(String(spec.default))) {
+        problem('warning', `The default "${String(spec.default)}" of the field "${key}" of the layout "${id}" is not one of its values: ${choices.join(', ')}.`);
+      }
       fields[key] = {
         description: typeof spec.description === 'string' ? spec.description : '',
         required: spec.required === true,
         ...(spec.default !== undefined ? { default: String(spec.default) } : {}),
+        ...(choices ? { values: choices } : {}),
       };
     } else {
       problem('warning', `The field "${key}" of the layout "${id}" must be a description or an object with "description".`);

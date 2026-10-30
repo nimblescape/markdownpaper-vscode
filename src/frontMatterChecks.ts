@@ -150,6 +150,9 @@ export class FrontMatterChecks implements vscode.Disposable {
     const text = new vscode.MarkdownString();
     text.appendMarkdown(`**${field.key}**${spec.required ? ' (required)' : ''}\n\n`);
     text.appendText(spec.description);
+    if (spec.values) {
+      text.appendMarkdown(`\n\nValues: ${spec.values.map((value) => `\`${value}\``).join(', ')}`);
+    }
     if (spec.default !== undefined) {
       text.appendMarkdown(`\n\nDefault: \`${spec.default}\``);
     }

@@ -53,6 +53,7 @@ This document replaces it where the two differ.
 | 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `markdownpaper format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | done |
 | 23 | Citation styles in CSL with citeproc-js: the built-in style `apa7`, a CSL file of the layout, the CSL locales; `pht-apa7.csl` in the PHT layouts | [R-CITE-003](#r-cite-003), [R-GEN-004](#r-gen-004) | done |
 | 24 | The metadata of new sources: `markdownpaper source` with DOI, ISBN, PubMed ID, arXiv ID, web address, RIS, BibTeX, CSL JSON, HTML and PDF files, and the title search of Crossref | [R-CITE-005](#r-cite-005) | in progress |
+| 25 | Parameters of a layout (fields with `values`), their check and hover, and the JSON schema of `layout.json` | [R-LAY-002](#r-lay-002), [R-DOC-002](#r-doc-002), [R-DOC-003](#r-doc-003) | done |
 
 ## General
 
@@ -231,6 +232,8 @@ in the text editor as warnings after a pause in typing, and with
 - A problem of `layout.json` shows at the field `layout` and names the file.
 - Each required field of the layout must have a value; else a warning at the
   field, or at the field `layout` when the field is missing.
+- The value of a parameter must be one of its names; else a warning at the
+  field that lists them ([decision 37](#decisions)).
 - Each link to `#fig-…`, `#tab-…`, `#lst-…` or `#sec-…`, and each link whose
   text is a word and a number, such as `[Kapitel 2.1](#methoden)`, must find
   its figure, table, listing or heading ([R-REN-009](#r-ren-009)), and so must
@@ -249,8 +252,9 @@ in the text editor as warnings after a pause in typing, and with
 ### R-DOC-003
 
 **Hover of a field.** The pointer on the key of a field of the front matter
-shows the description of the field from `layout.json`, and whether it is
-required.
+shows the description of the field from `layout.json`, whether it is
+required, the names of a parameter, and the default. The comment of a field in
+a new document lists the names of a parameter too.
 
 ### R-DOC-004
 
@@ -307,7 +311,17 @@ repository of the document ([decision 3](#decisions)).
 - `stylesheets`, `before` and `after` (the templates of the fixed pages before
   and after the text), `document` (the start text of a new document).
 - `fields`: the fields of the front matter, each with a description, and with
-  `required` and `default` when needed.
+  `required` and `default` when needed. A field with `values`, a list of
+  names, is a parameter of the layout: the author chooses one name in the
+  front matter, and the style sheets read the choice from
+  `data-field-<field>` ([R-LAY-008](#r-lay-008)). A layout can have any number
+  of parameters, each with any number of names, and the layout keeps to itself
+  what each name changes, for example the font and the margins of a variant
+  ([decision 37](#decisions)).
+- `$schema`: the JSON schema of `layout.json`,
+  `schemas/layout.schema.json` of this repository. VS Code checks each
+  `layouts/<name>/layout.json` with it and completes its keys; a layout of
+  another repository names it with its address on GitHub.
 - `headings`: `numbered`, `depth`, and `unnumbered`, regular expressions of
   headings without a number. `contents.depth`: the depth of the table of
   contents. `hyphenate`. `listings.lineNumbers`: the numbers of the lines
@@ -1366,6 +1380,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     npm package, no extension on the Marketplace and no release tag before
     the release; tests and other repositories install a package or a layout
     from its GitHub repository.
+37. **Parameters of a layout** ([R-LAY-002](#r-lay-002)): `layout.json` can
+    give any field a list of names to choose from, so one layout holds
+    several variants, for example the look of a Word template and an older
+    look. The front matter names the variant; how it looks stays inside the
+    layout. A JSON schema of `layout.json` describes the format.
 
 ## Open questions
 

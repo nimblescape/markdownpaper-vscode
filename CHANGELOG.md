@@ -65,8 +65,12 @@ The first version.
   extensions add to the Markdown preview, for example the diagrams of Mermaid
   and the math of KaTeX.
 - Checks of the front matter: a layout that does not exist, a missing required
-  field and a link to a figure, a table or a listing that does not exist are
-  warnings in the text editor; the pointer on a field shows its description.
+  field, a value that is not one of the names of a parameter, and a link to a
+  figure, a table or a listing that does not exist are warnings in the text
+  editor; the pointer on a field shows its description.
+- Parameters of a layout: a field of `layout.json` with `values` lets the
+  author choose a variant of the layout in the front matter. VS Code checks
+  `layout.json` with the JSON schema `schemas/layout.schema.json`.
 - "New Project", "New Document" and "New Layout": a project gets `AGENTS.md`
   for AI agents, a copy of the layout, `paper/paper.md`, the drop folder
   `inbox/` for sources, the folder `bib/` for the files of the sources, and

@@ -27,7 +27,9 @@ date: "30 October 2026"
 ```
 
 - The other fields are the fields of the layout. `layout.json` of the layout
-  lists them, each with a description; a required field must have a value.
+  lists them, each with a description; a required field must have a value,
+  and a parameter of the layout, a field with `values`, takes one of its
+  names, for example `variante: klassisch`.
   `npx -y @nimblescape/markdownpaper check <file.md>` names each missing
   field.
 - The templates of the layout show the fields, for example on the cover page.

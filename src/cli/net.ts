@@ -129,13 +129,15 @@ async function once(url: URL, headers: Record<string, string>, env: NodeJS.Proce
  * @param env - The environment variables.
  */
 export function httpFetcher(userAgent: string, env: NodeJS.ProcessEnv = process.env): Fetcher {
-  return async (address: string, accept: string): Promise<Response> => {
+  return async (address: string, accept: string, headers: Readonly<Record<string, string>> = {}): Promise<Response> => {
     let url = new URL(address);
     for (let redirects = 0; ; redirects++) {
       if (url.protocol !== 'https:' && url.protocol !== 'http:') {
         throw new Error(`${url.protocol} is no address of the web`);
       }
-      const answer = await once(url, { 'User-Agent': userAgent, Accept: accept, 'Accept-Encoding': 'identity' }, env);
+      // A redirect to another host gets no header of the first one, such as Authorization.
+      const extra = url.host === new URL(address).host ? headers : {};
+      const answer = await once(url, { ...extra, 'User-Agent': userAgent, Accept: accept, 'Accept-Encoding': 'identity' }, env);
       const location = answer.headers.location;
       if (answer.status >= 300 && answer.status < 400 && location) {
         if (redirects >= maxRedirects) {

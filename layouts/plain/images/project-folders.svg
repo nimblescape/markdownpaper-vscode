@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300" viewBox="0 0 600 300" font-family="Liberation Sans, Arial, Helvetica, sans-serif" font-size="15">
+  <!-- SPDX-License-Identifier: MIT. © 2026 Hannes Stauss (scalarion@nimblescape.com). Licensed under the MIT License. See LICENSE in the repository root for details. -->
+  <title>The folders of a project</title>
+  <rect x="1" y="1" width="598" height="298" rx="8" fill="#f4f6f9" stroke="#8a96a8" stroke-width="1.5"/>
+  <g font-family="Liberation Mono, Courier New, monospace" font-size="15" fill="#1f2a3a">
+    <text x="24" y="38" font-weight="bold">paper-project/</text>
+    <text x="48" y="72">AGENTS.md</text>
+    <text x="48" y="104">paper/paper.md</text>
+    <text x="48" y="136">images/</text>
+    <text x="48" y="168">code/</text>
+    <text x="48" y="200">bib/</text>
+    <text x="48" y="232">inbox/</text>
+    <text x="48" y="264">layouts/plain/</text>
+  </g>
+  <g stroke="#8a96a8" stroke-width="1.5" fill="none">
+    <path d="M32 48 V259 M32 67 H42 M32 99 H42 M32 131 H42 M32 163 H42 M32 195 H42 M32 227 H42 M32 259 H42"/>
+  </g>
+  <g fill="#3a4658">
+    <text x="250" y="72">the instructions for AI agents</text>
+    <text x="250" y="104">the document: title fields and text</text>
+    <text x="250" y="136">the images of the figures</text>
+    <text x="250" y="168">the source code of the listings</text>
+    <text x="250" y="200">the files of the sources, for example PDF</text>
+    <text x="250" y="232">new sources for the AI agent</text>
+    <text x="250" y="264">the layout: pages and citation style</text>
+  </g>
+</svg>

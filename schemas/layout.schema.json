@@ -4,7 +4,7 @@
   "title": "layout.json of nimblescape Markdown Paper",
   "description": "The file layout.json of a layout folder, in the format nimblescape-layout 1.x. The whole format: npx -y @nimblescape/markdownpaper instructions layout, or docs/layout.md of nimblescape/markdownpaper-vscode.",
   "type": "object",
-  "required": ["format"],
+  "required": ["format", "document", "preview"],
   "properties": {
     "$schema": {
       "description": "The address of this schema, for the editor.",
@@ -45,7 +45,11 @@
       "$ref": "#/definitions/files"
     },
     "document": {
-      "description": "The Markdown file that starts a new document.",
+      "description": "The empty paper document: the Markdown file that starts a new document of the layout, with the values of the cover page in its front matter and the files that it links to in the layout folder.",
+      "type": "string"
+    },
+    "preview": {
+      "description": "The PDF of the empty paper document, which shows the pages of the layout before a person chooses it.",
       "type": "string"
     },
     "fields": {

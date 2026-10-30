@@ -28,7 +28,8 @@ layout of a document without the field `layout`.
 | `layout.json` | The description of the layout (section 3). Required. |
 | `page.css` | The style sheet of the pages: CSS with the rules of CSS Paged Media (section 5). |
 | Templates, for example `cover.html` | HTML of the fixed pages, with the fields of the front matter (section 6). |
-| `document.md` | The start of a new document of the layout, after its front matter (optional). |
+| `document.md` | The empty paper document: the start of a new document of the layout (section 7). |
+| `document.pdf` | The preview: the PDF of the empty paper document (section 7). |
 | `fonts/` | Font files with their licenses. |
 | `images/` | Images, for example a logo. |
 | `source/` | The Word template and its PDF, from which the layout was made (optional; the renderer does not read it). |
@@ -48,6 +49,7 @@ a script element or an event attribute of a template is removed.
   "before": ["cover.html"],
   "after": [],
   "document": "document.md",
+  "preview": "document.pdf",
   "fields": {
     "title": { "description": "Der Titel der Arbeit.", "required": true },
     "subtitle": "Ein Untertitel, optional.",
@@ -74,7 +76,8 @@ a script element or an event attribute of a template is removed.
 | `citationStyle` | The citation style of the citations and the reference list: the built-in style `apa7` (APA Style 7th edition of the Citation Style Language), or a `.csl` file of the layout folder, for example `pht-apa7.csl`. The language of the layout chooses the words of the style, such as `S.` and `Hrsg.`. | `apa7` |
 | `stylesheets` | The style sheets, in their order. | `["page.css"]` |
 | `before`, `after` | The templates of the fixed pages before and after the text, in their order. | `[]` |
-| `document` | The Markdown file that starts a new document. | |
+| `document` | The empty paper document, the Markdown file that starts a new document (section 7). The JSON schema requires it. | |
+| `preview` | The PDF of the empty paper document, which shows the pages of the layout before a person chooses it (section 7). The JSON schema requires it. | |
 | `fields` | The fields of the front matter: each a description, or an object with `description`, `required` (`true` or `false`), `default`, and `values`, the list of names that the author chooses from (see "Parameters" below). | `{}` |
 | `headings.numbered` | `false`: the renderer numbers no heading. | `true` |
 | `headings.depth` | The deepest level of a numbered heading, 1 to 6. | `3` |
@@ -190,7 +193,54 @@ A field without a value in the front matter has the `default` of
 for example `<img src="images/logo.png" alt="Logo">`. A template has no logic
 and no script.
 
-## 7. A layout from a Word template
+## 7. The empty paper document and the preview
+
+Each layout holds an empty paper document, `document.md`, and its PDF,
+`document.pdf`. A new document starts from the empty paper document, and the
+PDF shows the pages of the layout in the list of the layouts of a new project.
+
+- The front matter of `document.md` holds the values of the cover page, for
+  example the placeholder texts of the Word template, such as
+  `title: "Titel eintragen"`. A new document gets them for the fields that the
+  person does not give; its field `layout` is not used.
+- The text after the front matter explains, with example texts, how to write
+  a document of the layout: the text, the headings, the footnotes, a figure, a
+  table, a listing, a citation with its source in the database, the special
+  sections and the PDF. The texts of the template, such as the text of an
+  affidavit, stay as the template has them; instructions of the template that
+  only fit Word, such as how to update a table of contents in Word, stay out.
+- A file that `document.md` links to, for example `images/figure.svg` or the
+  code of a listing in `code/`, is a file of the layout folder. A new project
+  gets it at the same path, and the link in `paper/paper.md` gets `../`.
+- The sources of the citations come from doi.org or from the source itself,
+  with `markdownpaper source`, never from memory.
+
+Write the preview after each change of the layout or of `document.md`:
+
+```sh
+npx -y @nimblescape/markdownpaper preview layouts/<name> --write
+```
+
+The command makes a project with `document.md` in a temporary folder, runs
+the format steps of the paper (the citations, the reference list and the
+lists of the special sections) and writes `document.pdf` into the layout
+folder. `--write` also writes the formatted `document.md` back. A copy of the
+layout, with "New Layout" or in a new project, leaves the preview out.
+
+## 8. A layout on GitHub
+
+A repository on GitHub with the topic `nimblescape-markdownpaper-layout`
+holds layouts for everyone who can read it: one layout at its root, or one
+folder for each layout, each with its own `layout.json`, up to two folder
+levels deep. The name of a folder is the name of its layout. `markdownpaper
+create` and "New Project" list these layouts, and
+`--layout github:<owner>/<repository>/<folder>@<branch, tag or commit>`
+chooses one; the new project gets a copy in `layouts/<folder>/`. A new version
+of a layout that changes its pages goes into a new folder, for example
+`thesis-v2/` beside `thesis-v1/`, so the documents of the older version keep
+their pages.
+
+## 9. A layout from a Word template
 
 A person adds the Word template (`.dotx` or `.docx`) to `source/` of the new
 layout folder, with a PDF of a filled example when one exists; without a PDF,
@@ -208,7 +258,7 @@ print one from the template with LibreOffice
 4. Write the cover page as `cover.html` with the fields of the front matter, and the other fixed pages, for example the affidavit, and list them in `before` or `after`.
 5. List the fields that the templates and the PDF name use in `fields` of `layout.json`, each with a description for the people and agents who write documents.
 6. Copy the fonts into `fonts/` with their license files, and the logo into `images/`.
-7. Write a document with every element (headings, lists, a table with its caption, a figure with its caption, a listing, a quote, footnotes, the four lists, a reference list, an appendix) and make its PDF: `npx -y @nimblescape/markdownpaper pdf example.md`.
+7. Write the empty paper document `document.md` with every element (headings, lists, a table with its caption, a figure with its caption, a listing, a quote, footnotes, the four lists, a reference list, an appendix) and the texts of the template (section 7), and make its PDF: `npx -y @nimblescape/markdownpaper preview layouts/<name> --write`.
 8. Compare the pages with the PDF of the template, page by page as images side by side (for example `pdftoppm -r 60 -png`). Change the CSS and make the PDF again while a page differs, for example in the margins, the line spacing or the footer.
 9. Write down in a comment of `page.css` what CSS cannot do as Word does.
 

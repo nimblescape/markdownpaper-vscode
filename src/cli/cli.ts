@@ -10,9 +10,11 @@
  * - `check <file>...` checks the front matter of each file against its layout.
  * - `format <file>...` runs the format steps of the paper on each file: the citations and the reference list, and the
  *   lists of the special sections.
- * - `create [folder]` scaffolds a new project, as `npm create vite` does: it asks for the name, the layout, the
- *   language, the title and the author, or takes them from its options.
+ * - `create [folder]` scaffolds a new project, as `npm create vite` does: it asks for the name, the layout from a list
+ *   of the layouts of the folder, the built-in layouts and the layouts on GitHub, the language, the title and the
+ *   author, or takes them from its options.
  * - `new document|layout|project` writes a new document, a new layout folder, or a new project without questions.
+ * - `layouts` lists the layouts that `create` offers, and `preview <folder>` writes the preview PDF of a layout.
  * - `instructions [topic]` prints the rules of a topic for AI agents.
  * - `source <file> <input>...` adds sources to the database of a file, with the metadata of the services that publish
  *   it, and `source --search <words>` lists works of Crossref.
@@ -24,6 +26,7 @@
  */
 
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { version } from '../../package.json';
@@ -33,11 +36,12 @@ import { citationStyleOf } from '../paper/csl';
 import { formatPaper } from '../paper/format';
 import { readFrontMatter } from '../paper/frontMatter';
 import { topicList, topics } from '../paper/instructions';
-import { formatText, type Layout, type Problem } from '../paper/layout';
+import { downloadRemote, findRemote, findRemotes, parseRemote, previewUrl, type RemoteLayout, remoteName } from '../paper/gallery';
+import { formatText, type Layout, layoutFile, parseLayout, type Problem } from '../paper/layout';
 import { type Fetcher, type Lookup, lookUpFile, lookUpIdentifier, searchWorks } from '../paper/lookup';
 import { identifierOf, missingFields } from '../paper/metadata';
 import { defaultLayout, documentLayout, findLayout, layoutName } from '../paper/render';
-import { type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, packageName } from '../paper/scaffold';
+import { mapLinks, type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, packageName, splitStart, startFiles } from '../paper/scaffold';
 import { type Assets, exportPdf, fileReader, folderUrl } from '../pdf/export';
 import { httpFetcher } from './net';
 
@@ -59,7 +63,9 @@ export const usage = [
   '  format <file.md>...           write the citations, the reference list and the lists, such as the table of contents',
   '      --check                   write nothing; exit with 1 when the format would change a file',
   '  create [folder]               scaffold a new project; asks for what its options do not give',
-  '      --layout <name>           the layout to copy into the project (default: plain)',
+  '      --layout <name>           the layout to copy into the project: the name of a folder in layouts/, a built-in',
+  '                                layout such as plain, or a layout on GitHub, github:<owner>/<repository>/<folder>',
+  '                                with @<branch, tag or commit> if needed; without it, create offers the list',
   '      --language <tag>          the language of the project, for example de-AT or en-US',
   '      --title <text>            the title of the document',
   '      --author <text>           the author of the document',
@@ -67,6 +73,9 @@ export const usage = [
   '  new document <file.md>        write a new document; --layout <name> names its layout (default: plain)',
   '  new layout <folder>           write a new layout folder, copied from --from <name> (default: plain), --language <tag>',
   '  new project <folder>          write a new project without questions, with the options of create',
+  '  layouts                       list the layouts that create offers, with the layouts on GitHub and their previews',
+  '  preview <layout folder>       write the preview PDF of a layout: the PDF of its empty paper document',
+  '      --write                   also write the formatted empty paper document back into the layout folder',
   '  instructions [topic]          print the rules of a topic for AI agents; without a topic, the list',
   '  source <file.md> <input>...   add sources to the database of the file, with the metadata from doi.org, the library',
   '                                catalogs, PubMed or arXiv; an input is a DOI, an ISBN, a PubMed ID, an arXiv ID, a web',
@@ -90,6 +99,8 @@ export interface Io {
   err(line: string): void;
   /** ask asks a question and returns the answer, or undefined when nobody can answer, for example without a terminal. */
   ask?(question: string, answer: string): Promise<string>;
+  /** choose shows a list and returns the index of the chosen entry, or undefined when the person stops the choice. */
+  choose?(question: string, choices: readonly Choice[], initial: number): Promise<number | undefined>;
   /** cwd is the folder of the relative paths. */
   cwd: string;
   /** assets are the built-in layouts and Paged.js of the package. */
@@ -98,6 +109,13 @@ export interface Io {
   fetch?: Fetcher;
   /** today is the day of the access of a web page; without it, the day of the run. */
   today?: Date;
+}
+
+/** Choice is an entry of a list of `create`: its label, a hint after it, and a detail below the list while it is chosen. */
+export interface Choice {
+  label: string;
+  hint?: string;
+  detail?: string;
 }
 
 /** UsageError is a wrong command or option. */
@@ -211,6 +229,98 @@ async function layoutAt(io: Io, near: string, name: string): Promise<{ layout: L
  */
 function startOf(layout: Layout, folder: string): string | undefined {
   return layout.document && fs.existsSync(path.join(folder, layout.document)) ? fs.readFileSync(path.join(folder, layout.document), 'utf8') : undefined;
+}
+
+/** Chosen is a layout for a new project: the read layout, its files by their paths in its folder, and its empty paper document. */
+interface Chosen {
+  layout: Layout;
+  source: Map<string, Uint8Array>;
+  start?: string;
+}
+
+/** token is a token of GitHub from the environment, which raises the limit of the requests to GitHub. */
+const token = (): string | undefined => process.env.GITHUB_TOKEN || process.env.GH_TOKEN || undefined;
+
+/**
+ * fetcherOf returns the network of the tool.
+ * @param io - The streams and the network.
+ */
+const fetcherOf = (io: Io): Fetcher => io.fetch ?? httpFetcher(userAgent);
+
+/**
+ * readRemote reads a layout on GitHub with its files.
+ * @param io - The streams and the network.
+ * @param remote - The layout.
+ */
+async function readRemote(io: Io, remote: RemoteLayout): Promise<Chosen> {
+  io.out(`Reading ${remoteName(remote)} at ${remote.commit.slice(0, 7)} from GitHub …`);
+  const source = await downloadRemote(fetcherOf(io), remote);
+  const start = remote.layout.document ? source.get(remote.layout.document.replace(/^\.\//, '')) : undefined;
+  return { layout: remote.layout, source, ...(start ? { start: new TextDecoder().decode(start) } : {}) };
+}
+
+/**
+ * resolveLayout reads a layout by its name for a new project: a layout on GitHub, `github:owner/repository/folder`, a
+ * folder in `layouts/` of the folder or above it, or a built-in layout.
+ * @param io - The streams, the assets and the network.
+ * @param near - The path of a file in the folder where the search starts.
+ * @param name - The name of the layout.
+ */
+async function resolveLayout(io: Io, near: string, name: string): Promise<Chosen> {
+  const spec = parseRemote(name);
+  if (name.startsWith('github:') && !spec) {
+    throw new UsageError(`The layout "${name}" is no layout on GitHub: github:<owner>/<repository>/<folder>, with @<ref> if needed.`);
+  }
+  if (spec) {
+    return readRemote(io, await findRemote(fetcherOf(io), spec, token()));
+  }
+  const { layout, folder } = await layoutAt(io, near, name);
+  const start = startOf(layout, folder);
+  return { layout, source: readFolder(folder), ...(start ? { start } : {}) };
+}
+
+/** Offer is a layout of the list of `create` and `layouts`: its name for --layout, the entry of the list, and the layout on GitHub, if it is one. */
+interface Offer {
+  name: string;
+  choice: Choice;
+  remote?: RemoteLayout;
+}
+
+/**
+ * offersOf lists the layouts that a new project can copy: the folders of `layouts/` of the current folder, the built-in
+ * layouts, and the layouts on GitHub. A failed search on GitHub leaves its layouts out and says why.
+ * @param io - The streams, the assets and the network.
+ */
+async function offersOf(io: Io): Promise<Offer[]> {
+  const offers: Offer[] = [];
+  const local = (folder: string, hint: (name: string) => string): void => {
+    if (!fs.existsSync(folder)) {
+      return;
+    }
+    for (const entry of fs.readdirSync(folder, { withFileTypes: true }).filter((candidate) => candidate.isDirectory() && layoutName.test(candidate.name)).sort((a, b) => a.name.localeCompare(b.name))) {
+      const file = path.join(folder, entry.name, layoutFile);
+      if (!offers.some((offer) => offer.name === entry.name) && fs.existsSync(file)) {
+        const { layout } = parseLayout(fs.readFileSync(file, 'utf8'), entry.name, folderUrl(path.join(folder, entry.name)));
+        offers.push({ name: entry.name, choice: { label: layout?.name ?? entry.name, hint: hint(entry.name) } });
+      }
+    }
+  };
+  local(path.join(io.cwd, 'layouts'), (name) => `layouts/${name}`);
+  local(io.assets.layouts, (name) => `${name}, built in`);
+  io.err('Searching the layouts on GitHub …');
+  try {
+    const { layouts, problems } = await findRemotes(fetcherOf(io), token());
+    for (const problem of problems) {
+      io.err(`warning: ${problem}`);
+    }
+    for (const remote of layouts) {
+      const preview = previewUrl(remote);
+      offers.push({ name: remoteName(remote), remote, choice: { label: remote.layout.name, hint: remoteName(remote), ...(preview ? { detail: `Preview: ${preview}` } : {}) } });
+    }
+  } catch (error) {
+    io.err(`warning: The layouts on GitHub are not in the list: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return offers;
 }
 
 /**
@@ -414,7 +524,7 @@ async function runSource(args: readonly string[], io: Io): Promise<number> {
 /** ProjectAnswers are the answers for a new project. */
 interface ProjectAnswers {
   folder: string;
-  layout: string;
+  layout: Chosen;
   language?: string;
   title: string;
   author: string;
@@ -427,7 +537,7 @@ interface ProjectAnswers {
  */
 async function writeProject(answers: ProjectAnswers, io: Io): Promise<number> {
   const target = path.resolve(io.cwd, answers.folder);
-  const { layout, folder } = await layoutAt(io, path.join(target, 'paper', 'paper.md'), answers.layout);
+  const { layout, source, start } = answers.layout;
   const language = answers.language || layout.language;
   const values: Record<string, string> = {};
   if (answers.title) {
@@ -436,7 +546,7 @@ async function writeProject(answers: ProjectAnswers, io: Io): Promise<number> {
   if (answers.author) {
     values.author = answers.author;
   }
-  const written = writeFiles(target, newProjectFiles({ layout, source: readFolder(folder), language, values }, startOf(layout, folder)));
+  const written = writeFiles(target, newProjectFiles({ layout, source, language, values }, start));
   for (const file of written) {
     io.out(`  ${path.relative(io.cwd, file)}`);
   }
@@ -464,7 +574,19 @@ async function runCreate(args: readonly string[], io: Io, questions: boolean): P
   if (!folder) {
     throw new UsageError('The project needs a folder.');
   }
-  const layout = await answer('Layout (plain, or the name of a folder in layouts/)', options.layout, defaultLayout);
+  const near = path.join(path.resolve(io.cwd, folder), 'paper', 'paper.md');
+  let layout: Chosen;
+  if (options.layout === undefined && ask && io.choose) {
+    const offers = await offersOf(io);
+    const index = await io.choose('Layout', offers.map((offer) => offer.choice), Math.max(0, offers.findIndex((offer) => offer.name === defaultLayout)));
+    if (index === undefined) {
+      throw new UsageError('No layout was chosen, so nothing was written.');
+    }
+    const offer = offers[index];
+    layout = offer.remote ? await readRemote(io, offer.remote) : await resolveLayout(io, near, offer.name);
+  } else {
+    layout = await resolveLayout(io, near, await answer('Layout (plain, the name of a folder in layouts/, or github:<owner>/<repository>/<folder>)', options.layout, defaultLayout));
+  }
   const language = await answer('Language of the document, for example de-AT or en-US', options.language, '');
   const title = await answer('Title of the document', options.title, '');
   const author = await answer('Author of the document', options.author, '');
@@ -497,8 +619,11 @@ async function runNew(args: readonly string[], io: Io): Promise<number> {
         values[key] = options[key];
       }
     }
-    const written = writeFiles(path.dirname(file), [{ path: path.basename(file), content: newDocumentText(layout, startOf(layout, folder), values) }]);
-    io.out(path.relative(io.cwd, written[0]));
+    const start = startOf(layout, folder);
+    const written = writeFiles(path.dirname(file), [{ path: path.basename(file), content: newDocumentText(layout, start, values) }, ...startFiles(start, readFolder(folder))]);
+    for (const name of written) {
+      io.out(path.relative(io.cwd, name));
+    }
     return 0;
   }
   if (kind === 'layout') {
@@ -519,6 +644,77 @@ async function runNew(args: readonly string[], io: Io): Promise<number> {
     return 0;
   }
   throw new UsageError(`${command} new needs one of: document, layout, project.`);
+}
+
+/**
+ * runLayouts runs `layouts`: the list of the layouts that `create` offers, with their names for --layout.
+ * @param args - The arguments after the command.
+ * @param io - The streams, the assets and the network.
+ */
+async function runLayouts(args: readonly string[], io: Io): Promise<number> {
+  parse(args, [], []);
+  for (const offer of await offersOf(io)) {
+    io.out(`${offer.name}`);
+    io.out(`    ${[offer.choice.label, offer.remote?.layout.language, offer.choice.detail].filter(Boolean).join(' · ')}`);
+  }
+  return 0;
+}
+
+/**
+ * runPreview runs `preview`: it makes a project with the empty paper document of a layout in a temporary folder,
+ * formats the document, and writes its PDF into the layout folder, with the name of the field `preview`.
+ * @param args - The arguments after the command.
+ * @param io - The streams and the assets.
+ */
+async function runPreview(args: readonly string[], io: Io): Promise<number> {
+  const { positional, options } = parse(args, ['browser'], ['write']);
+  if (positional.length !== 1) {
+    throw new UsageError(`${command} preview needs the path of one layout folder.`);
+  }
+  const folder = path.resolve(io.cwd, positional[0]);
+  const id = path.basename(folder);
+  if (!fs.existsSync(path.join(folder, layoutFile))) {
+    throw new UsageError(`The folder ${positional[0]} has no ${layoutFile}.`);
+  }
+  const { layout, problems } = parseLayout(fs.readFileSync(path.join(folder, layoutFile), 'utf8'), id, folderUrl(folder));
+  if (!layout) {
+    throw new UsageError(problems.map((problem) => problem.message).join(' '));
+  }
+  const start = startOf(layout, folder);
+  if (!start) {
+    throw new UsageError(`The layout "${id}" has no empty paper document: the field "document" of ${layoutFile} names it.`);
+  }
+  const preview = path.join(folder, layout.preview ?? 'document.pdf');
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'markdownpaper-preview-'));
+  try {
+    const source = readFolder(folder);
+    writeFiles(temporary, newProjectFiles({ layout, source, language: layout.language, values: {} }, start));
+    const paper = path.join(temporary, 'paper', 'paper.md');
+    const text = fs.readFileSync(paper, 'utf8');
+    const host = { reader: fileReader, builtinLayouts: folderUrl(io.assets.layouts) };
+    const loaded = await documentLayout(host, pathToFileURL(paper).href, readFrontMatter(text));
+    const { style } = await citationStyleOf((url) => fileReader.read(url), loaded.layout);
+    const formatted = formatPaper(text.split(/\r?\n/), loaded.layout, style).join('\n');
+    fs.writeFileSync(paper, formatted);
+    const result = await exportPdf(paper, { assets: io.assets, output: preview, ...(options.browser ? { browser: options.browser } : {}) });
+    for (const problem of result.problems) {
+      io.err(describe(problem, temporary));
+    }
+    if (options.write !== undefined) {
+      // The document gets back its own front matter, and the links to the files of the layout folder without `../`.
+      const linked = new Set(startFiles(start, source).map((file) => file.path));
+      const head = start.slice(0, start.indexOf(splitStart(start).body)).trimEnd();
+      const back = mapLinks(splitStart(formatted).body, (target) => (target.startsWith('../') && linked.has(target.slice(3)) ? encodeURI(target.slice(3)) : target));
+      fs.writeFileSync(path.join(folder, layout.document ?? 'document.md'), `${head ? `${head}\n\n` : ''}${back}\n`);
+    }
+    if (!layout.preview) {
+      io.err(`warning: ${layoutFile} names no preview; add "preview": "${path.basename(preview)}".`);
+    }
+    io.out(path.relative(io.cwd, preview) || preview);
+    return result.problems.length > 0 ? 1 : 0;
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
 }
 
 /**
@@ -550,6 +746,10 @@ export async function run(args: readonly string[], io: Io): Promise<number> {
         return await runNew(rest, io);
       case 'source':
         return await runSource(rest, io);
+      case 'layouts':
+        return await runLayouts(rest, io);
+      case 'preview':
+        return await runPreview(rest, io);
       case 'instructions': {
         if (rest.length === 0) {
           io.out(topicList(`npx -y ${packageName}`));

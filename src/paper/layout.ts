@@ -83,8 +83,13 @@ export interface Layout {
   /** before and after are the templates of the fixed pages before and after the text, relative to the folder. */
   before: string[];
   after: string[];
-  /** document is the Markdown file of the folder that starts a new document of the layout, when the layout has one. */
+  /**
+   * document is the empty paper document of the layout, a Markdown file of the folder that a new document of the
+   * layout starts from, with the values of the cover page in its front matter; preview is the PDF of that document,
+   * which shows the pages of the layout before a person chooses it ([R-LAY-009](../../docs/requirements.md#r-lay-009)).
+   */
   document?: string;
+  preview?: string;
   /** fields are the fields of the front matter that the layout uses. */
   fields: Record<string, FieldSpec>;
   /** numbered is true when the renderer numbers the headings, depth is the deepest numbered level. */
@@ -283,6 +288,14 @@ export function parseLayout(text: string, id: string, folder: string): { layout?
       problem('warning', `The field "${key}" of the layout "${id}" must be a description or an object with "description".`);
     }
   }
+  // The schema of layout.json requires both fields, so the editor of the layout shows a missing one; a document of the
+  // layout gets no warning for them, because its author cannot change the layout.
+  for (const key of ['document', 'preview'] as const) {
+    const value = json[key];
+    if (value !== undefined && (typeof value !== 'string' || !relativeFile(value))) {
+      problem('warning', `The field "${key}" of the layout "${id}" must name a file of the layout folder.`);
+    }
+  }
   const defaults = termsFor(language);
   const terms: Terms = { ...defaults, sections: { ...defaults.sections } };
   if (isObject(json.terms)) {
@@ -311,6 +324,7 @@ export function parseLayout(text: string, id: string, folder: string): { layout?
     before: files('before', []),
     after: files('after', []),
     ...(typeof json.document === 'string' && relativeFile(json.document) ? { document: json.document } : {}),
+    ...(typeof json.preview === 'string' && relativeFile(json.preview) ? { preview: json.preview } : {}),
     fields,
     numbered: headings.numbered !== false,
     depth: count(headings.depth, 3),

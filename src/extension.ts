@@ -69,6 +69,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     browserPath: () => readSettings().browserPath,
     openPdf: () => readSettings().openPdf,
     previewFile: () => preview.fileOfActive(),
+    version: (context.extension.packageJSON as { version?: string }).version,
   };
   context.subscriptions.push(
     checks,

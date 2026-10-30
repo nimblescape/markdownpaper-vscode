@@ -136,6 +136,54 @@ function plainText(tokens: readonly Token[]): string {
     .trim();
 }
 
+/** anchorTag matches the anchor of a figure or a table, `<a id="tab-grades"></a>`, as one token or as its start tag. */
+const anchorTag = /^<a\s+(?:id|name)\s*=\s*"([^"<>]+)"\s*>\s*(<\/a\s*>)?$/i;
+
+/**
+ * trailingAnchor returns the ID of the anchor at the end of an inline text, as the slash commands `/figure` and
+ * `/table` of nimblescape Markdown Notes write it after an image or a caption, and the index of its first token.
+ * @param tokens - The inline tokens.
+ */
+function trailingAnchor(tokens: readonly Token[]): { id: string; start: number } | undefined {
+  let end = tokens.length;
+  while (end > 0 && (tokens[end - 1].type === 'softbreak' || (tokens[end - 1].type === 'text' && tokens[end - 1].content.trim() === ''))) {
+    end--;
+  }
+  const last = tokens[end - 1];
+  if (last?.type !== 'html_inline') {
+    return undefined;
+  }
+  const whole = anchorTag.exec(last.content);
+  if (whole?.[2]) {
+    return { id: whole[1], start: end - 1 };
+  }
+  const open = end > 1 && tokens[end - 2].type === 'html_inline' && /^<\/a\s*>$/i.test(last.content) ? anchorTag.exec(tokens[end - 2].content) : null;
+  return open && !open[2] ? { id: open[1], start: end - 2 } : undefined;
+}
+
+/**
+ * withoutTrailingSpace returns the inline tokens without the spaces and line breaks at their end.
+ * @param tokens - The inline tokens.
+ */
+function withoutTrailingSpace(tokens: Token[]): Token[] {
+  const result = [...tokens];
+  while (result.length > 0) {
+    const last = result[result.length - 1];
+    if (last.type === 'softbreak' || (last.type === 'text' && last.content.trim() === '')) {
+      result.pop();
+    } else {
+      if (last.type === 'text') {
+        last.content = last.content.trimEnd();
+      }
+      break;
+    }
+  }
+  return result;
+}
+
+/** referenceText matches the text of a link to a figure or a table that the renderer writes anew: a word and a number. */
+const referenceText = /^\p{L}+\.?\s+[A-Z]?\d+$/u;
+
 /**
  * matches tells whether the text of a heading is one of the terms, without regard to case.
  * @param text - The text of the heading.
@@ -312,10 +360,15 @@ function paperRule(layout: Layout, found: Found) {
     let generatedLevel = 0;
     /** references is the level of the heading of the reference list while the rule is in it, else 0. */
     let references = 0;
+    /** links are the links to a place in the file, which can name a figure or a table. */
+    const links: { open: Token; text: Token[]; line: number }[] = [];
     const output: Token[] = [];
 
     for (let index = 0; index < tokens.length; index++) {
       const token = tokens[index];
+      if (token.type === 'inline') {
+        links.push(...linksOf(token.children ?? [], token.map?.[0] ?? 0));
+      }
       if (token.map && token.nesting === 1) {
         token.attrSet('data-line', String(token.map[0]));
       }
@@ -393,40 +446,53 @@ function paperRule(layout: Layout, found: Found) {
         // The generated list replaces the text of its section.
         continue;
       }
-      // A figure: a paragraph with only an image, whose text is the caption.
+      // A figure: a paragraph with only an image, whose text is the caption, and maybe the anchor of the figure.
       if (token.type === 'paragraph_open' && tokens[index + 1]?.type === 'inline') {
         const inline = tokens[index + 1];
-        const children = (inline.children ?? []).filter((child) => !(child.type === 'text' && child.content.trim() === '') && child.type !== 'softbreak');
+        const anchor = trailingAnchor(inline.children ?? []);
+        const kept = anchor ? (inline.children ?? []).slice(0, anchor.start) : (inline.children ?? []);
+        const children = kept.filter((child) => !(child.type === 'text' && child.content.trim() === '') && child.type !== 'softbreak');
         if (children.length === 1 && children[0].type === 'image') {
           const image = children[0];
           const caption = plainText(image.children ?? []);
           token.tag = 'figure';
           token.attrJoin('class', 'figure');
           tokens[index + 2].tag = 'figure';
+          inline.children = withoutTrailingSpace(kept);
+          if (anchor) {
+            ids.add(anchor.id);
+            token.attrSet('id', anchor.id);
+          }
           if (caption !== '') {
             figureCount++;
             const number = appendixPart && appendix >= 0 ? `${letter(appendix)}${figureCount}` : String(figureCount);
-            const id = unique(`figure-${number.toLowerCase()}`);
+            const id = anchor ? anchor.id : unique(`figure-${number.toLowerCase()}`);
             const label = `${terms.figure} ${number}`;
             token.attrSet('id', id);
             const rendered = state.md.renderer.renderInline(image.children ?? [], state.md.options, state.env);
             inline.children = [
-              ...(inline.children ?? []),
+              ...inline.children,
               html(state, `<figcaption><span class="caption-label">${escapeHtml(label)}</span><span class="caption-separator">: </span><span class="caption-text">${rendered}</span></figcaption>`),
             ];
             found.figures.push({ id, label, text: caption, line: token.map?.[0] ?? 0 });
           }
         }
-        // A caption of a table: "Table: …" directly before the table.
-        const text = plainText(inline.children ?? []);
+        // A caption of a table: "Table: …" directly before the table, and maybe the anchor of the table at its end.
+        const text = plainText(kept);
         const words = [...new Set(['Table', terms.table])].map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
         const tableCaption = new RegExp(`^(?:${words})(?:\\s+[A-Z]?\\d+)?\\s*:\\s*`, 'i');
         if (tokens[index + 3]?.type === 'table_open' && tableCaption.test(text)) {
           tableCount++;
           const number = appendixPart && appendix >= 0 ? `${letter(appendix)}${tableCount}` : String(tableCount);
-          const id = unique(`table-${number.toLowerCase()}`);
+          let id: string;
+          if (anchor) {
+            ids.add(anchor.id);
+            id = anchor.id;
+          } else {
+            id = unique(`table-${number.toLowerCase()}`);
+          }
           const label = `${terms.table} ${number}`;
-          const kids = inline.children ?? [];
+          const kids = withoutTrailingSpace(kept);
           const first = kids.find((child) => child.type === 'text');
           if (first) {
             first.content = first.content.replace(tableCaption, '');
@@ -447,7 +513,48 @@ function paperRule(layout: Layout, found: Found) {
       output.push(html(state, '</section>\n', true));
     }
     state.tokens = output;
+    // A link to a figure or a table whose text is a word and a number gets the label of its target: "Abbildung 1".
+    const labels = new Map([...found.figures, ...found.tables].map((caption) => [caption.id, caption.label]));
+    for (const link of links) {
+      const target = decodeURIComponent(link.open.attrGet('href')?.slice(1) ?? '');
+      const label = labels.get(target);
+      if (label === undefined) {
+        if (/^(?:fig|tab)-/.test(target) && !ids.has(target)) {
+          found.problems.push({ severity: 'warning', message: `The link #${target} names no figure and no table of the file.`, line: link.line });
+        }
+        continue;
+      }
+      if (link.text.length > 0 && link.text.every((child) => child.type === 'text') && referenceText.test(link.text.map((child) => child.content).join('').trim())) {
+        link.text[0].content = label;
+        for (const child of link.text.slice(1)) {
+          child.content = '';
+        }
+      }
+    }
   };
+}
+
+/**
+ * linksOf returns the links of inline tokens whose target is a place in the file (`#id`), with the tokens of their text.
+ * @param tokens - The inline tokens.
+ * @param line - The line of the tokens in the file.
+ */
+function linksOf(tokens: readonly Token[], line: number): { open: Token; text: Token[]; line: number }[] {
+  const result: { open: Token; text: Token[]; line: number }[] = [];
+  for (let index = 0; index < tokens.length; index++) {
+    if (tokens[index].type !== 'link_open' || !tokens[index].attrGet('href')?.startsWith('#')) {
+      continue;
+    }
+    const text: Token[] = [];
+    let end = index + 1;
+    while (end < tokens.length && tokens[end].type !== 'link_close') {
+      text.push(tokens[end]);
+      end++;
+    }
+    result.push({ open: tokens[index], text, line });
+    index = end;
+  }
+  return result;
 }
 
 /**

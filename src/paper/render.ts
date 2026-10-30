@@ -206,7 +206,7 @@ export async function render(host: Host, document: string, text: string): Promis
   const values = valuesOf(layout, frontMatter, document);
   const hyphenate = layout.hyphenate ? hyphenatorOf(layout.language) : undefined;
   const body = renderBody(bodyOf(text, frontMatter), layout, hyphenate);
-  problems.push(...body.problems);
+  problems.push(...body.problems.map((problem) => ({ ...problem, file: problem.file ?? document })));
 
   const read = async (file: string): Promise<string | undefined> => {
     const bytes = await host.reader.read(`${layout.folder}${file}`);

@@ -224,6 +224,12 @@ describe('checks of the front matter (R-DOC-002)', () => {
     expect(checked.problems[0]).toMatchObject({ severity: 'error', line: 2 });
     expect((await checkDocument(hostOf({}), 'file:///repo/a.md', '---\ntitle: x\n---\n')).problems).toEqual([]);
   });
+
+  test('a link to a figure or a table that does not exist is a warning at its line (R-REN-009)', async () => {
+    const host = hostOf({ 'file:///repo/layouts/thesis/layout.json': thesis });
+    const checked = await checkDocument(host, 'file:///repo/a.md', '---\nlayout: thesis\ntitle: T\nauthor: A\n---\n\nSiehe [Abbildung 1](#fig-weg).\n');
+    expect(checked.problems).toEqual([{ severity: 'warning', message: 'The link #fig-weg names no figure and no table of the file.', line: 6, file: 'file:///repo/a.md' }]);
+  });
 });
 
 describe('scaffold (R-NEW-001 to R-NEW-003)', () => {
@@ -244,10 +250,10 @@ describe('scaffold (R-NEW-001 to R-NEW-003)', () => {
     expect(JSON.parse(files[0].content as string)).toMatchObject({ name: 'mine', language: 'de-AT', format: formatText });
   });
 
-  test('a new project has AGENTS.md, the layout, the document and the folders in the language of the project', () => {
-    const source = new Map([['layout.json', encoder.encode(fs.readFileSync(path.join(repository, 'layouts/plain/layout.json')))]]);
+  test('a new project has AGENTS.md, the layout, the document and the folders inbox, bib and images (R-NEW-003)', () => {
+    const source = new Map([['layout.json', encoder.encode(fs.readFileSync(path.join(repository, 'layouts/plain/layout.json'), 'utf8'))]]);
     const files = newProjectFiles({ layout: plain, source, language: 'de-AT', values: { title: 'T' } }, undefined);
-    expect(files.map((file) => file.path)).toEqual(['AGENTS.md', 'layouts/plain/layout.json', 'paper/paper.md', 'literatur/.gitkeep', 'images/.gitkeep']);
+    expect(files.map((file) => file.path)).toEqual(['AGENTS.md', 'layouts/plain/layout.json', 'paper/paper.md', 'inbox/.gitkeep', 'bib/.gitkeep', 'images/.gitkeep']);
     expect(decoder.decode(encoder.encode(files[0].content as string))).toContain('npx -y @nimblescape/markdownpaper instructions document');
     expect(JSON.parse(files[1].content as string).language).toBe('de-AT');
   });

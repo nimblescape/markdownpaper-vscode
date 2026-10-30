@@ -44,7 +44,7 @@ export const usage = [
   '      --output <file.pdf>       write the PDF to this file',
   '      --html <file.html>        also write the HTML page of the renderer, for a look at it in a browser',
   '      --browser <program>       the program of Chrome, Chromium or Edge (else MARKDOWNPAPER_BROWSER or a search)',
-  '  check <file.md>...            check the front matter of each file against its layout',
+  '  check <file.md>...            check the front matter against the layout, and the links to figures and tables',
   '  create [folder]               scaffold a new project; asks for what its options do not give',
   '      --layout <name>           the layout to copy into the project (default: plain)',
   '      --language <tag>          the language of the project, for example de-AT or en-US',

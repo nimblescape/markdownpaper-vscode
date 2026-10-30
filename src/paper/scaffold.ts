@@ -102,18 +102,19 @@ export interface ProjectOptions {
 }
 
 /**
- * sourcesFolder returns the name of the folder of the sources of a project in a language.
- * @param language - The language tag.
+ * The folders of the sources of a project (Hannes, 2026-10-30, 02:42): `inbox/` is the drop folder for a source that no
+ * program can load on its own, for example a PDF file; an AI agent processes each file there and moves it to `bib/`,
+ * named after its citation.
  */
-export const sourcesFolder = (language: string): string => (language.toLowerCase().startsWith('de') ? 'literatur' : 'literature');
+export const inboxFolder = 'inbox';
+export const sourcesFolder = 'bib';
 
 /**
  * agentsText returns the text of the file AGENTS.md of a new project, which tells every AI agent the commands of the
  * rules and of the PDF.
  * @param layout - The name of the layout of the project.
- * @param sources - The name of the folder of the sources.
  */
-export function agentsText(layout: string, sources: string): string {
+export function agentsText(layout: string): string {
   return `# Instructions for AI agents
 
 This project writes a document in Markdown and makes its pages and its PDF with
@@ -124,7 +125,8 @@ commands; \`npx\` needs no installation.
 | --- | --- |
 | \`paper/paper.md\` | The document: front matter with the fields of the layout, then the text in Markdown. |
 | \`layouts/${layout}/\` | The layout of the pages: \`layout.json\`, the style sheets, the templates of the fixed pages, fonts and images. |
-| \`${sources}/\` | The PDF files of the sources. |
+| \`${inboxFolder}/\` | The drop folder: a person puts a source here that no program can load on its own, for example a PDF file. |
+| \`${sourcesFolder}/\` | The files of the sources, each named after its citation. |
 | \`images/\` | The figures of the document. |
 
 Read the rules before you change a file, and follow them:
@@ -142,6 +144,12 @@ ${command} check paper/paper.md    # the front matter against the layout
 ${command} pdf paper/paper.md      # the PDF beside the document
 \`\`\`
 
+Process each file in \`${inboxFolder}/\`: read it, find the authors, the year and the title of the source, and move the
+file to \`${sourcesFolder}/\` with the ID of its citation as its name: the family name of the first author and the year,
+in small letters without spaces and accents, for example \`${sourcesFolder}/hong2024.pdf\`; a second work of the same
+author and year gets \`a\`, \`b\` (\`hong2024a.pdf\`). Ask the person when a file is no source or its author or year is
+unclear. \`${inboxFolder}/\` stays empty after the work.
+
 Notes of nimblescape Markdown Notes (footnotes with the label \`note-\` and four letters or digits) are comments of the
 authors; the PDF leaves them out. Keep them as they are unless you are asked to change them.
 `;
@@ -154,13 +162,13 @@ authors; the PDF leaves them out. Keep them as they are unless you are asked to 
  * @param start - The text of the start document of the layout, or undefined.
  */
 export function newProjectFiles(options: ProjectOptions, start: string | undefined): NewFile[] {
-  const sources = sourcesFolder(options.language);
   const layoutFiles = newLayoutFiles(options.source, { name: options.layout.name, language: options.language }).map((file) => ({ ...file, path: `layouts/${options.layout.id}/${file.path}` }));
   return [
-    { path: 'AGENTS.md', content: agentsText(options.layout.id, sources) },
+    { path: 'AGENTS.md', content: agentsText(options.layout.id) },
     ...layoutFiles,
     { path: 'paper/paper.md', content: newDocumentText(options.layout, start, options.values) },
-    { path: `${sources}/.gitkeep`, content: '' },
+    { path: `${inboxFolder}/.gitkeep`, content: '' },
+    { path: `${sourcesFolder}/.gitkeep`, content: '' },
     { path: 'images/.gitkeep', content: '' },
   ];
 }

@@ -57,7 +57,9 @@ test('create asks for what its options do not give, and writes the project (R-NE
   expect(read('studie/paper/paper.md')).toContain('title: "Agenten"\n');
   expect(read('studie/paper/paper.md')).toContain('author: "Hannes Stauss"\n');
   expect(JSON.parse(read('studie/layouts/plain/layout.json')).language).toBe('de-AT');
-  expect(fs.existsSync(path.join(folder, 'studie/literatur/.gitkeep'))).toBe(true);
+  expect(fs.existsSync(path.join(folder, 'studie/inbox/.gitkeep'))).toBe(true);
+  expect(fs.existsSync(path.join(folder, 'studie/bib/.gitkeep'))).toBe(true);
+  expect(read('studie/AGENTS.md')).toContain('Process each file in `inbox/`');
   expect(read('studie/AGENTS.md')).toContain('npx -y @nimblescape/markdownpaper pdf paper/paper.md');
 });
 

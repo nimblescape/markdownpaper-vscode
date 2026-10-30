@@ -186,6 +186,49 @@ describe('figures and tables (R-REN-005)', () => {
   });
 });
 
+describe('links to figures and tables (R-REN-009)', () => {
+  test('the anchor of /figure and /table names the figure or the table, and a link to it gets its label', () => {
+    const markdown = [
+      'Siehe [Table 1](#tab-noten), [Figure 2](#fig-plan) und [den Plan](#fig-plan).',
+      '',
+      '![Der Plan](plan.png) <a id="fig-plan"></a>',
+      '',
+      'Table: Noten <a id="tab-noten"></a>',
+      '',
+      '| a |',
+      '| - |',
+      '| 1 |',
+      '',
+      '# Anhang',
+      '',
+      '## Daten',
+      '',
+      'Table: Rohdaten',
+      '<a id="tab-roh"></a>',
+      '',
+      '| b |',
+      '| - |',
+      '| 2 |',
+      '',
+      'Wie [Tabelle 9](#tab-roh) zeigt; [Table 3](#tab-fehlt).',
+      '',
+    ].join('\n');
+    const body = renderBody(markdown, layoutOf());
+    expect(body.figures).toEqual([{ id: 'fig-plan', label: 'Abbildung 1', text: 'Der Plan', line: 2 }]);
+    expect(body.tables.map((table) => [table.id, table.label, table.text])).toEqual([
+      ['tab-noten', 'Tabelle 1', 'Noten'],
+      ['tab-roh', 'Tabelle A1', 'Rohdaten'],
+    ]);
+    expect(body.html).toContain('<a href="#tab-noten">Tabelle 1</a>, <a href="#fig-plan">Abbildung 1</a> und <a href="#fig-plan">den Plan</a>');
+    expect(body.html).toContain('<figure data-line="2" class="figure" id="fig-plan"><img src="plan.png" alt="Der Plan"><figcaption>');
+    expect(body.html).toContain('<p data-line="4" id="tab-noten" class="caption table-caption"><span class="caption-label">Tabelle 1</span><span class="caption-separator">: </span><span class="caption-text">Noten</span></p>');
+    expect(body.html).toContain('<span class="caption-text">Rohdaten</span></p>');
+    expect(body.html).toContain('Wie <a href="#tab-roh">Tabelle A1</a> zeigt; <a href="#tab-fehlt">Table 3</a>.');
+    expect(body.html).not.toContain('<a id=');
+    expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #tab-fehlt names no figure and no table of the file.', line: 21 }]);
+  });
+});
+
 test('each block names its line in the file (R-PRV-003)', () => {
   const html = renderBody('\n\n# Teil\n\nText\n\n- Punkt\n', layoutOf()).html;
   expect(html).toContain('<h1 data-line="2"');

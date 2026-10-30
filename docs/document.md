@@ -47,24 +47,34 @@ date: "30 October 2026"
   keeps its numbers, and the renderer adds none.
 - A heading with `{-}` at its end gets no number, nor do the headings below
   it: `# Abstract {-}`. The marker does not show.
-- The headings of the generated lists, of the reference list and of the
-  appendix part get no number (sections 3 and 7).
+- The headings of the special sections get no number, nor do the headings
+  below them (section 3).
 
-## 3. Generated lists
+## 3. Special sections and generated lists
 
-A heading with one of these texts gets its list from the renderer. Leave its
-section empty; the renderer replaces what stands there.
+A special section has a heading without a number. The renderer finds it by
+the words of its heading in the language of the layout, or by the code of the
+section in curly brackets at the end of the heading, for example
+`# Quellen und Materialien {BIB}`. The marker does not show.
 
-| List | German headings | English headings |
-| --- | --- | --- |
-| Table of contents | Inhaltsverzeichnis, Inhalt | Contents, Table of Contents |
-| List of figures | Abbildungsverzeichnis | List of Figures, List of Illustrations |
-| List of tables | Tabellenverzeichnis | List of Tables |
+| Code | Section | German headings | English headings |
+| --- | --- | --- | --- |
+| `TOC` | Table of contents, generated | Inhaltsverzeichnis, Inhalt | Table of Contents, Contents |
+| `LOF` | List of figures, generated | Abbildungsverzeichnis | List of Figures, List of Illustrations |
+| `LOT` | List of tables, generated | Tabellenverzeichnis | List of Tables |
+| `BIB` | Reference list | Literaturverzeichnis, Literatur, Quellenverzeichnis, Quellen, Bibliographie | Bibliography, References, Works Cited |
+| `ADT` | Affidavit | Eidesstattliche Erklärung | Affidavit, Statutory Declaration |
+| `AST` | Abstract | Abstrakt, Abstract, Kurzfassung, Zusammenfassung | Abstract, Summary |
+| `ACC` | Acknowledgments | Danksagung, Dank | Acknowledgments |
+| `FWD` | Foreword | Vorwort | Foreword, Preface |
+| `APX` | Appendix part: `APX-A`, `APX-B`, … for its appendices | Anhang, Anhänge | Appendix, Appendices |
 
-The language of the layout decides which words count; a layout can change
-them. The table of contents lists the headings after its own heading, to the
-depth of the layout, with their pages. The list of figures and the list of
-tables list the captions with their pages.
+A layout can change the words. The table of contents, the list of figures and
+the list of tables are generated: leave their sections empty, because the
+renderer replaces what stands there. The table of contents lists the headings
+after its own heading, to the depth of the layout, with their pages; it does
+not list itself. The list of figures and the list of tables list the captions
+with their pages.
 
 ## 4. Figures
 
@@ -80,6 +90,21 @@ The page shows "Abbildung 1: Die Rollen von Agenten im Team" (in English
 `![](images/logo.png)`, is a figure without a caption and without a number.
 An image within a line of text stays in the line. Write the path of an image
 relative to the Markdown file.
+
+An anchor at the end of the line of the image gives the figure a name for
+links, as the slash command `/figure` of nimblescape Markdown Notes writes it;
+`/ref` writes a link to it:
+
+```markdown
+![Der Plan der Studie](images/plan.png) <a id="fig-plan"></a>
+
+[Abbildung 1](#fig-plan) zeigt den Plan.
+```
+
+The renderer writes the label of the figure as the text of each link to it
+whose text is a word and a number, so "Abbildung 1" is always the number on
+the page. A link with other words, such as `[den Plan](#fig-plan)`, keeps its
+text.
 
 ## 5. Tables
 
@@ -98,6 +123,13 @@ The page shows "Tabelle 1: Teilnehmende nach Schulstufe" above the table.
 The word of the language, for example `Tabelle:`, works too, and a number in
 the caption, as in `Tabelle 3:`, is replaced by the number of the renderer.
 A table without such a paragraph has no caption and no number.
+
+An anchor at the end of the caption names the table for links, as the slash
+command `/table` of nimblescape Markdown Notes writes it:
+`Table: Teilnehmende nach Schulstufe <a id="tab-teilnehmende"></a>`. A link
+`[Tabelle 1](#tab-teilnehmende)` gets the label of the table, as for figures.
+`check` and the page preview warn about a link to `#fig-…` or `#tab-…` whose
+figure or table does not exist.
 
 ## 6. Footnotes
 
@@ -118,8 +150,8 @@ indented by four spaces after it belong to it.
 ## 7. Reference list and appendix
 
 - A chapter heading `# Literaturverzeichnis` or `# References` (more words in
-  section 3 of `instructions layout`) starts the reference list. Its entries
-  get no soft hyphens; the layout gives them their indent.
+  section 3) starts the reference list. Its entries get no soft hyphens; the
+  layout gives them their indent.
 - A chapter heading `# Anhang` or `# Appendix` after the reference list starts
   the appendix part. Each `##` heading in it is one appendix: the renderer
   labels it "Anhang A", "Anhang B" (one appendix only: "Anhang"), and numbers

@@ -4,13 +4,15 @@
 
 /**
  * The checks of a document against its layout ([R-DOC-002](../../docs/requirements.md#r-doc-002)): the layout that the
- * field `layout` names must exist and be readable, and each field that the layout requires must have a value. The
- * text editor shows the problems as warnings, and `markdownpaper check` prints them. A file without the field `layout`
+ * field `layout` names must exist and be readable, each field that the layout requires must have a value, and each link
+ * to a figure or a table must find it ([R-REN-009](../../docs/requirements.md#r-ren-009)). The text editor shows the
+ * problems as warnings, and `markdownpaper check` prints them. A file without the field `layout`
  * is no document of a layout and gets no check. The module uses no API of VS Code.
  */
 
-import { type FrontMatter, readFrontMatter } from './frontMatter';
+import { bodyOf, type FrontMatter, readFrontMatter } from './frontMatter';
 import type { Layout, Problem } from './layout';
+import { renderBody } from './markdown';
 import { findLayout, type Host } from './render';
 
 /** Checked is the result of the checks of a document. */
@@ -50,6 +52,7 @@ export async function checkDocument(host: Pick<Host, 'reader' | 'builtinLayouts'
         });
       }
     }
+    problems.push(...renderBody(bodyOf(text, frontMatter), layout).problems.map((problem) => ({ ...problem, file: document })));
   }
   return { frontMatter, ...(layout ? { layout } : {}), problems };
 }

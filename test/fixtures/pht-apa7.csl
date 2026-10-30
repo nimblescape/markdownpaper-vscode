@@ -12,8 +12,8 @@
   <info>
     <title>APA 7 der Pädagogischen Hochschule Tirol (PHT)</title>
     <title-short>PHT APA 7</title-short>
-    <id>https://github.com/majikmate/nimblescape-markdownpaper-layout-pht/blob/main/thesis/pht-apa7.csl</id>
-    <link href="https://github.com/majikmate/nimblescape-markdownpaper-layout-pht/blob/main/thesis/pht-apa7.csl" rel="self"/>
+    <id>https://github.com/majikmate/markdownpaper-layout-pht/blob/main/thesis/pht-apa7.csl</id>
+    <link href="https://github.com/majikmate/markdownpaper-layout-pht/blob/main/thesis/pht-apa7.csl" rel="self"/>
     <link href="http://www.zotero.org/styles/apa" rel="template"/>
     <link href="https://apastyle.apa.org/style-grammar-guidelines/references" rel="documentation"/>
     <link href="https://zotero.org/groups/2205533/collections/MR2N872S" rel="documentation"/>

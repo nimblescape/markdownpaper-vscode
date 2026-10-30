@@ -5,7 +5,7 @@
 /**
  * These tests check the citation styles (R-CITE-003): the built-in style apa7 and the style pht-apa7.csl of the PHT
  * layout, a copy of apa.csl with the German terms of the guide of the PHT. test/fixtures/pht-apa7.csl is a copy of
- * thesis/pht-apa7.csl of the repository majikmate/nimblescape-markdownpaper-layout-pht. The cases are the patterns of
+ * thesis/pht-apa7.csl of the repository majikmate/markdownpaper-layout-pht. The cases are the patterns of
  * the guide of the PHT: the entries of books, edited books, chapters, articles, reports, theses, posts of a blog and of
  * social media, and the citations with one, two and more authors, a page, no year, no author, and two works of the
  * same authors in one year.

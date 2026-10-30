@@ -383,7 +383,7 @@ sheet.
 come from another repository or from an npm package, for example one layout
 of the PHT for many students ([decision 18](#decisions)). The folder
 `layouts/` of the repository of the document counts first. The PHT layouts
-have the repository `majikmate/nimblescape-markdownpaper-layout-pht`, under
+have the repository `majikmate/markdownpaper-layout-pht`, under
 CC BY-SA 4.0, and such a repository has a mark on GitHub by which Markdown Paper finds it and applies
 it. The mark is the GitHub topic `nimblescape-markdownpaper-layout`: its name
 names Markdown Paper, and the page of the topic,
@@ -1110,7 +1110,7 @@ not in its front matter and not in the DOCTYPE comment of Markdown Notes.
   (with "Jänner"), `de-DE`, `en-US` and `en-GB`. Another tag takes the locale
   of its first part (`de-CH` takes `de-DE`), else `en-US`.
 - The style of the PHT is `pht-apa7.csl` in the PHT layouts of the repository
-  `majikmate/nimblescape-markdownpaper-layout-pht`: a copy of `apa.csl` with
+  `majikmate/markdownpaper-layout-pht`: a copy of `apa.csl` with
   the rules of the guide of the PHT, "Zitationsrichtlinien für
   Abschlussarbeiten an der PHT, Zitation nach APA 7", version 2.0: `o. D.`,
   the places with their short German labels such as `S. 13 – 14`, `Kap. 2`,
@@ -1327,7 +1327,7 @@ requirement ([R-GEN-007](#r-gen-007)).
     3.0; the default of a layout without `citationStyle`.
 32. **The style of the PHT** ([R-CITE-003](#r-cite-003)): `pht-apa7.csl`, a
     copy of `apa.csl` with the rules of the guide of the PHT, in the PHT
-    layouts of `majikmate/nimblescape-markdownpaper-layout-pht`, which is
+    layouts of `majikmate/markdownpaper-layout-pht`, which is
     under CC BY-SA 4.0.
 33. **Sources without Zotero** ([R-CITE-001](#r-cite-001)): an AI agent
     searches and collects the sources; Markdown Paper has no integration of
@@ -1347,14 +1347,14 @@ requirement ([R-GEN-007](#r-gen-007)).
 - The form of a layout repository and the name of such a layout in the front
   matter ([R-LAY-007](#r-lay-007)). The proposal: one repository can hold
   several layouts, one folder each with its own `layout.json`, for example
-  `majikmate/nimblescape-markdownpaper-layout-pht` with `thesis/` and
+  `majikmate/markdownpaper-layout-pht` with `thesis/` and
   `concept/`; each `layout.json`
   has `"$schema"` with the URL of a layout schema in `markdownpaper-vscode`;
   Markdown Paper searches GitHub for the topic of
   [decision 29](#decisions) with the GitHub sign-in of VS Code, so private
   repositories that the author can read count too; a document names a layout
   with a release tag, so its pages stay the same:
-  `layout: github:majikmate/nimblescape-markdownpaper-layout-pht/thesis@v1.0.0`.
+  `layout: github:majikmate/markdownpaper-layout-pht/thesis@v1.0.0`.
   The form for an npm
   package is open too.
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
@@ -1370,5 +1370,5 @@ requirement ([R-GEN-007](#r-gen-007)).
   show the value.
 - The layout of the PHT thesis: today it lives in the skill
   `markdown-to-paper` of the repository `scalarion/transcribe`; it becomes the
-  folder `thesis/` of `majikmate/nimblescape-markdownpaper-layout-pht`, which
+  folder `thesis/` of `majikmate/markdownpaper-layout-pht`, which
   holds its citation style `pht-apa7.csl` already ([R-LAY-006](#r-lay-006)).

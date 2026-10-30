@@ -5,9 +5,10 @@
 
 // Tests in a real VS Code (npm run test:vscode, .vscode-test.mjs): mocha runs them in the extension host. They write a
 // layout and Markdown files into a temporary folder, and check the commands of the extension, the checks of the front
-// matter and their hover (R-DOC-002, R-DOC-003), the page preview with its pages from Paged.js (R-PRV-001), the page
-// preview as the preview of a paper document (R-PRV-005), and "Export PDF" (R-PDF-001) when a Chrome, Chromium or Edge
-// is installed, as on the runners of GitHub.
+// matter and their hover (R-DOC-002, R-DOC-003), the plugin of the pages in the Markdown preview of VS Code for a
+// paper document and none for a notes document (R-PRV-001, R-PRV-005, R-DOC-004), and "Export PDF" (R-PDF-001) when a
+// Chrome, Chromium or Edge is installed, as on the runners of GitHub. The test of the script of the pages, which needs
+// a browser page, is in src/paperPreview.test.ts.
 
 import * as assert from 'node:assert/strict';
 import * as fs from 'node:fs';
@@ -78,7 +79,7 @@ describe('nimblescape Markdown Paper', function () {
   it('the extension starts and has its commands', async () => {
     await api();
     const commands = await vscode.commands.getCommands(true);
-    for (const name of ['showPagePreview', 'togglePagePreview', 'openPreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout']) {
+    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout']) {
       assert.ok(commands.includes(`nimblescape.markdownPaper.${name}`), name);
     }
   });
@@ -100,39 +101,42 @@ describe('nimblescape Markdown Paper', function () {
     assert.match(text, /Der Titel der Arbeit\./);
   });
 
-  it('the page preview shows the pages of the layout (R-PRV-001)', async () => {
-    const extension = await api();
-    const file = write('paper/preview.md', `---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\n${'Ein Absatz über die Arbeit von Teams. '.repeat(400)}\n`);
-    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(file));
-    await vscode.commands.executeCommand('nimblescape.markdownPaper.showPagePreview');
-    const pages = await waitFor(() => {
-      const count = extension.pagesOf(file);
-      return count && count > 1 ? count : undefined;
-    }, 'the pages of the preview', 60_000);
-    assert.ok(pages > 1, `${pages} pages`);
-    await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+  it('the Markdown preview of a paper document gets the layout and the steps of the renderer, with the content of the other plugins, and a notes document keeps its preview (R-PRV-001, R-PRV-005, R-DOC-004)', async () => {
+    await api();
+    const paper = write('paper/preview.md', '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nDie Formel $a^2 + b^2 = c^2$.[^1]\n\n[^1]: Eine Fußnote.\n');
+    const document = await vscode.workspace.openTextDocument(paper);
+    await vscode.window.showTextDocument(document);
+    // The first rendering can come before the extension read the layout; then the preview renders again.
+    let rendered = '';
+    const end = Date.now() + 30_000;
+    do {
+      rendered = await vscode.commands.executeCommand<string>('markdown.api.render', document);
+      if (rendered.includes('&quot;layout&quot;:&quot;thesis&quot;')) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    } while (Date.now() < end);
+    assert.match(rendered, /^<div class="nimblescape-paper" hidden data-paper="[^"]*&quot;layout&quot;:&quot;thesis&quot;/);
+    assert.match(rendered, /&quot;language&quot;:&quot;de-AT&quot;/);
+    assert.match(rendered, /size: A5/, 'the style sheet of the layout');
+    assert.match(rendered, /<h1[^>]* id="einleitung"[^>]*><span class="heading-number">1<\/span> Einleitung<\/h1>/);
+    assert.match(rendered, /class="katex"/, 'the math of the built-in extension Markdown Math');
+    assert.match(rendered, /<span class="footnote"/, 'the footnote at its reference, for the foot of its page');
+    const notes = await vscode.workspace.openTextDocument(write('paper/notes.md', '# Notizen\n\nText.[^1]\n\n[^1]: Fußnote.\n'));
+    const plain = await vscode.commands.executeCommand<string>('markdown.api.render', notes);
+    assert.doesNotMatch(plain, /nimblescape-paper|heading-number|class="footnote"/);
   });
 
-  it('the preview of a paper document is the page preview, and a notes document keeps the Markdown preview of VS Code (R-DOC-004, R-PRV-005)', async () => {
-    const extension = await api();
-    const activeInput = () => vscode.window.tabGroups.activeTabGroup.activeTab?.input;
-    const paper = write('paper/toggle.md', '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nText.\n');
+  it('"Show Page Preview" opens the Markdown preview of VS Code beside the text editor (R-PRV-001)', async () => {
+    await api();
+    const paper = write('paper/show.md', '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nText.\n');
     await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(paper));
-    // Ctrl+Shift+V: the page preview in the group of the text editor, and again back to the text.
-    await vscode.commands.executeCommand('nimblescape.markdownPaper.togglePagePreview');
-    await waitFor(() => extension.pagesOf(paper), 'the page preview of the paper document', 60_000);
-    const input = activeInput();
-    assert.ok(input instanceof vscode.TabInputWebview && input.viewType.endsWith('nimblescape.markdownPaper.pagePreview'), 'the page preview is the active tab');
-    assert.equal(vscode.window.tabGroups.all.length, 1, 'the page preview is in the group of the text editor');
-    await vscode.commands.executeCommand('nimblescape.markdownPaper.togglePagePreview');
-    await waitFor(() => (vscode.window.activeTextEditor?.document.uri.toString() === paper.toString() ? true : undefined), 'the text editor again');
-    // "Open Preview" of a notes document opens the Markdown preview of VS Code.
-    const notes = write('paper/notes.md', '# Notizen\n\nText.\n');
-    await vscode.commands.executeCommand('nimblescape.markdownPaper.openPreview', notes);
+    await vscode.commands.executeCommand('nimblescape.markdownPaper.showPagePreview');
     await waitFor(() => {
-      const shown = activeInput();
-      return shown instanceof vscode.TabInputWebview && shown.viewType.includes('markdown.preview') ? true : undefined;
+      const tabs = vscode.window.tabGroups.all.flatMap((group) => group.tabs);
+      return tabs.some((tab) => tab.input instanceof vscode.TabInputWebview && tab.input.viewType.endsWith('markdown.preview')) ? true : undefined;
     }, 'the Markdown preview of VS Code');
+    assert.equal(vscode.window.tabGroups.all.length, 2, 'the preview is beside the text editor');
     await vscode.commands.executeCommand('workbench.action.closeAllEditors');
   });
 

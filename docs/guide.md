@@ -9,7 +9,7 @@ Licensed under the MIT License. See LICENSE in the repository root for details.
 This guide describes the features of nimblescape Markdown Paper and how to use
 them. The extension makes the pages and the PDF of a document that is written
 in Markdown, in a layout that the repository of the document defines. The
-page preview beside the text editor shows the pages as the PDF prints them.
+Markdown preview of VS Code shows the pages of a paper as the PDF prints them.
 
 The table shows each feature, where it works and its state, and
 [requirements.md](requirements.md) defines each feature exactly; the ID in the
@@ -30,7 +30,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Hyphenation](#hyphenation) | pages | available | [R-REN-007](requirements.md#r-ren-007) |
 | [Notes of Markdown Notes](#notes-of-markdown-notes) | pages | available | [R-REN-002](requirements.md#r-ren-002), [R-GEN-003](requirements.md#r-gen-003) |
 | [Paper documents and notes documents](#paper-documents-and-notes-documents) | the Markdown file | available | [R-DOC-004](requirements.md#r-doc-004) |
-| [Page preview](#page-preview), the preview of a paper document | beside the text editor, Ctrl+Shift+V, Ctrl+K V | available | [R-PRV-001](requirements.md#r-prv-001) to [R-PRV-005](requirements.md#r-prv-005) |
+| [Page preview](#page-preview), the pages in the Markdown preview of VS Code | Markdown preview, Ctrl+Shift+V, Ctrl+K V | available | [R-PRV-001](requirements.md#r-prv-001) to [R-PRV-006](requirements.md#r-prv-006) |
 | [Export PDF](#export-pdf) | title of the editor, Explorer, command line | available | [R-PDF-001](requirements.md#r-pdf-001) to [R-PDF-003](requirements.md#r-pdf-003) |
 | [Layouts](#layouts) | `layouts/<name>/` | available | [R-LAY-001](requirements.md#r-lay-001) to [R-LAY-005](requirements.md#r-lay-005) |
 | [A layout from a Word template](#a-layout-from-a-word-template) | AI agent | instructions available | [R-LAY-006](requirements.md#r-lay-006) |
@@ -38,7 +38,8 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Settings](#settings) | VS Code | available | [R-SET-001](requirements.md#r-set-001) |
 | One formatter command `markdownpaper format` | command line, VS Code | planned | [R-CLI-002](requirements.md#r-cli-002) |
 | Citations, the database of the sources, the reference list, `/source`, `/cite`, `/research` | the Markdown file, text editor | planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-004](requirements.md#r-cite-004) |
-| Mermaid, PlantUML and the other Markdown plugins of VS Code on the pages | page preview, PDF | planned | [R-REN-010](requirements.md#r-ren-010) |
+| [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
+| Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF | PDF | planned | [R-REN-010](requirements.md#r-ren-010) |
 
 ## Start a project
 
@@ -95,9 +96,9 @@ field `layout` gets the built-in layout `plain`.
 A Markdown file whose front matter has the field `layout` is a paper
 document; another Markdown file, also one with the notes, footnotes, figures
 and tables of Markdown Notes, is a notes document. A paper document gets the
-checks, the page preview as its preview, and the buttons "Show Page Preview"
-and "Export PDF" in the title of the editor. A notes document keeps the
-Markdown preview of VS Code.
+checks, its pages in the Markdown preview, and the buttons "Show Page
+Preview" and "Export PDF" in the title of the editor. A notes document keeps
+the Markdown preview as VS Code shows it.
 
 ## Checks and hover
 
@@ -192,7 +193,7 @@ of their references.
 ## Hyphenation
 
 The text gets soft hyphens by the language of the layout (German, English,
-Spanish, French and Italian), so the lines break the same in the page preview,
+Spanish, French and Italian), so the lines break the same in the preview,
 in the PDF and on every computer. Headings, links, code, captions and the
 reference list get none. The PDF loses the marks of the soft hyphens, so
 search and copy find whole words.
@@ -201,28 +202,37 @@ search and copy find whole words.
 
 The notes of nimblescape Markdown Notes, footnotes with the label `note-` and
 four letters or digits, do not show on the pages. When Markdown Notes shows a
-file in its clean editing view, the page preview and "Export PDF" use the file
-itself.
+file in its clean editing view, the pages in the preview and "Export PDF" use
+the file itself.
 
 ## Page preview
 
-The page preview is the preview of a paper document. The keys of the Markdown
-preview open it: Ctrl+Shift+V in the group of the text editor, and again back
-to the text; Ctrl+K V beside the text editor. "Show Page Preview" in the title
-of the editor (the icon of a book) shows it beside the text editor too. While
-a paper document is open, the buttons of the Markdown preview of VS Code
-hide, and "Open Preview" in the context menu of a Markdown file in the
-Explorer opens the page preview of a paper document and the Markdown preview
-of VS Code for another file. "Markdown Paper: Show Page Preview" in the
-Command Palette shows the pages of any Markdown file. The page preview:
+The Markdown preview of VS Code shows the pages of a paper document; there
+is no other view for the pages. Its keys and buttons open it as for any
+Markdown file: Ctrl+Shift+V in the group of the text editor, Ctrl+K V beside
+the text editor, and "Open Preview" in the context menu of the Explorer.
+"Show Page Preview" in the title of the editor of a paper document (the icon
+of a book) opens it beside the text editor too. The preview of a notes
+document stays as VS Code shows it. The pages in the preview:
 
-- makes the pages again after a pause in typing
+- are white paper on a grey background, also in a dark theme, and get
+  smaller when the preview is narrower than a page;
+- are made again after a pause in typing
   (`nimblescape.markdownPaper.previewDelay`) and after a change of a file of
-  the layout, and keeps the place on the page;
-- shows the line of a block in the text editor after a click on it;
-- opens a web link outside VS Code, and goes to the place of a link in the
+  the layout, without a flicker and at the same place; a note "Making the
+  pages…" shows meanwhile;
+- scroll with the text editor, and a double click on a block shows its line
+  in the text editor;
+- show what the other Markdown extensions of VS Code add, for example the
+  diagrams of Mermaid and the math of KaTeX, and the functions of their
+  scripts work on the pages, for example the highlights of the notes and "Add
+  Note" of Markdown Notes above a selected passage;
+- open a web link outside VS Code, and go to the place of a link in the
   document;
-- comes back after a restart of VS Code.
+- come back after a restart of VS Code, as the Markdown preview does.
+
+A paragraph longer than about two pages stops Paged.js; the pages then end
+before it.
 
 ## Export PDF
 
@@ -249,7 +259,7 @@ A layout is a folder `layouts/<name>/`:
 | `fonts/`, `images/` | Fonts and images of the layout. |
 
 `npx -y @nimblescape/markdownpaper instructions layout` prints the whole
-format. A change of a file of the layout updates the page preview.
+format. A change of a file of the layout updates the pages in the preview.
 
 ## A layout from a Word template
 

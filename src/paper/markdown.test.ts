@@ -2,10 +2,11 @@
 // © 2026 Hannes Stauss (scalarion@nimblescape.com)
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
+import MarkdownIt from 'markdown-it';
 import { describe, expect, test } from 'vitest';
 import { hyphenatorOf, softHyphen } from './hyphenate';
 import { type Layout, termsFor } from './layout';
-import { renderBody } from './markdown';
+import { emptyFound, type MarkdownPlugin, paperPlugin, paperTokenType, renderBody } from './markdown';
 
 /**
  * layoutOf returns a layout for the tests.
@@ -270,4 +271,35 @@ test('each block names its line in the file (R-PRV-003)', () => {
   expect(html).toContain('<h1 data-line="2"');
   expect(html).toContain('<p data-line="4">Text</p>');
   expect(html).toContain('<ul data-line="6">');
+});
+
+describe('the plugin of the renderer in another markdown-it (R-PRV-005, R-REN-010)', () => {
+  /** mermaid is a plugin like the one of Mermaid in VS Code: a fence `mermaid` becomes a div that its script draws. */
+  const mermaid: MarkdownPlugin = (md) => {
+    const fence = md.renderer.rules.fence;
+    md.renderer.rules.fence = (tokens, index, options, env, self) =>
+      tokens[index].info.trim() === 'mermaid' ? `<div class="mermaid">${md.utils.escapeHtml(tokens[index].content)}</div>\n` : (fence?.(tokens, index, options, env, self) ?? '');
+    return md;
+  };
+
+  test('the plugins of other extensions work before the rule, and their content gets no soft hyphens', () => {
+    const markdown = '# Einleitung\n\n```mermaid\nflowchart LR\n  Wirtschaftspädagogik --> Unterrichtsplanung\n```\n\nWirtschaftspädagogik ist ein Fach.\n';
+    const body = renderBody(markdown, layoutOf(), hyphenatorOf('de-AT'), [mermaid]);
+    expect(body.html).toContain('<div class="mermaid">flowchart LR\n  Wirtschaftspädagogik --&gt; Unterrichtsplanung\n</div>');
+    expect(body.html).toContain(`Wirt${softHyphen}schafts`);
+    expect(body.html).toContain('<span class="heading-number">1</span> Einleitung');
+  });
+
+  test('without nimblescapePaper in the environment, a notes document keeps its rendering: no footnotes, no numbers', () => {
+    const md = new MarkdownIt();
+    paperPlugin(md);
+    const notes = md.render('# Notizen\n\nText[^1]\n\n[^1]: Eine Fußnote.\n', {});
+    expect(notes).toBe('<h1>Notizen</h1>\n<p>Text[^1]</p>\n<p>[^1]: Eine Fußnote.</p>\n');
+    const env = { nimblescapePaper: { layout: layoutOf(), found: emptyFound() } };
+    const tokens = md.parse('# Teil\n\nText[^1]\n\n[^1]: Eine Fußnote.\n', env);
+    expect(tokens[0].type).toBe(paperTokenType);
+    expect(tokens[0].meta).toBe(env.nimblescapePaper);
+    expect(env.nimblescapePaper.found.headings.map((heading) => heading.number)).toEqual(['1']);
+    expect(md.renderer.render(tokens, md.options, env)).toContain('<span class="footnote"');
+  });
 });

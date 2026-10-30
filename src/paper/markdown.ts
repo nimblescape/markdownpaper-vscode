@@ -12,8 +12,8 @@
  *   with their `<wbr>`, as version 1 of the format of the notes defines them.
  * - Each other footnote becomes an element `<span class="footnote">` at the place of its first reference, which
  *   Paged.js puts at the foot of the page of that reference (`float: footnote`).
- * - The headings get an ID, the anchor of `/ref` of Markdown Notes at their end or else one from their text, and a
- *   number such as 1.1 when the layout numbers them. A heading with `{-}` at its end,
+ * - The headings get the ID that GitHub gives them, so plain Markdown links to them work, and a number such as 1.1
+ *   when the layout numbers them. A heading with `{-}` at its end,
  *   the heading of a special section (TOC, LOF, LOT, BIB, ADT, AST, ACC, FWD, APX: by its words in the language of
  *   the layout, or by a marker such as `{BIB}`), and a heading that a pattern of the layout names get none, nor do
  *   the headings below them.
@@ -25,7 +25,10 @@
  *   A, B, … (one appendix has no letter), whose figures and tables are numbered A1, A2, … as APA 7 numbers them.
  * - Each block names its line in the file (`data-line`), so that a click on a page shows that line in the editor.
  *
- * The module uses no API of VS Code.
+ * `paperPlugin` adds the rule to a markdown-it instance: to the one of `renderBody` for the PDF and the command line, and
+ * to the one of the Markdown preview of VS Code ([R-PRV-005](../../docs/requirements.md#r-prv-005)), where other
+ * plugins add their rules too. The rule works only when the environment of the rendering has `nimblescapePaper`, so a
+ * notes document keeps its preview as it is. The module uses no API of VS Code.
  */
 
 import MarkdownIt from 'markdown-it';
@@ -99,9 +102,24 @@ export interface Body {
 }
 
 /** Found is what the rule finds in the tokens, for one rendering. */
-interface Found extends Omit<Body, 'html'> {
+export interface Found extends Omit<Body, 'html'> {
   hyphenate?: (text: string) => string;
 }
+
+/** found returns an empty Found. */
+export const emptyFound = (): Found => ({ headings: [], figures: [], tables: [], footnotes: 0, notes: 0, problems: [] });
+
+/** PaperEnv is what the rule needs in the environment of a rendering, as `nimblescapePaper`. */
+export interface PaperEnv {
+  layout: Layout;
+  found: Found;
+}
+
+/** paperTokenType is the type of the token that the rule puts first, with the PaperEnv as its meta. */
+export const paperTokenType = 'nimblescape_paper';
+
+/** MarkdownPlugin is a plugin of markdown-it, as `extendMarkdownIt` of an extension of VS Code gives it. */
+export type MarkdownPlugin = (md: MarkdownIt) => MarkdownIt | void;
 
 /**
  * slug returns the ID of a heading from its text.
@@ -596,16 +614,46 @@ function linksOf(tokens: readonly Token[], line: number): { open: Token; text: T
 }
 
 /**
- * markdownIt returns the markdown-it instance of the renderer: HTML in the text, links from addresses, the footnotes,
- * and the rule of the renderer.
- * @param layout - The layout.
- * @param found - What the rule finds, which it fills.
+ * onlyForPapers makes the rules of a ruler work only in a rendering of a paper document.
+ * @param ruler - The ruler of markdown-it.
+ * @param names - The names of the rules.
  */
-function markdownIt(layout: Layout, found: Found): MarkdownIt {
-  const md = new MarkdownIt({ html: true, linkify: true, typographer: false });
-  md.use(footnote);
-  md.core.ruler.push('nimblescape_paper', paperRule(layout, found));
-  return md;
+function onlyForPapers(ruler: { __rules__: { name: string; fn: (...args: never[]) => unknown; alt: string[] }[]; at(name: string, fn: (...args: never[]) => unknown, options?: { alt: string[] }): void }, names: readonly string[]): void {
+  for (const name of names) {
+    const rule = ruler.__rules__.find((candidate) => candidate.name === name);
+    if (rule) {
+      const fn = rule.fn as (state: { env?: { nimblescapePaper?: PaperEnv } }, ...rest: unknown[]) => unknown;
+      ruler.at(name, ((state: { env?: { nimblescapePaper?: PaperEnv } }, ...rest: unknown[]) => (state.env?.nimblescapePaper ? fn(state, ...rest) : false)) as never, { alt: rule.alt });
+    }
+  }
+}
+
+/**
+ * paperPlugin adds the rule of the renderer to a markdown-it instance, and the footnotes when it has none. Both work
+ * only when the environment of a rendering has `nimblescapePaper`. The rule puts a token of the type `paperTokenType`
+ * first, whose meta is that PaperEnv, so that the rendering of the tokens finds it again.
+ * @param md - The markdown-it instance.
+ */
+export function paperPlugin(md: MarkdownIt): void {
+  // Another plugin, such as the footnotes of an extension of VS Code, may have the footnotes already.
+  if (!(md.block.ruler as unknown as { __rules__: { name: string }[] }).__rules__.some((rule) => rule.name === 'footnote_def')) {
+    md.use(footnote);
+    onlyForPapers(md.block.ruler as never, ['footnote_def']);
+    onlyForPapers(md.inline.ruler as never, ['footnote_inline', 'footnote_ref']);
+    onlyForPapers(md.core.ruler as never, ['footnote_tail']);
+  }
+  md.core.ruler.push('nimblescape_paper', (state) => {
+    const paper = (state.env as { nimblescapePaper?: PaperEnv } | undefined)?.nimblescapePaper;
+    if (!paper) {
+      return;
+    }
+    paperRule(paper.layout, paper.found)(state);
+    const token = new state.Token(paperTokenType, '', 0);
+    token.meta = paper;
+    token.hidden = true;
+    state.tokens.unshift(token);
+  });
+  md.renderer.rules[paperTokenType] = () => '';
 }
 
 /**
@@ -639,17 +687,32 @@ function list(code: GeneratedList, found: Found, depth: number): string {
 }
 
 /**
+ * finishBody returns the HTML of a rendering of a paper document with its generated lists and its soft hyphens.
+ * @param html - The HTML of markdown-it.
+ * @param found - What the rule found.
+ * @param layout - The layout.
+ * @param hyphenate - The hyphenation of a text, or undefined for no hyphens.
+ */
+export function finishBody(html: string, found: Found, layout: Layout, hyphenate?: (text: string) => string): string {
+  const hyphenated = hyphenate ? hyphenateHtml(html, hyphenate) : html;
+  return hyphenated.replace(/<!--paper:(TOC|LOF|LOT)-->\n?/g, (_all, code: GeneratedList) => list(code, found, layout.contentsDepth));
+}
+
+/**
  * renderBody returns the HTML of the Markdown text of a document in its layout.
  * @param markdown - The Markdown text after the front matter, with an empty line for each line of the front matter.
  * @param layout - The layout of the document.
  * @param hyphenate - The hyphenation of a text, or undefined for no hyphens.
+ * @param plugins - The markdown-it plugins of other extensions, which work before the rule of the renderer.
  */
-export function renderBody(markdown: string, layout: Layout, hyphenate?: (text: string) => string): Body {
-  const found: Found = { headings: [], figures: [], tables: [], footnotes: 0, notes: 0, problems: [] };
-  let html = markdownIt(layout, found).render(markdown, {});
-  if (hyphenate) {
-    html = hyphenateHtml(html, hyphenate);
+export function renderBody(markdown: string, layout: Layout, hyphenate?: (text: string) => string, plugins: readonly MarkdownPlugin[] = []): Body {
+  const found = emptyFound();
+  let md = new MarkdownIt({ html: true, linkify: true, typographer: false });
+  for (const plugin of plugins) {
+    md = plugin(md) ?? md;
   }
-  html = html.replace(/<!--paper:(TOC|LOF|LOT)-->\n?/g, (_all, code: GeneratedList) => list(code, found, layout.contentsDepth));
+  paperPlugin(md);
+  const env: { nimblescapePaper: PaperEnv } = { nimblescapePaper: { layout, found } };
+  const html = finishBody(md.render(markdown, env), found, layout, hyphenate);
   return { html, ...found };
 }

@@ -1,0 +1,99 @@
+/*
+SPDX-License-Identifier: MIT
+© 2026 Hannes Stauss (scalarion@nimblescape.com)
+Licensed under the MIT License. See LICENSE in the repository root for details.
+
+The style of the pages in the Markdown preview of VS Code (docs/requirements.md, R-PRV-005). VS Code loads it into the
+preview of every Markdown file, so each rule applies only while the preview shows a paper document: while the body
+has the class nimblescape-paper-mode, which the script of the pages (paperPreview.js) sets. The colors of the theme
+are those of a light theme. The pages stand on a grey background, with a shadow and a gap between them. The content
+of the preview stays in the page, hidden and off screen, as wide as the text of a page, so that the scripts of other
+extensions draw in it; the next pages are made in a hidden area. A note shows while Paged.js makes the pages.
+*/
+
+html:has(> body.nimblescape-paper-mode) {
+  background: #7a7d80;
+  /* The colors of the theme that the scripts of other extensions read for their drawings, such as the diagrams of
+     Mermaid, with the values of the theme "Light Modern" of VS Code: the pages are white paper also in a dark theme.
+     VS Code sets the colors of its theme in the attribute style of html, which only !important overrides. */
+  --vscode-foreground: #3b3b3b !important;
+  --vscode-editor-background: #ffffff !important;
+  --vscode-editor-foreground: #3b3b3b !important;
+  --vscode-editorWidget-background: #f8f8f8 !important;
+  --vscode-editorWidget-border: #c8c8c8 !important;
+  --vscode-focusBorder: #005fb8 !important;
+  --vscode-editorError-foreground: #e51400 !important;
+  --vscode-editorError-background: transparent !important;
+  --vscode-input-background: #ffffff !important;
+  --vscode-input-border: #cecece !important;
+  --vscode-input-foreground: #3b3b3b !important;
+  --vscode-inputValidation-errorBackground: #f2dede !important;
+  --vscode-textBlockQuote-background: #f8f8f8 !important;
+  --vscode-textBlockQuote-border: #e5e5e5 !important;
+  --vscode-charts-foreground: #3b3b3b !important;
+  --vscode-charts-lines: rgba(59, 59, 59, 0.5) !important;
+  --vscode-chart-line: #616161 !important;
+  --vscode-charts-red: #e51400 !important;
+  --vscode-charts-blue: #1a85ff !important;
+  --vscode-charts-yellow: #bf8803 !important;
+  --vscode-charts-orange: #d18616 !important;
+  --vscode-charts-green: #388a34 !important;
+  --vscode-charts-purple: #652d90 !important;
+}
+
+body.nimblescape-paper-mode {
+  margin: 0;
+  padding: 0;
+  background: #7a7d80;
+  overflow-x: auto;
+}
+
+body.nimblescape-paper-mode > .markdown-body {
+  position: absolute;
+  top: 0;
+  left: -10000px;
+  width: 160mm;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.nimblescape-paper-mode .nimblescape-paper-next {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.nimblescape-paper-mode .pagedjs_pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  min-width: 100%;
+  padding: 16px 0;
+  gap: 16px;
+}
+
+body.nimblescape-paper-mode .pagedjs_page {
+  background: white;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  margin: 0 !important;
+  flex: none;
+}
+
+.nimblescape-paper-busy {
+  position: fixed;
+  top: 8px;
+  right: 12px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font: 12px/1.4 system-ui, sans-serif;
+  z-index: 10;
+}

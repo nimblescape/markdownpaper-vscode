@@ -1,7 +1,7 @@
 {
   "name": "nimblescape-markdownpaper",
   "displayName": "nimblescape Markdown Paper",
-  "description": "Pages and PDF files from Markdown, in a layout that the repository of the document defines: a folder with the page style, the cover page and the front matter fields. A page preview beside the text editor shows the pages as the PDF prints them, with table of contents, list of figures, list of tables and footnotes. Notes of nimblescape Markdown Notes stay out of the pages.",
+  "description": "Pages and PDF files from Markdown, in a layout that the repository of the document defines: a folder with the page style, the cover page and the front matter fields. The Markdown preview of VS Code shows the pages of a paper document as the PDF prints them, with table of contents, list of figures, list of tables and footnotes, and with the content of other Markdown extensions such as Mermaid and math. Notes of nimblescape Markdown Notes stay out of the PDF.",
   "publisher": "nimblescape",
   "author": {
     "name": "nimblescape e.U.",
@@ -73,20 +73,19 @@
     "workspace"
   ],
   "activationEvents": [
-    "onLanguage:markdown",
-    "onWebviewPanel:nimblescape.markdownPaper.pagePreview"
+    "onLanguage:markdown"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
-      "description": "The page preview and the PDF show the Markdown file in the layout of its repository, with no script of the file or of the layout: a policy of the page lets only the scripts of the extension run. The browser for the PDF comes only from the setting of the user, not from a setting of the workspace.",
+      "description": "The pages in the Markdown preview and the PDF show the Markdown file in the layout of its repository, with no script of the file or of the layout: the Markdown preview of VS Code lets only the scripts of extensions run, and the PDF only the scripts of the extension. The browser for the PDF comes only from the setting of the user, not from a setting of the workspace.",
       "restrictedConfigurations": [
         "nimblescape.markdownPaper.browserPath"
       ]
     },
     "virtualWorkspaces": {
       "supported": "limited",
-      "description": "The page preview and the checks of the front matter read the files through VS Code. \"Export PDF\" needs a file on the disk of this computer, because the browser reads the file and its images from the disk."
+      "description": "The pages in the Markdown preview and the checks of the front matter read the files through VS Code. \"Export PDF\" needs a file on the disk of this computer, because the browser reads the file and its images from the disk."
     }
   },
   "contributes": {
@@ -96,16 +95,6 @@
         "title": "Show Page Preview",
         "category": "Markdown Paper",
         "icon": "$(book)"
-      },
-      {
-        "command": "nimblescape.markdownPaper.togglePagePreview",
-        "title": "Toggle Page Preview",
-        "category": "Markdown Paper"
-      },
-      {
-        "command": "nimblescape.markdownPaper.openPreview",
-        "title": "Open Preview",
-        "category": "Markdown Paper"
       },
       {
         "command": "nimblescape.markdownPaper.exportPdf",
@@ -140,33 +129,20 @@
       "editor/title/run": [
         {
           "command": "nimblescape.markdownPaper.exportPdf",
-          "when": "(editorLangId == markdown && nimblescape.markdownPaper.paperDocument) || activeWebviewPanelId == 'nimblescape.markdownPaper.pagePreview'"
+          "when": "(editorLangId == markdown || activeWebviewPanelId == 'markdown.preview') && nimblescape.markdownPaper.paperDocument"
         }
       ],
       "commandPalette": [
         {
           "command": "nimblescape.markdownPaper.showPagePreview",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "nimblescape.markdownPaper.togglePagePreview",
-          "when": "editorLangId == markdown || activeWebviewPanelId == 'nimblescape.markdownPaper.pagePreview'"
-        },
-        {
-          "command": "nimblescape.markdownPaper.openPreview",
-          "when": "false"
+          "when": "editorLangId == markdown && nimblescape.markdownPaper.paperDocument"
         },
         {
           "command": "nimblescape.markdownPaper.exportPdf",
-          "when": "editorLangId == markdown || activeWebviewPanelId == 'nimblescape.markdownPaper.pagePreview'"
+          "when": "editorLangId == markdown || activeWebviewPanelId == 'markdown.preview'"
         }
       ],
       "explorer/context": [
-        {
-          "command": "nimblescape.markdownPaper.openPreview",
-          "group": "navigation",
-          "when": "resourceLangId == markdown && hasCustomMarkdownPreview"
-        },
         {
           "command": "nimblescape.markdownPaper.exportPdf",
           "group": "nimblescape@1",
@@ -182,29 +158,8 @@
           "group": "nimblescape@3",
           "when": "explorerResourceIsFolder"
         }
-      ],
-      "editor/title/context": [
-        {
-          "command": "nimblescape.markdownPaper.openPreview",
-          "group": "1_open",
-          "when": "resourceLangId == markdown && hasCustomMarkdownPreview"
-        }
       ]
     },
-    "keybindings": [
-      {
-        "command": "nimblescape.markdownPaper.togglePagePreview",
-        "key": "ctrl+shift+v",
-        "mac": "cmd+shift+v",
-        "when": "!terminalFocus && ((editorFocus && editorLangId == markdown && nimblescape.markdownPaper.paperDocument && !notebookEditorFocused) || activeWebviewPanelId == 'nimblescape.markdownPaper.pagePreview')"
-      },
-      {
-        "command": "nimblescape.markdownPaper.showPagePreview",
-        "key": "ctrl+k v",
-        "mac": "cmd+k v",
-        "when": "editorFocus && editorLangId == markdown && nimblescape.markdownPaper.paperDocument && !notebookEditorFocused"
-      }
-    ],
     "configuration": {
       "title": "nimblescape Markdown Paper",
       "properties": {
@@ -220,7 +175,7 @@
           "minimum": 100,
           "maximum": 10000,
           "scope": "window",
-          "markdownDescription": "The pause in typing, in milliseconds, after which the page preview shows the changed text."
+          "markdownDescription": "The pause in typing, in milliseconds, after which the Markdown preview of a paper document makes its pages again."
         },
         "nimblescape.markdownPaper.openPdf": {
           "type": "boolean",
@@ -229,7 +184,14 @@
           "markdownDescription": "Open the PDF with the program of your system for PDF files after \"Export PDF\" wrote it."
         }
       }
-    }
+    },
+    "markdown.markdownItPlugins": true,
+    "markdown.previewScripts": [
+      "./media/paperPreview.js"
+    ],
+    "markdown.previewStyles": [
+      "./media/paperPreview.css"
+    ]
   },
   "allowScripts": {
     "esbuild": true,

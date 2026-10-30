@@ -24,14 +24,14 @@ export interface Context {
   browserPath(): string;
   /** openPdf is the setting that opens the PDF after the export. */
   openPdf(): boolean;
-  /** previewFile is the file of the active page preview, if one is active. */
+  /** previewFile is the paper document of the active Markdown preview, if one is active. */
   previewFile(): vscode.Uri | undefined;
 }
 
 const decoder = new TextDecoder();
 
 /**
- * targetOf returns the file of a command: the file of the Explorer, else of the active page preview, else of the
+ * targetOf returns the file of a command: the file of the Explorer, else of the active Markdown preview, else of the
  * active text editor.
  * @param context - The context.
  * @param uri - The URI that the Explorer or a menu passes, if any.

@@ -23,7 +23,7 @@ import { baseCss } from './baseCss';
 import { bodyOf, type FrontMatter, readFrontMatter } from './frontMatter';
 import { hyphenatorOf } from './hyphenate';
 import { type Layout, layoutFile, type Problem, parseLayout, termsFor } from './layout';
-import { type Body, renderBody } from './markdown';
+import { type Body, type MarkdownPlugin, renderBody } from './markdown';
 import { escapeHtml, fill, pdfNameOf } from './template';
 
 /** Reader reads files by their URLs. */
@@ -176,18 +176,26 @@ export function valuesOf(layout: Layout, frontMatter: FrontMatter | undefined, d
   return values;
 }
 
+/** LoadedLayout is a layout with the text of its style sheets and of its templates. */
+export interface LoadedLayout {
+  /** layout is the layout, in the language of the field `lang` of the document when it names one. */
+  layout: Layout;
+  /** styles are the style sheets of the layout, with their URLs. */
+  styles: { url: string; css: string }[];
+  /** before and after are the templates of the fixed pages before and after the text, with their URLs. */
+  before: { url: string; name: string; text: string }[];
+  after: { url: string; name: string; text: string }[];
+  problems: Problem[];
+}
+
 /**
- * render makes the page of a Markdown file in its layout.
- * @param host - The host.
- * @param document - The URL of the file.
- * @param text - The text of the file, with its unsaved changes.
+ * loadLayout finds the layout of a document and reads its style sheets and its templates.
+ * @param host - The reader of the files and the places of the layouts.
+ * @param document - The URL of the document.
+ * @param frontMatter - The front matter of the document.
  */
-export async function render(host: Host, document: string, text: string): Promise<Rendered> {
+export async function loadLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 'top'>, document: string, frontMatter: FrontMatter | undefined): Promise<LoadedLayout> {
   const problems: Problem[] = [];
-  const frontMatter = readFrontMatter(text);
-  for (const error of frontMatter?.errors ?? []) {
-    problems.push({ severity: 'warning', message: `Front matter: ${error.message}`, file: document, line: error.line });
-  }
   const name = frontMatter?.values.layout?.trim() || defaultLayout;
   let found = await findLayout(host, document, name);
   problems.push(...found.problems.map((problem) => ({ ...problem, file: problem.file ?? document })));
@@ -203,42 +211,95 @@ export async function render(host: Host, document: string, text: string): Promis
     lang && /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/i.test(lang) && lang.toLowerCase() !== found.layout.language.toLowerCase()
       ? { ...found.layout, language: lang, terms: lang.split('-')[0].toLowerCase() === found.layout.language.split('-')[0].toLowerCase() ? found.layout.terms : termsFor(lang) }
       : found.layout;
-  const values = valuesOf(layout, frontMatter, document);
-  const hyphenate = layout.hyphenate ? hyphenatorOf(layout.language) : undefined;
-  const body = renderBody(bodyOf(text, frontMatter), layout, hyphenate);
-  problems.push(...body.problems.map((problem) => ({ ...problem, file: problem.file ?? document })));
-
-  const read = async (file: string): Promise<string | undefined> => {
-    const bytes = await host.reader.read(`${layout.folder}${file}`);
+  const read = async (file: string): Promise<{ url: string; text: string } | undefined> => {
+    const url = `${layout.folder}${file}`;
+    const bytes = await host.reader.read(url);
     if (!bytes) {
       problems.push({ severity: 'warning', message: `The layout "${layout.id}" names the file ${file}, which does not exist.`, file: `${layout.folder}${layoutFile}` });
     }
-    return bytes && decoder.decode(bytes);
+    return bytes && { url, text: decoder.decode(bytes) };
   };
-  const styles: string[] = [];
+  const styles: LoadedLayout['styles'] = [];
   for (const file of layout.stylesheets) {
-    const css = await read(file);
-    if (css !== undefined) {
-      styles.push(rewriteCss(css, `${layout.folder}${file}`, host.resource));
+    const style = await read(file);
+    if (style) {
+      styles.push({ url: style.url, css: style.text });
     }
   }
-  const templates = async (files: readonly string[]): Promise<string> => {
-    const parts: string[] = [];
+  const templates = async (files: readonly string[]): Promise<LoadedLayout['before']> => {
+    const parts: LoadedLayout['before'] = [];
     for (const file of files) {
       const template = await read(file);
-      if (template !== undefined) {
-        const name = file.replace(/^.*\//, '').replace(/\.[^.]*$/, '');
-        parts.push(`<section class="paper-template paper-template-${escapeHtml(name)}" data-template="${escapeHtml(name)}">\n${rewriteHtml(withoutScripts(fill(template, values)), `${layout.folder}${file}`, host.resource)}\n</section>`);
+      if (template) {
+        parts.push({ ...template, name: file.replace(/^.*\//, '').replace(/\.[^.]*$/, '') });
       }
     }
-    return parts.join('\n');
+    return parts;
   };
-  const before = await templates(layout.before);
-  const after = await templates(layout.after);
+  return { layout, styles, before: await templates(layout.before), after: await templates(layout.after), problems };
+}
 
+/** Composed is the part of a page that comes from the layout and the fields of a document. */
+export interface Composed {
+  /** styles are the style sheets of the layout, whose addresses name the files as the page loads them. */
+  styles: string[];
+  /** before and after are the HTML of the filled templates. */
+  before: string;
+  after: string;
+  /** variables is the style sheet of the fields as CSS variables, and attributes their attributes of `<body>`. */
+  variables: string;
+  attributes: Record<string, string>;
+}
+
+/**
+ * compose fills the templates of a layout with the fields of a document, and maps the addresses of the style sheets
+ * and of the templates to the addresses that the page loads.
+ * @param loaded - The layout with its files.
+ * @param values - The values of the fields.
+ * @param resource - The mapping of a URL to the URL that the page loads.
+ */
+export function compose(loaded: LoadedLayout, values: Record<string, string>, resource: (url: string) => string): Composed {
+  const templates = (files: LoadedLayout['before']): string =>
+    files
+      .map(
+        (template) =>
+          `<section class="paper-template paper-template-${escapeHtml(template.name)}" data-template="${escapeHtml(template.name)}">\n${rewriteHtml(withoutScripts(fill(template.text, values)), template.url, resource)}\n</section>`,
+      )
+      .join('\n');
   const fieldNames = Object.keys(values).filter((key) => /^[A-Za-z][A-Za-z0-9_-]*$/.test(key));
-  const variables = fieldNames.map((key) => `  --field-${key}: ${cssString(values[key])};`).join('\n');
-  const attributes = fieldNames.map((key) => ` data-field-${key.toLowerCase()}="${escapeHtml(values[key])}"`).join('');
+  return {
+    styles: loaded.styles.map((style) => rewriteCss(style.css, style.url, resource)),
+    before: templates(loaded.before),
+    after: templates(loaded.after),
+    variables: `:root {\n${fieldNames.map((key) => `  --field-${key}: ${cssString(values[key])};`).join('\n')}\n}`,
+    attributes: Object.fromEntries(fieldNames.map((key) => [`data-field-${key.toLowerCase()}`, values[key]])),
+  };
+}
+
+/**
+ * render makes the page of a Markdown file in its layout.
+ * @param host - The host.
+ * @param document - The URL of the file.
+ * @param text - The text of the file, with its unsaved changes.
+ * @param plugins - The markdown-it plugins of other extensions ([R-REN-010](../../docs/requirements.md#r-ren-010)).
+ */
+export async function render(host: Host, document: string, text: string, plugins: readonly MarkdownPlugin[] = []): Promise<Rendered> {
+  const problems: Problem[] = [];
+  const frontMatter = readFrontMatter(text);
+  for (const error of frontMatter?.errors ?? []) {
+    problems.push({ severity: 'warning', message: `Front matter: ${error.message}`, file: document, line: error.line });
+  }
+  const loaded = await loadLayout(host, document, frontMatter);
+  problems.push(...loaded.problems);
+  const layout = loaded.layout;
+  const values = valuesOf(layout, frontMatter, document);
+  const hyphenate = layout.hyphenate ? hyphenatorOf(layout.language) : undefined;
+  const body = renderBody(bodyOf(text, frontMatter), layout, hyphenate, plugins);
+  problems.push(...body.problems.map((problem) => ({ ...problem, file: problem.file ?? document })));
+  const composed = compose(loaded, values, host.resource);
+  const attributes = Object.entries(composed.attributes)
+    .map(([name, value]) => ` ${name}="${escapeHtml(value)}"`)
+    .join('');
   const title = values.title?.trim() || values.file;
   const source = host.sources;
   const policy = [
@@ -260,11 +321,9 @@ ${(host.screenStyles ?? []).map((href) => `<link rel="stylesheet" media="screen"
 <style data-paper="base">
 ${baseCss}
 </style>
-${styles.map((css, index) => `<style data-paper="layout" data-file="${escapeHtml(layout.stylesheets[index] ?? '')}">\n${css}\n</style>`).join('\n')}
+${composed.styles.map((css, index) => `<style data-paper="layout" data-file="${escapeHtml(layout.stylesheets[index] ?? '')}">\n${css}\n</style>`).join('\n')}
 <style data-paper="fields">
-:root {
-${variables}
-}
+${composed.variables}
 </style>
 <script nonce="${host.nonce}">
 window.PagedConfig = {
@@ -277,11 +336,11 @@ window.PagedConfig = {
 </script>
 </head>
 <body class="paper" data-layout="${escapeHtml(layout.id)}"${attributes}>
-${before}
+${composed.before}
 <main class="paper-text">
 ${body.html}
 </main>
-${after}
+${composed.after}
 ${scripts.join('\n')}
 </body>
 </html>

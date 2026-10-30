@@ -16,7 +16,7 @@ The first version.
   built-in layout `plain` is the layout of a document without the field
   `layout`.
 - The renderer turns a Markdown document into one HTML page, which Paged.js
-  turns into pages, for the page preview and for the PDF alike. It numbers the
+  turns into pages, for the preview and for the PDF alike. It numbers the
   headings, puts footnotes at the foot of their page, hyphenates the text by
   the language of the layout with soft hyphens, and leaves out the notes of
   nimblescape Markdown Notes.
@@ -36,13 +36,15 @@ The first version.
   shows the number of the pages. A heading has the ID of GitHub, so a plain
   Markdown link such as `[Kapitel 2.1](#methoden)` shows the number of the
   heading.
-- A Markdown file whose front matter names a layout is a paper document. Its
-  preview is the page preview: Ctrl+Shift+V and Ctrl+K V open it, and the
-  buttons of the Markdown preview of VS Code hide while it is open. Another
-  Markdown file keeps the Markdown preview of VS Code.
-- The page preview beside the text editor shows the pages as the PDF prints
-  them, updates them after a pause in typing and after a change of the layout,
-  and shows the line of a click on a page in the text editor.
+- A Markdown file whose front matter names a layout is a paper document. The
+  Markdown preview of VS Code shows its pages as the PDF prints them, as white
+  paper also in a dark theme, and updates them after a pause in typing and
+  after a change of the layout. The preview scrolls with the text editor, a
+  double click on a page shows its line in the text editor, and the other
+  Markdown extensions work on the pages, for example Mermaid, KaTeX and the
+  highlights and "Add Note" of Markdown Notes. "Show Page Preview" opens the
+  preview beside the text editor. Another Markdown file keeps the Markdown
+  preview as VS Code shows it.
 - "Export PDF" writes the PDF with an installed Google Chrome, Chromium or
   Microsoft Edge beside the Markdown file, with the name that the layout
   gives, without the marks of the soft hyphens and with its title, author and

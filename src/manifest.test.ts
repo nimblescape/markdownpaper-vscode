@@ -16,8 +16,7 @@ import * as path from 'node:path';
 import * as esbuild from 'esbuild';
 import { expect, test, vi } from 'vitest';
 import { commands, extensionId } from './extension';
-import { previewType } from './pagePreview';
-import { customPreviewKey, paperDocumentKey } from './paperDocuments';
+import { paperDocumentKey } from './paperDocuments';
 import { defaults, settingsSection } from './settings';
 
 // The modules of the extension import the editor API; these tests read only their constants.
@@ -102,25 +101,21 @@ test('the manifest contributes the commands of the extension, and no other', () 
   }
 });
 
-test('"Show Page Preview" is a button of the title of a paper document, and "Export PDF" a button of its menu "Run" (R-PRV-001, R-PDF-001, R-DOC-004)', () => {
+test('"Show Page Preview" is a button of the title of a paper document, and "Export PDF" a button of its menu "Run" and of its Markdown preview (R-PRV-001, R-PDF-001, R-DOC-004)', () => {
   const menus = manifest.contributes.menus;
   expect(menus['editor/title']).toContainEqual({ command: commands.showPagePreview, group: 'navigation', when: `editorLangId == markdown && ${paperDocumentKey}` });
-  expect(menus['editor/title/run']).toContainEqual({ command: commands.exportPdf, when: `(editorLangId == markdown && ${paperDocumentKey}) || activeWebviewPanelId == '${previewType}'` });
-  // VS Code starts the extension for a page preview that it restores after a restart.
-  expect(manifest.activationEvents).toEqual(['onLanguage:markdown', `onWebviewPanel:${previewType}`]);
+  expect(menus['editor/title/run']).toContainEqual({ command: commands.exportPdf, when: `(editorLangId == markdown || activeWebviewPanelId == 'markdown.preview') && ${paperDocumentKey}` });
+  expect(manifest.activationEvents).toEqual(['onLanguage:markdown']);
 });
 
-test('the keys of the Markdown preview open the page preview of a paper document, and "Open Preview" takes the place of the hidden item of VS Code (R-PRV-005)', () => {
-  const editor = `editorFocus && editorLangId == markdown && ${paperDocumentKey} && !notebookEditorFocused`;
-  expect(manifest.contributes.keybindings).toEqual([
-    { command: commands.togglePagePreview, key: 'ctrl+shift+v', mac: 'cmd+shift+v', when: `!terminalFocus && ((${editor}) || activeWebviewPanelId == '${previewType}')` },
-    { command: commands.showPagePreview, key: 'ctrl+k v', mac: 'cmd+k v', when: editor },
-  ]);
-  const menus = manifest.contributes.menus;
-  const openPreview = `resourceLangId == markdown && ${customPreviewKey}`;
-  expect(menus['explorer/context']).toContainEqual({ command: commands.openPreview, group: 'navigation', when: openPreview });
-  expect(menus['editor/title/context']).toContainEqual({ command: commands.openPreview, group: '1_open', when: openPreview });
-  expect(menus.commandPalette).toContainEqual({ command: commands.openPreview, when: 'false' });
+test('the pages are part of the Markdown preview of VS Code: a markdown-it plugin, a script and a style, and no keys or views of their own (R-PRV-005)', () => {
+  const contributes = manifest.contributes;
+  expect(contributes['markdown.markdownItPlugins']).toBe(true);
+  expect(contributes['markdown.previewScripts']).toEqual(['./media/paperPreview.js']);
+  expect(contributes['markdown.previewStyles']).toEqual(['./media/paperPreview.css']);
+  expect(contributes).not.toHaveProperty('keybindings');
+  expect(contributes).not.toHaveProperty('customEditors');
+  expect(JSON.stringify(contributes.menus)).not.toContain('hasCustomMarkdownPreview');
 });
 
 test('the extension uses no proposed API, and the API of the oldest VS Code version that it supports (R-GEN-002)', () => {
@@ -155,19 +150,19 @@ test('the README, the guide and the requirements name every setting that the man
   }
 });
 
-test('the package holds the bundle, Paged.js, the script and the style of the page preview, the built-in layouts, the icons and the documents only', () => {
+test('the package holds the bundle, Paged.js, the script and the style of the pages in the Markdown preview, the built-in layouts, the icon and the documents only', () => {
   const patterns = read('.vscodeignore')
     .split('\n')
     .filter((line) => line && !line.startsWith('#'));
   expect(patterns).toEqual([
     '**',
     '!dist/extension.js',
+    '!media/paged.js',
     '!media/paged.polyfill.js',
-    '!media/pagePreview.css',
-    '!media/pagePreview.js',
+    '!media/paperPreview.css',
+    '!media/paperPreview.js',
     '!layouts/**',
     '!resources/icon.png',
-    '!resources/page-preview.svg',
     '!package.json',
     '!README.md',
     '!CHANGELOG.md',
@@ -176,7 +171,7 @@ test('the package holds the bundle, Paged.js, the script and the style of the pa
     '!THIRD-PARTY-NOTICES.md',
   ]);
   // The build writes dist/ and copies Paged.js into media/ (esbuild.mjs).
-  for (const pattern of patterns.filter((pattern) => pattern.startsWith('!') && !pattern.startsWith('!dist/') && pattern !== '!media/paged.polyfill.js')) {
+  for (const pattern of patterns.filter((pattern) => pattern.startsWith('!') && !pattern.startsWith('!dist/') && !pattern.startsWith('!media/paged.'))) {
     expect(fs.existsSync(path.join(repository, pattern.slice(1).replace('/**', ''))), pattern).toBe(true);
   }
 });
@@ -313,7 +308,7 @@ test('every requirement has a unique ID, and every link to a requirement or a se
     }
   }
   // An ID that a test, the code or a document names without a link exists too.
-  for (const file of [...sourceFiles('src'), ...sourceFiles('test'), 'media/pagePreview.js', 'docs/guide.md', 'CONTRIBUTING.md']) {
+  for (const file of [...sourceFiles('src'), ...sourceFiles('test'), 'media/paperPreview.js', 'docs/guide.md', 'CONTRIBUTING.md']) {
     for (const [id] of read(file).matchAll(/\bR-[A-Z]+-\d{3}\b/g)) {
       expect(ids, `${file}: ${id}`).toContain(id);
     }

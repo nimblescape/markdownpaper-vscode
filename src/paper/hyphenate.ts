@@ -61,20 +61,30 @@ export function hyphenatorOf(language: string): ((text: string) => string) | und
 }
 
 /** noHyphenTag matches the elements whose text gets no soft hyphens: headings, links, code, and the like. */
-const noHyphenTag = /^(?:h[1-6]|a|code|pre|kbd|samp|script|style|figcaption|math|svg)$/i;
+const noHyphenTag = /^(?:h[1-6]|a|code|pre|kbd|samp|script|style|figcaption|math|svg|template|textarea)$/i;
+
+/** noHyphenClass matches the classes of elements whose text gets no soft hyphens: the diagrams and formulas of plugins. */
+const noHyphenClass = /\bclass="[^"]*\b(?:no-hyphens|mermaid|katex|katex-display|math|plantuml)\b/;
+
+/**
+ * textTag matches the elements of running text, whose text gets soft hyphens. The text of other elements, such as the
+ * `div` of a plugin of the Markdown preview, stays as it is, because a plugin may read it later, for example Mermaid.
+ */
+const textTag = /^(?:p|li|td|th|dd|dt|blockquote)$/i;
 
 /** voidTag matches the elements that have no end tag. */
 const voidTag = /^(?:area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i;
 
 /**
- * hyphenateHtml inserts soft hyphens into the text of an HTML fragment, not in the elements of `noHyphenTag` and not
- * in an element with the class `no-hyphens`.
+ * hyphenateHtml inserts soft hyphens into the text of the elements of running text (`textTag`) of an HTML fragment,
+ * not in the elements of `noHyphenTag` and not in an element with a class of `noHyphenClass`, such as `no-hyphens`.
  * @param html - The HTML fragment.
  * @param hyphenate - The hyphenation of a text.
  */
 export function hyphenateHtml(html: string, hyphenate: (text: string) => string): string {
-  const skipped: boolean[] = [];
+  const stack: { skips: boolean; text: boolean }[] = [];
   let skip = 0;
+  let text = 0;
   return html
     .split(/(<!--[\s\S]*?-->|<[^>]+>)/)
     .map((piece) => {
@@ -88,19 +98,18 @@ export function hyphenateHtml(html: string, hyphenate: (text: string) => string)
           return piece;
         }
         if (closing) {
-          if (skipped.pop()) {
-            skip--;
-          }
+          const element = stack.pop();
+          skip -= element?.skips ? 1 : 0;
+          text -= element?.text ? 1 : 0;
         } else {
-          const skips = noHyphenTag.test(name) || /\bclass="[^"]*\bno-hyphens\b/.test(attributes);
-          skipped.push(skips);
-          if (skips) {
-            skip++;
-          }
+          const element = { skips: noHyphenTag.test(name) || noHyphenClass.test(attributes), text: textTag.test(name) };
+          stack.push(element);
+          skip += element.skips ? 1 : 0;
+          text += element.text ? 1 : 0;
         }
         return piece;
       }
-      return skip > 0 || piece.startsWith('<') ? piece : hyphenate(piece);
+      return skip > 0 || text === 0 || piece.startsWith('<') ? piece : hyphenate(piece);
     })
     .join('');
 }

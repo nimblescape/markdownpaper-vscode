@@ -35,7 +35,7 @@ This document replaces it where the two differ.
 | 4 | The renderer: HTML and Paged.js, the notes left out, numbered headings, footnotes at the foot of the page, hyphenation | [R-REN-001](#r-ren-001) to [R-REN-003](#r-ren-003), [R-REN-007](#r-ren-007), [R-REN-008](#r-ren-008) | done |
 | 5 | The special sections without numbers, the table of contents, the list of figures, the list of tables, the captions, the appendix | [R-REN-004](#r-ren-004) to [R-REN-006](#r-ren-006) | done |
 | 6 | The PDF with an installed Chrome, Chromium or Edge, only PDF | [R-PDF-001](#r-pdf-001) to [R-PDF-004](#r-pdf-004) | done |
-| 7 | The page preview, first as a view of its own | [R-PRV-001](#r-prv-001) to [R-PRV-004](#r-prv-004) | done; moves into the Markdown preview of VS Code in step 16 |
+| 7 | The page preview, first as a view of its own | [R-PRV-001](#r-prv-001) to [R-PRV-004](#r-prv-004) | done; replaced by the pages in the Markdown preview of VS Code in step 16 |
 | 8 | The scaffold: new document, new layout, new project with `inbox/` and `bib/` | [R-NEW-001](#r-new-001) to [R-NEW-003](#r-new-003) | done |
 | 9 | The command `markdownpaper` with `pdf`, `check`, `create`, `new` and `instructions` | [R-CLI-001](#r-cli-001), [R-CLI-003](#r-cli-003) | done |
 | 10 | The anchors of figures and tables, the links to them and to headings, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-003](#r-ren-003), [R-REN-009](#r-ren-009) | done |
@@ -44,7 +44,7 @@ This document replaces it where the two differ.
 | 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | planned; the work of Markdown Notes moves here |
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006) | instructions done; the first layout planned |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when Hannes asks |
-| 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | in progress |
+| 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
 | 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | planned |
 | 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark and the name wait for Hannes |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
@@ -69,8 +69,9 @@ related").
 - Markdown Paper works without Markdown Notes: then a Markdown file has no
   clean editing view and no slash commands of the notes, and the pages still
   leave the notes out ([R-REN-002](#r-ren-002)).
-- The extension extends the editors that VS Code has for Markdown files. It
-  adds one editor of its own, the page preview ([R-PRV-001](#r-prv-001)).
+- The extension extends the editors that VS Code has for Markdown files and
+  adds no editor of its own: the pages are in the Markdown preview of VS Code
+  ([R-PRV-001](#r-prv-001)).
 
 ### R-GEN-002
 
@@ -86,7 +87,10 @@ Marketplace does not accept extensions that use one.
   from the disk.
 - The extension collects no telemetry and connects to no address. It starts
   a program only for "Export PDF": the browser of [R-PDF-002](#r-pdf-002).
-- The pages run only the scripts of the renderer ([R-REN-001](#r-ren-001)).
+- The pages run only the scripts of the extensions of VS Code
+  ([R-PRV-004](#r-prv-004)) and, in the PDF, those of the renderer
+  ([R-REN-001](#r-ren-001)); a script in a Markdown file or in a layout does
+  not run.
 
 ### R-GEN-003
 
@@ -186,7 +190,7 @@ in the text editor as warnings after a pause in typing, and with
 - Each link to `#fig-…`, `#tab-…` or `#sec-…`, and each link whose text is a
   word and a number, such as `[Kapitel 2.1](#methoden)`, must find its figure,
   table or heading ([R-REN-009](#r-ren-009)).
-- The page preview adds the problems of the renderer, for example a template
+- The Markdown preview of a paper document adds the problems of the renderer, for example a template
   that does not exist. Each problem shows once.
 - `markdownpaper check` prints each problem as `file:line:column: severity:
   message` on the standard error and exits with 0 without problems, 1 with
@@ -212,13 +216,13 @@ when paper features are in it"; [decision 17](#decisions)).
 - The features of Markdown Notes, such as notes, footnotes, figures and
   tables with their anchors, and links of `/ref`, do not make a file a paper
   document.
-- A paper document gets the checks ([R-DOC-002](#r-doc-002)), the page preview
-  as its Markdown preview ([R-PRV-005](#r-prv-005)), and the buttons "Show
-  Page Preview" and "Export PDF" in the title bar of the editor.
+- A paper document gets the checks ([R-DOC-002](#r-doc-002)), its pages in
+  the Markdown preview ([R-PRV-005](#r-prv-005)), and the buttons "Show Page
+  Preview" and "Export PDF" in the title bar of the editor.
 - A notes document keeps the Markdown preview of VS Code, which Markdown Notes
-  uses ("notes is the standard markdown preview"). The Command Palette, the
-  Explorer and the command line still make the pages and the PDF of any
-  Markdown file, with the built-in layout `plain` when the file names no
+  uses ("notes is the standard markdown preview"). "Export PDF" in the Command
+  Palette and in the Explorer, and the command line, still make the PDF of
+  any Markdown file, with the built-in layout `plain` when the file names no
   layout.
 
 ## Layouts
@@ -689,7 +693,22 @@ VS Code shows it.
   lets VS Code read the lines of the pages again.
 - While a paper document shows, the style sheets of the Markdown preview of
   VS Code and of the theme do not apply, and the pages are white paper also
-  in a dark theme.
+  in a dark theme. The colors of the theme that the scripts of other
+  extensions read for their drawings, such as the diagrams of Mermaid, get the
+  values of the light theme "Light Modern" of VS Code, so a diagram has the
+  colors of white paper.
+- The front matter of a paper document does not show on the pages: its
+  fields go into the templates of the layout. (VS Code shows the front matter
+  of a notes document as a table, as set in `markdown.preview.frontMatter`.)
+- When the preview is narrower than a page, the pages get smaller until they
+  fit its width; they never get larger than the size of the paper.
+- The extension keeps each layout that it read, and reads it again after a
+  change of one of its files; then it lets the Markdown preview render again.
+  While the extension reads a layout for the first time, the preview shows a
+  note "Making the pages…" and then the pages.
+- Limit: Paged.js 0.4.3 stops at a single paragraph that is longer than about
+  two pages ("Layout repeated"); the pages then end before that paragraph. A
+  paragraph of a paper is much shorter, so the extension does not split it.
 
 ### R-PRV-006
 
@@ -704,9 +723,21 @@ above a selected passage.
 - The pages are copies of the blocks of the preview, with their attributes,
   among them `data-line`; a script that listens on the document, not on one
   element, works on them.
+- A script that draws into elements of the preview after each update, such as
+  the script of Mermaid, does not find the copies on the pages, so it does not
+  remove or draw them again: the copy of an element `.mermaid` gets the class
+  `nimblescape-paper-mermaid`, and each ID of a drawing (`svg[id]`) gets the
+  prefix `nimblescape-paper-`, also in the style sheet of the drawing. The
+  script of the pages makes the pages after such a drawing is done; when a
+  drawing is still missing after 5 seconds, it makes the pages and tries once
+  more after the next pause.
 - After each new set of pages, the script of the pages sends the event
   `nimblescape-paper-rendered` to `window`, with the number of the pages, so
   that another script can mark the pages again.
+- The text on the pages has soft hyphens (U+00AD) where the layout
+  hyphenates words ([R-REN-007](#r-ren-007)); a script that compares a
+  selected passage with the Markdown text leaves them out. The text of a page
+  is in `.pagedjs_page_content`; a highlight is drawn only inside it.
 - Markdown Notes adapts its preview script to the pages where it needs to
   ([R-GEN-003](#r-gen-003)).
 

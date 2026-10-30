@@ -4,7 +4,7 @@ Makes pages and PDF files from Markdown in VS Code, for a thesis, a report or
 a paper. The layout of the pages is a folder in the repository of the
 document: `layouts/<name>/` with the fields of the front matter, the style
 sheet of the pages and the templates of fixed pages such as the cover page.
-The page preview beside the text editor shows the pages as the PDF prints
+The Markdown preview of VS Code shows the pages of a paper as the PDF prints
 them, with the table of contents, the list of figures, the list of tables,
 the captions, the footnotes at the foot of the page and the appendix. "Export
 PDF" writes the PDF with an installed Google Chrome, Chromium or Microsoft
@@ -18,15 +18,18 @@ gives the same renderer to people and AI agents on the command line:
 ## What the extension does on your computer
 
 - **When it works.** The extension starts when a Markdown file opens, or when
-  VS Code restores a page preview. It does not run in VS Code for the Web.
+  the Markdown preview of VS Code shows one. It does not run in VS Code for the
+  Web.
 - **Markdown files.** The extension reads the open Markdown files and the
   files of their layouts. It writes files only for "Export PDF" (the PDF
   beside the Markdown file) and for "New Project", "New Document" and "New
   Layout", never over an existing file.
-- **Page preview.** The page preview is a webview of the extension. Its page
-  runs only the scripts of the extension and Paged.js; a script in a Markdown
-  file or in a layout does not run. It loads only the files of the workspace
-  and of the extension.
+- **Page preview.** The pages are in the Markdown preview of VS Code. The
+  extension gives it a markdown-it plugin, a script and a style sheet, as
+  other Markdown extensions do. The preview keeps the rules of safety of
+  VS Code: only the scripts of the extensions run, among them the script of
+  the pages and Paged.js; a script in a Markdown file or in a layout does not
+  run.
 - **Export PDF.** Only "Export PDF" starts a program: the installed Google
   Chrome, Chromium or Microsoft Edge, without a window, with a profile of its
   own in a temporary folder, and connected to the extension through a pipe,
@@ -34,7 +37,7 @@ gives the same renderer to people and AI agents on the command line:
   file and the images of the document from the disk.
 - **Network.** The extension's own code connects to no address and collects
   no telemetry. A document or a layout that names an image or a font on the
-  web makes the page preview and the browser load it.
+  web makes the Markdown preview and the browser load it.
 - **Restricted Mode and virtual workspaces.** In Restricted Mode the page
   preview, the checks and the commands work, and only the settings of the
   user can name the program of the browser
@@ -51,11 +54,15 @@ gives the same renderer to people and AI agents on the command line:
   cover page with the fields. Without a layout, a document gets the built-in
   layout `plain`.
 - **Page preview.** A Markdown file whose front matter names a layout is a
-  paper document, and its preview shows the pages: Ctrl+Shift+V, Ctrl+K V or
-  "Show Page Preview" in the title of the editor. Another Markdown file keeps
-  the Markdown preview of VS Code. The page preview updates the pages after a
-  pause in typing and after a change of the layout, and a click on a page
-  shows its line in the text editor.
+  paper document, and the Markdown preview of VS Code shows its pages:
+  Ctrl+Shift+V, Ctrl+K V or "Show Page Preview" in the title of the editor.
+  Another Markdown file keeps the Markdown preview as VS Code shows it. The
+  pages update after a pause in typing and after a change of the layout, the
+  preview scrolls with the text editor, and a double click on a page shows
+  its line in the text editor. The other Markdown extensions work on the
+  pages: the diagrams of Mermaid, the math of KaTeX, and the highlights and
+  "Add Note" of Markdown Notes. The pages are white paper also in a dark
+  theme.
 - **Numbers and lists.** The headings get numbers such as 1.1. A heading of
   the table of contents, of the list of figures or of the list of tables gets
   its list with the page numbers. An image alone in its paragraph is a
@@ -93,8 +100,8 @@ gives the same renderer to people and AI agents on the command line:
    (Ctrl+Shift+P), or open a Markdown file with a front matter.
 2. Write the fields of the layout in the front matter. The warnings name the
    missing ones.
-3. Press Ctrl+Shift+V or Ctrl+K V (on macOS Cmd), or choose "Show Page
-   Preview" in the title of the editor.
+3. Press Ctrl+Shift+V or Ctrl+K V (on macOS Cmd) for the Markdown preview,
+   or choose "Show Page Preview" in the title of the editor.
 4. Choose "Export PDF" in the menu "Run" of the title of the editor.
 
 The rules of the documents and of the layouts, for people and AI agents:
@@ -114,22 +121,21 @@ describes every feature.
 | Setting | Default | Effect |
 | --- | --- | --- |
 | `nimblescape.markdownPaper.browserPath` | `""` | The program of Google Chrome, Chromium or Microsoft Edge that prints the PDF. Empty: the extension looks for one at the usual places. Only the settings of the user can set it. |
-| `nimblescape.markdownPaper.previewDelay` | `800` | The pause in typing, in milliseconds, after which the page preview shows the changed text, from 100 to 10000. |
+| `nimblescape.markdownPaper.previewDelay` | `800` | The pause in typing, in milliseconds, after which the Markdown preview of a paper document makes its pages again, from 100 to 10000. |
 | `nimblescape.markdownPaper.openPdf` | `true` | Opens the PDF with the program of your system for PDF files after "Export PDF". |
 
 ## Limits
 
 - "Export PDF" needs an installed Google Chrome, Chromium or Microsoft Edge;
   the download of Chromium when none is installed is planned.
-- VS Code has one context key, `hasCustomMarkdownPreview`, for all extensions
-  whose preview replaces its own. When another such extension is installed and
-  you switch from a paper document to another Markdown file, Markdown Paper
-  sets the key back, and the buttons of the Markdown preview of VS Code show
-  again for that file.
-- The page preview and the PDF use the same renderer, but the page preview
+- The pages in the preview and the PDF use the same renderer, but the preview
   runs in the browser of VS Code and the PDF in the installed browser: with a
   font that only one of them has, a line can break at another place. Fonts in
   the layout folder give the same lines in both.
+- Paged.js stops at a single paragraph that is longer than about two pages;
+  the pages then end before it.
+- The diagrams of Mermaid, PlantUML and the other Markdown extensions of
+  VS Code show on the pages of the preview; in the PDF they are planned.
 - A layout has no scripts. Its templates know fields and parts that show
   only with a field, no other logic.
 - The citations and the reference list from a database of sources are

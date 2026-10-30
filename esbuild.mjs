@@ -6,7 +6,8 @@
 // cli/dist/markdownpaper.js, the file of the npm package @nimblescape/markdownpaper of cli/, for Node.js 22 or later
 // (engines of cli/package.json). Both bundles hold markdown-it, its footnotes, yaml, the hyphenation patterns and
 // pdf-lib. The build copies the files that the renderer reads at run time: Paged.js (paged.polyfill.js) into media/
-// for the extension and into cli/dist/ for the npm package, and the built-in layouts of layouts/ into cli/dist/layouts/;
+// for the extension and into cli/dist/ for the npm package, and paged.js, which does not start on its own, into media/
+// for the script of the pages in the Markdown preview, and the built-in layouts of layouts/ into cli/dist/layouts/;
 // the extension reads layouts/ of its own folder. npm puts the license of the folder of a package into the package,
 // so the build copies LICENSE and THIRD-PARTY-NOTICES.md into cli/. VS Code provides the module `vscode` at run time,
 // so the bundle leaves it out. The bundles are readable JavaScript: not minified, so that they keep the names of the
@@ -38,6 +39,7 @@ fs.mkdirSync('media', { recursive: true });
 fs.copyFileSync('LICENSE', 'cli/LICENSE');
 fs.copyFileSync('THIRD-PARTY-NOTICES.md', 'cli/THIRD-PARTY-NOTICES.md');
 fs.copyFileSync('node_modules/pagedjs/dist/paged.polyfill.js', 'media/paged.polyfill.js');
+fs.copyFileSync('node_modules/pagedjs/dist/paged.js', 'media/paged.js');
 fs.copyFileSync('node_modules/pagedjs/dist/paged.polyfill.js', 'cli/dist/paged.polyfill.js');
 fs.rmSync('cli/dist/layouts', { recursive: true, force: true });
 fs.cpSync('layouts', 'cli/dist/layouts', { recursive: true });

@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: MIT
+# © 2026 Hannes Stauss (scalarion@nimblescape.com)
+# Licensed under the MIT License. See LICENSE in the repository root for details.
+
+# The package holds the bundle, Paged.js, the scripts and the style of the pages
+# in the Markdown preview, the built-in layouts, the icon and the documents
+# only: ignore everything, then keep the listed files.
+**
+!dist/extension.js
+!media/paged.js
+!media/paged.polyfill.js
+!media/paperHandlers.js
+!media/paperPreview.css
+!media/paperPreview.js
+!layouts/**
+!schemas/layout.schema.json
+!resources/icon.png
+!package.json
+!README.md
+!CHANGELOG.md
+!SUPPORT.md
+!LICENSE
+!THIRD-PARTY-NOTICES.md

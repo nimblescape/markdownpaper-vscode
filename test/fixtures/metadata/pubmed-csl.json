@@ -1,0 +1,44 @@
+{
+    "source": "PubMed",
+    "accessed": {
+        "date-parts": [
+            [
+                2026,
+                10,
+                30
+            ]
+        ]
+    },
+    "id": "pmid:37189997",
+    "title": "Muscle Activity during Handwriting on a Tablet: An Electromyographic Analysis of the Writing Process in Children and Adults",
+    "author": [
+        {
+            "family": "Gerth",
+            "given": "Sabrina"
+        },
+        {
+            "family": "Festman",
+            "given": "Julia"
+        }
+    ],
+    "container-title-short": "Children (Basel)",
+    "container-title": "Children (Basel, Switzerland)",
+    "publisher-place": "Switzerland",
+    "ISSN": "2227-9067",
+    "issued": {
+        "date-parts": [
+            [
+                2023,
+                4,
+                20
+            ]
+        ]
+    },
+    "page": "748",
+    "volume": "10",
+    "issue": "4",
+    "PMID": "37189997",
+    "PMCID": "PMC10137273",
+    "DOI": "10.3390/children10040748",
+    "type": "article-journal"
+}

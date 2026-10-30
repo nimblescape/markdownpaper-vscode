@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/nimblescape/markdownpaper-vscode/main/schemas/layout.schema.json",
+  "title": "layout.json of nimblescape Markdown Paper",
+  "description": "The file layout.json of a layout folder, in the format nimblescape-layout 1.x. The whole format: npx -y @nimblescape/markdownpaper instructions layout, or docs/layout.md of nimblescape/markdownpaper-vscode.",
+  "type": "object",
+  "required": ["format"],
+  "properties": {
+    "$schema": {
+      "description": "The address of this schema, for the editor.",
+      "type": "string"
+    },
+    "format": {
+      "description": "The format and its version, for example \"nimblescape-layout 1.0.0\".",
+      "type": "string",
+      "pattern": "^nimblescape-layout \\d+\\.\\d+\\.\\d+$"
+    },
+    "instructions": {
+      "description": "The command that prints the rules of the format, for agents. Informative.",
+      "type": "string"
+    },
+    "name": {
+      "description": "The name of the layout for people. Default: the name of the folder.",
+      "type": "string"
+    },
+    "language": {
+      "description": "The language of the documents, a tag such as de-AT or en-US. It decides the hyphenation and the words of the special sections. Default: en-US.",
+      "type": "string",
+      "pattern": "^[a-zA-Z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+    },
+    "citationStyle": {
+      "description": "The citation style: the built-in style apa7, or a .csl file of the layout folder. Default: apa7.",
+      "type": "string"
+    },
+    "stylesheets": {
+      "description": "The style sheets, in their order, relative to the layout folder. Default: [\"page.css\"].",
+      "$ref": "#/definitions/files"
+    },
+    "before": {
+      "description": "The templates of the fixed pages before the text, in their order.",
+      "$ref": "#/definitions/files"
+    },
+    "after": {
+      "description": "The templates of the fixed pages after the text, in their order.",
+      "$ref": "#/definitions/files"
+    },
+    "document": {
+      "description": "The Markdown file that starts a new document.",
+      "type": "string"
+    },
+    "fields": {
+      "description": "The fields of the front matter, by name: each a description, or an object.",
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "description": {
+                "description": "What the field holds, for the hover of the editor and for the agents that write documents.",
+                "type": "string"
+              },
+              "required": {
+                "description": "true: a document of the layout must have the field.",
+                "type": "boolean"
+              },
+              "default": {
+                "description": "The value when the document has none. With values, one of them.",
+                "type": ["string", "number", "boolean"]
+              },
+              "values": {
+                "description": "A parameter of the layout: the names that the author chooses from, for example the variants of the layout. The style sheets read the choice from the attribute data-field-<field>.",
+                "type": "array",
+                "items": { "type": "string" },
+                "minItems": 1,
+                "uniqueItems": true
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "headings": {
+      "type": "object",
+      "properties": {
+        "numbered": { "description": "false: the renderer numbers no heading. Default: true.", "type": "boolean" },
+        "depth": { "description": "The deepest level of a numbered heading. Default: 3.", "type": "integer", "minimum": 1, "maximum": 6 },
+        "unnumbered": {
+          "description": "Regular expressions; a heading whose text matches one gets no number, nor do the headings below it.",
+          "$ref": "#/definitions/texts"
+        },
+        "numberedSections": {
+          "description": "The codes of the special sections whose headings get a number as other chapters do, for example [\"BIB\"]. Default: [].",
+          "type": "array",
+          "items": { "enum": ["TOC", "LOF", "LOT", "LOL", "BIB", "ADT", "AST", "ACC", "FWD", "APX"] }
+        }
+      }
+    },
+    "contents": {
+      "type": "object",
+      "properties": {
+        "depth": { "description": "The deepest level of a heading in the table of contents. Default: 3.", "type": "integer", "minimum": 1, "maximum": 6 },
+        "front": { "description": "false: the table of contents lists no chapter of the front part (affidavit, abstract, foreword, table of contents and lists before the first chapter). Default: true.", "type": "boolean" }
+      }
+    },
+    "hyphenate": {
+      "description": "false: no soft hyphens. Default: true.",
+      "type": "boolean"
+    },
+    "references": {
+      "type": "object",
+      "properties": {
+        "hyphenate": { "description": "true: the reference list gets soft hyphens as the text does, but not its web addresses. Default: false.", "type": "boolean" }
+      }
+    },
+    "listings": {
+      "type": "object",
+      "properties": {
+        "lineNumbers": { "description": "true: the number of each line before the code of a listing. Default: false.", "type": "boolean" }
+      }
+    },
+    "pdfName": {
+      "description": "The name of the PDF file without .pdf, with fields as {{field}}; {{file}} is the name of the Markdown file. Default: \"{{file}}\".",
+      "type": "string"
+    },
+    "terms": {
+      "description": "Words of the language that this layout changes: the headings of the special sections by their code, and the words figure, table, listing and appendix.",
+      "type": "object",
+      "propertyNames": {
+        "enum": ["TOC", "LOF", "LOT", "LOL", "BIB", "ADT", "AST", "ACC", "FWD", "APX", "figure", "table", "listing", "appendix"]
+      },
+      "additionalProperties": { "$ref": "#/definitions/texts" }
+    }
+  },
+  "definitions": {
+    "files": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "texts": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      ]
+    }
+  }
+}

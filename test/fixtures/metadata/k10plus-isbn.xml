@@ -1,0 +1,1547 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zs:searchRetrieveResponse xmlns:zs="http://www.loc.gov/zing/srw/"><zs:version>1.1</zs:version><zs:numberOfRecords>2</zs:numberOfRecords><zs:records><zs:record><zs:recordSchema>marcxml</zs:recordSchema><zs:recordPacking>xml</zs:recordPacking><zs:recordData><record xmlns="http://www.loc.gov/MARC21/slim">
+  <leader>     cam a22      c 4500</leader>
+  <controlfield tag="001">1680808966</controlfield>
+  <controlfield tag="003">DE-627</controlfield>
+  <controlfield tag="005">20251226181058.0</controlfield>
+  <controlfield tag="007">cr uuu---uuuuu</controlfield>
+  <controlfield tag="008">191031s2019    gw |||||o     00| ||ger c</controlfield>
+  <datafield tag="020" ind1=" " ind2=" ">
+    <subfield code="a">9783838547534</subfield>
+    <subfield code="q">PDF</subfield>
+    <subfield code="9">978-3-8385-4753-4</subfield>
+  </datafield>
+  <datafield tag="024" ind1="3" ind2=" ">
+    <subfield code="a">9783838547534</subfield>
+  </datafield>
+  <datafield tag="024" ind1="7" ind2=" ">
+    <subfield code="a">10.36198/9783838547534</subfield>
+    <subfield code="2">doi</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(DE-627)1680808966</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(DE-599)KEP047952997</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(OCoLC)1164163092</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(UTB)9783838547534</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(DE-627-1)047952997</subfield>
+  </datafield>
+  <datafield tag="040" ind1=" " ind2=" ">
+    <subfield code="a">DE-627</subfield>
+    <subfield code="b">ger</subfield>
+    <subfield code="c">DE-627</subfield>
+    <subfield code="e">rda</subfield>
+  </datafield>
+  <datafield tag="041" ind1=" " ind2=" ">
+    <subfield code="a">ger</subfield>
+  </datafield>
+  <datafield tag="044" ind1=" " ind2=" ">
+    <subfield code="c">XA-DE</subfield>
+  </datafield>
+  <datafield tag="072" ind1=" " ind2="7">
+    <subfield code="a">9574</subfield>
+    <subfield code="2">wsb</subfield>
+  </datafield>
+  <datafield tag="082" ind1="0" ind2=" ">
+    <subfield code="a">370.711</subfield>
+    <subfield code="q">SEPA</subfield>
+  </datafield>
+  <datafield tag="082" ind1="0" ind2="4">
+    <subfield code="a">370</subfield>
+    <subfield code="q">DE-576</subfield>
+  </datafield>
+  <datafield tag="084" ind1=" " ind2=" ">
+    <subfield code="a">DN 7000</subfield>
+    <subfield code="q">SEPA</subfield>
+    <subfield code="2">rvk</subfield>
+    <subfield code="0">(DE-625)rvk/19744:761</subfield>
+  </datafield>
+  <datafield tag="084" ind1=" " ind2=" ">
+    <subfield code="a">81.31</subfield>
+    <subfield code="2">bkl</subfield>
+  </datafield>
+  <datafield tag="100" ind1="1" ind2=" ">
+    <subfield code="a">Kriesche, Julia</subfield>
+    <subfield code="e">VerfasserIn</subfield>
+    <subfield code="0">(DE-588)1049852656</subfield>
+    <subfield code="0">(DE-627)782813925</subfield>
+    <subfield code="0">(DE-576)403850177</subfield>
+    <subfield code="4">aut</subfield>
+  </datafield>
+  <datafield tag="245" ind1="1" ind2="0">
+    <subfield code="a">Lehrer werden mit Methode</subfield>
+    <subfield code="b">Beratung, Selbstreflexion, Professionalisierung - ein multimediales Arbeitsbuch : mit mehr als 100 Materialien, 16 Kurzfilmen und 10 Interviewfilmen auf www.lehrer-werden-mit-methode.de</subfield>
+    <subfield code="c">Julia Kriesche, Joachim Kahlert</subfield>
+  </datafield>
+  <datafield tag="246" ind1="3" ind2="3">
+    <subfield code="a">Eignungsberatung und Eignungsreflexion in der Lehrerbildung</subfield>
+  </datafield>
+  <datafield tag="264" ind1=" " ind2="1">
+    <subfield code="a">Bad Heilbrunn</subfield>
+    <subfield code="b">Verlag Julius Klinkhardt</subfield>
+    <subfield code="c">2019</subfield>
+  </datafield>
+  <datafield tag="264" ind1=" " ind2="4">
+    <subfield code="c">©2019</subfield>
+  </datafield>
+  <datafield tag="300" ind1=" " ind2=" ">
+    <subfield code="a">1 Online-Ressource (302 Seiten)</subfield>
+    <subfield code="b">Illustrationen</subfield>
+  </datafield>
+  <datafield tag="336" ind1=" " ind2=" ">
+    <subfield code="a">Text</subfield>
+    <subfield code="b">txt</subfield>
+    <subfield code="2">rdacontent</subfield>
+  </datafield>
+  <datafield tag="337" ind1=" " ind2=" ">
+    <subfield code="a">Computermedien</subfield>
+    <subfield code="b">c</subfield>
+    <subfield code="2">rdamedia</subfield>
+  </datafield>
+  <datafield tag="338" ind1=" " ind2=" ">
+    <subfield code="a">Online-Ressource</subfield>
+    <subfield code="b">cr</subfield>
+    <subfield code="2">rdacarrier</subfield>
+  </datafield>
+  <datafield tag="490" ind1="0" ind2=" ">
+    <subfield code="a">UTB</subfield>
+    <subfield code="v">4753</subfield>
+    <subfield code="a">Schulpädagogik</subfield>
+  </datafield>
+  <datafield tag="490" ind1="0" ind2=" ">
+    <subfield code="a">utb-studi-e-book</subfield>
+  </datafield>
+  <datafield tag="500" ind1=" " ind2=" ">
+    <subfield code="a">Ursprünglich angekündigt unter dem Titel "Eignungsberatung und Eignungsreflexion in der Lehrerbildung"</subfield>
+  </datafield>
+  <datafield tag="500" ind1=" " ind2=" ">
+    <subfield code="a">Auf dem Umschlag: Mit Microsite!</subfield>
+  </datafield>
+  <datafield tag="500" ind1=" " ind2=" ">
+    <subfield code="a">Literaturverzeichnis: Seite 261-270</subfield>
+  </datafield>
+  <datafield tag="520" ind1=" " ind2=" ">
+    <subfield code="a">Die eigenen Potenziale fürs Lehramtsstudium entdeckenDieser Leitfaden bietet Lehramtsstudierenden die Möglichkeit, ihre erworbenen Kenntnisse in Bezug auf die Praxis zu überprüfen. Mit der Hilfe des bereitgestellten Online-Tools SeLF (Selbsterkundung zum Lehrerberuf mit Filmimpulsen) können die Studierenden ihre Eignung und ihre persönlichen Entwicklungspotenziale anhand von Kurzfilmen realitätsnah reflektieren. Eine Hilfe und Empfehlung für einen gelungenen Einstieg in die Praxis des Unterrichts.</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Fachspezifischer Unterricht</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Lehrerausbildung</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Schulpäd. 2017-1</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Lehramt; Lehrer; Lehrerberuf; Lehrerin; Lehramt studieren; Lehrerbildung; Schulpädagogik; Referendariat; Selbstreflexion; Eignungstest; Unterricht; Elternarbeit; Erziehungsauftrag; Heterogenität; Gymnasium; Inklusion; Sekundarstufe I; Sekundarstufe II; Elternabend; Klassenführung; Schülermotivation; Leistungsbewertung; Schülerleistung; Gemeinschaftsschule; Realschule; Gesamtschule; Hauptschule; utb; Lehrbuch</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Lehramt</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Lehrer</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Lehrerberuf</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Lehrerin</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Lehramt studieren</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Lehrerbildung</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Referendariat</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Selbstreflexion</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Eignungstest</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Unterricht</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Elternarbeit</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Erziehungsauftrag</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Heterogenität</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Gymnasium</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Inklusion</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Sekundarstufe I</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Sekundarstufe II</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Elternabend</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Klassenführung</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Schülermotivation</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Leistungsbewertung</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Schülerleistung</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Gemeinschaftsschule</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Realschule</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Gesamtschule</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Hauptschule</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">utb</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Lehrbuch</subfield>
+  </datafield>
+  <datafield tag="650" ind1=" " ind2="4">
+    <subfield code="a">Schulpädagogik</subfield>
+  </datafield>
+  <datafield tag="655" ind1=" " ind2="7">
+    <subfield code="a">Lehrbuch</subfield>
+    <subfield code="0">(DE-588)4123623-3</subfield>
+    <subfield code="0">(DE-627)104270187</subfield>
+    <subfield code="0">(DE-576)209561262</subfield>
+    <subfield code="2">gnd-content</subfield>
+  </datafield>
+  <datafield tag="689" ind1="0" ind2="0">
+    <subfield code="D">s</subfield>
+    <subfield code="0">(DE-588)4035093-9</subfield>
+    <subfield code="0">(DE-627)106249398</subfield>
+    <subfield code="0">(DE-576)20901072X</subfield>
+    <subfield code="a">Lehrerbildung</subfield>
+    <subfield code="2">gnd</subfield>
+  </datafield>
+  <datafield tag="689" ind1="0" ind2=" ">
+    <subfield code="5">DE-101</subfield>
+  </datafield>
+  <datafield tag="689" ind1="1" ind2="0">
+    <subfield code="D">s</subfield>
+    <subfield code="0">(DE-588)4035093-9</subfield>
+    <subfield code="0">(DE-627)106249398</subfield>
+    <subfield code="0">(DE-576)20901072X</subfield>
+    <subfield code="a">Lehrerbildung</subfield>
+    <subfield code="2">gnd</subfield>
+  </datafield>
+  <datafield tag="689" ind1="1" ind2="1">
+    <subfield code="D">s</subfield>
+    <subfield code="0">(DE-588)4047376-4</subfield>
+    <subfield code="0">(DE-627)104509368</subfield>
+    <subfield code="0">(DE-576)20907339X</subfield>
+    <subfield code="a">Professionalisierung</subfield>
+    <subfield code="2">gnd</subfield>
+  </datafield>
+  <datafield tag="689" ind1="1" ind2=" ">
+    <subfield code="5">(DE-627)</subfield>
+  </datafield>
+  <datafield tag="700" ind1="1" ind2=" ">
+    <subfield code="a">Kahlert, Joachim</subfield>
+    <subfield code="d">1954-</subfield>
+    <subfield code="e">VerfasserIn</subfield>
+    <subfield code="0">(DE-588)123723051</subfield>
+    <subfield code="0">(DE-627)082728909</subfield>
+    <subfield code="0">(DE-576)165065834</subfield>
+    <subfield code="4">aut</subfield>
+  </datafield>
+  <datafield tag="710" ind1="2" ind2=" ">
+    <subfield code="a">Verlag Julius Klinkhardt</subfield>
+    <subfield code="e">Verlag</subfield>
+    <subfield code="0">(DE-588)2016917-6</subfield>
+    <subfield code="0">(DE-627)101917708</subfield>
+    <subfield code="0">(DE-576)191707244</subfield>
+    <subfield code="4">pbl</subfield>
+  </datafield>
+  <datafield tag="776" ind1="1" ind2=" ">
+    <subfield code="z">9783825247539</subfield>
+  </datafield>
+  <datafield tag="776" ind1="0" ind2="8">
+    <subfield code="i">Erscheint auch als</subfield>
+    <subfield code="n">Druck-Ausgabe</subfield>
+    <subfield code="a">Kriesche, Julia</subfield>
+    <subfield code="t">Lehrer werden mit Methode</subfield>
+    <subfield code="d">Bad Heilbrunn : Verlag Julius Klinkhardt, 2019</subfield>
+    <subfield code="h">302 Seiten</subfield>
+    <subfield code="w">(DE-627)873537645</subfield>
+    <subfield code="w">(DE-576)9873537643</subfield>
+    <subfield code="z">3825247538</subfield>
+    <subfield code="z">9783825247539</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2="0">
+    <subfield code="u">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="m">X:UTB</subfield>
+    <subfield code="x">Verlag</subfield>
+    <subfield code="z">lizenzpflichtig</subfield>
+    <subfield code="7">1</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2="2">
+    <subfield code="u">https://elibrary.onixtools.de/Cover/9783838547534.jpg</subfield>
+    <subfield code="x">Verlag</subfield>
+    <subfield code="3">Cover</subfield>
+    <subfield code="7">1</subfield>
+  </datafield>
+  <datafield tag="912" ind1=" " ind2=" ">
+    <subfield code="a">ZDB-41-UTBI</subfield>
+  </datafield>
+  <datafield tag="912" ind1=" " ind2=" ">
+    <subfield code="a">ZDB-41-UTBI</subfield>
+    <subfield code="b">2017</subfield>
+    <subfield code="c">1</subfield>
+  </datafield>
+  <datafield tag="912" ind1=" " ind2=" ">
+    <subfield code="a">ZDB-41-UTBI</subfield>
+    <subfield code="b">2017</subfield>
+    <subfield code="c">1</subfield>
+  </datafield>
+  <datafield tag="912" ind1=" " ind2=" ">
+    <subfield code="a">ZDB-41-UTB</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533495949</subfield>
+    <subfield code="b">DE-84</subfield>
+    <subfield code="9">84</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533180034</subfield>
+    <subfield code="b">DE-46</subfield>
+    <subfield code="9">46</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537719523</subfield>
+    <subfield code="b">DE-18</subfield>
+    <subfield code="9">18</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="k">http://emedien.sub.uni-hamburg.de/han/utb/elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">Volltextzugang Campus</subfield>
+    <subfield code="y">Nur für Angehörige der Universität Hamburg: Volltextzugang von außerhalb des Campus</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537730241</subfield>
+    <subfield code="b">DE-8</subfield>
+    <subfield code="9">8</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="e">p</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537390599</subfield>
+    <subfield code="b">DE-27</subfield>
+    <subfield code="9">27</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">UTB studi-e-book</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3734203716</subfield>
+    <subfield code="b">DE-547</subfield>
+    <subfield code="9">547</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537709757</subfield>
+    <subfield code="b">DE-705</subfield>
+    <subfield code="9">705</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="e">p</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3544038196</subfield>
+    <subfield code="b">DE-28</subfield>
+    <subfield code="9">28</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537748140</subfield>
+    <subfield code="b">DE-Wim2</subfield>
+    <subfield code="9">Wim 2</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">E-Book</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3538118922</subfield>
+    <subfield code="b">DE-3</subfield>
+    <subfield code="9">3</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537728638</subfield>
+    <subfield code="b">DE-9</subfield>
+    <subfield code="9">9</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="e">n</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4862331807</subfield>
+    <subfield code="b">DE-89</subfield>
+    <subfield code="9">89</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">e</subfield>
+    <subfield code="e">n</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3624592017</subfield>
+    <subfield code="b">DE-Hil2</subfield>
+    <subfield code="9">Hil 2</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3618224060</subfield>
+    <subfield code="b">DE-542</subfield>
+    <subfield code="9">542</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="e">n</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3543925946</subfield>
+    <subfield code="b">DE-Luen4</subfield>
+    <subfield code="9">Luen 4</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">E-Books (utb-studi-e-book)</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537745400</subfield>
+    <subfield code="b">DE-715</subfield>
+    <subfield code="9">715</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://www.utb-studi-e-book.de/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">401052118X</subfield>
+    <subfield code="b">DE-715</subfield>
+    <subfield code="9">715</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">http://49gbv-uob-primo.hosted.exlibrisgroup.com/openurl/49GBV_UOB/UOB_services_page?u.ignore_date_coverage=true&amp;rft.mms_id=991015559686303501</subfield>
+    <subfield code="l">UTB studi-e-books gesamt Zugang bis 31.12.26 (Lizenz)</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537712251</subfield>
+    <subfield code="b">DE-897</subfield>
+    <subfield code="9">897</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3543934805</subfield>
+    <subfield code="b">DE-700</subfield>
+    <subfield code="9">700</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3566324116</subfield>
+    <subfield code="b">DE-Va1</subfield>
+    <subfield code="9">Va 1</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://www.utb-studi-e-book.de/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3667060815</subfield>
+    <subfield code="b">DE-959</subfield>
+    <subfield code="9">959</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://www.utb-studi-e-book.de/9783838547534</subfield>
+    <subfield code="y">Zugriff nur für Angehörige der Hochschule Osnabrück im Hochschulnetz</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3872452827</subfield>
+    <subfield code="b">DE-564</subfield>
+    <subfield code="9">564</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537714696</subfield>
+    <subfield code="b">DE-839</subfield>
+    <subfield code="9">839</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3818985332</subfield>
+    <subfield code="b">DE-Fl3</subfield>
+    <subfield code="9">Fl 3</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3768761592</subfield>
+    <subfield code="b">DE-J59</subfield>
+    <subfield code="9">J 59</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">Jahreslizenz</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4150800286</subfield>
+    <subfield code="b">DE-755</subfield>
+    <subfield code="9">755</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">utb elibrary</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537707142</subfield>
+    <subfield code="b">DE-519</subfield>
+    <subfield code="9">519</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3850844900</subfield>
+    <subfield code="b">DE-Ki95</subfield>
+    <subfield code="9">Ki 95</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://www.utb-studi-e-book.de/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">496169679X</subfield>
+    <subfield code="b">DE-H155</subfield>
+    <subfield code="9">H 155</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3612412760</subfield>
+    <subfield code="b">DE-Brg3</subfield>
+    <subfield code="9">Brg 3</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">Online-Ressource</subfield>
+    <subfield code="k">https://thh-friedensau.idm.oclc.org/login?url=https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">Fulltext</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4583432844</subfield>
+    <subfield code="b">DE-1041</subfield>
+    <subfield code="9">1041</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4770783388</subfield>
+    <subfield code="b">DE-Hv111</subfield>
+    <subfield code="9">Hv 111</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">http://evlka.hh-han.com/han/e-library-utb/elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">Zum Volltext</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3537717180</subfield>
+    <subfield code="b">DE-897-1</subfield>
+    <subfield code="9">897/1</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">1847320562</subfield>
+    <subfield code="b">DE-517</subfield>
+    <subfield code="9">517</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3657726187</subfield>
+    <subfield code="b">DE-1373</subfield>
+    <subfield code="9">1373</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">E-Book: Zugriff im HCU-Netz. Zugriff von außerhalb nur für HCU-Angehörige möglich</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3746492998</subfield>
+    <subfield code="b">DE-B1556</subfield>
+    <subfield code="9">B1556</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">Campuslizenz</subfield>
+    <subfield code="h">Online-Publikation</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533090469</subfield>
+    <subfield code="b">DE-21</subfield>
+    <subfield code="9">21</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zugang für die Universität Tübingen</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">361775192X</subfield>
+    <subfield code="b">DE-291</subfield>
+    <subfield code="9">291</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">399744921X</subfield>
+    <subfield code="b">DE-Sa16</subfield>
+    <subfield code="9">Sa 16</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zugriff nur aus dem HTW-Netz</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533093360</subfield>
+    <subfield code="b">DE-14</subfield>
+    <subfield code="9">14</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3576139559</subfield>
+    <subfield code="b">DE-24</subfield>
+    <subfield code="9">24</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">http://han.wlb-stuttgart.de/han/utb-eb/elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533093379</subfield>
+    <subfield code="b">DE-15</subfield>
+    <subfield code="9">15</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">Online-Zugriff</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4616510962</subfield>
+    <subfield code="b">DE-90</subfield>
+    <subfield code="9">90</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">Zugang im Netz der DHBW</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3668158126</subfield>
+    <subfield code="b">DE-93</subfield>
+    <subfield code="9">93</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">e</subfield>
+    <subfield code="e">n</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533090477</subfield>
+    <subfield code="b">DE-31</subfield>
+    <subfield code="9">31</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://www.redi-bw.de/start/blbka/utb-elibrary/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4039042115</subfield>
+    <subfield code="b">DE-Ch1</subfield>
+    <subfield code="9">Ch 1</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4515680579</subfield>
+    <subfield code="b">DE-Frei129</subfield>
+    <subfield code="9">Frei 129</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533090485</subfield>
+    <subfield code="b">DE-100</subfield>
+    <subfield code="9">100</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3557068625</subfield>
+    <subfield code="b">DE-Lg1</subfield>
+    <subfield code="9">Lg 1</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">e</subfield>
+    <subfield code="e">n</subfield>
+    <subfield code="g">eBook UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Zugriff nur aus dem Campus-Netz oder via VPN</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3637138212</subfield>
+    <subfield code="b">DE-747</subfield>
+    <subfield code="9">747</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBook UTB studi-e-books</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">RWU + HSB</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">444111947X</subfield>
+    <subfield code="b">DE-747</subfield>
+    <subfield code="9">747</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBook UTB studi-e-book</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">PHW + HSB</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4829782838</subfield>
+    <subfield code="b">DE-747</subfield>
+    <subfield code="9">747</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBook UTB studi-e-book</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">PHW + HSB</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533090493</subfield>
+    <subfield code="b">DE-He76</subfield>
+    <subfield code="9">He 76</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">utb studi ebook</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Im Campusnetz verfügbar, für Hochschulangehörige mit Passwort auch außerhalb des Campusnetzes erreichbar</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3620507902</subfield>
+    <subfield code="b">DE-751</subfield>
+    <subfield code="9">751</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBook UTB studi</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533093395</subfield>
+    <subfield code="b">DE-Mit1</subfield>
+    <subfield code="9">Mit 1</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4838489617</subfield>
+    <subfield code="b">DE-Zwi2</subfield>
+    <subfield code="9">Zwi 2</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">E-Book UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4036559559</subfield>
+    <subfield code="b">DE-Zi4</subfield>
+    <subfield code="9">Zi 4</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3810866938</subfield>
+    <subfield code="b">DE-840</subfield>
+    <subfield code="9">840</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">UTB E-Book</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Nur aus dem Campusnetz erreichbar</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3810866946</subfield>
+    <subfield code="b">DE-840</subfield>
+    <subfield code="9">840</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">UTB E-Book</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Nur aus dem Campusnetz erreichbar</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533093417</subfield>
+    <subfield code="b">DE-L189</subfield>
+    <subfield code="9">L 189</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="y">HTWK-Zugang</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4285727404</subfield>
+    <subfield code="b">DE-520</subfield>
+    <subfield code="9">520</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">UTB Gebührenmodell</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3582548775</subfield>
+    <subfield code="b">DE-958</subfield>
+    <subfield code="9">958</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBook UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Nur aus dem Campusnetz erreichbar</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3791016164</subfield>
+    <subfield code="b">DE-Stg259</subfield>
+    <subfield code="9">Stg 259</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBook UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Nur aus dem Campusnetz erreichbar</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">379111378X</subfield>
+    <subfield code="b">DE-Mh35</subfield>
+    <subfield code="9">Mh 35</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBook UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Online-Dokument</subfield>
+    <subfield code="l">Nur aus dem Campusnetz erreichbar</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3791559583</subfield>
+    <subfield code="b">DE-Vil2</subfield>
+    <subfield code="9">Vil 2</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBooks UTB 20-22</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Campuslizenz-von extern nach Anmeldung im Hochschulnetz erreichbar</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4206714207</subfield>
+    <subfield code="b">DE-Ofb1</subfield>
+    <subfield code="9">Ofb 1</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="e">p</subfield>
+    <subfield code="g">E-Book UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Zugang im Hochschulnetz der HS Offenburg / extern via VPN oder Shibboleth (Login über Institution) / Beachten Sie die Hinweise zu UTB in DBIS</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3791705814</subfield>
+    <subfield code="b">DE-Rav1</subfield>
+    <subfield code="9">Rav 1</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">E-Book UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Campuslizenz - externer Zugriff nach Anmeldung am Hochschulnetz möglich</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533090507</subfield>
+    <subfield code="b">DE-955</subfield>
+    <subfield code="9">955</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4008834052</subfield>
+    <subfield code="b">DE-950</subfield>
+    <subfield code="9">950</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="e">p</subfield>
+    <subfield code="g">eBook UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Aus dem Campusnetz erreichbar, für Hochschulmitglieder auch von außerhalb (vpn, shibboleth)</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3791079409</subfield>
+    <subfield code="b">DE-Loer2</subfield>
+    <subfield code="9">Lör 2</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBook UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Campuslizenz - externer Zugriff für Hochschulangehörige nach Anmeldung via EZproxy/Shibboleth möglich</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3792144824</subfield>
+    <subfield code="b">DE-941</subfield>
+    <subfield code="9">941</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">E-Book UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Campuslizenz-externer Zugriff nach Anmeldung am Hochschulnetz möglich</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3790921904</subfield>
+    <subfield code="b">DE-Hed2</subfield>
+    <subfield code="9">Hed 2</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">e-Book UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Nur aus dem Campusnetz erreichbar</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">4808325810</subfield>
+    <subfield code="b">DE-984</subfield>
+    <subfield code="9">984</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBook UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Volltext</subfield>
+    <subfield code="l">Im Campusnetz/ extern via VPN oder Shibboleth (Login über Institution)</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3533093492</subfield>
+    <subfield code="b">DE-1141</subfield>
+    <subfield code="9">1141</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Nur aus dem Campusnetz erreichbar</subfield>
+  </datafield>
+  <datafield tag="924" ind1="1" ind2=" ">
+    <subfield code="a">3791045660</subfield>
+    <subfield code="b">DE-Stg258</subfield>
+    <subfield code="9">Stg 258</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">eBook UTB</subfield>
+    <subfield code="k">https://elibrary.utb.de/doi/book/10.36198/9783838547534</subfield>
+    <subfield code="l">Zum Online-Dokument</subfield>
+    <subfield code="l">Nur aus dem Campusnetz erreichbar oder per VPN</subfield>
+  </datafield>
+  <datafield tag="936" ind1="r" ind2="v">
+    <subfield code="a">DN 7000</subfield>
+    <subfield code="b">Allgemeines und Deutschland</subfield>
+    <subfield code="k">Pädagogik</subfield>
+    <subfield code="k">Lehrer und Lehrerbildung</subfield>
+    <subfield code="k">Lehrerbildung</subfield>
+    <subfield code="k">Allgemeines und Deutschland</subfield>
+    <subfield code="0">(DE-627)1270782649</subfield>
+    <subfield code="0">(DE-625)rvk/19744:761</subfield>
+    <subfield code="0">(DE-576)200782649</subfield>
+  </datafield>
+  <datafield tag="936" ind1="b" ind2="k">
+    <subfield code="a">81.31</subfield>
+    <subfield code="j">Lehrpersonal</subfield>
+    <subfield code="j">Erziehungspersonal</subfield>
+    <subfield code="0">(DE-627)106422723</subfield>
+  </datafield>
+  <datafield tag="951" ind1=" " ind2=" ">
+    <subfield code="a">BO</subfield>
+  </datafield>
+</record></zs:recordData><zs:recordPosition>1</zs:recordPosition></zs:record><zs:record><zs:recordSchema>marcxml</zs:recordSchema><zs:recordPacking>xml</zs:recordPacking><zs:recordData><record xmlns="http://www.loc.gov/MARC21/slim">
+  <leader>     cam a22      c 4500</leader>
+  <controlfield tag="001">873537645</controlfield>
+  <controlfield tag="003">DE-627</controlfield>
+  <controlfield tag="005">20260614222026.0</controlfield>
+  <controlfield tag="007">tu</controlfield>
+  <controlfield tag="008">161130s2019    gw |||||      00| ||ger c</controlfield>
+  <datafield tag="015" ind1=" " ind2=" ">
+    <subfield code="a">16,N48</subfield>
+    <subfield code="2">dnb</subfield>
+  </datafield>
+  <datafield tag="015" ind1=" " ind2=" ">
+    <subfield code="a">16,N48</subfield>
+    <subfield code="2">dnb</subfield>
+  </datafield>
+  <datafield tag="016" ind1="7" ind2=" ">
+    <subfield code="a">1119733707</subfield>
+    <subfield code="2">DE-101</subfield>
+  </datafield>
+  <datafield tag="020" ind1=" " ind2=" ">
+    <subfield code="a">3825247538</subfield>
+    <subfield code="q">Pb : circa EUR 24.99 (DE), circa EUR 25.70 (AT), circa CHF 32.50 (freier Preis)</subfield>
+    <subfield code="9">3-8252-4753-8</subfield>
+  </datafield>
+  <datafield tag="020" ind1=" " ind2=" ">
+    <subfield code="a">9783825247539</subfield>
+    <subfield code="q">Pb : circa EUR 24.99 (DE), circa EUR 25.70 (AT), circa CHF 32.50 (freier Preis)</subfield>
+    <subfield code="9">978-3-8252-4753-9</subfield>
+  </datafield>
+  <datafield tag="024" ind1="3" ind2=" ">
+    <subfield code="a">9783825247539</subfield>
+  </datafield>
+  <datafield tag="028" ind1="5" ind2="2">
+    <subfield code="a">4753</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(DE-627)873537645</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(DE-603)454524730</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(DE-576)9873537643</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(DE-599)DNB1119733707</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(OCoLC)964670874</subfield>
+  </datafield>
+  <datafield tag="035" ind1=" " ind2=" ">
+    <subfield code="a">(OCoLC)1126278887</subfield>
+  </datafield>
+  <datafield tag="040" ind1=" " ind2=" ">
+    <subfield code="a">DE-627</subfield>
+    <subfield code="b">ger</subfield>
+    <subfield code="c">DE-627</subfield>
+    <subfield code="e">rda</subfield>
+  </datafield>
+  <datafield tag="041" ind1=" " ind2=" ">
+    <subfield code="a">ger</subfield>
+  </datafield>
+  <datafield tag="044" ind1=" " ind2=" ">
+    <subfield code="c">XA-DE-BY</subfield>
+  </datafield>
+  <datafield tag="072" ind1=" " ind2="7">
+    <subfield code="a">9574</subfield>
+    <subfield code="2">wsb</subfield>
+  </datafield>
+  <datafield tag="082" ind1="0" ind2=" ">
+    <subfield code="a">370.711</subfield>
+    <subfield code="q">DE-101</subfield>
+  </datafield>
+  <datafield tag="082" ind1="0" ind2="4">
+    <subfield code="a">370</subfield>
+    <subfield code="q">DE-101</subfield>
+  </datafield>
+  <datafield tag="084" ind1=" " ind2=" ">
+    <subfield code="a">370#</subfield>
+    <subfield code="2">sdnb</subfield>
+  </datafield>
+  <datafield tag="084" ind1=" " ind2=" ">
+    <subfield code="a">DN 7000</subfield>
+    <subfield code="2">rvk</subfield>
+    <subfield code="0">(DE-625)rvk/19744:761</subfield>
+  </datafield>
+  <datafield tag="084" ind1=" " ind2=" ">
+    <subfield code="a">81.31</subfield>
+    <subfield code="2">bkl</subfield>
+  </datafield>
+  <datafield tag="084" ind1=" " ind2=" ">
+    <subfield code="a">81.61</subfield>
+    <subfield code="2">bkl</subfield>
+  </datafield>
+  <datafield tag="084" ind1=" " ind2=" ">
+    <subfield code="a">81.51</subfield>
+    <subfield code="2">bkl</subfield>
+  </datafield>
+  <datafield tag="100" ind1="1" ind2=" ">
+    <subfield code="a">Kriesche, Julia</subfield>
+    <subfield code="e">VerfasserIn</subfield>
+    <subfield code="0">(DE-588)1049852656</subfield>
+    <subfield code="0">(DE-627)782813925</subfield>
+    <subfield code="0">(DE-576)403850177</subfield>
+    <subfield code="4">aut</subfield>
+  </datafield>
+  <datafield tag="245" ind1="1" ind2="0">
+    <subfield code="a">Lehrer werden mit Methode</subfield>
+    <subfield code="b">Beratung, Selbstreflexion, Professionalisierung - ein multimediales Arbeitsbuch : mit mehr als 100 Materialien, 16 Kurzfilmen und 10 Interviewfilmen auf www.lehrer-werden-mit-methode.de</subfield>
+    <subfield code="c">Julia Kriesche, Joachim Kahlert</subfield>
+  </datafield>
+  <datafield tag="264" ind1=" " ind2="1">
+    <subfield code="a">Bad Heilbrunn</subfield>
+    <subfield code="b">Verlag Julius Klinkhardt</subfield>
+    <subfield code="c">2019</subfield>
+  </datafield>
+  <datafield tag="300" ind1=" " ind2=" ">
+    <subfield code="a">302 Seiten</subfield>
+    <subfield code="b">Illustrationen</subfield>
+    <subfield code="c">21.5 cm x 15 cm</subfield>
+  </datafield>
+  <datafield tag="336" ind1=" " ind2=" ">
+    <subfield code="a">Text</subfield>
+    <subfield code="b">txt</subfield>
+    <subfield code="2">rdacontent</subfield>
+  </datafield>
+  <datafield tag="337" ind1=" " ind2=" ">
+    <subfield code="a">ohne Hilfsmittel zu benutzen</subfield>
+    <subfield code="b">n</subfield>
+    <subfield code="2">rdamedia</subfield>
+  </datafield>
+  <datafield tag="338" ind1=" " ind2=" ">
+    <subfield code="a">Band</subfield>
+    <subfield code="b">nc</subfield>
+    <subfield code="2">rdacarrier</subfield>
+  </datafield>
+  <datafield tag="490" ind1="0" ind2=" ">
+    <subfield code="a">utb</subfield>
+    <subfield code="v">4753</subfield>
+    <subfield code="a">Schulpädagogik</subfield>
+  </datafield>
+  <datafield tag="500" ind1=" " ind2=" ">
+    <subfield code="a">Literaturverzeichnis: Seiten 261-270</subfield>
+  </datafield>
+  <datafield tag="500" ind1=" " ind2=" ">
+    <subfield code="a">Kommentiertes Literaturverzeichnis: Seiten 271-293</subfield>
+  </datafield>
+  <datafield tag="650" ind1="0" ind2="7">
+    <subfield code="0">(DE-588)4035093-9</subfield>
+    <subfield code="0">(DE-627)106249398</subfield>
+    <subfield code="0">(DE-576)20901072X</subfield>
+    <subfield code="a">Lehrerbildung</subfield>
+    <subfield code="2">gnd</subfield>
+  </datafield>
+  <datafield tag="655" ind1=" " ind2="7">
+    <subfield code="a">Lehrbuch</subfield>
+    <subfield code="0">(DE-588)4123623-3</subfield>
+    <subfield code="0">(DE-627)104270187</subfield>
+    <subfield code="0">(DE-576)209561262</subfield>
+    <subfield code="2">gnd-content</subfield>
+  </datafield>
+  <datafield tag="689" ind1="0" ind2="0">
+    <subfield code="D">s</subfield>
+    <subfield code="0">(DE-588)4035093-9</subfield>
+    <subfield code="0">(DE-627)106249398</subfield>
+    <subfield code="0">(DE-576)20901072X</subfield>
+    <subfield code="a">Lehrerbildung</subfield>
+    <subfield code="2">gnd</subfield>
+  </datafield>
+  <datafield tag="689" ind1="0" ind2=" ">
+    <subfield code="5">DE-101</subfield>
+  </datafield>
+  <datafield tag="689" ind1="1" ind2="0">
+    <subfield code="D">s</subfield>
+    <subfield code="0">(DE-588)4035093-9</subfield>
+    <subfield code="0">(DE-627)106249398</subfield>
+    <subfield code="0">(DE-576)20901072X</subfield>
+    <subfield code="a">Lehrerbildung</subfield>
+    <subfield code="2">gnd</subfield>
+  </datafield>
+  <datafield tag="689" ind1="1" ind2="1">
+    <subfield code="D">s</subfield>
+    <subfield code="0">(DE-588)4047376-4</subfield>
+    <subfield code="0">(DE-627)104509368</subfield>
+    <subfield code="0">(DE-576)20907339X</subfield>
+    <subfield code="a">Professionalisierung</subfield>
+    <subfield code="2">gnd</subfield>
+  </datafield>
+  <datafield tag="689" ind1="1" ind2=" ">
+    <subfield code="5">(DE-627)</subfield>
+  </datafield>
+  <datafield tag="700" ind1="1" ind2=" ">
+    <subfield code="a">Kahlert, Joachim</subfield>
+    <subfield code="d">1954-</subfield>
+    <subfield code="e">VerfasserIn</subfield>
+    <subfield code="0">(DE-588)123723051</subfield>
+    <subfield code="0">(DE-627)082728909</subfield>
+    <subfield code="0">(DE-576)165065834</subfield>
+    <subfield code="4">aut</subfield>
+  </datafield>
+  <datafield tag="710" ind1="2" ind2=" ">
+    <subfield code="a">Verlag Julius Klinkhardt</subfield>
+    <subfield code="e">Verlag</subfield>
+    <subfield code="0">(DE-588)2016917-6</subfield>
+    <subfield code="0">(DE-627)101917708</subfield>
+    <subfield code="0">(DE-576)191707244</subfield>
+    <subfield code="4">pbl</subfield>
+  </datafield>
+  <datafield tag="710" ind1="2" ind2=" ">
+    <subfield code="a">Uni-Taschenbücher GmbH</subfield>
+    <subfield code="e">Verlag</subfield>
+    <subfield code="0">(DE-588)5161273-2</subfield>
+    <subfield code="0">(DE-627)713209216</subfield>
+    <subfield code="0">(DE-576)195539338</subfield>
+    <subfield code="4">pbl</subfield>
+  </datafield>
+  <datafield tag="776" ind1="0" ind2="8">
+    <subfield code="i">Erscheint auch als</subfield>
+    <subfield code="n">Online-Ausgabe</subfield>
+    <subfield code="a">Kriesche, Julia</subfield>
+    <subfield code="t">Lehrer werden mit Methode</subfield>
+    <subfield code="d">Bad Heilbrunn : Verlag Julius Klinkhardt, 2019</subfield>
+    <subfield code="h">1 Online-Ressource (302 Seiten)</subfield>
+    <subfield code="w">(DE-627)1680808966</subfield>
+    <subfield code="z">9783838547534</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2="2">
+    <subfield code="u">https://d-nb.info/1119733707/04</subfield>
+    <subfield code="m">B:DE-101</subfield>
+    <subfield code="q">application/pdf</subfield>
+    <subfield code="v">2020-12-02</subfield>
+    <subfield code="x">Verlag</subfield>
+    <subfield code="3">Inhaltsverzeichnis</subfield>
+    <subfield code="7">1</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2="2">
+    <subfield code="u">http://deposit.dnb.de/cgi-bin/dokserv?id=9b7979a0b6284665b9f8fc19101868bf&amp;prov=M&amp;dok_var=1&amp;dok_ext=htm</subfield>
+    <subfield code="m">X: MVB</subfield>
+    <subfield code="q">text/html</subfield>
+    <subfield code="v">2016-11-30</subfield>
+    <subfield code="x">Verlag</subfield>
+    <subfield code="3">Inhaltstext</subfield>
+    <subfield code="7">1</subfield>
+  </datafield>
+  <datafield tag="856" ind1="4" ind2="2">
+    <subfield code="u">http://scans.hebis.de/HEBCGI/show.pl?45452473_toc.pdf</subfield>
+    <subfield code="m">V:DE-603;B:DE-17</subfield>
+    <subfield code="q">application/pdf</subfield>
+    <subfield code="3">Inhaltsverzeichnis</subfield>
+    <subfield code="7">1</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3542120707</subfield>
+    <subfield code="b">DE-9</subfield>
+    <subfield code="9">9</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">310/DN 7000 K92</subfield>
+    <subfield code="h">BB 310</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3549455070</subfield>
+    <subfield code="b">DE-89</subfield>
+    <subfield code="9">89</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">E 19 B 1800</subfield>
+    <subfield code="h">FBE pae 796</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3671237813</subfield>
+    <subfield code="b">DE-Hil2</subfield>
+    <subfield code="9">Hil 2</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">ERZ 780 : K64</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3685127888</subfield>
+    <subfield code="b">DE-Hil2</subfield>
+    <subfield code="9">Hil 2</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">ERZ 780 : K64,b</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">4049811375</subfield>
+    <subfield code="b">DE-715</subfield>
+    <subfield code="9">715</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">pae 790 e DK 6243</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">184095339X</subfield>
+    <subfield code="b">DE-45</subfield>
+    <subfield code="9">45</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">FH: Päd 480 19-6467</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3573331815</subfield>
+    <subfield code="b">DE-700</subfield>
+    <subfield code="9">700</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">IAZ 6241-947 7</subfield>
+    <subfield code="h">B</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3573332668</subfield>
+    <subfield code="b">DE-700</subfield>
+    <subfield code="9">700</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">6227-630 6</subfield>
+    <subfield code="h">B-Freihand-Magazin</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3573333257</subfield>
+    <subfield code="b">DE-700</subfield>
+    <subfield code="9">700</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">6227-631 9</subfield>
+    <subfield code="h">B-Freihand-Magazin</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3573333265</subfield>
+    <subfield code="b">DE-700</subfield>
+    <subfield code="9">700</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">6227-632 2</subfield>
+    <subfield code="h">B-Freihand-Magazin</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3573333273</subfield>
+    <subfield code="b">DE-700</subfield>
+    <subfield code="9">700</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">6227-633 5</subfield>
+    <subfield code="h">B-Freihand-Magazin</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">1798337797</subfield>
+    <subfield code="b">DE-700</subfield>
+    <subfield code="9">700</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">6241-561 7</subfield>
+    <subfield code="h">B-Freihand-Magazin</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3540175717</subfield>
+    <subfield code="b">DE-700</subfield>
+    <subfield code="9">700</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">4779-455 7</subfield>
+    <subfield code="h">E-5</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3872409867</subfield>
+    <subfield code="b">DE-960</subfield>
+    <subfield code="9">960</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">E Jb 3586</subfield>
+    <subfield code="h">DGS</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">1780735510</subfield>
+    <subfield code="b">DE-916</subfield>
+    <subfield code="9">916</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">PA Ah 021</subfield>
+    <subfield code="h">SUD</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">1867578468</subfield>
+    <subfield code="b">DE-517</subfield>
+    <subfield code="9">517</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="h">2508</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3541605472</subfield>
+    <subfield code="b">DE-517</subfield>
+    <subfield code="9">517</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="h">1519</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3541605480</subfield>
+    <subfield code="b">DE-517</subfield>
+    <subfield code="9">517</subfield>
+    <subfield code="c">GBV</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="g">DN 7000 KRI</subfield>
+    <subfield code="h">2001</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3624595776</subfield>
+    <subfield code="b">DE-90</subfield>
+    <subfield code="9">90</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">2020 A 773</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3574826885</subfield>
+    <subfield code="b">DE-Ch1</subfield>
+    <subfield code="9">Ch 1</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">c</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3617690742</subfield>
+    <subfield code="b">DE-Frei129</subfield>
+    <subfield code="9">Frei 129</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">DN 7000 K92 M5</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">4883730972</subfield>
+    <subfield code="b">DE-77-002</subfield>
+    <subfield code="9">77/002</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">d</subfield>
+    <subfield code="g">40 495</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3562112688</subfield>
+    <subfield code="b">DE-Rt2</subfield>
+    <subfield code="9">Rt 2</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">P 1-100-35</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3666839452</subfield>
+    <subfield code="b">DE-752</subfield>
+    <subfield code="9">752</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">c</subfield>
+    <subfield code="g">N ml/ Krie 32</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3785471408</subfield>
+    <subfield code="b">DE-Tue128</subfield>
+    <subfield code="9">Tü 128</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">b</subfield>
+    <subfield code="g">P-LA kr 2</subfield>
+  </datafield>
+  <datafield tag="924" ind1="0" ind2=" ">
+    <subfield code="a">3729171658</subfield>
+    <subfield code="b">DE-F43</subfield>
+    <subfield code="9">F 43</subfield>
+    <subfield code="c">BSZ</subfield>
+    <subfield code="d">c</subfield>
+  </datafield>
+  <datafield tag="936" ind1="r" ind2="v">
+    <subfield code="a">DN 7000</subfield>
+    <subfield code="b">Allgemeines und Deutschland</subfield>
+    <subfield code="k">Pädagogik</subfield>
+    <subfield code="k">Lehrer und Lehrerbildung</subfield>
+    <subfield code="k">Lehrerbildung</subfield>
+    <subfield code="k">Allgemeines und Deutschland</subfield>
+    <subfield code="0">(DE-627)1270782649</subfield>
+    <subfield code="0">(DE-625)rvk/19744:761</subfield>
+    <subfield code="0">(DE-576)200782649</subfield>
+  </datafield>
+  <datafield tag="936" ind1="b" ind2="k">
+    <subfield code="a">81.31</subfield>
+    <subfield code="j">Lehrpersonal</subfield>
+    <subfield code="j">Erziehungspersonal</subfield>
+    <subfield code="0">(DE-627)106422723</subfield>
+  </datafield>
+  <datafield tag="936" ind1="b" ind2="k">
+    <subfield code="a">81.61</subfield>
+    <subfield code="j">Didaktik</subfield>
+    <subfield code="j">Hochschuldidaktik</subfield>
+    <subfield code="0">(DE-627)106422790</subfield>
+  </datafield>
+  <datafield tag="936" ind1="b" ind2="k">
+    <subfield code="a">81.51</subfield>
+    <subfield code="j">Lernprozess</subfield>
+    <subfield code="0">(DE-627)106414755</subfield>
+  </datafield>
+  <datafield tag="936" ind1="s" ind2="n">
+    <subfield code="a">d100</subfield>
+    <subfield code="2">mzub</subfield>
+  </datafield>
+  <datafield tag="936" ind1="s" ind2="n">
+    <subfield code="a">z250</subfield>
+    <subfield code="2">mzub</subfield>
+  </datafield>
+  <datafield tag="951" ind1=" " ind2=" ">
+    <subfield code="a">BO</subfield>
+  </datafield>
+</record></zs:recordData><zs:recordPosition>2</zs:recordPosition></zs:record></zs:records><zs:echoedSearchRetrieveRequest><zs:version>1.1</zs:version><zs:query>pica.isb=9783825247539</zs:query><zs:maximumRecords>5</zs:maximumRecords><zs:recordPacking>xml</zs:recordPacking><zs:recordSchema>marcxml</zs:recordSchema></zs:echoedSearchRetrieveRequest></zs:searchRetrieveResponse>

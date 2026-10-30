@@ -1,0 +1,41 @@
+{
+  "name": "@nimblescape/markdownpaper",
+  "version": "0.1.0",
+  "description": "The command markdownpaper: pages and PDF files from Markdown in a layout that the repository of the document defines, a scaffold of paper projects, layouts and documents, and the rules for AI agents, as the VS Code extension nimblescape Markdown Paper does.",
+  "license": "MIT",
+  "author": {
+    "name": "nimblescape e.U.",
+    "url": "https://nimblescape.com"
+  },
+  "homepage": "https://github.com/nimblescape/markdownpaper-vscode#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nimblescape/markdownpaper-vscode.git",
+    "directory": "cli"
+  },
+  "bugs": {
+    "url": "https://github.com/nimblescape/markdownpaper-vscode/issues"
+  },
+  "keywords": [
+    "markdown",
+    "pdf",
+    "paged-media",
+    "thesis",
+    "scaffold",
+    "ai-agents"
+  ],
+  "bin": {
+    "markdownpaper": "dist/markdownpaper.js"
+  },
+  "files": [
+    "dist/*.js",
+    "dist/layouts/**",
+    "THIRD-PARTY-NOTICES.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -17,7 +17,7 @@
  */
 
 import * as vscode from 'vscode';
-import { notesApi, notesExtensionId } from './notesApi';
+import { registerWithNotes } from './notesApi';
 import { type CitationStyle, citationStyleOf } from './paper/csl';
 import { formatPaper } from './paper/format';
 import { type FrontMatter, isPaperDocument, readFrontMatter } from './paper/frontMatter';
@@ -145,22 +145,5 @@ export class PaperFormatStep implements FormatStep, vscode.Disposable {
  * @returns The registration, which removes the step when it is disposed.
  */
 export function registerFormatStep(step: FormatStep): vscode.Disposable {
-  let registration: vscode.Disposable | undefined;
-  let disposed = false;
-  const extension = vscode.extensions.getExtension(notesExtensionId);
-  void Promise.resolve(extension?.isActive ? undefined : extension?.activate()).then(
-    () => {
-      const register = notesApi()?.registerFormatStep;
-      if (!disposed && register) {
-        registration = register(step);
-      }
-    },
-    () => {
-      // Markdown Notes did not start: the paper has no format step in VS Code.
-    },
-  );
-  return new vscode.Disposable(() => {
-    disposed = true;
-    registration?.dispose();
-  });
+  return registerWithNotes((api) => api.registerFormatStep?.(step));
 }

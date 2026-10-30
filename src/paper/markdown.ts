@@ -61,6 +61,15 @@ export const noteLabel = /^note-[a-z0-9]{4}$/;
 /** noteStart matches the start marker of a note: an HTML comment with "[", the label and an optional color. */
 const noteStart = /^<!--\[note-[a-z0-9]{4}(?:\s[^>]*)?-->$/;
 
+/**
+ * researchStart matches the start marker of an argument for which an AI agent researches the evidence
+ * ([R-CITE-002](../../docs/requirements.md#r-cite-002)).
+ */
+export const researchStart = /^<!--\[research-->$/;
+
+/** startMarker tells whether a token is the start marker of a note or of an argument to research. */
+const startMarker = (token: Token | undefined): boolean => token?.type === 'html_inline' && (noteStart.test(token.content) || researchStart.test(token.content));
+
 /** wbr matches the element <wbr> that stands before a start marker. */
 const wbr = /^<wbr\s*\/?>$/i;
 
@@ -336,7 +345,7 @@ function html(state: StateCore, content: string, block = false): Token {
 
 /**
  * removeNotes removes the notes from the tokens: their references and start markers, and their definitions, and
- * returns the number of the removed notes.
+ * returns the number of the removed notes. It also removes the start markers of the arguments to research.
  * @param tokens - The tokens of the text.
  */
 function removeNotes(tokens: Token[]): number {
@@ -350,11 +359,10 @@ function removeNotes(tokens: Token[]): number {
         labels.add(child.meta.label);
         return false;
       }
-      if (child.type === 'html_inline' && noteStart.test(child.content)) {
+      if (startMarker(child)) {
         return false;
       }
-      const next = children[index + 1];
-      return !(child.type === 'html_inline' && wbr.test(child.content) && next?.type === 'html_inline' && noteStart.test(next.content));
+      return !(child.type === 'html_inline' && wbr.test(child.content) && startMarker(children[index + 1]));
     });
   }
   // The definitions of the notes in the block of the footnotes at the end.

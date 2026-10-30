@@ -9,6 +9,7 @@
  * files; the host writes them, and never over an existing file. It uses no API of VS Code.
  */
 
+import { readFrontMatter } from './frontMatter';
 import { type FieldSpec, formatText, type Layout, layoutFile } from './layout';
 
 /** NewFile is a file to write: its path, relative to the folder of the new project or layout, and its content. */
@@ -45,7 +46,7 @@ export function frontMatterOf(layout: Pick<Layout, 'id' | 'fields'>, values: Rea
       const choices = spec.values ? ` Values: ${spec.values.join(', ')}.` : '';
       lines.push(`# ${spec.required ? '(required) ' : ''}${spec.description}${choices}`.replace(/\s+/g, ' ').trimEnd());
     }
-    lines.push(`${key}: ${yamlString(values[key] ?? '')}`);
+    lines.push(`${key}: ${yamlString(values[key] ?? spec.default ?? '')}`);
   }
   for (const [key, value] of Object.entries(values)) {
     if (!(key in layout.fields) && key !== 'layout') {
@@ -57,25 +58,157 @@ export function frontMatterOf(layout: Pick<Layout, 'id' | 'fields'>, values: Rea
 }
 
 /**
- * newDocumentText returns the text of a new document of a layout: its front matter, and the start document of the
- * layout or a first heading.
- * @param layout - The layout.
- * @param start - The text of the start document of the layout, or undefined.
- * @param values - The values of fields that the document gets.
+ * splitStart splits the empty paper document of a layout ([R-LAY-009](../../docs/requirements.md#r-lay-009)) into the
+ * values of its front matter, such as the texts of the cover page of a template, and its text after the front matter.
+ * A comment at its start, such as a license, is left out.
+ * @param start - The text of the empty paper document.
  */
-export function newDocumentText(layout: Pick<Layout, 'id' | 'fields' | 'terms'>, start: string | undefined, values: Readonly<Record<string, string>> = {}): string {
-  const body = start?.trim() ? start.replace(/^<!--[\s\S]*?-->\s*/, '').trim() : `# ${layout.terms.figure === 'Abbildung' ? 'Einleitung' : 'Introduction'}\n\n`;
-  return `${frontMatterOf(layout, values)}\n\n${body.trimEnd()}\n`;
+export function splitStart(start: string): { values: Record<string, string>; body: string } {
+  const text = start.replace(/^\uFEFF?<!--[\s\S]*?-->\s*/, '');
+  const frontMatter = readFrontMatter(text);
+  if (!frontMatter || frontMatter.errors.length > 0) {
+    return { values: {}, body: text.trim() };
+  }
+  const values = Object.fromEntries(Object.entries(frontMatter.values).filter(([key]) => key !== 'layout'));
+  return { values, body: text.split(/\r?\n/).slice(frontMatter.end + 1).join('\n').trim() };
 }
 
 /**
- * newLayoutFiles returns the files of a new layout, copied from another layout, with a new name and language.
+ * newDocumentText returns the text of a new document of a layout: its front matter with the values of the empty paper
+ * document of the layout and the given values, and the text of the empty paper document, or a first heading.
+ * @param layout - The layout.
+ * @param start - The text of the empty paper document of the layout, or undefined.
+ * @param values - The values of fields that the document gets, before the values of the empty paper document.
+ */
+export function newDocumentText(layout: Pick<Layout, 'id' | 'fields' | 'terms'>, start: string | undefined, values: Readonly<Record<string, string>> = {}): string {
+  const parts = start?.trim() ? splitStart(start) : undefined;
+  const body = parts?.body || `# ${layout.terms.figure === 'Abbildung' ? 'Einleitung' : 'Introduction'}\n\n`;
+  return `${frontMatterOf(layout, { ...parts?.values, ...values })}\n\n${body.trimEnd()}\n`;
+}
+
+/** decodePath returns a path of a link without its escapes, or the path as it is when its escapes are wrong. */
+function decodePath(path: string): string {
+  try {
+    return decodeURI(path);
+  } catch {
+    return path;
+  }
+}
+
+/** fence matches the line that opens or closes a code block: three or more backticks or tildes. */
+const fence = /^ {0,3}(`{3,}|~{3,})/;
+
+/**
+ * mapLinks calls a function for the target of each link, image and listing comment of a Markdown text outside its code
+ * blocks and code spans, and puts the result of the function in the place of the target.
+ * @param text - The Markdown text.
+ * @param map - The function: it gets the path of a target without its escapes and without its part after `#`, and
+ *   returns the new path with its escapes, or the path that it got to keep the target as it is.
+ */
+export function mapLinks(text: string, map: (path: string) => string): string {
+  let open: string | undefined;
+  return text
+    .split('\n')
+    .map((line) => {
+      const marker = fence.exec(line)?.[1];
+      if (open) {
+        if (marker && marker[0] === open[0] && marker.length >= open.length && line.trim() === marker) {
+          open = undefined;
+        }
+        return line;
+      }
+      if (marker) {
+        open = marker;
+        return line;
+      }
+      // A target that the function keeps stays as it is written, with its escapes.
+      const target = (path: string): string => {
+        const decoded = decodePath(path);
+        const mapped = map(decoded);
+        return mapped === decoded ? path : mapped;
+      };
+      return line
+        .split(/(`+[^`]*`+)/)
+        .map((part, index) =>
+          index % 2 === 1
+            ? part
+            : part
+                .replace(/(\]\()([^)\s#]+)/g, (_, before: string, path: string) => `${before}${target(path)}`)
+                .replace(/(<!--\s*listing:\s*)([^\s#]+)/g, (_, before: string, path: string) => `${before}${target(path)}`),
+        )
+        .join('');
+    })
+    .join('\n');
+}
+
+/**
+ * linkedFiles returns the files of a layout folder that a text links to, for example the images and the source code of
+ * the empty paper document, by their paths in the folder.
+ * @param text - The text.
+ * @param source - The files of the layout folder, by their paths in it.
+ */
+export function linkedFiles(text: string, source: ReadonlyMap<string, Uint8Array>): string[] {
+  const found = new Set<string>();
+  mapLinks(text, (path) => {
+    const relative = path.replace(/^\.\//, '');
+    if (source.has(relative)) {
+      found.add(relative);
+    }
+    return path;
+  });
+  return [...found].sort();
+}
+
+/**
+ * rebaseLinks puts a prefix before the target of each link of a text to one of the given files, for a text that moves
+ * to another folder than these files.
+ * @param text - The text.
+ * @param files - The paths of the files.
+ * @param prefix - The prefix, for example `../`.
+ */
+export function rebaseLinks(text: string, files: readonly string[], prefix: string): string {
+  const moved = new Set(files);
+  return mapLinks(text, (path) => (moved.has(path.replace(/^\.\//, '')) ? encodeURI(`${prefix}${path.replace(/^\.\//, '')}`) : path));
+}
+
+/**
+ * startFiles returns the files that a new document copies from the folder of its layout: the files that the empty
+ * paper document links to, for example its images and its source code, at the same paths beside the new document.
+ * @param start - The text of the empty paper document, or undefined.
+ * @param source - The files of the layout folder, by their paths in it.
+ */
+export function startFiles(start: string | undefined, source: ReadonlyMap<string, Uint8Array>): NewFile[] {
+  return start ? linkedFiles(start, source).map((path) => ({ path, content: source.get(path) ?? new Uint8Array() })) : [];
+}
+
+/**
+ * previewOf returns the path of the preview PDF of a layout folder ([R-LAY-009](../../docs/requirements.md#r-lay-009))
+ * from its `layout.json`, or undefined.
+ * @param source - The files of the layout folder, by their paths in it.
+ */
+function previewOf(source: ReadonlyMap<string, Uint8Array>): string | undefined {
+  const json = source.get(layoutFile);
+  try {
+    const preview = json ? (JSON.parse(decoder.decode(json)) as { preview?: unknown }).preview : undefined;
+    return typeof preview === 'string' ? preview.replace(/^\.\//, '') : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * newLayoutFiles returns the files of a new layout, copied from another layout, with a new name and language. The
+ * preview PDF of the other layout stays out: it shows the other layout.
  * @param source - The files of the layout to copy, by their paths in its folder.
  * @param options - The name of the new layout, and its language.
  */
 export function newLayoutFiles(source: ReadonlyMap<string, Uint8Array>, options: { name: string; language?: string }): NewFile[] {
   const files: NewFile[] = [];
+  const preview = previewOf(source);
   for (const [path, content] of source) {
+    if (path === preview) {
+      continue;
+    }
     if (path === layoutFile) {
       const json = JSON.parse(decoder.decode(content)) as Record<string, unknown>;
       json.format = formatText;
@@ -166,17 +299,21 @@ authors; the PDF leaves them out. Keep them as they are unless you are asked to 
 }
 
 /**
- * newProjectFiles returns the files of a new project: AGENTS.md, the copy of the layout, the document, and the folders
- * of the sources and of the images.
+ * newProjectFiles returns the files of a new project: AGENTS.md, the copy of the layout, the document from the empty
+ * paper document of the layout with the files that it links to at the same paths in the project, and the folders of the
+ * sources and of the images.
  * @param options - The options.
  * @param start - The text of the start document of the layout, or undefined.
  */
 export function newProjectFiles(options: ProjectOptions, start: string | undefined): NewFile[] {
   const layoutFiles = newLayoutFiles(options.source, { name: options.layout.name, language: options.language }).map((file) => ({ ...file, path: `layouts/${options.layout.id}/${file.path}` }));
+  const linked = startFiles(start, options.source);
+  const text = newDocumentText(options.layout, start, options.values);
   return [
     { path: 'AGENTS.md', content: agentsText(options.layout.id) },
     ...layoutFiles,
-    { path: 'paper/paper.md', content: newDocumentText(options.layout, start, options.values) },
+    ...linked,
+    { path: 'paper/paper.md', content: rebaseLinks(text, linked.map((file) => file.path), '../') },
     { path: `${inboxFolder}/.gitkeep`, content: '' },
     { path: `${sourcesFolder}/.gitkeep`, content: '' },
     { path: 'images/.gitkeep', content: '' },

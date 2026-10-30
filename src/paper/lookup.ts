@@ -33,8 +33,11 @@ export interface Response {
   body: Uint8Array;
 }
 
-/** Fetcher sends a GET request with the header Accept and returns the answer; it throws when the host is not reached. */
-export type Fetcher = (url: string, accept: string) => Promise<Response>;
+/**
+ * Fetcher sends a GET request with the header Accept and more headers, if any, and returns the answer; it throws when
+ * the host is not reached.
+ */
+export type Fetcher = (url: string, accept: string, headers?: Readonly<Record<string, string>>) => Promise<Response>;
 
 /** Context is what a lookup needs: the network, or none offline, and the day of the access of a web page. */
 export interface Context {

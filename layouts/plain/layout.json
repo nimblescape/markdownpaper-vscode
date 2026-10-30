@@ -7,6 +7,7 @@
   "before": ["title.html"],
   "after": [],
   "document": "document.md",
+  "preview": "document.pdf",
   "fields": {
     "title": {
       "description": "The title of the document: on the first page, in the title of the PDF and in the name of its file.",

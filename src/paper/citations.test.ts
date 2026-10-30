@@ -11,7 +11,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { describe, expect, test } from 'vitest';
-import { addSources, citationProblems, findCitations, findDatabase, parseData, sourceLine, writeCitations } from './citations';
+import { addSources, citationProblems, findCitations, findDatabase, parseData, researchEdit, researchMarkers, sourceLine, writeCitations } from './citations';
 import type { CitationStyle } from './csl';
 import { type Layout, termsFor } from './layout';
 
@@ -246,4 +246,44 @@ test('the problems name the database, the titles of the citations, the paragraph
     [0, 'The source "shao2025" has no e'],
   ]);
   expect(citationProblems(['Text.'], layout)).toEqual([]);
+});
+
+test('an argument to research ends at its "(RESEARCH)" in its paragraph, and a start marker without one is a warning (R-CITE-002)', () => {
+  const problems = (lines: string[]) => citationProblems(lines, layout).map((problem) => [problem.line, problem.message.slice(0, 30)]);
+  expect(problems(['<wbr><!--[research-->Feedback changes learning (RESEARCH).'])).toEqual([[0, '"(RESEARCH)" asks an AI agent ']]);
+  expect(problems(['<wbr><!--[research-->Feedback changes', 'learning (RESEARCH).'])).toEqual([[1, '"(RESEARCH)" asks an AI agent ']]);
+  expect(problems(['<wbr><!--[research-->Feedback changes learning.', '', 'Another paragraph (RESEARCH).'])).toEqual([
+    [0, 'The argument to research has n'],
+    [2, '"(RESEARCH)" asks an AI agent '],
+  ]);
+  // A mark in a code span is text.
+  expect(problems(['Type `/research`: the argument gets `<wbr><!--[research-->` and `(RESEARCH)`.'])).toEqual([]);
+});
+
+test('the start markers of the arguments to research, with the <wbr> before them, are hidden outside code (R-CITE-002, R-GEN-003)', () => {
+  const lines = [
+    '---',
+    'layout: plain',
+    '---',
+    'Agents <wbr><!--[research-->change the work (RESEARCH). <!--[research-->Teams learn (RESEARCH).',
+    'The mark `<wbr><!--[research-->` in code.',
+    '```markdown',
+    '<wbr><!--[research-->In a code block (RESEARCH).',
+    '```',
+  ];
+  expect(researchMarkers(lines)).toEqual([
+    { line: 3, start: 7, end: 28 },
+    { line: 3, start: 56, end: 72 },
+  ]);
+  expect(researchMarkers(['No argument.'])).toEqual([]);
+});
+
+test('/research puts the start marker before the selected argument and "(RESEARCH)" before a punctuation mark at its end (R-CITE-002)', () => {
+  expect(researchEdit('change the work')).toEqual({ start: 0, end: 15 });
+  expect(researchEdit(' Feedback changes learning more than praise does. ')).toEqual({ start: 1, end: 48 });
+  expect(researchEdit('Feedback changes\nlearning?')).toEqual({ start: 0, end: 25 });
+  expect(researchEdit('  ')).toBe('Select the argument to research, then type /research.');
+  expect(researchEdit('.')).toBe('Select the argument to research, then type /research.');
+  expect(researchEdit('First argument.\n\nSecond argument.')).toBe('Select an argument in one paragraph.');
+  expect(researchEdit('Teams learn (RESEARCH).')).toBe('The selected text has a mark of /research already.');
 });

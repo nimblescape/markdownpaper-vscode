@@ -92,14 +92,21 @@ gives the same renderer to people and AI agents on the command line:
   for example `{{matrikelnummer}}_{{author}}`. The PDF shows what the other
   Markdown extensions add, such as the diagrams of Mermaid and the math of
   KaTeX.
-- **New project, document and layout.** "New Project" writes the folders of a
-  paper: `AGENTS.md` for AI agents, the layout, `paper/paper.md`, the drop
-  folder `inbox/` for sources, the folder `bib/` for the files of the
-  sources, and `images/`. "New Document" and "New Layout" add a document or a
-  layout.
+- **New project, document and layout.** "New Project" lists the layouts of
+  the workspace, the built-in layouts and the layouts on GitHub, with a button
+  that opens the preview PDF of a layout on GitHub. It writes the folders of a
+  paper: `AGENTS.md` for AI agents, the chosen layout, `paper/paper.md` from
+  the empty paper document of the layout, which explains how to work with the
+  layout, the drop folder `inbox/` for sources, the folder `bib/` for the
+  files of the sources, and `images/`. "New Document" and "New Layout" add a
+  document or a layout.
 - **Notes.** The notes of nimblescape Markdown Notes do not show on the pages.
   The page preview and the PDF of a file in its clean editing view show the
-  file itself.
+  file itself. The clean editing view hides the database of the sources.
+- **Research.** With Markdown Notes, select an argument in a paper document
+  and type `/research`: the argument gets a hidden start marker and
+  `(RESEARCH)` at its end, where an AI agent puts the citations of the
+  sources that it finds.
 
 ## Usage
 
@@ -147,9 +154,10 @@ describes every feature.
   source text of a diagram.
 - A layout has no scripts. Its templates know fields and parts that show
   only with a field, no other logic.
-- The slash commands `/source`, `/cite` and `/research` for the citations are
-  planned; until then, an AI agent or you write the sources and the links of
-  the citations, and the format writes their text and the reference list.
+- The slash command `/cite` is planned, also with the sources of Zotero;
+  until then, an AI agent adds the sources with `markdownpaper source`, an AI
+  agent or you write the links of the citations, and the format writes their
+  text and the reference list. `/research` needs nimblescape Markdown Notes.
 
 ---
 

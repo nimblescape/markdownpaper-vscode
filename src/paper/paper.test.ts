@@ -16,7 +16,7 @@ import { hyphenateHtml, hyphenatorOf, softHyphen } from './hyphenate';
 import { topicList, topics } from './instructions';
 import { formatText, parseLayout, termsFor } from './layout';
 import { findLayout, type Host, type Reader, render, rewriteCss, rewriteHtml } from './render';
-import { frontMatterOf, newDocumentText, newLayoutFiles, newProjectFiles } from './scaffold';
+import { frontMatterOf, linkedFiles, mapLinks, newDocumentText, newLayoutFiles, newProjectFiles, rebaseLinks, splitStart, startFiles } from './scaffold';
 import { fill, pdfNameOf } from './template';
 
 const encoder = new TextEncoder();
@@ -117,6 +117,15 @@ describe('layout.json (R-LAY-002)', () => {
     expect(layout?.terms.table).toBe('Tab.');
     expect(layout?.unnumbered).toEqual([]);
     expect(problems.map((problem) => problem.severity)).toEqual(['warning', 'warning', 'warning', 'warning']);
+  });
+
+  test('the empty paper document and the preview name files of the folder; a missing one is no warning for a document (R-LAY-009)', () => {
+    expect(parseLayout(JSON.stringify({ format: formatText, document: 'document.md', preview: 'document.pdf' }), 'x', 'file:///x/')).toMatchObject({ layout: { document: 'document.md', preview: 'document.pdf' }, problems: [] });
+    expect(parseLayout(JSON.stringify({ format: formatText }), 'x', 'file:///x/').problems).toEqual([]);
+    const { layout, problems } = parseLayout(JSON.stringify({ format: formatText, document: '../a.md', preview: 3 }), 'x', 'file:///x/');
+    expect(layout?.document).toBeUndefined();
+    expect(layout?.preview).toBeUndefined();
+    expect(problems.map((problem) => problem.message)).toEqual(['The field "document" of the layout "x" must name a file of the layout folder.', 'The field "preview" of the layout "x" must name a file of the layout folder.']);
   });
 
   test('a layout can number special sections, hyphenate the reference list and leave the front part out of the table of contents', () => {
@@ -299,6 +308,72 @@ describe('scaffold (R-NEW-001 to R-NEW-003)', () => {
     expect(files.map((file) => file.path)).toEqual(['AGENTS.md', 'layouts/plain/layout.json', 'paper/paper.md', 'inbox/.gitkeep', 'bib/.gitkeep', 'images/.gitkeep']);
     expect(decoder.decode(encoder.encode(files[0].content as string))).toContain('npx -y @nimblescape/markdownpaper instructions document');
     expect(JSON.parse(files[1].content as string).language).toBe('de-AT');
+  });
+
+  test('the empty paper document gives the values of its front matter, and the given values and the defaults come first (R-LAY-009)', () => {
+    const start = '<!-- license -->\n---\nlayout: other\ntitle: "Titel eintragen"\nauthor: "Vorname Nachname"\n---\n\n# Start\n';
+    expect(splitStart(start)).toEqual({ values: { title: 'Titel eintragen', author: 'Vorname Nachname' }, body: '# Start' });
+    expect(splitStart('# Only text\n')).toEqual({ values: {}, body: '# Only text' });
+    const text = newDocumentText(plain, start, { title: 'Mein Titel' });
+    expect(readFrontMatter(text)?.values).toMatchObject({ layout: 'plain', title: 'Mein Titel', author: 'Vorname Nachname' });
+    expect(text.endsWith('---\n\n# Start\n')).toBe(true);
+    expect(frontMatterOf({ id: 'x', fields: { kind: { description: 'The kind.', required: false, default: 'thesis' } } }, {})).toContain('kind: "thesis"');
+  });
+
+  test('the files that the empty paper document links to go with it, and the links outside code get ../ in paper/ (R-LAY-009)', () => {
+    const start = [
+      '---',
+      'title: "T"',
+      '---',
+      '',
+      'Figure 1: Folders <a id="fig-folders"></a>',
+      '',
+      '![Folders](images/the%20folders.svg)',
+      '',
+      'Listing 1: [Mean](code/mean.py#L1-L3) (mean.py, L1-L3)',
+      '',
+      '<!-- listing: code/mean.py#mean -->',
+      '',
+      '```markdown',
+      '![Folders](images/the%20folders.svg)',
+      '```',
+      '',
+      'Write `![x](images/the%20folders.svg)`, see [the site](https://example.com/a%2Fb) and [missing](images/none.png).',
+    ].join('\n');
+    const source = new Map([
+      ['layout.json', encoder.encode(JSON.stringify({ format: formatText, name: 'Plain', preview: 'document.pdf' }))],
+      ['document.pdf', encoder.encode('%PDF')],
+      ['images/the folders.svg', encoder.encode('<svg/>')],
+      ['code/mean.py', encoder.encode('def mean(): pass\n')],
+    ]);
+    expect(linkedFiles(start, source)).toEqual(['code/mean.py', 'images/the folders.svg']);
+    expect(startFiles(start, source).map((file) => file.path)).toEqual(['code/mean.py', 'images/the folders.svg']);
+    expect(startFiles(undefined, source)).toEqual([]);
+    const moved = rebaseLinks(start, ['code/mean.py', 'images/the folders.svg'], '../').split('\n');
+    expect(moved[6]).toBe('![Folders](../images/the%20folders.svg)');
+    expect(moved[8]).toBe('Listing 1: [Mean](../code/mean.py#L1-L3) (mean.py, L1-L3)');
+    expect(moved[10]).toBe('<!-- listing: ../code/mean.py#mean -->');
+    // A code block, a code span, another address and a link to no file of the layout stay as they are.
+    expect(moved[13]).toBe('![Folders](images/the%20folders.svg)');
+    expect(moved[16]).toBe('Write `![x](images/the%20folders.svg)`, see [the site](https://example.com/a%2Fb) and [missing](images/none.png).');
+    expect(mapLinks('[a](b%zz)', (target) => target)).toBe('[a](b%zz)');
+
+    const files = newProjectFiles({ layout: plain, source, language: 'en-US', values: {} }, start);
+    expect(files.map((file) => file.path)).toEqual(['AGENTS.md', 'layouts/plain/code/mean.py', 'layouts/plain/images/the folders.svg', 'layouts/plain/layout.json', 'code/mean.py', 'images/the folders.svg', 'paper/paper.md', 'inbox/.gitkeep', 'bib/.gitkeep', 'images/.gitkeep']);
+    expect(files.find((file) => file.path === 'paper/paper.md')?.content).toContain('![Folders](../images/the%20folders.svg)');
+    // A copy of the layout leaves its preview PDF out, because it shows the pages of the other layout.
+    expect(newLayoutFiles(source, { name: 'mine' }).map((file) => file.path)).toEqual(['code/mean.py', 'images/the folders.svg', 'layout.json']);
+  });
+
+  test('the built-in layout plain has its empty paper document, its preview and the files that the document links to (R-LAY-009)', () => {
+    const folder = path.join(repository, 'layouts/plain');
+    expect(plain.document).toBe('document.md');
+    expect(plain.preview).toBe('document.pdf');
+    expect(fs.existsSync(path.join(folder, 'document.pdf'))).toBe(true);
+    const start = fs.readFileSync(path.join(folder, 'document.md'), 'utf8');
+    const source = new Map(['images/project-folders.svg', 'code/mean.py'].map((file) => [file, fs.readFileSync(path.join(folder, file))]));
+    expect(linkedFiles(start, source)).toEqual(['code/mean.py', 'images/project-folders.svg']);
+    expect(splitStart(start).values).toMatchObject({ title: 'Enter the title', author: 'First name Last name' });
   });
 
   test('AGENTS.md names the files of the sources by the IDs of decision 22 (R-CITE-001)', () => {

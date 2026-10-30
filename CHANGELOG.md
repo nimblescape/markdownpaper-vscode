@@ -86,13 +86,24 @@ The first version.
 - "New Project", "New Document" and "New Layout": a project gets `AGENTS.md`
   for AI agents, a copy of the layout, `paper/paper.md`, the drop folder
   `inbox/` for sources, the folder `bib/` for the files of the sources, and
-  `images/`.
+  `images/`. "New Project" and `markdownpaper create` without `--layout`
+  list the layouts of the workspace, the built-in layouts and the layouts on
+  GitHub (the repositories with the topic
+  `nimblescape-markdownpaper-layout`), with their preview PDF; `--layout
+  github:<owner>/<repository>/<folder>` names a layout on GitHub.
+- The empty paper document and its preview: each layout names in
+  `layout.json` its empty paper document (`document`), which a new document
+  starts from, with the values of the cover page and example texts that
+  explain the layout, and its PDF (`preview`); the files that the document
+  links to go into the new project. `markdownpaper preview` writes the PDF,
+  and `markdownpaper layouts` lists the layouts.
 - The settings `nimblescape.markdownPaper.browserPath`,
   `nimblescape.markdownPaper.previewDelay` and
   `nimblescape.markdownPaper.openPdf`.
 - The npm package `@nimblescape/markdownpaper` with the command
-  `markdownpaper`: `pdf`, `check`, `create`, `new document|layout|project` and
-  `instructions document|layout|render`, the rules for AI agents.
+  `markdownpaper`: `pdf`, `check`, `create`, `new document|layout|project`,
+  `layouts`, `preview` and `instructions document|layout|render`, the rules
+  for AI agents.
 - Citations: the sources of a document as CSL JSON in a comment at the end of
   the file, citations as links to their source with the place in the title of
   the link, and the format writes the text of each citation and the reference
@@ -108,3 +119,10 @@ The first version.
   a saved HTML page, and the DOI in the metadata of a PDF. Each new source
   gets its ID; a source that the database has already is not added again.
   `--search <words>` lists works of Crossref with their DOIs.
+- `/research` in VS Code with nimblescape Markdown Notes: on selected text of a
+  paper document, it puts a hidden start marker before the argument and
+  `(RESEARCH)` at its end, where an AI agent puts the citations of the sources
+  that it finds. The checks warn of each `(RESEARCH)` and of a start marker
+  without one, the pages leave the start marker out, and the clean editing
+  view of Markdown Notes hides the start marker and the database of the
+  sources.

@@ -41,12 +41,12 @@ This document replaces it where the two differ.
 | 10 | The anchors of figures and tables, the links to them and to headings, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-003](#r-ren-003), [R-REN-009](#r-ren-009) | done |
 | 11 | The interface of Markdown Notes: the file behind the clean editing view | [R-GEN-003](#r-gen-003) | done |
 | 12 | One formatter command: `markdownpaper format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | the steps of the paper done (step 22); the steps of Markdown Notes on the command line need the library of `@nimblescape/markdownnotes` |
-| 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | the database, the citations, the reference list and their checks done, in the format step and in `markdownpaper format`; the slash commands and the database hidden in the clean editing view of Markdown Notes planned |
+| 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | the database, the citations, the reference list and their checks done, in the format step and in `markdownpaper format`; the database hidden in the clean editing view of Markdown Notes and `/research` done in step 30; `/cite` in step 29 |
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006), [R-LAY-007](#r-lay-007) | done: the instructions, and the PHT layouts `thesis/` and `concept/` |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
 | 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; the command line is open |
-| 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark is decided, the form of the repository and the name in the front matter wait for a decision |
+| 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | the repositories on GitHub done in step 28; the name of a layout on GitHub in the front matter and the npm packages wait for a decision |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` with the cite of the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
 | 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
@@ -56,6 +56,9 @@ This document replaces it where the two differ.
 | 25 | Parameters of a layout (fields with `values`), their check and hover, and the JSON schema of `layout.json` | [R-LAY-002](#r-lay-002), [R-DOC-002](#r-doc-002), [R-DOC-003](#r-doc-003) | done |
 | 26 | Layouts close to a Word template: numbered special sections (`headings.numberedSections`), a hyphenated reference list (`references.hyphenate`), the natural spaces of the last line of a justified paragraph whose spaces shrink; the PHT concept layout in the look of its Word template | [R-REN-004](#r-ren-004), [R-REN-007](#r-ren-007), [R-REN-012](#r-ren-012), [R-LAY-002](#r-lay-002) | done |
 | 27 | The parts of a document (front part, body, appendix part) as elements for their own pages, and a table of contents without the front part (`contents.front`); the PHT thesis layout in the look of its Word template | [R-REN-013](#r-ren-013), [R-REN-004](#r-ren-004), [R-LAY-002](#r-lay-002) | done |
+| 28 | The empty paper document and its preview PDF in each layout; the list of the layouts of `create` and "New Project" with the layouts on GitHub; `markdownpaper layouts` and `markdownpaper preview` | [R-LAY-009](#r-lay-009), [R-NEW-004](#r-new-004), [R-LAY-007](#r-lay-007) | done; the PHT layouts have their empty paper documents and previews |
+| 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, and the merge of a chosen item into the database | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | planned; the open questions of the discussion document come first |
+| 30 | `/research` on a selected argument: the start marker and `(RESEARCH)`, the rules for AI agents, the checks, the slash command on selected text, and the start marker and the database hidden in the clean editing view of Markdown Notes | [R-CITE-002](#r-cite-002), [R-GEN-003](#r-gen-003) | done |
 
 ## General
 
@@ -107,23 +110,33 @@ interface from its activation, as the Git extension of VS Code does:
 without it.
 
 - Version 1: `fileOf(uri)` returns the file behind a document of the clean
-  editing view of Markdown Notes (scheme `markdown-notes`), so that the page
+  editing view of Markdown Notes (scheme `markdownnotes`), so that the page
   preview, the checks and "Export PDF" read the file itself, with its
-  footnotes. Without the interface, the file is the open document with the
-  same path.
-- Planned in the same version: `registerFormatStep(step)` with `applies(lines,
+  footnotes. Markdown Paper asks `fileOf` for each document that is no file.
+  Without the interface, the file is the open document with the same path.
+- Also in version 1: `registerFormatStep(step)` with `applies(lines,
   file)` and `format(lines, file)`, a step of the formatter of Markdown Notes,
   for [R-CLI-002](#r-cli-002) and [R-CITE-004](#r-cite-004);
   `registerHiddenBlocks({ find(lines) })`, blocks at the end of a file that the
   clean editing view leaves out, for the database of [R-CITE-001](#r-cite-001);
   `registerSlashCommand({ label, description, detail, run(editor, range) })`, a
-  slash command of the text editor (a slash and small letters), for `/source`,
-  `/cite` and `/research` of [R-CITE-002](#r-cite-002). Each call returns a
+  slash command of the text editor (a slash and small letters), for `/cite`
+  and `/research` of [R-CITE-002](#r-cite-002). Each call returns a
   `Disposable`. Markdown Notes has them since commit `bf3b719` of its
   [pull request 1](https://github.com/nimblescape/markdownnotes-vscode/pull/1).
   Markdown Paper adds its format step with `registerFormatStep`
   ([R-CLI-002](#r-cli-002)); an older version of Markdown Notes without it
   gets no step.
+- For `/research` ([decision 43](#decisions)), Markdown Notes has since
+  commit `657ff6c` of its pull request 1: `registerSlashCommand` with
+  `selection: true`, which offers the command only when a typed slash
+  replaced selected text, puts the text back, and gives `run(editor, range)`
+  the range of that text; and `registerHiddenMarkers({ find(lines) })`, parts
+  of lines that the clean editing view leaves out and keeps at their text.
+  Markdown Paper registers the database of the sources as a hidden block
+  ([R-CITE-001](#r-cite-001)), each start marker `<wbr><!--[research-->`
+  outside code as a hidden marker, and `/research`. A version of Markdown
+  Notes without a function gets no such part.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
@@ -311,7 +324,8 @@ repository of the document ([decision 3](#decisions)).
   built-in style or a CSL file of the layout folder,
   [R-CITE-003](#r-cite-003)).
 - `stylesheets`, `before` and `after` (the templates of the fixed pages before
-  and after the text), `document` (the start text of a new document).
+  and after the text), `document` and `preview` (the empty paper document and
+  its PDF, [R-LAY-009](#r-lay-009)).
 - `fields`: the fields of the front matter, each with a description, and with
   `required` and `default` when needed. A field with `values`, a list of
   names, is a parameter of the layout: the author chooses one name in the
@@ -415,12 +429,24 @@ names Markdown Paper, and the page of the topic,
 <https://github.com/topics/nimblescape-markdownpaper-layout>, lists every
 layout repository ([decision 29](#decisions)). The papers of one repository
 can have different layouts, for example the thesis paper and the concept
-paper of `scalarion/transcribe`. The PHT layouts are `thesis/`, where each
-chapter starts on a new page, and `concept/`, the same pages for the concept
-paper, where a chapter follows the text before it; both have the look of the
-PHT template and its citation style. The form of a layout repository and the name
-of its layout in the front matter are not decided yet (see the
-[open questions](#open-questions)).
+paper of `scalarion/transcribe`. The PHT layouts are one folder for each
+version, for example `thesis-v2/`, where each chapter starts on a new page,
+and `concept-v2/`, the same pages for the concept paper, where a chapter
+follows the text before it; both have the look of the PHT template and its
+citation style.
+
+- A layout repository holds one layout at its root, or several layout
+  folders, each with its own `layout.json`, up to two folder levels deep. The
+  name of a folder is the name of its layout ([decision 41](#decisions)).
+- A layout on GitHub has the name
+  `github:<owner>/<repository>/<folder>`, with `@<branch, tag or commit>` for
+  another version than the default branch, for example
+  `github:majikmate/markdownpaper-layout-pht/thesis-v2`. A new project copies
+  it into `layouts/<folder>/` ([R-NEW-004](#r-new-004)), so its documents
+  name the copy, for example `layout: thesis-v2`.
+- The name of a layout on GitHub in the front matter, without a copy, and the
+  form of a layout in an npm package are not decided yet (see the
+  [open questions](#open-questions)).
 
 ### R-LAY-008
 
@@ -436,6 +462,41 @@ at the template section, for example
 script, because a layout from another repository would run its code on the
 computer of the author ([decision 19](#decisions)). The renderer removes
 scripts and event attributes from the templates ([R-LAY-004](#r-lay-004)).
+
+### R-LAY-009
+
+**The empty paper document and its preview.** Each layout holds an empty
+paper document and its PDF, so that a person sees the pages of the layout
+before choosing it, and a new document starts with an example of each
+function ([decision 40](#decisions)).
+
+- `document` of `layout.json` names the empty paper document, a Markdown file
+  of the layout folder, and `preview` names its PDF, by convention
+  `document.md` and `document.pdf`. The JSON schema of `layout.json` requires
+  both fields. The checks of a document do not report a missing one, because
+  the author of a document cannot change the layout.
+- The front matter of the empty paper document holds the values of the cover
+  page, for example the placeholder texts of the Word template of a school;
+  its field `layout` is not used. A new document gets these values for the
+  fields that its options or answers do not give, and a field without a value
+  gets the `default` of `layout.json`.
+- The text after the front matter explains how to write a document of the
+  layout, with example texts: the text, the headings, the footnotes, the
+  figures, the tables, the listings, the citations, the special sections, the
+  notes and the PDF. It can link to VS Code and to the extensions.
+- The files that the empty paper document links to, for example an image in
+  `images/` or the code of a listing in `code/`, are files of the layout
+  folder. A new project gets them at the same paths, and the links in
+  `paper/paper.md` get `../` before them; a new document gets them beside it.
+  Links in code blocks and in code spans stay as they are.
+- `markdownpaper preview <layout folder>` makes the preview: it writes a
+  project with the empty paper document into a temporary folder, runs the
+  format steps of the paper (the citations, the reference list and the lists
+  of the special sections), and writes the PDF into the layout folder, with
+  the name of `preview`. `--write` also writes the formatted document back
+  into the layout folder, with its own front matter.
+- "New Layout" and a new project copy a layout without its preview PDF,
+  because the PDF shows the pages of the other layout.
 
 ## Renderer
 
@@ -985,8 +1046,10 @@ passage.
 menu of a folder in the Explorer) and `markdownpaper new document <file>
 --layout <name>` write a Markdown file with the front matter of the layout:
 the comment line of [R-DOC-001](#r-doc-001), the field `layout`, and each field
-with its description as a YAML comment, and the start text of the layout. The
-values come from options or questions.
+with its description as a YAML comment, and the text of the empty paper
+document of the layout ([R-LAY-009](#r-lay-009)), with the files that it links
+to beside the new document. The values come from options or questions, else
+from the empty paper document.
 
 ### R-NEW-002
 
@@ -1004,8 +1067,9 @@ as a scaffold of Vite does ([decision 4](#decisions)):
 | Folder or file | Content |
 | --- | --- |
 | `AGENTS.md` | The instructions for AI agents: the folders, the commands of the rules, of the checks and of the PDF, and the work of `inbox/`. |
-| `layouts/<name>/` | The copy of the layout. |
-| `paper/paper.md` | The document ([R-NEW-001](#r-new-001)). |
+| `layouts/<name>/` | The copy of the layout, without its preview PDF. |
+| `paper/paper.md` | The document from the empty paper document of the layout ([R-NEW-001](#r-new-001), [R-LAY-009](#r-lay-009)). |
+| `images/`, `code/`, … | The files that the empty paper document links to, at the same paths as in the layout folder. |
 | `inbox/` | The drop folder for sources that no program can load on its own. |
 | `bib/` | The files of the sources, each named after its citation. |
 | `images/` | The figures. |
@@ -1016,9 +1080,11 @@ as a scaffold of Vite does ([decision 4](#decisions)):
   name, for example `bib/hong2024.pdf`. With the citations
   ([R-CITE-001](#r-cite-001)), the agent also adds the metadata of the source
   to the database of the document.
-- `create` asks for the name of the folder, the layout, the language, the
-  title and the author when its options do not give them and a person runs
-  it in a terminal; `--yes` asks nothing, for AI agents.
+- `create` asks for the name of the folder, the layout (from the list of
+  [R-NEW-004](#r-new-004)), the language, the title and the author when its
+  options do not give them and a person runs it in a terminal; `--yes` asks
+  nothing and takes the layout `plain` when `--layout` names none, for AI
+  agents.
 - No command writes a file over an existing file; then it writes nothing and
   names the files.
 - A project can hold more than one document in `paper/`, for example
@@ -1026,6 +1092,37 @@ as a scaffold of Vite does ([decision 4](#decisions)):
   paper, which share `bib/`. A project can have more folders than
   the scaffold writes, for example `instructions/` for the documents of the
   school, `research/` for working notes and `archive/`.
+
+### R-NEW-004
+
+**The list of the layouts.** A new project chooses its layout from a list of
+all layouts that Markdown Paper can find ([decision 41](#decisions)):
+
+- The list holds the folders of `layouts/` of the current folder (in VS Code,
+  of the workspace), the built-in layouts, and the layouts on GitHub: each
+  layout folder ([R-LAY-007](#r-lay-007)) of the repositories with the topic
+  of [decision 29](#decisions), in the order of the stars of the repositories.
+  Archived repositories stay out.
+- `markdownpaper create` without `--layout` shows the list in a terminal, as
+  `npm create vite` does: the arrow keys move, Enter chooses, Esc or Ctrl+C
+  stops without writing a file. The chosen entry shows the address of its
+  preview PDF ([R-LAY-009](#r-lay-009)) below the list.
+- "New Project" in VS Code shows the same list in a Quick Pick: first the
+  layouts of the workspace and the built-in layouts, then the layouts on
+  GitHub when GitHub answers. The button of a layout on GitHub opens its
+  preview PDF.
+- `--layout github:<owner>/<repository>/<folder>` names a layout on GitHub
+  without the list, with `@<branch, tag or commit>` if needed
+  ([R-LAY-007](#r-lay-007)).
+- The scaffold reads the files of a layout on GitHub at one commit and copies
+  them into `layouts/<folder>/` of the new project, without the preview PDF.
+- `markdownpaper layouts` prints the list, with the name of each layout for
+  `--layout`.
+- GitHub limits the number of requests without a sign-in. The command uses
+  the token of `GITHUB_TOKEN` or `GH_TOKEN`; VS Code uses the GitHub sign-in
+  of VS Code when one exists, without asking, so that the private
+  repositories of the author count too. When the search fails, the list has
+  no layouts of GitHub and says why.
 
 ## Command line
 
@@ -1042,6 +1139,7 @@ command from GitHub is planned.
 
 - `pdf`, `check`, `format` ([R-CLI-002](#r-cli-002)), `source`
   ([R-CITE-005](#r-cite-005)), `create`, `new document|layout|project`,
+  `layouts` ([R-NEW-004](#r-new-004)), `preview` ([R-LAY-009](#r-lay-009)),
   `instructions`.
 - `--help` prints the use, `--version` the version and the version of the
   layout format.
@@ -1150,7 +1248,7 @@ cited or not, in one HTML comment at the end of the file, its database:
 - The checks report a line that is no JSON object, a source without a valid
   `id`, a second source with the same `id`, and a comment without its end.
 - The clean editing view of Markdown Notes leaves the database out (a hidden
-  block of [R-GEN-003](#r-gen-003)).
+  block of [R-GEN-003](#r-gen-003)), when only empty lines follow it.
 
 ### R-CITE-002
 
@@ -1173,17 +1271,37 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
   comment or in a fenced code block is no citation.
 - The checks warn of a title with words that are no CSL term or value, such
   as `"S. 3"`, and the formatter keeps the text of such a link.
-- `(RESEARCH)` asks an AI agent to find a source for the statement before it,
-  to add it to the database, and to replace `(RESEARCH)` with its citation.
-  When no source supports the statement, the agent keeps `(RESEARCH)` and
-  says so. The checks warn of each `(RESEARCH)`. The slash command `/research`
-  inserts it.
-- The slash commands of the sources ([decision 15](#decisions)): a command
-  named by a noun adds an entry, `/cite` adds a reference. `/source` picks a
-  file of the folder `bib/` ([R-NEW-003](#r-new-003)) and adds the source to
-  the database and to the reference list; `/cite` inserts a citation of a
-  source of the database. Markdown Paper registers `/source`, `/cite` and
-  `/research` as slash commands of Markdown Notes ([R-GEN-003](#r-gen-003)).
+- `(RESEARCH)` asks an AI agent to research the evidence for an argument
+  ([decision 43](#decisions)). The author selects the argument in the text
+  editor and types `/research`, which works only with selected text of a
+  paper document. The selection gets the hidden start marker
+  `<wbr><!--[research-->` before it, and `(RESEARCH)` at its end, before a
+  punctuation mark (`.`, `,`, `;`, `:`, `!`, `?`) at the end of the
+  selection, where the citation goes. A selection over more than one
+  paragraph, or with a mark of `/research` in it, gets a message and no
+  marks:
+
+  ```markdown
+  <wbr><!--[research-->Feedback changes learning more than praise does (RESEARCH).
+  ```
+
+  The argument is the text from the start marker to `(RESEARCH)`; a
+  `(RESEARCH)` without a start marker asks for the sentence before it. The
+  agent finds sources that support the argument, adds them to the database
+  with `markdownpaper source` ([R-CITE-005](#r-cite-005)), removes the start
+  marker, and replaces `(RESEARCH)` with the citations. When no source
+  supports the argument, the agent keeps both marks and says so. The checks
+  warn of each `(RESEARCH)` outside code and of a start marker without a
+  `(RESEARCH)` after it in its paragraph. The pages and the PDF show
+  `(RESEARCH)` and leave the start marker out.
+- The slash commands of the sources ([decision 15](#decisions),
+  [decision 42](#decisions)): `/cite` inserts a citation of a source of the
+  database, and with Zotero also of an item of Zotero
+  ([R-CITE-006](#r-cite-006)). There is no slash command that only adds a
+  source: the database gets its sources from Zotero through `/cite`, or from
+  an AI agent through `markdownpaper source` ([R-CITE-005](#r-cite-005)).
+  Markdown Paper registers `/cite` and `/research` as slash commands of
+  Markdown Notes ([R-GEN-003](#r-gen-003)).
 
 ### R-CITE-003
 
@@ -1301,6 +1419,42 @@ input is an identifier or a file:
 - A source that a service gives without an author or another field that its
   type needs keeps the gap: the command does not guess a field, for example
   from a person whom a library record names without the role of an author.
+- The command stays the way of AI agents to add sources; the author adds
+  sources from Zotero with `/cite` ([R-CITE-006](#r-cite-006)).
+
+### R-CITE-006
+
+**Sources from Zotero in `/cite`.** In VS Code, `/cite` reads the library of
+the Zotero of the author, so that the author cites the sources of Zotero and
+writes no metadata ([decision 42](#decisions)). This is planned; the design
+waits for the answers to the questions of the discussion document.
+
+- `/cite` shows one list of the sources of the database of the document and,
+  when Zotero is set up, of the items of Zotero; a source that
+  both have shows once. A search box filters the list by author, title and
+  year.
+- A chosen item of Zotero is merged into the database as well as the data
+  allows: a field that the line of the database does not have is added; a
+  field with another value in Zotero is updated from Zotero only after the
+  author confirms the change; nothing is removed from the line; the ID of the
+  line never changes, so no citation breaks. An item that the database does
+  not have becomes a new line with an ID by [decision 22](#decisions).
+- The PDF attachment of a chosen item goes to `bib/<ID>.pdf`
+  ([R-NEW-003](#r-new-003)) without a question. The author keeps a PDF with a
+  paywall out of a public repository, for example with a private repository.
+  The web API gives the file only when Zotero syncs the files to the storage
+  of zotero.org.
+- The extension reads Zotero through the Zotero web API
+  (`https://api.zotero.org`), with an API key that the author makes on
+  zotero.org and gives to the extension once; the extension keeps the key in
+  the secret storage of VS Code. The web API reads the library that Zotero
+  syncs, also when Zotero does not run and in VS Code on another computer,
+  for example over SSH or in Codespaces, and gives the items as CSL JSON
+  (`format=csljson`). The extension does not use the local API of Zotero 7:
+  the Zotero program on the computer of the author manages the library and
+  syncs it with zotero.org.
+- AI agents and the command `markdownpaper` do not use Zotero; agents add
+  sources with `markdownpaper source` ([R-CITE-005](#r-cite-005)).
 
 ## Settings
 
@@ -1358,10 +1512,11 @@ requirement ([R-GEN-007](#r-gen-007)).
 14. **`inbox/` and `bib/`** ([R-NEW-003](#r-new-003)): the drop folder and the
     folder of the sources of a project.
 15. **Slash commands: entries by noun, references by `/ref` and `/cite`**
-    ([R-REN-009](#r-ren-009), [R-CITE-002](#r-cite-002)): `/figure`, `/table`
-    and `/source` add an entry; `/ref` and `/cite` add a reference to an
-    entry. `/figure`, `/table` and `/ref` belong to Markdown Notes, `/source`,
-    `/cite` and `/research` to Markdown Paper.
+    ([R-REN-009](#r-ren-009), [R-CITE-002](#r-cite-002)): `/figure` and
+    `/table` add an entry; `/ref` and `/cite` add a reference to an entry.
+    `/figure`, `/table` and `/ref` belong to Markdown Notes, `/cite` and
+    `/research` to Markdown Paper; `/source` was dropped by
+    [decision 42](#decisions).
 16. **Plain Markdown links to headings** ([R-REN-003](#r-ren-003),
     [R-REN-009](#r-ren-009)): the formats stay as close to Markdown as
     possible. A heading has the ID of GitHub, and a link to it is a Markdown
@@ -1431,9 +1586,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     copy of `apa.csl` with the rules of the guide of the PHT, in the PHT
     layouts of `majikmate/markdownpaper-layout-pht`, which is
     under CC BY-SA 4.0.
-33. **Sources without Zotero** ([R-CITE-001](#r-cite-001)): an AI agent
-    searches and collects the sources; Markdown Paper has no integration of
-    Zotero or of another reference manager.
+33. **AI agents collect the sources without a reference manager**
+    ([R-CITE-001](#r-cite-001)): an AI agent searches and collects the
+    sources with `markdownpaper source`; agents and the command
+    `markdownpaper` use no Zotero and no other reference manager. For the
+    author, [decision 42](#decisions) adds Zotero to `/cite`.
 34. **Everything in the requirements** ([R-GEN-007](#r-gen-007)): every
     function that is built and every decision is in this document, as a clean
     summary, in the same commit as the change of the code.
@@ -1471,26 +1628,51 @@ requirement ([R-GEN-007](#r-gen-007)).
     …. A special section of the front part is never numbered, and
     `contents.front: false` leaves the front part out of the table of contents,
     as the PHT template does.
+40. **An empty paper document and its preview in each layout**
+    ([R-LAY-009](#r-lay-009)): each layout holds an empty paper document with
+    the cover texts of its template and chapters that explain how to work with
+    the document and its functions, with example texts, and the PDF of this
+    document as the preview of the layout. A new document starts from it.
+41. **The layouts on GitHub in the list of a new project**
+    ([R-NEW-004](#r-new-004), [R-LAY-007](#r-lay-007)): `create` without
+    `--layout` and "New Project" list the layouts of all repositories with the
+    topic of [decision 29](#decisions) for a choice, as `npm create vite` lists
+    its templates. A repository holds one folder for each layout, and a new
+    project gets a copy of the chosen layout in `layouts/<folder>/`.
+42. **Zotero only through `/cite`, for the author** ([R-CITE-002](#r-cite-002),
+    [R-CITE-006](#r-cite-006)): the author cites with `/cite`, which searches
+    the database of the document and, when Zotero is set up, the items of
+    Zotero, as one list. The extension reads Zotero only through the Zotero
+    web API, with an API key of the author; the Zotero program on the
+    computer manages the library and syncs it. There is no slash command `/source`. A
+    chosen item of Zotero is merged into the database: a missing field is
+    added, a field with another value is updated from Zotero only after the
+    author confirms, and nothing is removed. The database gets its sources
+    from Zotero through `/cite` or from an AI agent through `markdownpaper
+    source`, which stays. AI agents and the command `markdownpaper` do not use
+    Zotero. The discussion document is
+    [Zotero integration of Markdown Paper](https://claude.ai/artifact/2Q4BZy6wJzcqRn9SjTDFa3).
+43. **`/research` on a selected argument** ([R-CITE-002](#r-cite-002),
+    [R-GEN-003](#r-gen-003)): `/research` works only with selected text. The
+    selection is the argument for which an AI agent researches the evidence;
+    a hidden start marker before it and `(RESEARCH)` at its end mark the
+    argument in the file.
 
 ## Open questions
 
 - The mark of a paper document ([R-DOC-004](#r-doc-004)): the field `layout`
   of the front matter, and later the citations; not confirmed yet.
-- The form of a layout repository and the name of such a layout in the front
-  matter ([R-LAY-007](#r-lay-007)). The proposal: one repository can hold
-  several layouts, one folder each with its own `layout.json`, for example
-  `majikmate/markdownpaper-layout-pht` with `thesis/` and
-  `concept/`; each `layout.json`
-  has `"$schema"` with the URL of a layout schema in `markdownpaper-vscode`;
-  Markdown Paper searches GitHub for the topic of
-  [decision 29](#decisions) with the GitHub sign-in of VS Code, so private
-  repositories that the author can read count too; a document names a layout
-  with a release tag, so its pages stay the same:
-  `layout: github:majikmate/markdownpaper-layout-pht/thesis@v1.0.0`. Until
+- The name of a layout on GitHub in the front matter, without a copy in
+  `layouts/` ([R-LAY-007](#r-lay-007)). The proposal: a document names a
+  layout with a release tag, so its pages stay the same:
+  `layout: github:majikmate/markdownpaper-layout-pht/thesis-v2@v1.0.0`. Until
   the release there is no release tag, so a document names a branch or a
-  commit ([decision 36](#decisions)).
-  The form for an npm
-  package is open too.
+  commit ([decision 36](#decisions)). The form for an npm package is open
+  too.
+- Zotero in `/cite` ([R-CITE-006](#r-cite-006)): how an item finds its line
+  in the database, the Zotero key in the line, and a command that updates all
+  sources at once; the questions are in the discussion document of
+  [decision 42](#decisions).
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
   `markdownpaper` has no extensions of VS Code, so its PDF shows a diagram as
   its source text. It can bring Mermaid itself; PlantUML needs Java or a

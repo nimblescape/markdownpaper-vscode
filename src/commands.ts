@@ -5,16 +5,18 @@
 /**
  * The commands of the extension that write files: "Export PDF" ([R-PDF-001](../docs/requirements.md#r-pdf-001)) and
  * "New Project", "New Document" and "New Layout" ([R-NEW-001](../docs/requirements.md#r-new-001) to
- * [R-NEW-003](../docs/requirements.md#r-new-003)). They write no file over an existing one.
+ * [R-NEW-004](../docs/requirements.md#r-new-004)). They write no file over an existing one.
  */
 
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { markdownExtensions } from './markdownExtensions';
 import { fileOf, textOf } from './notesApi';
+import { downloadRemote, findRemotes, previewUrl, type RemoteLayout, remoteName } from './paper/gallery';
 import type { Layout } from './paper/layout';
+import type { Fetcher } from './paper/lookup';
 import { defaultLayout, findLayout, layoutName } from './paper/render';
-import { type NewFile, newDocumentText, newLayoutFiles, newProjectFiles } from './paper/scaffold';
+import { type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, startFiles } from './paper/scaffold';
 import { exportPdf } from './pdf/export';
 import { folderUrl, readFolder, searchHost, workspaceReader } from './workspaceHost';
 
@@ -27,6 +29,8 @@ export interface Context {
   openPdf(): boolean;
   /** previewFile is the paper document of the active Markdown preview, if one is active. */
   previewFile(): vscode.Uri | undefined;
+  /** version is the version of the extension, for the header User-Agent of the requests to GitHub. */
+  version?: string;
 }
 
 const decoder = new TextDecoder();
@@ -153,6 +157,97 @@ async function startOf(layout: Layout): Promise<string | undefined> {
 }
 
 /**
+ * fetcher returns the network of the extension: the fetch of VS Code, which uses the proxy settings of VS Code.
+ * @param userAgent - The value of the header User-Agent.
+ */
+const fetcher =
+  (userAgent: string): Fetcher =>
+  async (url, accept, headers = {}) => {
+    const response = await fetch(url, { headers: { ...headers, Accept: accept, 'User-Agent': userAgent } });
+    return { status: response.status, type: response.headers.get('content-type') ?? '', url: response.url, body: new Uint8Array(await response.arrayBuffer()) };
+  };
+
+/** LayoutItem is an entry of the list of the layouts of "New Project". */
+interface LayoutItem extends vscode.QuickPickItem {
+  name: string;
+  remote?: RemoteLayout;
+}
+
+/**
+ * pickProjectLayout asks for the layout of a new project ([R-NEW-004](../docs/requirements.md#r-new-004)): the layouts
+ * of the folders layouts/ of the workspace, the built-in layouts, and the layouts on GitHub, which the list adds when
+ * GitHub answers. The button of a layout on GitHub opens its preview PDF. With a sign-in to GitHub in VS Code, the
+ * search uses its token, which raises the limit of the requests and finds private repositories too.
+ * @param context - The context.
+ * @param near - The URI of a file in the folder where the search starts.
+ */
+async function pickProjectLayout(context: Context, near: vscode.Uri): Promise<{ layout: Layout; source: Map<string, Uint8Array>; start?: string } | undefined> {
+  const found = await vscode.workspace.findFiles('**/layouts/*/layout.json', '**/node_modules/**', 50);
+  const names = [...new Set(found.map((uri) => uri.path.split('/').slice(-2, -1)[0]))].filter((name) => layoutName.test(name)).sort();
+  const local: LayoutItem[] = [
+    ...names.map((name) => ({ name, label: name, description: 'layout of the workspace' })),
+    ...(names.includes(defaultLayout) ? [] : [{ name: defaultLayout, label: defaultLayout, description: 'built-in layout: A4, numbered headings, title block' }]),
+  ];
+  const preview = { iconPath: new vscode.ThemeIcon('file-pdf'), tooltip: 'Open the preview PDF' };
+  const picker = vscode.window.createQuickPick<LayoutItem>();
+  picker.title = 'Layout of the project';
+  picker.placeholder = 'Layout; the layouts on GitHub follow';
+  picker.matchOnDescription = true;
+  picker.items = local;
+  picker.busy = true;
+  const session = await vscode.authentication.getSession('github', ['repo'], { silent: true }).then(
+    (value) => value,
+    () => undefined,
+  );
+  const fetch = fetcher(`nimblescape-markdownpaper/${context.version ?? '0'}`);
+  void findRemotes(fetch, session?.accessToken).then(
+    ({ layouts }) => {
+      const remote: LayoutItem[] = layouts.map((layout) => ({
+        name: remoteName(layout),
+        label: layout.layout.name,
+        description: remoteName(layout),
+        remote: layout,
+        ...(previewUrl(layout) ? { buttons: [preview] } : {}),
+      }));
+      picker.items = [...local, { name: '', label: 'GitHub', kind: vscode.QuickPickItemKind.Separator }, ...remote];
+      picker.busy = false;
+    },
+    (error: unknown) => {
+      picker.busy = false;
+      picker.placeholder = `Layout; GitHub gave no list: ${error instanceof Error ? error.message : String(error)}`;
+    },
+  );
+  picker.onDidTriggerItemButton((event) => {
+    const url = event.item.remote && previewUrl(event.item.remote);
+    if (url) {
+      void vscode.env.openExternal(vscode.Uri.parse(url));
+    }
+  });
+  const choice = await new Promise<LayoutItem | undefined>((resolve) => {
+    picker.onDidAccept(() => resolve(picker.selectedItems[0]));
+    picker.onDidHide(() => resolve(undefined));
+    picker.show();
+  });
+  picker.dispose();
+  if (!choice) {
+    return undefined;
+  }
+  if (choice.remote) {
+    const remote = choice.remote;
+    const source = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `New Project: reading ${remoteName(remote)} from GitHub` }, () => downloadRemote(fetch, remote));
+    const start = remote.layout.document ? source.get(remote.layout.document.replace(/^\.\//, '')) : undefined;
+    return { layout: remote.layout, source, ...(start ? { start: decoder.decode(start) } : {}) };
+  }
+  const result = await findLayout(searchHost(context.extension, near), near.toString(), choice.name);
+  if (!result.layout) {
+    void vscode.window.showErrorMessage(result.problems.map((problem) => problem.message).join(' '));
+    return undefined;
+  }
+  const start = await startOf(result.layout);
+  return { layout: result.layout, source: await readFolder(vscode.Uri.parse(result.layout.folder, true)), ...(start ? { start } : {}) };
+}
+
+/**
  * folderOfCommand returns the folder of a command of the Explorer, else the first folder of the workspace.
  * @param uri - The URI that the Explorer passes, if any.
  */
@@ -174,7 +269,8 @@ export async function newDocumentCommand(context: Context, uri?: unknown): Promi
     return undefined;
   }
   const parent = vscode.Uri.joinPath(target, '..');
-  const written = await writeNew(parent, [{ path: target.path.split('/').pop() ?? 'paper.md', content: newDocumentText(picked.layout, await startOf(picked.layout)) }]);
+  const start = await startOf(picked.layout);
+  const written = await writeNew(parent, [{ path: target.path.split('/').pop() ?? 'paper.md', content: newDocumentText(picked.layout, start) }, ...startFiles(start, start ? await readFolder(picked.folder) : new Map())]);
   if (written) {
     await vscode.window.showTextDocument(written[0]);
   }
@@ -230,7 +326,13 @@ export async function newProjectCommand(context: Context, uri?: unknown): Promis
     return undefined;
   }
   const target = vscode.Uri.joinPath(chosen[0], name);
-  const picked = await pickLayout(context, vscode.Uri.joinPath(target, 'paper', 'paper.md'), 'Layout of the project');
+  let picked: Awaited<ReturnType<typeof pickProjectLayout>>;
+  try {
+    picked = await pickProjectLayout(context, vscode.Uri.joinPath(target, 'paper', 'paper.md'));
+  } catch (error) {
+    void vscode.window.showErrorMessage(`New Project: ${error instanceof Error ? error.message : String(error)}`);
+    return undefined;
+  }
   if (!picked) {
     return undefined;
   }
@@ -247,7 +349,7 @@ export async function newProjectCommand(context: Context, uri?: unknown): Promis
   if (author) {
     values.author = author;
   }
-  const files = newProjectFiles({ layout: picked.layout, source: await readFolder(picked.folder), language: language || picked.layout.language, values }, await startOf(picked.layout));
+  const files = newProjectFiles({ layout: picked.layout, source: picked.source, language: language || picked.layout.language, values }, picked.start);
   const written = await writeNew(target, files);
   if (!written) {
     return undefined;

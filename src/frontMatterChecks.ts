@@ -11,7 +11,7 @@
  */
 
 import * as vscode from 'vscode';
-import { fileOf } from './notesApi';
+import { cleanScheme, fileOf } from './notesApi';
 import { checkDocument } from './paper/checks';
 import type { Problem } from './paper/layout';
 import { searchHost } from './workspaceHost';
@@ -47,7 +47,7 @@ export class FrontMatterChecks implements vscode.Disposable {
       vscode.workspace.onDidChangeTextDocument((event) => this.schedule(event.document)),
       vscode.workspace.onDidSaveTextDocument((document) => this.schedule(document)),
       vscode.workspace.onDidCloseTextDocument((document) => {
-        if (document.uri.scheme !== 'markdown-notes') {
+        if (document.uri.scheme !== cleanScheme) {
           this.collection.delete(document.uri);
           this.checked.delete(document.uri.toString());
           this.rendered.delete(document.uri.toString());
@@ -106,14 +106,15 @@ export class FrontMatterChecks implements vscode.Disposable {
   }
 
   /**
-   * show shows the problems of the checks and of the renderer of a file, each once.
+   * show shows the problems of the checks and of the renderer of a file, each once: a problem that both report has the
+   * same message at the same place, and the same message at another place is another problem.
    * @param file - The URI of the file.
    */
   private show(file: vscode.Uri): void {
     const key = file.toString();
     const seen = new Set<string>();
     const problems = [...(this.checked.get(key) ?? []), ...(this.rendered.get(key) ?? [])].filter((problem) => {
-      const id = `${problem.message}`;
+      const id = `${problem.file ?? ''}:${problem.line ?? ''}:${problem.column ?? ''}:${problem.message}`;
       if (seen.has(id)) {
         return false;
       }

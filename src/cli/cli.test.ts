@@ -189,3 +189,96 @@ test('source gives the exit code 1 for an input without a source, 2 for a wrong 
   );
   expect(out.at(-1)).toBe('Add the right one by its DOI: markdownpaper source <file.md> <DOI>');
 });
+
+const commit = 'c'.repeat(40);
+const encoder = new TextEncoder();
+
+/** github is a network that answers as GitHub for one repository with the layout folder `thesis`. */
+const github = (asked: string[] = []): Fetcher => {
+  const answers: Record<string, string> = {
+    'https://api.github.com/search/repositories?q=topic%3Animblescape-markdownpaper-layout&sort=stars&per_page=50': JSON.stringify({ items: [{ full_name: 'school/layouts', default_branch: 'main' }] }),
+    'https://api.github.com/repos/school/layouts/commits/main': commit,
+    [`https://api.github.com/repos/school/layouts/git/trees/${commit}?recursive=1`]: JSON.stringify({
+      tree: ['thesis/layout.json', 'thesis/page.css', 'thesis/document.md', 'thesis/document.pdf', 'thesis/images/folders.svg'].map((file) => ({ path: file, type: 'blob' })),
+    }),
+    [`https://raw.githubusercontent.com/school/layouts/${commit}/thesis/layout.json`]: JSON.stringify({
+      format: 'nimblescape-layout 1.0.0',
+      name: 'School thesis',
+      language: 'de-AT',
+      stylesheets: ['page.css'],
+      document: 'document.md',
+      preview: 'document.pdf',
+      fields: { title: 'Der Titel.', author: 'Der Name.' },
+    }),
+    [`https://raw.githubusercontent.com/school/layouts/${commit}/thesis/page.css`]: 'p {}',
+    [`https://raw.githubusercontent.com/school/layouts/${commit}/thesis/document.md`]: '---\ntitle: "Titel eintragen"\nauthor: "Vorname Nachname"\n---\n\n# Start\n\n![Ordner](images/folders.svg)\n',
+    [`https://raw.githubusercontent.com/school/layouts/${commit}/thesis/images/folders.svg`]: '<svg/>',
+  };
+  return async (url) => {
+    asked.push(url);
+    const body = answers[url];
+    return { status: body === undefined ? 404 : 200, type: 'application/json', url, body: encoder.encode(body ?? '') };
+  };
+};
+
+test('create without --layout lists the layouts of the folder, the built-in ones and those on GitHub, and copies the chosen one with its empty paper document (R-NEW-004, R-LAY-009)', async () => {
+  const lists: string[][] = [];
+  const asked: string[] = [];
+  const terminal: Io = {
+    ...io(['studie', '', 'Mein Titel', '']),
+    fetch: github(asked),
+    choose: async (_question, choices) => {
+      lists.push(choices.map((choice) => `${choice.label} | ${choice.hint ?? ''} | ${choice.detail ?? ''}`));
+      return choices.findIndex((choice) => choice.label === 'School thesis');
+    },
+  };
+  expect(await run(['create'], terminal)).toBe(0);
+  expect(lists).toEqual([['Plain | plain, built in | ', `School thesis | github:school/layouts/thesis | Preview: https://github.com/school/layouts/blob/${commit}/thesis/document.pdf`]]);
+  const paper = read('studie/paper/paper.md');
+  expect(paper).toContain('layout: thesis\n');
+  expect(paper).toContain('title: "Mein Titel"\n');
+  expect(paper).toContain('author: "Vorname Nachname"\n');
+  expect(paper).toContain('![Ordner](../images/folders.svg)');
+  expect(read('studie/images/folders.svg')).toBe('<svg/>');
+  expect(read('studie/layouts/thesis/page.css')).toBe('p {}');
+  expect(fs.existsSync(path.join(folder, 'studie/layouts/thesis/document.pdf'))).toBe(false);
+  expect(asked.some((url) => url.endsWith('/thesis/document.pdf'))).toBe(false);
+});
+
+test('create stops without a file when no layout is chosen, and lists the layouts without GitHub when GitHub fails (R-NEW-004)', async () => {
+  const refused: Fetcher = async (url) => ({ status: 403, type: 'application/json', url, body: new Uint8Array() });
+  const terminal: Io = { ...io(['studie']), fetch: refused, choose: async () => undefined };
+  expect(await run(['create'], terminal)).toBe(2);
+  expect(err.join('\n')).toContain('warning: The layouts on GitHub are not in the list: GitHub refused');
+  expect(err.join('\n')).toContain('No layout was chosen, so nothing was written.');
+  expect(fs.existsSync(path.join(folder, 'studie'))).toBe(false);
+});
+
+test('create --layout names a layout on GitHub, and layouts prints the list (R-NEW-004, R-CLI-001)', async () => {
+  expect(await run(['create', 'one', '--yes', '--layout', 'github:school/layouts/thesis@main'], { ...io(), fetch: github() })).toBe(0);
+  expect(read('one/paper/paper.md')).toContain('layout: thesis\n');
+  expect(await run(['create', 'two', '--yes', '--layout', 'github:school'], { ...io(), fetch: github() })).toBe(2);
+  out.length = 0;
+  expect(await run(['layouts'], { ...io(), fetch: github() })).toBe(0);
+  expect(out).toEqual(['plain', '    Plain', 'github:school/layouts/thesis', `    School thesis · de-AT · Preview: https://github.com/school/layouts/blob/${commit}/thesis/document.pdf`]);
+});
+
+test('new document copies the files that the empty paper document links to beside the document (R-NEW-001, R-LAY-009)', async () => {
+  fs.mkdirSync(path.join(folder, 'layouts/mine/images'), { recursive: true });
+  fs.writeFileSync(path.join(folder, 'layouts/mine/layout.json'), JSON.stringify({ format: 'nimblescape-layout 1.0.0', document: 'document.md', preview: 'document.pdf', stylesheets: [] }));
+  fs.writeFileSync(path.join(folder, 'layouts/mine/document.md'), '---\ntitle: "Enter the title"\n---\n\n![A](images/a.svg)\n');
+  fs.writeFileSync(path.join(folder, 'layouts/mine/images/a.svg'), '<svg/>');
+  expect(await run(['new', 'document', 'paper/a.md', '--layout', 'mine'], io())).toBe(0);
+  expect(read('paper/a.md')).toContain('title: "Enter the title"\n');
+  expect(read('paper/a.md')).toContain('![A](images/a.svg)');
+  expect(read('paper/images/a.svg')).toBe('<svg/>');
+});
+
+test('preview needs a layout folder with an empty paper document (R-LAY-009)', async () => {
+  expect(await run(['preview'], io())).toBe(2);
+  expect(await run(['preview', 'nothing'], io())).toBe(2);
+  fs.mkdirSync(path.join(folder, 'layouts/bare'), { recursive: true });
+  fs.writeFileSync(path.join(folder, 'layouts/bare/layout.json'), JSON.stringify({ format: 'nimblescape-layout 1.0.0' }));
+  expect(await run(['preview', 'layouts/bare'], io())).toBe(2);
+  expect(err.join('\n')).toContain('The layout "bare" has no empty paper document');
+});

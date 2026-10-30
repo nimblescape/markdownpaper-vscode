@@ -69,7 +69,7 @@ a script element or an event attribute of a template is removed.
 | `instructions` | The command that prints this document, for agents. Informative. | |
 | `name` | The name of the layout for people. | the name of the folder |
 | `language` | The language of the documents, a tag such as `de-AT` or `en-US`. It decides the hyphenation and the words of section 4. | `en-US` |
-| `citationStyle` | The citation style of the documents, for example `apa7`. Informative in this version. | |
+| `citationStyle` | The citation style of the citations and the reference list: the built-in style `apa7` (APA Style 7th edition of the Citation Style Language), or a `.csl` file of the layout folder, for example `pht-apa7.csl`. The language of the layout chooses the words of the style, such as `S.` and `Hrsg.`. | `apa7` |
 | `stylesheets` | The style sheets, in their order. | `["page.css"]` |
 | `before`, `after` | The templates of the fixed pages before and after the text, in their order. | `[]` |
 | `document` | The Markdown file that starts a new document. | |

@@ -51,6 +51,7 @@ This document replaces it where the two differ.
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` with the cite of the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
 | 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
 | 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `markdownpaper format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | done |
+| 23 | Citation styles in CSL with citeproc-js: the built-in style `apa7`, a CSL file of the layout, the CSL locales; `pht-apa7.csl` in the PHT layouts | [R-CITE-003](#r-cite-003), [R-GEN-004](#r-gen-004) | the styles done; the formatter of the citations is step 13 |
 
 ## General
 
@@ -126,6 +127,11 @@ without it.
 **Licenses.** `THIRD-PARTY-NOTICES.md` names every package that the build
 bundles into the extension or into the npm package, with its version, its
 license and the place of its source code, and holds the text of each license.
+It also names the data files of other projects in the bundle, the CSL style
+and the CSL locales of `csl/` ([R-CITE-003](#r-cite-003)), with their
+authors and their license. citeproc-js has two licenses to choose from; the
+extension uses it under the CPAL 1.0 and does not change its files
+([decision 30](#decisions)).
 
 ### R-GEN-005
 
@@ -278,7 +284,9 @@ repository of the document ([decision 3](#decisions)).
   not read, and the checks say so.
 - `instructions`: the command that prints the rules of the format for AI
   agents, `npx -y @nimblescape/markdownpaper instructions layout`.
-- `name`, `language` (a language tag such as `de-AT`), `citationStyle`.
+- `name`, `language` (a language tag such as `de-AT`), `citationStyle` (a
+  built-in style or a CSL file of the layout folder,
+  [R-CITE-003](#r-cite-003)).
 - `stylesheets`, `before` and `after` (the templates of the fixed pages before
   and after the text), `document` (the start text of a new document).
 - `fields`: the fields of the front matter, each with a description, and with
@@ -361,9 +369,9 @@ sheet.
 **A layout of another repository or of an npm package.** A layout can also
 come from another repository or from an npm package, for example one layout
 of the PHT for many students ([decision 18](#decisions)). The folder
-`layouts/` of the repository of the document counts first. The PHT layout
-gets a repository of its own in the organization `majikmate`, and such a
-repository has a mark on GitHub by which Markdown Paper finds it and applies
+`layouts/` of the repository of the document counts first. The PHT layouts
+have the repository `majikmate/nimblescape-markdownpaper-layout-pht`, under
+CC BY-SA 4.0, and such a repository has a mark on GitHub by which Markdown Paper finds it and applies
 it. The mark is the GitHub topic `nimblescape-markdownpaper-layout`: its name
 names Markdown Paper, and the page of the topic,
 <https://github.com/topics/nimblescape-markdownpaper-layout>, lists every
@@ -1050,12 +1058,34 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
 
 **The citation style.** The layout names the citation style with
 `citationStyle`, and only the layout: a document does not repeat the style,
-not in its front matter and not in the DOCTYPE comment of Markdown Notes. For now the only style is APA 7 in the German form of the
-guide of the PHT, "Zitationsrichtlinien für Abschlussarbeiten an der PHT,
-Zitation nach APA 7", version 2.0: one, two and three or more authors, `o. D.`,
-the letters `a`, `b`, the places with German labels such as `S. 13 – 14`, the
-entries with initials, `(Hrsg.)`, italics, DOIs and `Abgerufen am … von …`.
-`markdownpaper instructions apa7` will print the rules.
+not in its front matter and not in the DOCTYPE comment of Markdown Notes.
+
+- A style is a file of the Citation Style Language (CSL), the format of
+  Zotero and of more than 10,000 styles of
+  <https://github.com/citation-style-language/styles>. citeproc-js applies it
+  to the metadata of the sources and writes the text of the citations and of
+  the entries as Markdown ([decision 30](#decisions)).
+- `citationStyle` names a built-in style or a `.csl` file of the layout
+  folder, for example `"citationStyle": "pht-apa7.csl"`. The built-in style
+  `apa7` is "APA Style 7th edition" of the CSL styles (`csl/apa.csl`). A
+  layout without the field gets `apa7`; a style that does not exist or is no
+  CSL style gets `apa7` and a warning ([decision 31](#decisions)).
+- The language of the layout chooses the CSL locale, the words of the style
+  such as `S.`, `Hrsg.` and the names of the months: the bundle has `de-AT`
+  (with "Jänner"), `de-DE`, `en-US` and `en-GB`. Another tag takes the locale
+  of its first part (`de-CH` takes `de-DE`), else `en-US`.
+- The style of the PHT is `pht-apa7.csl` in the PHT layouts of the repository
+  `majikmate/nimblescape-markdownpaper-layout-pht`: a copy of `apa.csl` with
+  the rules of the guide of the PHT, "Zitationsrichtlinien für
+  Abschlussarbeiten an der PHT, Zitation nach APA 7", version 2.0: `o. D.`,
+  the places with their short German labels such as `S. 13 – 14`, `Kap. 2`,
+  `Abb. 1`, the day before the month (`2018, 1. Oktober`) and
+  `Abgerufen am … von …` whenever a source has the day of the access
+  ([decision 32](#decisions)).
+- In a citation in the sentence, the last two names are joined by the word
+  "and" of the language, as APA writes it: `Festman und Schwieter (2019)`,
+  but `(Festman & Schwieter, 2019)` in parentheses. Italic parts that only a
+  comma separates become one italic part: `*Behavioral Science, 9*`.
 
 ### R-CITE-004
 
@@ -1187,6 +1217,19 @@ requirement ([R-GEN-007](#r-gen-007)).
     adds the page numbers.
 29. **The mark of a layout repository** ([R-LAY-007](#r-lay-007)): the GitHub
     topic `nimblescape-markdownpaper-layout`, whose name names Markdown Paper.
+30. **Citation styles in CSL with citeproc-js** ([R-CITE-003](#r-cite-003),
+    [R-GEN-004](#r-gen-004)): a layout can bring its own style as a CSL file;
+    citeproc-js (npm `citeproc`, CPAL 1.0 or AGPL) applies it, under the CPAL
+    1.0, without changes to its files, with its notice and the place of its
+    source in `THIRD-PARTY-NOTICES.md`. Its package names no attribution of
+    "Exhibit B", so the extension shows none.
+31. **The built-in style `apa7`** ([R-CITE-003](#r-cite-003)): "APA Style 7th
+    edition" of the CSL styles and the CSL locales in the bundle, CC BY-SA
+    3.0; the default of a layout without `citationStyle`.
+32. **The style of the PHT** ([R-CITE-003](#r-cite-003)): `pht-apa7.csl`, a
+    copy of `apa.csl` with the rules of the guide of the PHT, in the PHT
+    layouts of `majikmate/nimblescape-markdownpaper-layout-pht`, which is
+    under CC BY-SA 4.0.
 
 ## Open questions
 
@@ -1195,13 +1238,15 @@ requirement ([R-GEN-007](#r-gen-007)).
 - The form of a layout repository and the name of such a layout in the front
   matter ([R-LAY-007](#r-lay-007)). The proposal: one repository can hold
   several layouts, one folder each with its own `layout.json`, for example
-  `majikmate/pht-layouts` with `thesis/` and `concept/`; each `layout.json`
+  `majikmate/nimblescape-markdownpaper-layout-pht` with `thesis/` and
+  `concept/`; each `layout.json`
   has `"$schema"` with the URL of a layout schema in `markdownpaper-vscode`;
   Markdown Paper searches GitHub for the topic of
   [decision 29](#decisions) with the GitHub sign-in of VS Code, so private
   repositories that the author can read count too; a document names a layout
   with a release tag, so its pages stay the same:
-  `layout: github:majikmate/pht-layouts/thesis@v1.0.0`. The form for an npm
+  `layout: github:majikmate/nimblescape-markdownpaper-layout-pht/thesis@v1.0.0`.
+  The form for an npm
   package is open too.
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
   `markdownpaper` has no extensions of VS Code, so its PDF shows a diagram as
@@ -1215,5 +1260,6 @@ requirement ([R-GEN-007](#r-gen-007)).
   and the formatter writes the value anew from the front matter. The pages
   show the value.
 - The layout of the PHT thesis: today it lives in the skill
-  `markdown-to-paper` of the repository `scalarion/transcribe`; it becomes a
-  layout folder of that repository ([R-LAY-006](#r-lay-006)).
+  `markdown-to-paper` of the repository `scalarion/transcribe`; it becomes the
+  folder `thesis/` of `majikmate/nimblescape-markdownpaper-layout-pht`, which
+  holds its citation style `pht-apa7.csl` already ([R-LAY-006](#r-lay-006)).

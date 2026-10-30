@@ -1362,7 +1362,8 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
   `, ` joins a work of the same authors to the citation before it, as APA
   writes "(Levitt, 1972, 1976)": the formatter writes only the year and the
   place of the joined citation, `([Levitt, 1972](#levitt1972), [1976](#levitt1976))`.
-  After a citation of other authors, a joined citation keeps its names.
+  After a citation of other authors, a joined citation keeps its names
+  ([decision 47](#decisions)).
 - `(RESEARCH)` asks an AI agent to research the evidence for an argument
   ([decision 43](#decisions)). The author selects the argument in the text
   editor and types `/research`, which works only with selected text of a
@@ -1821,6 +1822,10 @@ requirement ([R-GEN-007](#r-gen-007)).
     copy names its origin in its `layout.json`; the update replaces only what
     the project did not change, and replaces a change of the project only
     when the author confirms it.
+47. **Works of the same authors in one citation** ([R-CITE-002](#r-cite-002)):
+    a comma between two citations in one pair of parentheses joins a work of
+    the same authors to the citation before it, as APA 7 writes
+    "(Levitt, 1972, 1976)". Each year stays a link to its own entry.
 
 ## Open questions
 

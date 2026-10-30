@@ -37,6 +37,8 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Settings](#settings) | VS Code | available | [R-SET-001](requirements.md#r-set-001) |
 | One formatter command `markdownpaper format` | command line, VS Code | planned | [R-CLI-002](requirements.md#r-cli-002) |
 | Citations, the database of the sources, the reference list, `/source`, `/cite`, `/research` | the Markdown file, text editor | planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-004](requirements.md#r-cite-004) |
+| The page preview as the Markdown preview of a paper document; a notes document keeps the Markdown preview of VS Code | Ctrl+Shift+V, Ctrl+K V | planned | [R-DOC-004](requirements.md#r-doc-004), [R-PRV-005](requirements.md#r-prv-005) |
+| Mermaid, PlantUML and the other Markdown plugins of VS Code on the pages | page preview, PDF | planned | [R-REN-010](requirements.md#r-ren-010) |
 
 ## Start a project
 

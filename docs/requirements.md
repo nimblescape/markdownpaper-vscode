@@ -44,6 +44,8 @@ This document replaces it where the two differ.
 | 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | planned; the work of Markdown Notes moves here |
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006) | instructions done; the first layout planned |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when Hannes asks |
+| 16 | Paper documents and notes documents: the page preview is the Markdown preview of a paper document, and a notes document keeps the Markdown preview of VS Code | [R-DOC-004](#r-doc-004), [R-PRV-005](#r-prv-005) | planned |
+| 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the page preview and in the PDF | [R-REN-010](#r-ren-010) | planned |
 
 ## General
 
@@ -172,7 +174,7 @@ in the text editor as warnings after a pause in typing, and with
   field, or at the field `layout` when the field is missing.
 - Each link to `#fig-…`, `#tab-…` or `#sec-…`, and each link whose text is a
   word and a number, such as `[Kapitel 2.1](#methoden)`, must find its figure,
-  table or heading ([R-REN-009](#r-ren-009).
+  table or heading ([R-REN-009](#r-ren-009)).
 - The page preview adds the problems of the renderer, for example a template
   that does not exist. Each problem shows once.
 - `markdownpaper check` prints each problem as `file:line:column: severity:
@@ -184,6 +186,29 @@ in the text editor as warnings after a pause in typing, and with
 **Hover of a field.** The pointer on the key of a field of the front matter
 shows the description of the field from `layout.json`, and whether it is
 required.
+
+### R-DOC-004
+
+**Paper documents and notes documents.** A Markdown file is a paper document
+when it uses a feature of Markdown Paper, and a notes document when it uses
+only features of Markdown Notes or none (Hannes, 2026-10-30, 03:40: "it is a
+notes doument when only notes features are in it", "it is a paper document
+when paper features are in it"; [decision 17](#decisions)).
+
+- The features of Markdown Paper are the field `layout` of the front matter
+  ([R-DOC-001](#r-doc-001)) and, when they are built, the citations
+  ([R-CITE-002](#r-cite-002)).
+- The features of Markdown Notes, such as notes, footnotes, figures and
+  tables with their anchors, and links of `/ref`, do not make a file a paper
+  document.
+- A paper document gets the checks ([R-DOC-002](#r-doc-002)), the page preview
+  as its Markdown preview ([R-PRV-005](#r-prv-005)), and the buttons "Show
+  Page Preview" and "Export PDF" in the title bar of the editor.
+- A notes document keeps the Markdown preview of VS Code, which Markdown Notes
+  uses ("notes is the standard markdown preview"). The Command Palette, the
+  Explorer and the command line still make the pages and the PDF of any
+  Markdown file, with the built-in layout `plain` when the file names no
+  layout.
 
 ## Layouts
 
@@ -303,7 +328,7 @@ renderer can then also be what the preview shows"; [decision 2](#decisions)).
 2. It reads the style sheets and fills the templates with the fields.
 3. It turns the Markdown text into HTML with markdown-it, with HTML in the
    text, links from addresses and footnotes, and the steps of
-   [R-REN-002](#r-ren-002) to [R-REN-009](#r-ren-009).
+   [R-REN-002](#r-ren-002) to [R-REN-010](#r-ren-010).
 4. It writes the page: a content security policy that lets only the scripts of
    the renderer run, the folder of the document as the base address for
    images, the style sheets, the fields, the fixed pages and the text, and
@@ -492,6 +517,27 @@ Table: Noten nach Schulstufe <a id="tab-grades"></a>
   `tab-participants-grade`, and its clean editing view hides the anchors. The
   renderer also reads an anchor on the line after the caption.
 
+### R-REN-010
+
+**Markdown plugins.** The page preview and the PDF show what the Markdown
+extensions of VS Code add to the Markdown preview, for example the diagrams of
+Mermaid and PlantUML (Hannes, 2026-10-30, 03:40: "it shall recognize all
+markdown plugins though, ie, mermaid, plantuml, footnotes, etc.").
+
+- The renderer takes the markdown-it plugins of the extensions that contribute
+  `markdown.markdownItPlugins`, as the Markdown preview of VS Code does: the
+  extension activates them and gives their function `extendMarkdownIt` to the
+  renderer, which calls it on its markdown-it before its own steps.
+- The page loads the scripts and the style sheets that these extensions
+  contribute with `markdown.previewScripts` and `markdown.previewStyles`.
+  Paged.js makes the pages after these scripts have drawn their content, for
+  example the diagrams of Mermaid.
+- Footnotes are part of the renderer ([R-REN-008](#r-ren-008)).
+- The renderer itself stays without an API of VS Code
+  ([R-REN-001](#r-ren-001)): it takes the plugins, the scripts and the style
+  sheets as input. On the command line there are no extensions of VS Code
+  (see the [open questions](#open-questions)).
+
 ## PDF
 
 ### R-PDF-001
@@ -553,8 +599,27 @@ the text editor. Each block of the HTML names its line in the file
 
 **Links and safety.** A link to a place in the document goes to that place on
 the pages. A link to a web address or an e-mail address opens outside VS Code.
-The page preview loads only the files of the workspace and of the extension,
-and runs only the scripts of the renderer.
+The page preview loads only the files of the workspace and of the extensions,
+and runs only the scripts of the renderer, Paged.js, and the preview scripts of
+the Markdown extensions of VS Code ([R-REN-010](#r-ren-010)), as the Markdown
+preview of VS Code runs them.
+
+### R-PRV-005
+
+**The Markdown preview of a paper.** The page preview is the Markdown preview
+of a paper document ([R-DOC-004](#r-doc-004)): it shows the document rendered
+in its layout (Hannes, 2026-10-30, 03:40: "preview shall show the rendered
+paper according to the layout", "it is the markdown preview of a paper").
+
+- The keys of the Markdown preview of VS Code, Ctrl+Shift+V and Ctrl+K V (on
+  macOS Cmd), open the page preview of a paper document, in the same group or
+  beside the text editor as VS Code does it. For a notes document, the keys
+  open the Markdown preview of VS Code.
+- The extension knows whether the file of the active editor is a paper
+  document by the context key `nimblescape.markdownPaper.paperDocument`; the
+  keys and the buttons in the title bar use it.
+- VS Code gives no way to hide the button "Open Preview to the Side" of its
+  own Markdown preview, so it stays in the title bar of a paper document too.
 
 ## New files
 
@@ -813,9 +878,23 @@ above follow them.
     markdown as possible". A heading has the ID of GitHub, and a link to it is
     a Markdown link such as `[Kapitel 2.1](#methoden)`, without an added HTML
     anchor. The anchors `sec-…` of an earlier version of `/ref` still work.
+17. **The page preview is the Markdown preview of a paper**
+    ([R-DOC-004](#r-doc-004), [R-PRV-005](#r-prv-005),
+    [R-REN-010](#r-ren-010), 2026-10-30, 03:40, a comment of Hannes on the
+    outline of Markdown Notes): a file with features of the paper is a paper
+    document and gets the page preview as its Markdown preview, with all
+    Markdown plugins of VS Code; a file with only features of Markdown Notes is
+    a notes document with the Markdown preview of VS Code. That the field
+    `layout` is the feature that marks a paper document is the reading of
+    Claude, not yet confirmed.
 
 ## Open questions
 
+- The mark of a paper document ([R-DOC-004](#r-doc-004)): the field `layout`
+  of the front matter, and later the citations; Hannes has not confirmed it.
+- Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
+  `markdownpaper` has no extensions of VS Code. It can bring Mermaid itself;
+  PlantUML needs Java or a PlantUML server.
 - The npm name `@nimblescape/markdownpaper` ([decision 5](#decisions)) and the
   installed browser ([decision 6](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the

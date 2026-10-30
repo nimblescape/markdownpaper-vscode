@@ -8,7 +8,7 @@ The Markdown preview of VS Code shows the pages of a paper as the PDF prints
 them, with the table of contents, the list of figures, the list of tables,
 the captions, the footnotes at the foot of the page and the appendix. "Export
 PDF" writes the PDF with an installed Google Chrome, Chromium or Microsoft
-Edge. The notes of [nimblescape Markdown Notes](https://github.com/nimblescape/nimblescape-markdown-notes)
+Edge. The notes of [nimblescape Markdown Notes](https://github.com/nimblescape/markdownnotes-vscode)
 in the same file stay out of the pages.
 
 The npm package [`@nimblescape/markdownpaper`](https://github.com/nimblescape/markdownpaper-vscode/blob/main/cli/README.md)

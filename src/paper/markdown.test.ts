@@ -33,7 +33,7 @@ const layoutOf = (changes: Partial<Layout> = {}): Layout => ({
 });
 
 /** example is the example of docs/format.md of nimblescape Markdown Notes, version 1.0.0, with a footnote of its own. */
-const example = `<!-- nimblescape-markdown-notes v1.0.0 spec=https://github.com/nimblescape/nimblescape-markdown-notes/blob/main/docs/format.md
+const example = `<!-- nimblescape-markdown-notes v1.0.0 spec=https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/format.md
 This comment marks a Markdown file with notes of the VS Code extension nimblescape Markdown Notes.
 -->
 

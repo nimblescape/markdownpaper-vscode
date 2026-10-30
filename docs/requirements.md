@@ -117,7 +117,7 @@ without it.
   slash command of the text editor (a slash and small letters), for `/source`,
   `/cite` and `/research` of [R-CITE-002](#r-cite-002). Each call returns a
   `Disposable`. Markdown Notes has them since commit `bf3b719` of its
-  [pull request 1](https://github.com/nimblescape/nimblescape-markdown-notes/pull/1).
+  [pull request 1](https://github.com/nimblescape/markdownnotes-vscode/pull/1).
   Markdown Paper adds its format step with `registerFormatStep`
   ([R-CLI-002](#r-cli-002)); an older version of Markdown Notes without it
   gets no step.
@@ -146,7 +146,11 @@ the display name "nimblescape Markdown Paper", and the repository
 `markdownpaper` ([decision 5](#decisions)). The release uses the same
 workflows and checks as the other extensions of the publisher and follows
 the [release rules](../CONTRIBUTING.md#release-rules). Nobody publishes the
-extension or the npm package until the owner asks for it.
+extension or the npm package until the owner asks for it. Until the release,
+nothing is published: no npm package, no extension on the Marketplace and no
+release tag. Tests, the CI and other repositories that need a package or a
+layout before the release install it from its GitHub repository, at a branch
+or a commit ([decision 36](#decisions)).
 
 ### R-GEN-006
 
@@ -650,10 +654,10 @@ Table 1: Noten nach Schulstufe <a id="tab-grades"></a>
   headings in the links by the rules of the layout, so the file shows the
   numbers of the pages.
 - Markdown Notes defines the form of the anchors and of the links in
-  [R-XREF-001](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-001),
-  [R-XREF-002](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-002)
+  [R-XREF-001](https://github.com/nimblescape/markdownnotes-vscode/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-001),
+  [R-XREF-002](https://github.com/nimblescape/markdownnotes-vscode/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-002)
   and
-  [R-XREF-003](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-003):
+  [R-XREF-003](https://github.com/nimblescape/markdownnotes-vscode/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-003):
   it writes an anchor only at the end of the line of the image or of the
   caption, with a name from up to three words of the caption, for example
   `tab-participants-grade`, and its clean editing view hides the anchors. The
@@ -697,10 +701,10 @@ Mermaid and PlantUML ([decision 17](#decisions)).
 ### R-REN-011
 
 **Listings.** Markdown Notes writes listings of source code with `/listing`
-([R-CODE-001](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-code-001)): a caption line with the cite of
+([R-CODE-001](https://github.com/nimblescape/markdownnotes-vscode/blob/claude/project-thread-on67uj/docs/requirements.md#r-code-001)): a caption line with the cite of
 the source, the comment of the source and a fenced code block, whose code
 and cite its formatter keeps current
-([R-CODE-002](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-code-002)):
+([R-CODE-002](https://github.com/nimblescape/markdownnotes-vscode/blob/claude/project-thread-on67uj/docs/requirements.md#r-code-002)):
 
 ````markdown
 Listing 1: [Reading the fields](../src/fields.ts#L12-L30) (fields.ts, L12-L30)<a id="lst-reading-fields"></a>
@@ -956,6 +960,11 @@ as a scaffold of Vite does ([decision 4](#decisions)):
 **The command `markdownpaper`.** The npm package `@nimblescape/markdownpaper`
 gives the command `markdownpaper` for people and AI agents, with Node.js 22 or
 later, also through `npx` without an installation ([decision 4](#decisions)).
+Until the release the package is not on npmjs.com, so `npx -y
+@nimblescape/markdownpaper` works only after the release; before it, the
+command comes from the GitHub repository ([decision 36](#decisions)). npm
+cannot install the folder `cli/` of a repository, so the way to install the
+command from GitHub is planned.
 
 - `pdf`, `check`, `format` ([R-CLI-002](#r-cli-002)), `source`
   ([R-CITE-005](#r-cite-005)), `create`, `new document|layout|project`,
@@ -987,7 +996,11 @@ notes and the paper are two packages. The plan:
   and the reference list, then the lists, so that a new reference list is in
   the table of contents after one format.
 - Today `markdownpaper format` runs the steps of the paper; the steps of
-  Markdown Notes join it when its library is published. Then it runs the
+  Markdown Notes join it with the library of Markdown Notes. Until the
+  release, the build checks out the GitHub repository
+  `nimblescape/markdownnotes-vscode` at a fixed commit, builds it and installs
+  its folder `cli/` as a file dependency, because npm cannot install a folder
+  of a Git repository ([decision 36](#decisions)). Then it runs the
   steps of Markdown Notes and the steps of the paper again while the text
   changes, at most three rounds, as Markdown Notes does in VS Code, so that
   `--check` passes after one format. The steps of the paper keep a text that
@@ -1346,6 +1359,10 @@ requirement ([R-GEN-007](#r-gen-007)).
     `markdownpaper source` fills the metadata in the ways that Zotero does:
     identifiers through the services that publish their metadata, the
     metadata in web pages, the exports of databases, and the DOI in a PDF.
+36. **Nothing published before the release** ([R-GEN-005](#r-gen-005)): no
+    npm package, no extension on the Marketplace and no release tag before
+    the release; tests and other repositories install a package or a layout
+    from its GitHub repository.
 
 ## Open questions
 
@@ -1361,7 +1378,9 @@ requirement ([R-GEN-007](#r-gen-007)).
   [decision 29](#decisions) with the GitHub sign-in of VS Code, so private
   repositories that the author can read count too; a document names a layout
   with a release tag, so its pages stay the same:
-  `layout: github:majikmate/markdownpaper-layout-pht/thesis@v1.0.0`.
+  `layout: github:majikmate/markdownpaper-layout-pht/thesis@v1.0.0`. Until
+  the release there is no release tag, so a document names a branch or a
+  commit ([decision 36](#decisions)).
   The form for an npm
   package is open too.
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):

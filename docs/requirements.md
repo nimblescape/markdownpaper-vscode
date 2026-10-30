@@ -517,7 +517,9 @@ the headings below them ([decision 10](#decisions)):
   section does not show. An entry of the table of contents gets the level of
   its heading, and its number its own element, for the indent of the layout.
   An entry whose target is not in the file is a warning
-  ([R-DOC-002](#r-doc-002)).
+  ([R-DOC-002](#r-doc-002)). The renderer compares the decoded target, so an
+  entry of a heading with letters outside ASCII, such as
+  `#eidesstattliche-erklärung`, finds its heading and its page.
 - The format step of the paper writes the lists ([R-CLI-002](#r-cli-002)),
   and a section without the markers gets the same list from the renderer:
   the table of contents lists the headings to the depth of the layout, with

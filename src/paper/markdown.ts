@@ -270,6 +270,19 @@ const referenceText = /^(\p{L}+\.?)\s+(?:[A-Z]?\d+(?:\.\d+)*|[A-Z])$/u;
 const matches = (text: string, terms: readonly string[]): boolean => terms.some((term) => term.toLocaleLowerCase() === text.toLocaleLowerCase());
 
 /**
+ * decodedTarget returns the target of a link without the escapes that markdown-it writes for the letters outside
+ * ASCII, such as `erkl%C3%A4rung` for `erklärung`; a target with a wrong escape stays as it is.
+ * @param href - The target, without "#".
+ */
+function decodedTarget(href: string): string {
+  try {
+    return decodeURIComponent(href);
+  } catch {
+    return href;
+  }
+}
+
+/**
  * sectionOf returns the code of the special section of a heading: the code of its marker, else the code whose words
  * are its text. The appendix part and the reference list are chapters, of the level 1.
  * @param text - The text of the heading, without its marker.
@@ -608,7 +621,8 @@ function paperRule(layout: Layout, found: Found) {
           const open = children.findIndex((child) => child.type === 'link_open' && child.attrGet('href')?.startsWith('#'));
           if (open >= 0) {
             const close = children.findIndex((child, position) => position > open && child.type === 'link_close');
-            found.lists[generated]?.push({ href: children[open].attrGet('href')?.slice(1) ?? '', text: plainText(children.slice(open + 1, close < 0 ? undefined : close)).trim() });
+            // The page of an entry comes from target-counter(), which finds the ID only without the escapes of markdown-it.
+            found.lists[generated]?.push({ href: decodedTarget(children[open].attrGet('href')?.slice(1) ?? ''), text: plainText(children.slice(open + 1, close < 0 ? undefined : close)).trim() });
             listLinks.set(children[open], { list: generated, line: token.map?.[0] ?? 0 });
           }
         }
@@ -750,21 +764,14 @@ function paperRule(layout: Layout, found: Found) {
     const labels = new Map([...found.figures, ...found.tables, ...found.listings].map((caption) => [caption.id, caption.label]));
     const headings = new Map(found.headings.flatMap((heading) => [[heading.id, heading], ...(heading.anchor ? [[heading.anchor, heading] as const] : [])]));
     for (const link of links) {
+      const target = decodedTarget(link.open.attrGet('href')?.slice(1) ?? '');
       const entry = listLinks.get(link.open);
       if (entry) {
         // An entry of a list must find its heading, figure, table or listing.
-        const href = link.open.attrGet('href')?.slice(1) ?? '';
-        if (!labels.has(href) && !headings.has(href) && !ids.has(href)) {
-          found.problems.push({ severity: 'warning', message: `The entry #${href} of the ${entry.list} names no heading, figure, table or listing of the file.`, line: entry.line });
+        if (!labels.has(target) && !headings.has(target) && !ids.has(target)) {
+          found.problems.push({ severity: 'warning', message: `The entry #${target} of the ${entry.list} names no heading, figure, table or listing of the file.`, line: entry.line });
         }
         continue;
-      }
-      const href = link.open.attrGet('href')?.slice(1) ?? '';
-      let target = href;
-      try {
-        target = decodeURIComponent(href);
-      } catch {
-        // A link with a wrong escape keeps its text as it is.
       }
       const heading = headings.get(target);
       const text = link.text.map((child) => child.content).join('').trim();

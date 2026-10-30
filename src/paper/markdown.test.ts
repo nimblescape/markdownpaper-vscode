@@ -221,6 +221,14 @@ describe('lists of the special sections (R-REN-004)', () => {
     expect(body.html).not.toContain('<!--');
     expect(body.problems).toEqual([{ severity: 'warning', message: 'The entry #weg of the TOC names no heading, figure, table or listing of the file.', line: 7 }]);
   });
+
+  test('finds the heading of an entry whose target has letters outside ASCII', () => {
+    const markdown = ['# Inhaltsverzeichnis', '', '<!-- toc -->', '- [Eidesstattliche Erklärung](#eidesstattliche-erklärung)', '<!-- /toc -->', '', '# Eidesstattliche Erklärung', ''].join('\n');
+    const body = renderBody(markdown, layoutOf());
+    expect(body.problems).toEqual([]);
+    // The page of the entry needs the ID without escapes in the link.
+    expect(body.html).toContain('<a href="#eidesstattliche-erklärung">');
+  });
 });
 
 describe('figures and tables (R-REN-005)', () => {

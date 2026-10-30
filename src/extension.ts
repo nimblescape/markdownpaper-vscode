@@ -12,6 +12,7 @@ import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectComma
 import { FrontMatterChecks } from './frontMatterChecks';
 import { fileOf } from './notesApi';
 import { PagePreviews } from './pagePreview';
+import { PaperDocuments } from './paperDocuments';
 import { checkedSettings, type Settings, settingsSection } from './settings';
 
 /** extensionId is the ID of the extension. */
@@ -20,6 +21,8 @@ export const extensionId = 'nimblescape.nimblescape-markdownpaper';
 /** commands are the IDs of the commands of the extension. */
 export const commands = {
   showPagePreview: 'nimblescape.markdownPaper.showPagePreview',
+  togglePagePreview: 'nimblescape.markdownPaper.togglePagePreview',
+  openPreview: 'nimblescape.markdownPaper.openPreview',
   exportPdf: 'nimblescape.markdownPaper.exportPdf',
   newProject: 'nimblescape.markdownPaper.newProject',
   newDocument: 'nimblescape.markdownPaper.newDocument',
@@ -50,6 +53,7 @@ export function readSettings(scope?: vscode.Uri): Settings {
  */
 export function activate(context: vscode.ExtensionContext): Api {
   const checks = new FrontMatterChecks(context.extensionUri);
+  const papers = new PaperDocuments();
   const previews = new PagePreviews(
     context.extensionUri,
     () => readSettings().previewDelay,
@@ -61,8 +65,11 @@ export function activate(context: vscode.ExtensionContext): Api {
     openPdf: () => readSettings().openPdf,
     previewFile: () => previews.fileOfActive(),
   };
+  /** The text document from which Ctrl+Shift+V opened the page preview of a file, to which the key goes back. */
+  const toggledFrom = new Map<string, vscode.Uri>();
   context.subscriptions.push(
     checks,
+    papers,
     previews,
     vscode.commands.registerCommand(commands.showPagePreview, async (uri?: unknown) => {
       const target = uri instanceof vscode.Uri ? uri : vscode.window.activeTextEditor?.document.uri;
@@ -71,6 +78,34 @@ export function activate(context: vscode.ExtensionContext): Api {
         return;
       }
       await previews.show(fileOf(target));
+    }),
+    // Ctrl+Shift+V of a paper document: the page preview in the group of the text editor, and back to the text.
+    vscode.commands.registerCommand(commands.togglePagePreview, async () => {
+      const shown = previews.fileOfActive();
+      if (shown) {
+        const back = toggledFrom.get(shown.toString()) ?? shown;
+        await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(back), { viewColumn: vscode.ViewColumn.Active });
+        return;
+      }
+      const target = vscode.window.activeTextEditor?.document.uri;
+      if (!target) {
+        return;
+      }
+      toggledFrom.set(fileOf(target).toString(), target);
+      await previews.show(target, 'active');
+    }),
+    // "Open Preview" of the context menus, while the extension hides the item of VS Code: the page preview of a paper
+    // document, and the Markdown preview of VS Code for another file.
+    vscode.commands.registerCommand(commands.openPreview, async (uri?: unknown) => {
+      const target = uri instanceof vscode.Uri ? uri : vscode.window.activeTextEditor?.document.uri;
+      if (!target) {
+        return;
+      }
+      if (await papers.isPaper(fileOf(target))) {
+        await previews.show(target, 'active');
+      } else {
+        await vscode.commands.executeCommand('markdown.showPreview', target);
+      }
     }),
     vscode.commands.registerCommand(commands.exportPdf, (uri?: unknown) => exportPdfCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.newProject, (uri?: unknown) => newProjectCommand(commandContext, uri)),

@@ -98,6 +98,16 @@
         "icon": "$(book)"
       },
       {
+        "command": "nimblescape.markdownPaper.togglePagePreview",
+        "title": "Toggle Page Preview",
+        "category": "Markdown Paper"
+      },
+      {
+        "command": "nimblescape.markdownPaper.openPreview",
+        "title": "Open Preview",
+        "category": "Markdown Paper"
+      },
+      {
         "command": "nimblescape.markdownPaper.exportPdf",
         "title": "Export PDF",
         "category": "Markdown Paper",
@@ -124,13 +134,13 @@
         {
           "command": "nimblescape.markdownPaper.showPagePreview",
           "group": "navigation",
-          "when": "editorLangId == markdown"
+          "when": "editorLangId == markdown && nimblescape.markdownPaper.paperDocument"
         }
       ],
       "editor/title/run": [
         {
           "command": "nimblescape.markdownPaper.exportPdf",
-          "when": "editorLangId == markdown || activeWebviewPanelId == 'nimblescape.markdownPaper.pagePreview'"
+          "when": "(editorLangId == markdown && nimblescape.markdownPaper.paperDocument) || activeWebviewPanelId == 'nimblescape.markdownPaper.pagePreview'"
         }
       ],
       "commandPalette": [
@@ -139,11 +149,24 @@
           "when": "editorLangId == markdown"
         },
         {
+          "command": "nimblescape.markdownPaper.togglePagePreview",
+          "when": "editorLangId == markdown || activeWebviewPanelId == 'nimblescape.markdownPaper.pagePreview'"
+        },
+        {
+          "command": "nimblescape.markdownPaper.openPreview",
+          "when": "false"
+        },
+        {
           "command": "nimblescape.markdownPaper.exportPdf",
           "when": "editorLangId == markdown || activeWebviewPanelId == 'nimblescape.markdownPaper.pagePreview'"
         }
       ],
       "explorer/context": [
+        {
+          "command": "nimblescape.markdownPaper.openPreview",
+          "group": "navigation",
+          "when": "resourceLangId == markdown && hasCustomMarkdownPreview"
+        },
         {
           "command": "nimblescape.markdownPaper.exportPdf",
           "group": "nimblescape@1",
@@ -159,8 +182,29 @@
           "group": "nimblescape@3",
           "when": "explorerResourceIsFolder"
         }
+      ],
+      "editor/title/context": [
+        {
+          "command": "nimblescape.markdownPaper.openPreview",
+          "group": "1_open",
+          "when": "resourceLangId == markdown && hasCustomMarkdownPreview"
+        }
       ]
     },
+    "keybindings": [
+      {
+        "command": "nimblescape.markdownPaper.togglePagePreview",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v",
+        "when": "!terminalFocus && ((editorFocus && editorLangId == markdown && nimblescape.markdownPaper.paperDocument && !notebookEditorFocused) || activeWebviewPanelId == 'nimblescape.markdownPaper.pagePreview')"
+      },
+      {
+        "command": "nimblescape.markdownPaper.showPagePreview",
+        "key": "ctrl+k v",
+        "mac": "cmd+k v",
+        "when": "editorFocus && editorLangId == markdown && nimblescape.markdownPaper.paperDocument && !notebookEditorFocused"
+      }
+    ],
     "configuration": {
       "title": "nimblescape Markdown Paper",
       "properties": {

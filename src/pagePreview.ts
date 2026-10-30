@@ -198,18 +198,22 @@ export class PagePreviews implements vscode.Disposable {
   }
 
   /**
-   * show shows the page preview of a document beside its editor, and makes it when it does not exist.
+   * show shows the page preview of a document, and makes it when it does not exist: beside its editor, or in the group
+   * of its editor with the focus, as the Markdown preview of VS Code does for its keys
+   * ([R-PRV-005](../docs/requirements.md#r-prv-005)).
    * @param document - The URI of the document, or of a document of the clean editing view.
+   * @param place - `beside` or `active`.
    */
-  async show(document: vscode.Uri): Promise<void> {
+  async show(document: vscode.Uri, place: 'beside' | 'active' = 'beside'): Promise<void> {
     const file = fileOf(document);
+    const column = place === 'active' ? vscode.ViewColumn.Active : vscode.ViewColumn.Beside;
     const existing = this.previews.get(file.toString());
     if (existing) {
-      existing.panel.reveal(vscode.ViewColumn.Beside, true);
+      existing.panel.reveal(column, place === 'beside');
       existing.schedule(true);
       return;
     }
-    const panel = vscode.window.createWebviewPanel(previewType, `Pages: ${file.path.split('/').pop() ?? ''}`, { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true }, { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [] });
+    const panel = vscode.window.createWebviewPanel(previewType, `Pages: ${file.path.split('/').pop() ?? ''}`, { viewColumn: column, preserveFocus: place === 'beside' }, { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [] });
     await this.adopt(file, panel).update();
   }
 

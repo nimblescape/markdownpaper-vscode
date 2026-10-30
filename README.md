@@ -50,10 +50,12 @@ gives the same renderer to people and AI agents on the command line:
   Paged Media (page size, margins, header and footer); the templates fill the
   cover page with the fields. Without a layout, a document gets the built-in
   layout `plain`.
-- **Page preview.** "Show Page Preview" in the title of a Markdown file shows
-  the pages beside the text editor. It updates them after a pause in typing
-  and after a change of the layout, and a click on a page shows its line in
-  the text editor.
+- **Page preview.** A Markdown file whose front matter names a layout is a
+  paper document, and its preview shows the pages: Ctrl+Shift+V, Ctrl+K V or
+  "Show Page Preview" in the title of the editor. Another Markdown file keeps
+  the Markdown preview of VS Code. The page preview updates the pages after a
+  pause in typing and after a change of the layout, and a click on a page
+  shows its line in the text editor.
 - **Numbers and lists.** The headings get numbers such as 1.1. A heading of
   the table of contents, of the list of figures or of the list of tables gets
   its list with the page numbers. An image alone in its paragraph is a
@@ -91,7 +93,8 @@ gives the same renderer to people and AI agents on the command line:
    (Ctrl+Shift+P), or open a Markdown file with a front matter.
 2. Write the fields of the layout in the front matter. The warnings name the
    missing ones.
-3. Choose "Show Page Preview" in the title of the editor.
+3. Press Ctrl+Shift+V or Ctrl+K V (on macOS Cmd), or choose "Show Page
+   Preview" in the title of the editor.
 4. Choose "Export PDF" in the menu "Run" of the title of the editor.
 
 The rules of the documents and of the layouts, for people and AI agents:
@@ -117,7 +120,12 @@ describes every feature.
 ## Limits
 
 - "Export PDF" needs an installed Google Chrome, Chromium or Microsoft Edge;
-  the extension downloads no browser.
+  the download of Chromium when none is installed is planned.
+- VS Code has one context key, `hasCustomMarkdownPreview`, for all extensions
+  whose preview replaces its own. When another such extension is installed and
+  you switch from a paper document to another Markdown file, Markdown Paper
+  sets the key back, and the buttons of the Markdown preview of VS Code show
+  again for that file.
 - The page preview and the PDF use the same renderer, but the page preview
   runs in the browser of VS Code and the PDF in the installed browser: with a
   font that only one of them has, a line can break at another place. Fonts in

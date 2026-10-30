@@ -93,6 +93,20 @@ export function readFrontMatter(text: string): FrontMatter | undefined {
 }
 
 /**
+ * isPaperDocument tells whether a Markdown text is a paper document, a file with a feature of Markdown Paper: today the
+ * field `layout` of its front matter ([R-DOC-004](../../docs/requirements.md#r-doc-004)). Another Markdown file is a
+ * notes document, which keeps the Markdown preview of VS Code.
+ * @param text - The Markdown text.
+ */
+export function isPaperDocument(text: string): boolean {
+  // Most Markdown files have no front matter; they need no YAML parser.
+  if (!/^---[ \t]*\r?\n/.test(text)) {
+    return false;
+  }
+  return readFrontMatter(text)?.fields.some((field) => field.key === 'layout') ?? false;
+}
+
+/**
  * bodyOf returns the Markdown text after the front matter, with an empty line for each line of the front matter, so
  * that each line of the body keeps its number in the file.
  * @param text - The Markdown text.

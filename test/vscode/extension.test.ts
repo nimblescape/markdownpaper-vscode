@@ -5,8 +5,9 @@
 
 // Tests in a real VS Code (npm run test:vscode, .vscode-test.mjs): mocha runs them in the extension host. They write a
 // layout and Markdown files into a temporary folder, and check the commands of the extension, the checks of the front
-// matter and their hover (R-DOC-002, R-DOC-003), the page preview with its pages from Paged.js (R-PRV-001), and
-// "Export PDF" (R-PDF-001) when a Chrome, Chromium or Edge is installed, as on the runners of GitHub.
+// matter and their hover (R-DOC-002, R-DOC-003), the page preview with its pages from Paged.js (R-PRV-001), the page
+// preview as the preview of a paper document (R-PRV-005), and "Export PDF" (R-PDF-001) when a Chrome, Chromium or Edge
+// is installed, as on the runners of GitHub.
 
 import * as assert from 'node:assert/strict';
 import * as fs from 'node:fs';
@@ -77,7 +78,7 @@ describe('nimblescape Markdown Paper', function () {
   it('the extension starts and has its commands', async () => {
     await api();
     const commands = await vscode.commands.getCommands(true);
-    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout']) {
+    for (const name of ['showPagePreview', 'togglePagePreview', 'openPreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout']) {
       assert.ok(commands.includes(`nimblescape.markdownPaper.${name}`), name);
     }
   });
@@ -109,6 +110,29 @@ describe('nimblescape Markdown Paper', function () {
       return count && count > 1 ? count : undefined;
     }, 'the pages of the preview', 60_000);
     assert.ok(pages > 1, `${pages} pages`);
+    await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+  });
+
+  it('the preview of a paper document is the page preview, and a notes document keeps the Markdown preview of VS Code (R-DOC-004, R-PRV-005)', async () => {
+    const extension = await api();
+    const activeInput = () => vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+    const paper = write('paper/toggle.md', '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nText.\n');
+    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(paper));
+    // Ctrl+Shift+V: the page preview in the group of the text editor, and again back to the text.
+    await vscode.commands.executeCommand('nimblescape.markdownPaper.togglePagePreview');
+    await waitFor(() => extension.pagesOf(paper), 'the page preview of the paper document', 60_000);
+    const input = activeInput();
+    assert.ok(input instanceof vscode.TabInputWebview && input.viewType.endsWith('nimblescape.markdownPaper.pagePreview'), 'the page preview is the active tab');
+    assert.equal(vscode.window.tabGroups.all.length, 1, 'the page preview is in the group of the text editor');
+    await vscode.commands.executeCommand('nimblescape.markdownPaper.togglePagePreview');
+    await waitFor(() => (vscode.window.activeTextEditor?.document.uri.toString() === paper.toString() ? true : undefined), 'the text editor again');
+    // "Open Preview" of a notes document opens the Markdown preview of VS Code.
+    const notes = write('paper/notes.md', '# Notizen\n\nText.\n');
+    await vscode.commands.executeCommand('nimblescape.markdownPaper.openPreview', notes);
+    await waitFor(() => {
+      const shown = activeInput();
+      return shown instanceof vscode.TabInputWebview && shown.viewType.includes('markdown.preview') ? true : undefined;
+    }, 'the Markdown preview of VS Code');
     await vscode.commands.executeCommand('workbench.action.closeAllEditors');
   });
 

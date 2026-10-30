@@ -36,6 +36,10 @@ The first version.
   shows the number of the pages. A heading has the ID of GitHub, so a plain
   Markdown link such as `[Kapitel 2.1](#methoden)` shows the number of the
   heading.
+- A Markdown file whose front matter names a layout is a paper document. Its
+  preview is the page preview: Ctrl+Shift+V and Ctrl+K V open it, and the
+  buttons of the Markdown preview of VS Code hide while it is open. Another
+  Markdown file keeps the Markdown preview of VS Code.
 - The page preview beside the text editor shows the pages as the PDF prints
   them, updates them after a pause in typing and after a change of the layout,
   and shows the line of a click on a page in the text editor.

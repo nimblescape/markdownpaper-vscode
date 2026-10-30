@@ -29,12 +29,12 @@ This document replaces it where the two differ.
 
 | Step | Content | Requirements | State |
 | --- | --- | --- | --- |
-| 1 | Setup: manifest, build, tests, CI, release workflows, license notices, the same structure as the other nimblescape extensions | [R-GEN-001](#r-gen-001) to [R-GEN-006](#r-gen-006) | done |
+| 1 | Setup: manifest, build, tests, CI, release workflows, license notices, the same structure as the other nimblescape extensions, this specification | [R-GEN-001](#r-gen-001) to [R-GEN-007](#r-gen-007) | done |
 | 2 | The front matter and its checks, the hover of the fields | [R-DOC-001](#r-doc-001) to [R-DOC-003](#r-doc-003) | done |
-| 3 | The layout folder, `layout.json`, the style sheets, the templates, the words of the language, the built-in layout `plain` | [R-LAY-001](#r-lay-001) to [R-LAY-005](#r-lay-005) | done |
+| 3 | The layout folder, `layout.json`, the style sheets, the templates, the words of the language, the built-in layout `plain`, no logic in a layout | [R-LAY-001](#r-lay-001) to [R-LAY-005](#r-lay-005), [R-LAY-008](#r-lay-008) | done |
 | 4 | The renderer: HTML and Paged.js, the notes left out, numbered headings, footnotes at the foot of the page, hyphenation | [R-REN-001](#r-ren-001) to [R-REN-003](#r-ren-003), [R-REN-007](#r-ren-007), [R-REN-008](#r-ren-008) | done |
 | 5 | The special sections without numbers, the table of contents, the list of figures, the list of tables, the captions, the appendix | [R-REN-004](#r-ren-004) to [R-REN-006](#r-ren-006) | done |
-| 6 | The PDF with an installed Chrome, Chromium or Edge | [R-PDF-001](#r-pdf-001) to [R-PDF-003](#r-pdf-003) | done |
+| 6 | The PDF with an installed Chrome, Chromium or Edge, only PDF | [R-PDF-001](#r-pdf-001) to [R-PDF-004](#r-pdf-004) | done |
 | 7 | The page preview | [R-PRV-001](#r-prv-001) to [R-PRV-004](#r-prv-004) | done |
 | 8 | The scaffold: new document, new layout, new project with `inbox/` and `bib/` | [R-NEW-001](#r-new-001) to [R-NEW-003](#r-new-003) | done |
 | 9 | The command `markdownpaper` with `pdf`, `check`, `create`, `new` and `instructions` | [R-CLI-001](#r-cli-001), [R-CLI-003](#r-cli-003) | done |
@@ -44,8 +44,10 @@ This document replaces it where the two differ.
 | 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | planned; the work of Markdown Notes moves here |
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006) | instructions done; the first layout planned |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when Hannes asks |
-| 16 | Paper documents and notes documents: the page preview is the Markdown preview of a paper document, and a notes document keeps the Markdown preview of VS Code | [R-DOC-004](#r-doc-004), [R-PRV-005](#r-prv-005) | planned |
+| 16 | Paper documents and notes documents: the page preview is the Markdown preview of a paper document, and a notes document keeps the Markdown preview of VS Code | [R-DOC-004](#r-doc-004), [R-PRV-005](#r-prv-005) | done |
 | 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the page preview and in the PDF | [R-REN-010](#r-ren-010) | planned |
+| 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark and the name wait for Hannes |
+| 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
 
 ## General
 
@@ -139,6 +141,14 @@ English terms: "table of contents", "list of figures", "list of tables",
 for it"). The words that the renderer writes into a document, such as
 "Inhaltsverzeichnis", "Abbildung 1" or "Anhang A", come from the language of
 the layout ([R-LAY-005](#r-lay-005)).
+
+### R-GEN-007
+
+**This specification.** This document holds all requirements of Markdown
+Paper, the plan and the decisions (Hannes, 2026-10-30, 02:38: "all of our
+specifications go as a spec doc into the repository"). Each decision is also
+a requirement in it (03:48: "document any decision as a requirement"), and a
+change of the code changes this document in the same commit.
 
 ## Documents
 
@@ -314,6 +324,35 @@ styles, numbering, header, footer, images, fonts), write the style sheet and
 the templates, list the fields, make the PDF of an example document, and
 compare its pages with a PDF of the template page by page until they match.
 What CSS cannot do as Word does stays as a comment in the style sheet.
+
+### R-LAY-007
+
+**A layout of another repository or of an npm package.** A layout can also
+come from another repository or from an npm package, for example one layout
+of the PHT for many students (Hannes, 2026-10-30, about 03:35, "yes" to the
+question; [decision 18](#decisions)). The folder `layouts/` of the
+repository of the document counts first. The PHT layout gets a repository
+of its own in the organization `majikmate`, and such a repository has a mark
+on GitHub by which Markdown Paper finds it and applies it (Hannes,
+2026-10-30, 03:43: "such repos shall have something that identifies them on
+github so that it can be found and applied; lets find a mechanism for
+that"). The proposal, which waits for Hannes: the repository has the GitHub
+topic `nimblescape-layout` and `layout.json` at its root; Markdown Paper
+searches GitHub for the topic with the GitHub sign-in of VS Code, so private
+repositories that the author can read count too, and lists the layouts; a
+document names one with a release tag, so its pages stay the same:
+`layout: github:majikmate/pht-thesis@v1.0.0`.
+
+### R-LAY-008
+
+**No logic in a layout.** A layout of version 1 holds only style sheets, the
+templates and the fields of the front matter, which the pages get as
+attributes, for example `kapitelumbruch: false` as
+`data-field-kapitelumbruch="false"` ([R-REN-001](#r-ren-001)). It holds no
+script, because a layout from another repository would run its code on the
+computer of the author (Hannes, 2026-10-30, about 03:36: "ok";
+[decision 19](#decisions)). The renderer removes scripts and event
+attributes from the templates ([R-LAY-004](#r-lay-004)).
 
 ## Renderer
 
@@ -565,6 +604,12 @@ own in a temporary folder, and talks with the renderer through a pipe, not
 through a network port. Without a browser, the message says how to install
 one or how to name it.
 
+- When no Chrome, Chromium or Edge is installed, the extension and the command
+  download Chromium once and use it (Hannes, 2026-10-30, 03:50: "ok" to the
+  proposal "an installed browser first, the download only when none is
+  found"; [decision 6](#decisions)). The download asks first in VS Code, and
+  needs the option `--download-browser` on the command line. Planned.
+
 ### R-PDF-003
 
 **The finished PDF.** The PDF loses the marks of the soft hyphens of
@@ -572,12 +617,19 @@ one or how to name it.
 title, the author, the subject and the language of the document in its
 metadata, and "nimblescape Markdown Paper" as its creator.
 
+### R-PDF-004
+
+**Only PDF.** The only output of a document is the PDF; there is no Word file
+(Hannes, 2026-10-30, about 03:37: "correct, no word";
+[decision 21](#decisions)).
+
 ## Page preview
 
 ### R-PRV-001
 
-**Pages beside the editor.** "Show Page Preview" in the title bar of a
-Markdown file shows the pages of the document in its layout beside the text
+**Pages beside the editor.** "Show Page Preview" in the title bar of a paper
+document ([R-DOC-004](#r-doc-004)), and in the Command Palette for any
+Markdown file, shows the pages of the document in its layout beside the text
 editor, as the PDF prints them. Each file has one page preview, and VS Code
 restores it after a restart. A file of the clean editing view of Markdown
 Notes shows the pages of its file ([R-GEN-003](#r-gen-003)).
@@ -611,15 +663,22 @@ of a paper document ([R-DOC-004](#r-doc-004)): it shows the document rendered
 in its layout (Hannes, 2026-10-30, 03:40: "preview shall show the rendered
 paper according to the layout", "it is the markdown preview of a paper").
 
-- The keys of the Markdown preview of VS Code, Ctrl+Shift+V and Ctrl+K V (on
-  macOS Cmd), open the page preview of a paper document, in the same group or
-  beside the text editor as VS Code does it. For a notes document, the keys
-  open the Markdown preview of VS Code.
+- There is no second preview for a paper document: the page preview takes
+  the place of the Markdown preview of VS Code ([decision 20](#decisions)).
+- The keys of the Markdown preview of VS Code open the page preview of a
+  paper document as VS Code opens its own preview: Ctrl+Shift+V in the group
+  of the text editor, and again back to the text, Ctrl+K V beside the text
+  editor (on macOS Cmd). For a notes document, the keys keep their work.
+- While the active editor shows a paper document, the extension sets the
+  context key `hasCustomMarkdownPreview`, which VS Code gives to an extension
+  whose preview replaces its own: the buttons and menu items of the Markdown
+  preview of VS Code hide, and "Show Page Preview" shows. The item "Open
+  Preview" of the context menu of a Markdown file in the Explorer opens the
+  page preview of a paper document and the Markdown preview of VS Code for
+  another file.
 - The extension knows whether the file of the active editor is a paper
-  document by the context key `nimblescape.markdownPaper.paperDocument`; the
-  keys and the buttons in the title bar use it.
-- VS Code gives no way to hide the button "Open Preview to the Side" of its
-  own Markdown preview, so it stays in the title bar of a paper document too.
+  document by the context key `nimblescape.markdownPaper.paperDocument`, and
+  updates it after each change of the text.
 
 ## New files
 
@@ -822,7 +881,8 @@ A value of a wrong type counts as the default.
 ## Decisions
 
 Hannes decided these questions on 2026-10-29 and 2026-10-30. The requirements
-above follow them.
+above follow them, and each decision is a requirement ([R-GEN-007](#r-gen-007)).
+Decision 20 is the technique that Claude chose for decision 17 of Hannes.
 
 1. **Two packages** ([R-GEN-001](#r-gen-001), 2026-10-29, 22:07): Markdown
    Paper for the paper workflow and Markdown Notes for the notes, with a clean
@@ -840,10 +900,11 @@ above follow them.
    extension IDs and repositories of Markdown Paper and Markdown Notes. The npm
    package `@nimblescape/markdownpaper` with the command `markdownpaper`
    follows the IDs; Hannes has not confirmed this name yet.
-6. **The installed browser prints the PDF** ([R-PDF-002](#r-pdf-002)): the
-   extension downloads no Chromium, because a download of about 150 MB for
-   each user is not allowed in the Marketplace package and needs a network.
-   This choice of the build waits for a confirmation of Hannes.
+6. **The installed browser prints the PDF** ([R-PDF-002](#r-pdf-002),
+   2026-10-30, 03:50): an installed Chrome, Chromium or Edge first, and a
+   download of Chromium only when none is found. The package itself holds no
+   Chromium, because about 150 MB for each user is too much for the
+   Marketplace package.
 7. **Generated lists** ([R-REN-004](#r-ren-004), 2026-10-30, 02:06): table of
    contents, list of figures, list of tables; English terms in code and
    documentation (02:07).
@@ -861,7 +922,9 @@ above follow them.
     itself.
 11. **Citations and sources in Markdown Paper** ([R-CITE-001](#r-cite-001) to
     [R-CITE-004](#r-cite-004), 2026-10-30, 02:25), not in Markdown Notes.
-12. **One spec doc in the repository** (2026-10-30, 02:38): this document.
+12. **One spec doc in the repository** ([R-GEN-007](#r-gen-007), 2026-10-30,
+    02:38, and 03:48 "document any decision as a requirement"): this
+    document.
 13. **Links to figures and tables** ([R-REN-009](#r-ren-009), 2026-10-30,
     02:32): anchors at the end of the line of the image or of the caption, and
     links to them.
@@ -887,16 +950,35 @@ above follow them.
     a notes document with the Markdown preview of VS Code. That the field
     `layout` is the feature that marks a paper document is the reading of
     Claude, not yet confirmed.
+18. **Layouts from other places** ([R-LAY-007](#r-lay-007), 2026-10-30, about
+    03:35): a layout can also come from another repository or from an npm
+    package; `layouts/` of the repository counts first.
+19. **No logic in a layout** ([R-LAY-008](#r-lay-008), 2026-10-30, about
+    03:36): style sheets, templates and fields only, no scripts.
+20. **The page preview takes the place of the Markdown preview of VS Code**
+    ([R-PRV-005](#r-prv-005), 2026-10-30, 03:50, the technique chosen by
+    Claude for decision 17): VS Code changes the content of its own preview
+    in place after each change of the text and finds the lines by the blocks
+    it made, so pages of Paged.js inside it would break the scroll with the
+    text editor and the double click to the line. The page preview therefore
+    stays a view of the extension, opens with the keys of the Markdown
+    preview, and hides the buttons of the Markdown preview with the context
+    key `hasCustomMarkdownPreview`, which VS Code has for this case.
+21. **Only PDF** ([R-PDF-004](#r-pdf-004), 2026-10-30, about 03:37): no Word
+    file.
 
 ## Open questions
 
 - The mark of a paper document ([R-DOC-004](#r-doc-004)): the field `layout`
   of the front matter, and later the citations; Hannes has not confirmed it.
+- The mark of a layout repository and the name of such a layout in the front
+  matter ([R-LAY-007](#r-lay-007)): the proposal is the topic
+  `nimblescape-layout` and `layout: github:majikmate/pht-thesis@v1.0.0`; the
+  form for an npm package is open too.
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
   `markdownpaper` has no extensions of VS Code. It can bring Mermaid itself;
   PlantUML needs Java or a PlantUML server.
-- The npm name `@nimblescape/markdownpaper` ([decision 5](#decisions)) and the
-  installed browser ([decision 6](#decisions)).
+- The npm name `@nimblescape/markdownpaper` ([decision 5](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
 - Listings (open in Markdown Notes, no decision of Hannes yet): `/listing`

@@ -29,7 +29,8 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Footnotes](#footnotes) | pages | available | [R-REN-008](requirements.md#r-ren-008) |
 | [Hyphenation](#hyphenation) | pages | available | [R-REN-007](requirements.md#r-ren-007) |
 | [Notes of Markdown Notes](#notes-of-markdown-notes) | pages | available | [R-REN-002](requirements.md#r-ren-002), [R-GEN-003](requirements.md#r-gen-003) |
-| [Page preview](#page-preview) | beside the text editor | available | [R-PRV-001](requirements.md#r-prv-001) to [R-PRV-004](requirements.md#r-prv-004) |
+| [Paper documents and notes documents](#paper-documents-and-notes-documents) | the Markdown file | available | [R-DOC-004](requirements.md#r-doc-004) |
+| [Page preview](#page-preview), the preview of a paper document | beside the text editor, Ctrl+Shift+V, Ctrl+K V | available | [R-PRV-001](requirements.md#r-prv-001) to [R-PRV-005](requirements.md#r-prv-005) |
 | [Export PDF](#export-pdf) | title of the editor, Explorer, command line | available | [R-PDF-001](requirements.md#r-pdf-001) to [R-PDF-003](requirements.md#r-pdf-003) |
 | [Layouts](#layouts) | `layouts/<name>/` | available | [R-LAY-001](requirements.md#r-lay-001) to [R-LAY-005](requirements.md#r-lay-005) |
 | [A layout from a Word template](#a-layout-from-a-word-template) | AI agent | instructions available | [R-LAY-006](requirements.md#r-lay-006) |
@@ -37,7 +38,6 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Settings](#settings) | VS Code | available | [R-SET-001](requirements.md#r-set-001) |
 | One formatter command `markdownpaper format` | command line, VS Code | planned | [R-CLI-002](requirements.md#r-cli-002) |
 | Citations, the database of the sources, the reference list, `/source`, `/cite`, `/research` | the Markdown file, text editor | planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-004](requirements.md#r-cite-004) |
-| The page preview as the Markdown preview of a paper document; a notes document keeps the Markdown preview of VS Code | Ctrl+Shift+V, Ctrl+K V | planned | [R-DOC-004](requirements.md#r-doc-004), [R-PRV-005](requirements.md#r-prv-005) |
 | Mermaid, PlantUML and the other Markdown plugins of VS Code on the pages | page preview, PDF | planned | [R-REN-010](requirements.md#r-ren-010) |
 
 ## Start a project
@@ -89,6 +89,15 @@ document or in a folder above it. The other fields are the fields of the
 layout, which its cover page and the name of its PDF use. `lang: de-AT`
 changes the language of the layout for one document. A document without the
 field `layout` gets the built-in layout `plain`.
+
+## Paper documents and notes documents
+
+A Markdown file whose front matter has the field `layout` is a paper
+document; another Markdown file, also one with the notes, footnotes, figures
+and tables of Markdown Notes, is a notes document. A paper document gets the
+checks, the page preview as its preview, and the buttons "Show Page Preview"
+and "Export PDF" in the title of the editor. A notes document keeps the
+Markdown preview of VS Code.
 
 ## Checks and hover
 
@@ -197,8 +206,15 @@ itself.
 
 ## Page preview
 
-"Show Page Preview" in the title of a Markdown file (the icon of a book) shows
-the pages beside the text editor. The page preview:
+The page preview is the preview of a paper document. The keys of the Markdown
+preview open it: Ctrl+Shift+V in the group of the text editor, and again back
+to the text; Ctrl+K V beside the text editor. "Show Page Preview" in the title
+of the editor (the icon of a book) shows it beside the text editor too. While
+a paper document is open, the buttons of the Markdown preview of VS Code
+hide, and "Open Preview" in the context menu of a Markdown file in the
+Explorer opens the page preview of a paper document and the Markdown preview
+of VS Code for another file. "Markdown Paper: Show Page Preview" in the
+Command Palette shows the pages of any Markdown file. The page preview:
 
 - makes the pages again after a pause in typing
   (`nimblescape.markdownPaper.previewDelay`) and after a change of a file of

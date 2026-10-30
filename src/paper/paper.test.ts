@@ -11,7 +11,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { checkDocument } from './checks';
-import { bodyOf, readFrontMatter } from './frontMatter';
+import { bodyOf, isPaperDocument, readFrontMatter } from './frontMatter';
 import { hyphenateHtml, hyphenatorOf, softHyphen } from './hyphenate';
 import { topicList, topics } from './instructions';
 import { formatText, parseLayout, termsFor } from './layout';
@@ -266,4 +266,14 @@ test('the instructions print the documents of docs/ without their license commen
     expect(topic.text).toBe(fs.readFileSync(path.join(repository, 'docs', `${topic.name}.md`), 'utf8').replace(/^<!--[\s\S]*?-->\s*/, ''));
   }
   expect(topicList('npx -y @nimblescape/markdownpaper')).toContain('  document   writing a document');
+});
+
+test('a file with the field layout is a paper document, and another Markdown file a notes document (R-DOC-004)', () => {
+  expect(isPaperDocument('---\nlayout: plain\ntitle: "Ein Bericht"\n---\n\n# Teil\n')).toBe(true);
+  expect(isPaperDocument('---\r\nlayout: pht-thesis\r\n---\r\nText\r\n')).toBe(true);
+  // Notes, footnotes, figures and links of Markdown Notes make no paper document.
+  expect(isPaperDocument('# Notizen\n\nText[^note-7k2q]\n\n![Bild](a.png) <a id="fig-a"></a>\n\n[^note-7k2q]: **hannes** · 2026-10-30\n')).toBe(false);
+  expect(isPaperDocument('---\ntitle: "Nur Notizen"\n---\nText\n')).toBe(false);
+  // The field must be in the front matter, not in the text.
+  expect(isPaperDocument('Text\n\n---\nlayout: plain\n---\n')).toBe(false);
 });

@@ -13,7 +13,7 @@
 
 import type MarkdownIt from 'markdown-it';
 import * as vscode from 'vscode';
-import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand } from './commands';
+import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, updateLayoutCommand } from './commands';
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
 import { PaperPreview } from './markdownPreview';
@@ -32,6 +32,7 @@ export const commands = {
   newProject: 'nimblescape.markdownPaper.newProject',
   newDocument: 'nimblescape.markdownPaper.newDocument',
   newLayout: 'nimblescape.markdownPaper.newLayout',
+  updateLayout: 'nimblescape.markdownPaper.updateLayout',
 };
 
 /** Api is the export of the extension: the plugin for the Markdown preview of VS Code, and a function for the tests. */
@@ -96,6 +97,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     vscode.commands.registerCommand(commands.newProject, (uri?: unknown) => newProjectCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.newDocument, (uri?: unknown) => newDocumentCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.newLayout, (uri?: unknown) => newLayoutCommand(commandContext, uri)),
+    vscode.commands.registerCommand(commands.updateLayout, (uri?: unknown) => updateLayoutCommand(commandContext, uri)),
   );
   return {
     extendMarkdownIt: (md) => preview.extendMarkdownIt(md),

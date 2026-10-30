@@ -132,3 +132,10 @@ The first version.
   a Word template under a heading; the built-in layout `plain` draws it as
   GitHub does. A hint at the start of the reference list stays before the
   entries.
+- The update of a copy of a layout on GitHub: a new project writes the field
+  `origin` (the layout, the ref and the commit) into the `layout.json` of its
+  copy. `markdownpaper update` and "Update Layout" read the newest commit of
+  the ref and update the copy: a file that only the repository changed gets
+  its new version, a file that only the project changed stays, and a file that
+  both changed stops the update unless `--force` or a confirmation replaces it.
+  `--check` only tells whether a newer version exists.

@@ -10,6 +10,7 @@
  */
 
 import { readFrontMatter } from './frontMatter';
+import { type Origin, readOrigin } from './gallery';
 import { type FieldSpec, formatText, type Layout, layoutFile } from './layout';
 
 /** NewFile is a file to write: its path, relative to the folder of the new project or layout, and its content. */
@@ -198,11 +199,13 @@ function previewOf(source: ReadonlyMap<string, Uint8Array>): string | undefined 
 
 /**
  * newLayoutFiles returns the files of a new layout, copied from another layout, with a new name and language. The
- * preview PDF of the other layout stays out: it shows the other layout.
+ * preview PDF of the other layout stays out: it shows the other layout. The field `origin` of the other layout stays
+ * out too, and the copy gets the origin of the options ([R-LAY-010](../../docs/requirements.md#r-lay-010)).
  * @param source - The files of the layout to copy, by their paths in its folder.
- * @param options - The name of the new layout, and its language.
+ * @param options - The name of the new layout, its language, and where the copy comes from, for a copy of a layout on
+ * GitHub that its repository updates.
  */
-export function newLayoutFiles(source: ReadonlyMap<string, Uint8Array>, options: { name: string; language?: string }): NewFile[] {
+export function newLayoutFiles(source: ReadonlyMap<string, Uint8Array>, options: { name: string; language?: string; origin?: Origin }): NewFile[] {
   const files: NewFile[] = [];
   const preview = previewOf(source);
   for (const [path, content] of source) {
@@ -215,6 +218,10 @@ export function newLayoutFiles(source: ReadonlyMap<string, Uint8Array>, options:
       json.name = options.name;
       if (options.language) {
         json.language = options.language;
+      }
+      delete json.origin;
+      if (options.origin) {
+        json.origin = options.origin;
       }
       files.push({ path, content: `${JSON.stringify(json, null, 2)}\n` });
     } else {
@@ -233,6 +240,11 @@ export interface ProjectOptions {
   language: string;
   /** values are the fields of the new document, for example title and author. */
   values: Readonly<Record<string, string>>;
+  /**
+   * origin is where a layout on GitHub comes from; without it, the copy keeps the origin of the layout that it copies,
+   * for example of a copy in `layouts/` of the workspace.
+   */
+  origin?: Origin;
 }
 
 /**
@@ -306,7 +318,9 @@ authors; the PDF leaves them out. Keep them as they are unless you are asked to 
  * @param start - The text of the start document of the layout, or undefined.
  */
 export function newProjectFiles(options: ProjectOptions, start: string | undefined): NewFile[] {
-  const layoutFiles = newLayoutFiles(options.source, { name: options.layout.name, language: options.language }).map((file) => ({ ...file, path: `layouts/${options.layout.id}/${file.path}` }));
+  const json = options.source.get(layoutFile);
+  const origin = options.origin ?? (json ? readOrigin(decoder.decode(json)) : undefined);
+  const layoutFiles = newLayoutFiles(options.source, { name: options.layout.name, language: options.language, ...(origin ? { origin } : {}) }).map((file) => ({ ...file, path: `layouts/${options.layout.id}/${file.path}` }));
   const linked = startFiles(start, options.source);
   const text = newDocumentText(options.layout, start, options.values);
   return [

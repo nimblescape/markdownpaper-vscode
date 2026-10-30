@@ -83,6 +83,15 @@ layout of the workspace, and "New Layout" copies a layout into a new folder. Bot
 in the context menu of a folder in the Explorer. No command writes a file over
 an existing file.
 
+A layout from GitHub stays as it is in the project until you update it. Its
+`layout.json` names where it comes from in the field `origin`. "Update
+Layout", in the Command Palette and in the context menu of a folder in
+`layouts/`, reads the newest version from the repository of the layout: the
+files that only the repository changed get their new versions, and your own
+changes stay. When you and the repository changed the same file, VS Code asks
+before it replaces your change. On the command line:
+`npx -y @nimblescape/markdownpaper update`.
+
 ## Sources in inbox and bib
 
 Put a source that no program can load on its own, for example a PDF file,

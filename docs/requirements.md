@@ -59,6 +59,8 @@ This document replaces it where the two differ.
 | 28 | The empty paper document and its preview PDF in each layout; the list of the layouts of `create` and "New Project" with the layouts on GitHub; `markdownpaper layouts` and `markdownpaper preview` | [R-LAY-009](#r-lay-009), [R-NEW-004](#r-new-004), [R-LAY-007](#r-lay-007) | done; the PHT layouts have their empty paper documents and previews |
 | 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, and the merge of a chosen item into the database | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | planned; the open questions of the discussion document come first |
 | 30 | `/research` on a selected argument: the start marker and `(RESEARCH)`, the rules for AI agents, the checks, the slash command on selected text, and the start marker and the database hidden in the clean editing view of Markdown Notes | [R-CITE-002](#r-cite-002), [R-GEN-003](#r-gen-003) | done |
+| 31 | The hints of a template as alerts of GitHub, drawn as boxes by the layout; the hints of the PHT concept template in its empty paper document | [R-REN-014](#r-ren-014), [R-CITE-004](#r-cite-004) | done |
+| 32 | The origin of a copy of a layout on GitHub in its `layout.json`, and its update from the repository: `markdownpaper update` and "Update Layout" | [R-LAY-010](#r-lay-010), [R-LAY-007](#r-lay-007) | done |
 
 ## General
 
@@ -350,6 +352,8 @@ repository of the document ([decision 3](#decisions)).
   [R-REN-011](#r-ren-011)). `pdfName`: the name of the PDF with fields, for
   example `{{matrikelnummer}}_{{author}}_{{type}}`. `terms`
   ([R-LAY-005](#r-lay-005)).
+- `origin`: in a copy of a layout on GitHub, where it comes from, which the
+  scaffold writes and the update reads ([R-LAY-010](#r-lay-010)).
 - Every path is relative to the layout folder and stays inside it.
 
 `npx -y @nimblescape/markdownpaper instructions layout` prints the whole
@@ -445,7 +449,8 @@ the look of the PHT templates and the citation style of the PHT.
   it into `layouts/<folder>/` ([R-NEW-004](#r-new-004)), so its documents
   name the copy, for example `layout: thesis`. The copy stays as it is when
   the layout changes in its repository, so the pages of a project change only
-  when its copy changes.
+  when its copy changes: by hand, or by the update of the copy from the
+  repository ([R-LAY-010](#r-lay-010)).
 - The name of a layout on GitHub in the front matter, without a copy, and the
   form of a layout in an npm package are not decided yet (see the
   [open questions](#open-questions)).
@@ -499,6 +504,50 @@ function ([decision 40](#decisions)).
   into the layout folder, with its own front matter.
 - "New Layout" and a new project copy a layout without its preview PDF,
   because the PDF shows the pages of the other layout.
+
+### R-LAY-010
+
+**The update of a copy of a layout on GitHub.** A project updates its copy of
+a layout on GitHub from the repository of the layout when the repository has
+a newer version ([decision 46](#decisions)):
+
+- A new project from a layout on GitHub ([R-NEW-004](#r-new-004)) writes into
+  the `layout.json` of its copy the field `origin`: `layout`, the name of the
+  layout on GitHub, `ref`, the branch, tag or commit that the copy follows, and
+  `commit`, the commit of the copied files:
+
+  ```json
+  "origin": {
+    "layout": "github:majikmate/markdownpaper-layout-pht/thesis",
+    "ref": "main",
+    "commit": "c2907533d7d01329769c76e8f0efa23b48fa3bd1"
+  }
+  ```
+
+  A copy of a copy keeps the origin; "New Layout" and `new layout` make a
+  layout of their own, without an origin. A copy made by hand gets the field
+  by hand, with the commit of its files.
+- `markdownpaper update [<layout folder>...]` and "Update Layout" in VS Code
+  (in the Command Palette, and in the context menu of a folder in `layouts/`
+  of the Explorer) read the newest commit of the ref. Without a folder, the
+  command takes each folder of `layouts/` with an origin; in VS Code it offers
+  the copies of the workspace and "All layouts".
+- The update compares three versions of each file of the folder by the IDs of
+  their contents, as Git computes them: the copy, the file at the commit of
+  the copy, and the file at the newest commit. A file that only the
+  repository changed gets its new version, a new file comes, and a removed
+  file goes. A file that only the project changed stays. `layout.json` is
+  compared field by field in the same way, so the copy keeps a language of its
+  own; it gets the `format` of the extension and the new commit in `origin`.
+  The preview PDF stays out, as at the copy ([R-LAY-009](#r-lay-009)).
+- A file or a field of `layout.json` that the project and the repository both
+  changed is a conflict: the update writes nothing and names them. With
+  `--force`, or in VS Code after a confirmation, the versions of the
+  repository replace them.
+- `--check` writes nothing and exits with 1 when the folder of a copy has a
+  newer version. A ref that is a tag or a commit gets no newer version.
+- The update reads GitHub as the scaffold does, with the token of
+  `GITHUB_TOKEN` or `GH_TOKEN`, or of the GitHub sign-in of VS Code.
 
 ## Renderer
 
@@ -1166,12 +1215,14 @@ command from GitHub is planned.
 - `pdf`, `check`, `format` ([R-CLI-002](#r-cli-002)), `source`
   ([R-CITE-005](#r-cite-005)), `create`, `new document|layout|project`,
   `layouts` ([R-NEW-004](#r-new-004)), `preview` ([R-LAY-009](#r-lay-009)),
-  `instructions`.
+  `update` ([R-LAY-010](#r-lay-010)), `instructions`.
 - `--help` prints the use, `--version` the version and the version of the
   layout format.
 - The exit code is 0 for success, 1 for problems of a document, for a file
-  that `format --check` would change, or for an input of `source` that gave
-  no source, and 2 for a wrong call or a failure.
+  that `format --check` would change, for an input of `source` that gave
+  no source, for a copy that `update` leaves as it is because of a conflict,
+  or for a newer version that `update --check` finds, and 2 for a wrong call
+  or a failure.
 - The command uses the same renderer, checks and scaffold as the extension.
 
 ### R-CLI-002
@@ -1692,6 +1743,20 @@ requirement ([R-GEN-007](#r-gen-007)).
     the thesis layout of the PHT, the caption of a figure stands above the
     figure, as in APA 7 and as the captions of tables and listings, although
     the Word template has it below the figure.
+45. **The hints of a template as alerts of GitHub** ([R-REN-014](#r-ren-014)):
+    a hint of a Word template under a heading, such as the blue boxes of the
+    PHT concept template, is an alert of GitHub in the Markdown file,
+    `> [!NOTE]` and the hint word for word, which GitHub shows as a box too.
+    The layout draws it as the box of the template; an ordinary block quote
+    stays a quotation. The empty paper document of the PHT concept layout and
+    the concept papers of its authors have the hints of the template under
+    their chapter headings.
+46. **The update of a copied layout** ([R-LAY-010](#r-lay-010)): a project
+    keeps its copy of a layout, and a command updates the copy from the
+    repository of the layout when the repository has a newer version. The
+    copy names its origin in its `layout.json`; the update replaces only what
+    the project did not change, and replaces a change of the project only
+    when the author confirms it.
 
 ## Open questions
 

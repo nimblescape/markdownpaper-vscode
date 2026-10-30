@@ -52,6 +52,28 @@
       "description": "The PDF of the empty paper document, which shows the pages of the layout before a person chooses it.",
       "type": "string"
     },
+    "origin": {
+      "description": "Only in a copy of a layout on GitHub in a project: where it comes from. A new project writes it, and markdownpaper update and \"Update Layout\" read it to update the copy from its repository.",
+      "type": "object",
+      "properties": {
+        "layout": {
+          "description": "The name of the layout on GitHub: github:<owner>/<repository>/<folder>.",
+          "type": "string",
+          "pattern": "^github:"
+        },
+        "ref": {
+          "description": "The branch, the tag or the commit that the copy follows.",
+          "type": "string"
+        },
+        "commit": {
+          "description": "The commit of the copied files, 40 hexadecimal digits.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      },
+      "required": ["layout", "ref", "commit"],
+      "additionalProperties": false
+    },
     "fields": {
       "description": "The fields of the front matter, by name: each a description, or an object.",
       "type": "object",

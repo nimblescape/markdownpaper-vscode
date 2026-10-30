@@ -90,6 +90,7 @@ a script element or an event attribute of a template is removed.
 | `listings.lineNumbers` | `true`: the number of each line before the code of a listing, from 1 in each listing. | `false` |
 | `pdfName` | The name of the PDF file without `.pdf`, with fields as `{{field}}`; `{{file}}` is the name of the Markdown file. Characters other than letters, digits, `-`, `_` and `.` fall away, a space becomes `-`. | `"{{file}}"` |
 | `terms` | Words of the language that this layout changes (section 4). | |
+| `origin` | Only in a copy of a layout on GitHub in a project: where it comes from, `layout` (`github:<owner>/<repository>/<folder>`), `ref` (the branch, tag or commit that the copy follows) and `commit` (the commit of the copied files). A new project writes it; `markdownpaper update` and "Update Layout" read it (section 8). A layout repository does not write it. | |
 
 All paths are relative to the layout folder and stay inside it. A higher minor
 version of the format adds fields that an older renderer leaves out; a higher
@@ -245,6 +246,22 @@ chooses one; the new project gets a copy in `layouts/<folder>/`. Keep one
 folder for each kind of work, without a version in its name, for example
 `thesis/` and `concept/`: a project keeps its copy, so a change of the layout
 in its repository does not change the pages of an existing project.
+
+A new project writes the field `origin` into the `layout.json` of its copy
+(section 3). `markdownpaper update` and "Update Layout" in VS Code update the
+copy when the branch of `origin` has a newer version: a file that only the
+repository changed gets its new version, a file that only the project changed
+stays, and a file that both changed stops the update, unless `--force` (or the
+confirmation in VS Code) replaces it. A copy made by hand, for example with
+`git archive`, gets the field by hand, with the full commit of its files:
+
+```json
+"origin": {
+  "layout": "github:majikmate/markdownpaper-layout-pht/concept",
+  "ref": "main",
+  "commit": "c2907533d7d01329769c76e8f0efa23b48fa3bd1"
+}
+```
 
 ## 9. A layout from a Word template
 

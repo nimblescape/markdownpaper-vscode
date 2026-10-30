@@ -7,6 +7,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { version } from '../../package.json';
+import type { Fetcher } from '../paper/lookup';
 import { type Io, run } from './cli';
 
 /** repository is the root folder of this repository. */
@@ -134,4 +135,57 @@ test('pdf needs one file that exists (R-PDF-001)', async () => {
   expect(await run(['pdf'], io())).toBe(2);
   expect(await run(['pdf', 'missing.md'], io())).toBe(2);
   expect(err).toContain('markdownpaper: The file missing.md does not exist.');
+});
+
+/**
+ * services returns a network that answers with the recorded answers of test/fixtures/metadata/ and lists the asked
+ * addresses.
+ * @param answers - The recorded answers by the start of the address.
+ * @param asked - The list of the asked addresses.
+ */
+const services = (answers: Record<string, string>, asked: string[] = []): Fetcher => async (url) => {
+  asked.push(url);
+  const key = Object.keys(answers).find((start) => url.startsWith(start));
+  const body = key ? fs.readFileSync(path.join(repository, 'test/fixtures/metadata', answers[key])) : new Uint8Array();
+  return { status: key ? 200 : 404, type: 'application/json', url: key && url.startsWith('https://doi.org/') ? 'https://api.crossref.org/v1/works/x/transform' : url, body: new Uint8Array(body) };
+};
+
+test('source adds the sources of a DOI and of an export to the database, once each, and names the missing fields (R-CITE-005)', async () => {
+  fs.writeFileSync(path.join(folder, 'a.md'), '# Text\r\n\r\nWords.\r\n');
+  fs.writeFileSync(path.join(folder, 'export.ris'), ['TY  - BOOK', 'AU  - Muster, Erika', 'PY  - 2020', 'TI  - Ein Buch', 'ER  - ', ''].join('\n'));
+  const asked: string[] = [];
+  const network = { ...io(), fetch: services({ 'https://doi.org/10.3390/bs9040039': 'doi-journal.json' }, asked), today: new Date(2026, 9, 30) };
+  expect(await run(['source', 'a.md', 'https://doi.org/10.3390/BS9040039', 'export.ris'], network)).toBe(0);
+  expect(out).toEqual([
+    'https://doi.org/10.3390/BS9040039: added festman2019 (article-journal) from doi.org (Crossref)',
+    'export.ris: added muster2020 (book) from the RIS file',
+    '  muster2020 needs these fields and did not get them: publisher. Take them from the source itself, or leave them out.',
+    'a.md: 2 sources added',
+  ]);
+  expect(asked).toEqual(['https://doi.org/10.3390/bs9040039']);
+  const lines = read('a.md').split('\r\n');
+  expect(lines.slice(0, 5)).toEqual(['# Text', '', 'Words.', '', '<!-- nimblescape-sources']);
+  expect(lines.slice(5).map((line) => (line.startsWith('{') ? JSON.parse(line).id : line))).toEqual(['festman2019', 'muster2020', '-->', '']);
+
+  out.length = 0;
+  expect(await run(['source', 'a.md', '10.3390/bs9040039', '--dry-run'], network)).toBe(0);
+  expect(out).toEqual(['10.3390/bs9040039: the database has this source already as festman2019 (the same DOI); nothing added']);
+});
+
+test('source gives the exit code 1 for an input without a source, 2 for a wrong call, and searches Crossref (R-CITE-005)', async () => {
+  fs.writeFileSync(path.join(folder, 'a.md'), 'Words.\n');
+  const network = { ...io(), fetch: services({ 'https://api.crossref.org/works': 'crossref-search.json' }) };
+  expect(await run(['source', 'a.md', '10.1000/none', 'no-such-thing'], network)).toBe(1);
+  expect(err).toEqual(['10.1000/none: error: doi.org does not know it (DOI 10.1000/none).', 'no-such-thing: error: This is no file and no DOI, ISBN, PubMed ID, arXiv ID or web address.']);
+  expect(read('a.md')).toBe('Words.\n');
+  expect(await run(['source', 'a.md', '10.3390/bs9040039', '--offline'], network)).toBe(1);
+  expect(await run(['source', 'a.md'], network)).toBe(2);
+  expect(await run(['source', 'a.md', '10.1000/a', '10.1000/b', '--id', 'law'], network)).toBe(2);
+  expect(await run(['source', 'missing.md', '10.1000/a'], network)).toBe(2);
+  out.length = 0;
+  expect(await run(['source', '--search', 'Guidelines for Human-AI Interaction'], network)).toBe(0);
+  expect(out[1]).toBe(
+    '10.1145/3511605  Li et al. (2023). Assessing Human-AI Interaction Early through Factorial Surveys: A Study on the Guidelines for Human-AI Interaction. ACM Transactions on Computer-Human Interaction. [article-journal]',
+  );
+  expect(out.at(-1)).toBe('Add the right one by its DOI: markdownpaper source <file.md> <DOI>');
 });

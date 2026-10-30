@@ -11,7 +11,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { describe, expect, test } from 'vitest';
-import { citationProblems, findCitations, findDatabase, parseData, sourceLine, writeCitations } from './citations';
+import { addSources, citationProblems, findCitations, findDatabase, parseData, sourceLine, writeCitations } from './citations';
 import type { CitationStyle } from './csl';
 import { type Layout, termsFor } from './layout';
 
@@ -85,6 +85,35 @@ describe('the database of the sources (R-CITE-001)', () => {
     expect(findDatabase(['<!-- nimblescape-sources', '{"id":"a"}'])!.problems[0].message).toMatch(/no end/);
     expect(findDatabase(['<!-- nimblescape-sources', '{"id":"a","title":"x-->"}', '-->'])!.problems[0].message).toMatch(/holds "-->"/);
     expect(sourceLine({ id: 'a', title: 'x-->y' })).toBe('{"id":"a","title":"x--\\u003ey"}');
+  });
+});
+
+describe('new sources in the database (R-CITE-005)', () => {
+  const festman = { type: 'article-journal', author: [{ family: 'Festman', given: 'Julia' }], issued: { 'date-parts': [[2019]] }, title: 'Self-Concepts', DOI: '10.3390/bs9040039', id: '' };
+
+  test('makes the database at the end of a file without one, with the ID of decision 22 first', () => {
+    const { lines, added, known } = addSources(['# Text', '', 'Words.', ''], [festman]);
+    expect(lines).toEqual(['# Text', '', 'Words.', '', '<!-- nimblescape-sources', '{"id":"festman2019","type":"article-journal","author":[{"family":"Festman","given":"Julia"}],"issued":{"date-parts":[[2019]]},"title":"Self-Concepts","DOI":"10.3390/bs9040039"}', '-->', '']);
+    expect(added.map((source) => source.id)).toEqual(['festman2019']);
+    expect(known).toEqual([]);
+    expect(addSources(['Words.'], [festman]).lines.slice(-3)).toEqual(['<!-- nimblescape-sources', expect.stringContaining('festman2019'), '-->']);
+  });
+
+  test('adds a source before the end of the database, with a letter for a taken ID, and not a source that it has already', () => {
+    const text = ['Words.', '', '<!-- nimblescape-sources', '{"id":"festman2019","title":"Other","issued":{"date-parts":[[2019]]}}', '-->', ''];
+    const second = { ...festman, title: 'Second', DOI: '10.1000/second' };
+    const { lines, added, known } = addSources(text, [second, { ...festman, DOI: '10.1000/second', title: 'Again' }]);
+    expect(added.map((source) => source.id)).toEqual(['festman2019a']);
+    expect(known).toEqual([{ source: expect.objectContaining({ title: 'Again' }), id: 'festman2019a', by: 'DOI' }]);
+    expect(lines.slice(3)).toEqual([text[3], expect.stringMatching(/^\{"id":"festman2019a",/), '-->', '']);
+  });
+
+  test('takes the given ID, and adds nothing for a taken or wrong ID or a database without its end', () => {
+    expect(addSources([], [{ ...festman, title: 'BGBl. II Nr. 262/2015' }], 'bgbl-ii-262-2015').added[0].id).toBe('bgbl-ii-262-2015');
+    const text = ['<!-- nimblescape-sources', '{"id":"law"}', '-->'];
+    expect(addSources(text, [festman], 'law')).toMatchObject({ lines: text, added: [], problem: 'The database has a source with the ID "law" already.' });
+    expect(addSources(text, [festman], 'two words').problem).toMatch(/^The ID "two words" is no ID of a source/);
+    expect(addSources(['<!-- nimblescape-sources', '{"id":"law"}'], [festman]).problem).toMatch(/no end/);
   });
 });
 

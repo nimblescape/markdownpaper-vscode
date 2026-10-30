@@ -38,7 +38,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Instructions for AI agents](#instructions-for-ai-agents) | command line | available | [R-CLI-003](requirements.md#r-cli-003) |
 | [Settings](#settings) | VS Code | available | [R-SET-001](requirements.md#r-set-001) |
 | The format step of the paper: the four lists in the file | VS Code (format of Markdown Notes), `markdownpaper format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
-| [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format of Markdown Notes), `markdownpaper format` | available; `/source`, `/cite` and `/research` planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-004](requirements.md#r-cite-004) |
+| [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format of Markdown Notes), `markdownpaper format`, `markdownpaper source` | available; `/source`, `/cite` and `/research` planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-005](requirements.md#r-cite-005) |
 | [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
 | [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line planned | [R-REN-010](requirements.md#r-ren-010) |
 
@@ -90,8 +90,10 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
 cited sources under the heading of the reference list, in the citation style
 of the layout: `citationStyle` in `layout.json`, the built-in style `apa7` or a
 CSL file of the layout, such as `pht-apa7.csl` of the PHT layouts. An AI agent
-searches and collects the sources; it takes the metadata from doi.org or from
-the source itself and must not write it from memory (`instructions document`,
+searches and collects the sources and adds them with `markdownpaper source`,
+which takes the metadata from doi.org, the catalogs of the libraries, PubMed,
+arXiv, a web page, an export of a reference manager or the DOI of a PDF; the
+agent must not write metadata from memory (`instructions document`,
 section 9). The checks name a line of the database that is no source, a title
 of a link that is no data of a citation, a cited source without an entry, and
 each `(RESEARCH)`.

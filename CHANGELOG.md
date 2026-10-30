@@ -88,3 +88,11 @@ The first version.
   built-in style `apa7` (APA Style 7th edition of the Citation Style Language)
   or a CSL file of the layout folder, with the words of the language of the
   layout.
+- `markdownpaper source <file> <input>...` adds sources to the database of a
+  document with the metadata of the places that publish it: a DOI from
+  doi.org (Crossref, DataCite, mEDRA, JaLC), an ISBN from the German National
+  Library, K10plus or Open Library, a PubMed ID from PubMed, an arXiv ID with
+  its DOI, a web page from its metadata, an export in RIS, BibTeX or CSL JSON,
+  a saved HTML page, and the DOI in the metadata of a PDF. Each new source
+  gets its ID; a source that the database has already is not added again.
+  `--search <words>` lists works of Crossref with their DOIs.

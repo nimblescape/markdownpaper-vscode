@@ -14,9 +14,11 @@
  *   language, the title and the author, or takes them from its options.
  * - `new document|layout|project` writes a new document, a new layout folder, or a new project without questions.
  * - `instructions [topic]` prints the rules of a topic for AI agents.
+ * - `source <file> <input>...` adds sources to the database of a file, with the metadata of the services that publish
+ *   it, and `source --search <words>` lists works of Crossref.
  *
  * The exit code is 0 for success, 1 when `check` found a problem, `format --check` found a file that the format
- * changes, or `pdf` wrote the PDF with problems of the document,
+ * changes, `pdf` wrote the PDF with problems of the document, or an input of `source` gave no source,
  * and 2 for a wrong command or option, a missing file, a file that exists already, or a PDF that could not be made.
  * The module uses no API of VS Code, and main.ts runs it in Node.js.
  */
@@ -26,14 +28,18 @@ import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { version } from '../../package.json';
 import { checkDocument } from '../paper/checks';
+import { addSources, sourceLine } from '../paper/citations';
 import { citationStyleOf } from '../paper/csl';
 import { formatPaper } from '../paper/format';
 import { readFrontMatter } from '../paper/frontMatter';
 import { topicList, topics } from '../paper/instructions';
 import { formatText, type Layout, type Problem } from '../paper/layout';
+import { type Fetcher, type Lookup, lookUpFile, lookUpIdentifier, searchWorks } from '../paper/lookup';
+import { identifierOf, missingFields } from '../paper/metadata';
 import { defaultLayout, documentLayout, findLayout, layoutName } from '../paper/render';
 import { type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, packageName } from '../paper/scaffold';
 import { type Assets, exportPdf, fileReader, folderUrl } from '../pdf/export';
+import { httpFetcher } from './net';
 
 /** command is the name of the command, the `bin` of cli/package.json, as the shell calls it. */
 export const command = 'markdownpaper';
@@ -62,6 +68,13 @@ export const usage = [
   '  new layout <folder>           write a new layout folder, copied from --from <name> (default: plain), --language <tag>',
   '  new project <folder>          write a new project without questions, with the options of create',
   '  instructions [topic]          print the rules of a topic for AI agents; without a topic, the list',
+  '  source <file.md> <input>...   add sources to the database of the file, with the metadata from doi.org, the library',
+  '                                catalogs, PubMed or arXiv; an input is a DOI, an ISBN, a PubMed ID, an arXiv ID, a web',
+  '                                address, or a RIS, BibTeX, CSL JSON, HTML or PDF file',
+  '      --id <id>                 the ID of the one new source, for example of a law',
+  '      --offline                 ask no service; keep the metadata of the files',
+  '      --dry-run                 print the new lines of the database and write nothing',
+  '  source --search <words>       list up to ten works of Crossref whose title matches, with their DOIs',
   '',
   'Options:',
   '  --help                        show this help',
@@ -81,6 +94,10 @@ export interface Io {
   cwd: string;
   /** assets are the built-in layouts and Paged.js of the package. */
   assets: Assets;
+  /** fetch is the network of `source`; without it, the tool sends its own requests. */
+  fetch?: Fetcher;
+  /** today is the day of the access of a web page; without it, the day of the run. */
+  today?: Date;
 }
 
 /** UsageError is a wrong command or option. */
@@ -296,6 +313,104 @@ async function runFormat(args: readonly string[], io: Io): Promise<number> {
   return options.check && changed > 0 ? 1 : 0;
 }
 
+/** userAgent names the command and its repository in each request of `source`, as the services ask for. */
+const userAgent = `${command}/${version} (+https://github.com/nimblescape/markdownpaper-vscode)`;
+
+/**
+ * runSource runs `source` ([R-CITE-005](../../docs/requirements.md#r-cite-005)): it looks up each input, adds the new
+ * sources to the database of the file, and prints for each input the ID, where the metadata came from, and the fields
+ * that the source needs and did not get.
+ * @param args - The arguments after the command.
+ * @param io - The streams and the network.
+ */
+async function runSource(args: readonly string[], io: Io): Promise<number> {
+  const { positional, options } = parse(args, ['id', 'search'], ['offline', 'dry-run']);
+  const fetch = options.offline ? undefined : (io.fetch ?? httpFetcher(userAgent));
+  if (options.search !== undefined) {
+    if (positional.length > 0 || options.id !== undefined || options['dry-run'] || !fetch) {
+      throw new UsageError(`${command} source --search takes only the words of the search.`);
+    }
+    const { works, problem } = await searchWorks(options.search, fetch);
+    if (problem) {
+      io.err(`${command}: error: ${problem}.`);
+    }
+    for (const work of works) {
+      io.out(`${work.doi}  ${work.authors || 'no author'} (${work.year ?? 'no date'}). ${work.title}.${work.container ? ` ${work.container}.` : ''} [${work.type}]`);
+    }
+    if (works.length > 0) {
+      io.out(`Add the right one by its DOI: ${command} source <file.md> <DOI>`);
+    } else if (!problem) {
+      io.err(`${command}: Crossref found no work for "${options.search}".`);
+    }
+    return works.length > 0 ? 0 : 1;
+  }
+  if (positional.length < 2) {
+    throw new UsageError(`${command} source needs a Markdown file and at least one input: a DOI, an ISBN, a PubMed ID, an arXiv ID, a web address or a file.`);
+  }
+  if (options.id !== undefined && positional.length > 2) {
+    throw new UsageError('--id gives the ID of one new source, so the call can name only one input.');
+  }
+  const [name, ...inputs] = positional;
+  const file = path.resolve(io.cwd, name);
+  if (!fs.existsSync(file)) {
+    throw new UsageError(`The file ${name} does not exist.`);
+  }
+  const context = { ...(fetch ? { fetch } : {}), today: io.today ?? new Date() };
+  const text = fs.readFileSync(file, 'utf8');
+  let lines = text.split(/\r?\n/);
+  const newLines: string[] = [];
+  let failed = 0;
+  for (const input of inputs) {
+    const inputFile = path.resolve(io.cwd, input);
+    let found: Lookup;
+    if (fs.existsSync(inputFile) && fs.statSync(inputFile).isFile()) {
+      found = await lookUpFile(input, fs.readFileSync(inputFile), context);
+    } else {
+      const identifier = identifierOf(input);
+      found = identifier
+        ? await lookUpIdentifier(identifier, context)
+        : { sources: [], from: '', notes: [], problem: 'This is no file and no DOI, ISBN, PubMed ID, arXiv ID or web address.' };
+    }
+    if (options.id !== undefined && found.sources.length > 1) {
+      throw new UsageError(`--id gives the ID of one new source, but ${input} holds ${found.sources.length} sources.`);
+    }
+    const result = found.sources.length > 0 ? addSources(lines, found.sources, options.id) : undefined;
+    const problem = found.problem ?? result?.problem;
+    if (!result || problem) {
+      failed++;
+      io.err(`${input}: error: ${problem ?? 'The input gave no source.'}`);
+    } else {
+      lines = result.lines;
+      newLines.push(...result.added.map(sourceLine));
+      for (const source of result.added) {
+        io.out(`${input}: added ${source.id} (${source.type ?? 'no type'}) from ${found.from}`);
+        const missing = missingFields(source);
+        if (missing.length > 0) {
+          io.out(`  ${source.id} needs these fields and did not get them: ${missing.join(', ')}. Take them from the source itself, or leave them out.`);
+        }
+      }
+      for (const known of result.known) {
+        io.out(`${input}: the database has this source already as ${known.id} (the same ${known.by}); nothing added`);
+      }
+    }
+    for (const note of found.notes) {
+      io.out(`  note: ${note}`);
+    }
+  }
+  if (newLines.length > 0) {
+    if (options['dry-run']) {
+      io.out(`The lines that the database of ${name} would get:`);
+      for (const line of newLines) {
+        io.out(line);
+      }
+    } else {
+      fs.writeFileSync(file, lines.join(text.includes('\r\n') ? '\r\n' : '\n'));
+      io.out(`${name}: ${newLines.length === 1 ? '1 source' : `${newLines.length} sources`} added`);
+    }
+  }
+  return failed > 0 ? 1 : 0;
+}
+
 /** ProjectAnswers are the answers for a new project. */
 interface ProjectAnswers {
   folder: string;
@@ -433,6 +548,8 @@ export async function run(args: readonly string[], io: Io): Promise<number> {
         return await runCreate(rest, io, true);
       case 'new':
         return await runNew(rest, io);
+      case 'source':
+        return await runSource(rest, io);
       case 'instructions': {
         if (rest.length === 0) {
           io.out(topicList(`npx -y ${packageName}`));

@@ -239,8 +239,13 @@ The format writes the text of each citation and the entries of the reference
 list from the data of the sources, in the citation style of the layout. Do not
 write the text of a citation or of an entry yourself.
 
-1. **Add the source** as one line of CSL JSON to the comment
-   `nimblescape-sources` at the end of the file:
+1. **Add the source** to the comment `nimblescape-sources` at the end of the
+   file, one line of CSL JSON for each source, with the command
+   `markdownpaper source`:
+
+   ```sh
+   markdownpaper source paper/paper.md 10.3390/bs9040039 978-3-8252-4753-9 inbox/export.ris
+   ```
 
    ```markdown
    <!-- nimblescape-sources
@@ -248,27 +253,41 @@ write the text of a citation or of an entry yourself.
    -->
    ```
 
-   - Take the metadata of a source with a DOI from doi.org, as CSL JSON:
-     `curl -sL -H "Accept: application/vnd.citationstyles.csl+json" https://doi.org/<DOI>`.
-     Keep the fields that describe the source, such as `type`, `author`,
-     `editor`, `issued`, `title`, `container-title`, `volume`, `issue`,
-     `page`, `publisher`, `DOI` and `URL`, and leave out the others, such as
-     `reference`.
-   - Take the metadata of a source without a DOI from the source itself: the
-     title page of a PDF in `inbox/`, the record of the source in the
-     database where you found it, or the catalog of a library.
-   - **You must not write metadata from memory.** Each field comes from
-     doi.org or from the source. Leave out a field that you cannot take from
-     there, and say which source has no metadata yet.
-   - Give the source its ID instead of the `id` of the downloaded metadata:
-     the family name of the first author and the year in small letters,
-     without accents and spaces (`hong2024`, a second work `hong2024a`); an
+   - An input is a DOI, an ISBN, a PubMed ID, an arXiv ID, a web address, or
+     a file: an export in RIS, BibTeX or CSL JSON from a database or a
+     reference manager, a web page that you saved as HTML, or a PDF whose
+     metadata names its DOI. The command takes the metadata from doi.org, the
+     catalogs of the libraries, PubMed or arXiv, or from the file, gives each
+     new source its ID, and does not add a source that the database has
+     already.
+   - `markdownpaper source --search "<title>"` lists up to ten works of
+     Crossref with their DOIs. Add the right one by its DOI.
+   - For each input, the command prints the ID, where the metadata came from,
+     and the fields that the source needs and did not get. Take such a field
+     from the source itself, such as the title page of a PDF in `inbox/`, or
+     leave it out.
+   - A PDF without a DOI in its metadata adds nothing; the command lists the
+     DOIs in the file, which can also be the works that the paper cites. Give
+     the DOI of its title page.
+   - A web page that the network does not reach: open it in the browser,
+     save it as HTML in `inbox/`, and give the file.
+   - `--id <id>` gives the ID of the one new source, for example of a law;
+     `--dry-run` prints the new lines and writes nothing; `--offline` asks no
+     service. The exit code is 1 when an input gave no source.
+   - **You must not write metadata from memory.** Each field comes from the
+     command or from the source. Leave out a field that you cannot take from
+     there, and say which source has no metadata yet. Write a line yourself
+     only for a source that no input of the command describes, from the
+     source itself.
+   - The ID of a source: the family name of the first author and the year in
+     small letters, without accents and spaces, with "ae", "oe" and "ue" for
+     the German umlauts (`hong2024`, a second work `hong2024a`); an
      organization by its full name and the year
      (`worldeconomicforum2025`); a law by its place of publication
      (`bgbl-ii-262-2015`); no year without a date.
    - Each source stays on one line. Write `>` in a text as `\u003e`.
    - A web page that can change gets the day of the access:
-     `"accessed":{"date-parts":[[2026,10,30]]}`.
+     `"accessed":{"date-parts":[[2026,10,30]]}`; the command adds it.
 2. **Cite the source** with a link to its ID where the text states what the
    source says. The text of the link does not matter; the format writes it.
    - In parentheses after the statement: `([Hong et al., 2024, S. 3](#hong2024 "page 3"))`.

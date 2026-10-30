@@ -33,6 +33,7 @@ import { type CitationStyle, cite, type Form, type Source } from './csl';
 import { bodyOf, readFrontMatter } from './frontMatter';
 import type { Layout, Problem } from './layout';
 import { type Heading, renderBody } from './markdown';
+import { sameSource, sourceId } from './metadata';
 
 /** sourcesName is the name of the comment of the database in its first line. */
 export const sourcesName = 'nimblescape-sources';
@@ -125,6 +126,72 @@ export function findDatabase(lines: readonly string[]): Database | undefined {
  * @param source - The source.
  */
 export const sourceLine = (source: Source): string => JSON.stringify(source).replace(/>/g, '\\u003e');
+
+/** Added is the result of addSources: the new lines of the text, the new sources, the sources that the database has already, and why it added none. */
+export interface Added {
+  lines: string[];
+  added: Source[];
+  known: { source: Source; id: string; by: string }[];
+  problem?: string;
+}
+
+/**
+ * addSources adds new sources to the database of a text, each with the ID first: before the end of the comment, or in
+ * a new comment at the end of the text. A source gets the given ID, else its ID by decision 22 (sourceId); a source
+ * whose DOI, ISBN, or title and year the database has already is not added again.
+ * @param lines - The lines of the text.
+ * @param sources - The new sources.
+ * @param newId - The ID of the one new source, if the call gives it.
+ */
+export function addSources(lines: readonly string[], sources: readonly Source[], newId?: string): Added {
+  const database = findDatabase(lines);
+  if (database && (database.end >= lines.length || lines[database.end].trim() !== '-->')) {
+    return { lines: [...lines], added: [], known: [], problem: database.problems[0]?.message ?? 'The comment of the sources has no end.' };
+  }
+  if (newId !== undefined && !idPattern.test(newId)) {
+    return { lines: [...lines], added: [], known: [], problem: `The ID "${newId}" is no ID of a source: letters and digits, then also "_", "-", "." and ":".` };
+  }
+  const present = [...(database?.sources ?? [])];
+  const taken = new Set(present.map((source) => source.id));
+  // An ID in a line that the checks report, such as a second source with the same ID, is taken as well.
+  for (let line = (database?.start ?? 0) + 1; database && line < database.end; line++) {
+    const id = /"id"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(lines[line])?.[1];
+    if (id !== undefined) {
+      taken.add(id);
+    }
+  }
+  const added: Source[] = [];
+  const known: Added['known'] = [];
+  for (const source of sources) {
+    const same = sameSource(source, present);
+    if (same) {
+      known.push({ source, id: same.source.id, by: same.by });
+      continue;
+    }
+    const { id: _id, ...fields } = source;
+    const id = newId ?? sourceId(source, taken);
+    if (taken.has(id)) {
+      return { lines: [...lines], added: [], known: [], problem: `The database has a source with the ID "${id}" already.` };
+    }
+    const entry = { id, ...fields } as Source;
+    added.push(entry);
+    present.push(entry);
+    taken.add(id);
+  }
+  const entries = added.map(sourceLine);
+  if (entries.length === 0) {
+    return { lines: [...lines], added, known };
+  }
+  if (database) {
+    return { lines: [...lines.slice(0, database.end), ...entries, ...lines.slice(database.end)], added, known };
+  }
+  const body = [...lines];
+  const ending = body.length > 0 && body[body.length - 1] === '';
+  while (body.length > 0 && body[body.length - 1].trim() === '') {
+    body.pop();
+  }
+  return { lines: [...body, ...(body.length > 0 ? [''] : []), `<!-- ${sourcesName}`, ...entries, '-->', ...(ending || body.length === 0 ? [''] : [])], added, known };
+}
 
 /** locatorTerms are the CSL terms of a place in a source, which the title of a citation names. */
 export const locatorTerms: readonly string[] = [

@@ -52,7 +52,7 @@ This document replaces it where the two differ.
 | 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
 | 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `markdownpaper format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | done |
 | 23 | Citation styles in CSL with citeproc-js: the built-in style `apa7`, a CSL file of the layout, the CSL locales; `pht-apa7.csl` in the PHT layouts | [R-CITE-003](#r-cite-003), [R-GEN-004](#r-gen-004) | done |
-| 24 | The metadata of new sources: `markdownpaper source` with DOI, ISBN, PubMed ID, arXiv ID, web address, RIS, BibTeX, CSL JSON, HTML and PDF files, and the title search of Crossref | [R-CITE-005](#r-cite-005) | in progress |
+| 24 | The metadata of new sources: `markdownpaper source` with DOI, ISBN, PubMed ID, arXiv ID, web address, RIS, BibTeX, CSL JSON, HTML and PDF files, and the title search of Crossref | [R-CITE-005](#r-cite-005) | done |
 | 25 | Parameters of a layout (fields with `values`), their check and hover, and the JSON schema of `layout.json` | [R-LAY-002](#r-lay-002), [R-DOC-002](#r-doc-002), [R-DOC-003](#r-doc-003) | done |
 
 ## General
@@ -988,8 +988,9 @@ command from GitHub is planned.
   `instructions`.
 - `--help` prints the use, `--version` the version and the version of the
   layout format.
-- The exit code is 0 for success, 1 for problems of a document or for a file
-  that `format --check` would change, and 2 for a wrong call or a failure.
+- The exit code is 0 for success, 1 for problems of a document, for a file
+  that `format --check` would change, or for an input of `source` that gave
+  no source, and 2 for a wrong call or a failure.
 - The command uses the same renderer, checks and scaffold as the extension.
 
 ### R-CLI-002
@@ -1075,8 +1076,9 @@ cited or not, in one HTML comment at the end of the file, its database:
   or from the source, and a field that it cannot take from there stays out.
   The ID of the downloaded metadata is replaced by the ID of the next item.
   A web page that can change gets the day of the access (`accessed`).
-- The ID of a source is in small letters, without spaces and accents
-  ([decision 22](#decisions)):
+- The ID of a source is in small letters, without spaces and accents, with
+  "ae", "oe" and "ue" for the German umlauts and "ss" for "ß"; the letters of
+  other scripts, such as Japanese, stay ([decision 22](#decisions)):
   - a source by persons: the family name of the first author and the year,
     for example `hong2024`; a second work of the same author and year gets
     `a`, `b` (`hong2024a`);
@@ -1236,7 +1238,12 @@ input is an identifier or a file:
   `data.medra.org`, `japanlinkcenter.org`, `services.dnb.de`,
   `sru.k10plus.de`, `openlibrary.org`, `api.ncbi.nlm.nih.gov`,
   `export.arxiv.org`, and the host of a web address that the call names. Each
-  request names the command and its repository in the header `User-Agent`.
+  request names the command and its repository in the header `User-Agent`,
+  and goes through the proxy of the environment variables `HTTPS_PROXY` and
+  `NO_PROXY` when they name one.
+- A source that a service gives without an author or another field that its
+  type needs keeps the gap: the command does not guess a field, for example
+  from a person whom a library record names without the role of an author.
 
 ## Settings
 
@@ -1319,7 +1326,8 @@ requirement ([R-GEN-007](#r-gen-007)).
     Markdown plugin, such as "Add Note" of Markdown Notes, works on the pages
     as in the Markdown preview, because the pages are made there.
 21. **Only PDF** ([R-PDF-004](#r-pdf-004)): no Word file.
-22. **The IDs of the sources** ([R-CITE-001](#r-cite-001)): a person is the
+22. **The IDs of the sources** ([R-CITE-001](#r-cite-001)): small letters,
+    with "ae", "oe" and "ue" for the German umlauts; a person is the
     family name of the first author and the year, an organization its full
     name as cited and the year, a law or a regulation its Fundstelle with
     hyphens, a source without a date has no year, and a second file of one

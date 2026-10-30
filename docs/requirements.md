@@ -1439,9 +1439,9 @@ waits for the answers to the questions of the discussion document.
   the secret storage of VS Code. The web API reads the library that Zotero
   syncs, also when Zotero does not run and in VS Code on another computer,
   for example over SSH or in Codespaces, and gives the items as CSL JSON
-  (`format=csljson`). Whether the local API of Zotero 7
-  (`http://localhost:23119/api/`, the same addresses without a key) comes as
-  an addition is open ([open questions](#open-questions)).
+  (`format=csljson`). The extension does not use the local API of Zotero 7:
+  the Zotero program on the computer of the author manages the library and
+  syncs it with zotero.org.
 - AI agents and the command `markdownpaper` do not use Zotero; agents add
   sources with `markdownpaper source` ([R-CITE-005](#r-cite-005)).
 
@@ -1631,8 +1631,9 @@ requirement ([R-GEN-007](#r-gen-007)).
 42. **Zotero only through `/cite`, for the author** ([R-CITE-002](#r-cite-002),
     [R-CITE-006](#r-cite-006)): the author cites with `/cite`, which searches
     the database of the document and, when Zotero is set up, the items of
-    Zotero, as one list. The extension reads Zotero through the Zotero web
-    API with an API key of the author. There is no slash command `/source`. A
+    Zotero, as one list. The extension reads Zotero only through the Zotero
+    web API, with an API key of the author; the Zotero program on the
+    computer manages the library and syncs it. There is no slash command `/source`. A
     chosen item of Zotero is merged into the database: a missing field is
     added, a field with another value is updated from Zotero only after the
     author confirms, and nothing is removed. The database gets its sources
@@ -1657,11 +1658,10 @@ requirement ([R-GEN-007](#r-gen-007)).
   the release there is no release tag, so a document names a branch or a
   commit ([decision 36](#decisions)). The form for an npm package is open
   too.
-- Zotero in `/cite` ([R-CITE-006](#r-cite-006)): the local API of Zotero 7
-  as an addition to the web API, how an item finds its line in the database,
-  the Zotero key in the line, the copy of the PDF of an item into `bib/`, and
-  a command that updates all sources at once; the questions are in the
-  discussion document of [decision 42](#decisions).
+- Zotero in `/cite` ([R-CITE-006](#r-cite-006)): how an item finds its line
+  in the database, the Zotero key in the line, the copy of the PDF of an item
+  into `bib/`, and a command that updates all sources at once; the questions
+  are in the discussion document of [decision 42](#decisions).
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
   `markdownpaper` has no extensions of VS Code, so its PDF shows a diagram as
   its source text. It can bring Mermaid itself; PlantUML needs Java or a

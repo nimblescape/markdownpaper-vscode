@@ -284,21 +284,35 @@ export interface Composed {
  * @param resource - The mapping of a URL to the URL that the page loads.
  */
 export function compose(loaded: LoadedLayout, values: Record<string, string>, resource: (url: string) => string): Composed {
+  const fieldNames = Object.keys(values).filter((key) => /^[A-Za-z][A-Za-z0-9_-]*$/.test(key));
+  const attributes = Object.fromEntries(fieldNames.map((key) => [`data-field-${key.toLowerCase()}`, values[key]]));
+  // Each template section has the fields as attributes too, as the text has them: Paged.js applies the breaks and the
+  // named pages to the content without its body, so a rule such as `body[data-field-x] h1 { break-before: auto; }`
+  // never matches there, and `.paper-text[data-field-x] > h1` does.
   const templates = (files: LoadedLayout['before']): string =>
     files
       .map(
         (template) =>
-          `<section class="paper-template paper-template-${escapeHtml(template.name)}" data-template="${escapeHtml(template.name)}">\n${rewriteHtml(withoutScripts(fill(template.text, values)), template.url, resource)}\n</section>`,
+          `<section class="paper-template paper-template-${escapeHtml(template.name)}" data-template="${escapeHtml(template.name)}"${attributesHtml(attributes)}>\n${rewriteHtml(withoutScripts(fill(template.text, values)), template.url, resource)}\n</section>`,
       )
       .join('\n');
-  const fieldNames = Object.keys(values).filter((key) => /^[A-Za-z][A-Za-z0-9_-]*$/.test(key));
   return {
     styles: loaded.styles.map((style) => rewriteCss(style.css, style.url, resource)),
     before: templates(loaded.before),
     after: templates(loaded.after),
     variables: `:root {\n${fieldNames.map((key) => `  --field-${key}: ${cssString(values[key])};`).join('\n')}\n}`,
-    attributes: Object.fromEntries(fieldNames.map((key) => [`data-field-${key.toLowerCase()}`, values[key]])),
+    attributes,
   };
+}
+
+/**
+ * attributesHtml returns attributes as the text of an HTML start tag, each with a space before it.
+ * @param attributes - The names and the values of the attributes.
+ */
+function attributesHtml(attributes: Record<string, string>): string {
+  return Object.entries(attributes)
+    .map(([name, value]) => ` ${name}="${escapeHtml(value)}"`)
+    .join('');
 }
 
 /**
@@ -322,9 +336,7 @@ export async function render(host: Host, document: string, text: string, plugins
   const body = renderBody(bodyOf(text, frontMatter), layout, hyphenate, plugins);
   problems.push(...body.problems.map((problem) => ({ ...problem, file: problem.file ?? document })));
   const composed = compose(loaded, values, host.resource);
-  const attributes = Object.entries(composed.attributes)
-    .map(([name, value]) => ` ${name}="${escapeHtml(value)}"`)
-    .join('');
+  const attributes = attributesHtml(composed.attributes);
   const title = values.title?.trim() || values.file;
   const source = host.sources;
   const policy = [
@@ -402,7 +414,7 @@ window.PagedConfig = {
 </head>
 <body class="paper${host.extensions ? ' vscode-light' : ''}" data-layout="${escapeHtml(layout.id)}"${attributes}>
 ${composed.before}
-<main class="paper-text">
+<main class="paper-text"${attributes}>
 ${body.html}
 </main>
 ${composed.after}

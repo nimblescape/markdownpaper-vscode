@@ -121,7 +121,7 @@ gives the style sheet these parts:
 
 | Selector | Part |
 | --- | --- |
-| `body.paper` with `data-layout` and `data-field-<field>` | The page, with each field of the front matter as an attribute: `body[data-field-kapitelumbruch="nein"] h1 { break-before: auto; }`. |
+| `body.paper` with `data-layout` and `data-field-<field>` | The page, with each field of the front matter as an attribute: `body[data-field-draft="ja"] { color: #555; }`. `main.paper-text` and each template section have the same `data-field-<field>` attributes. Paged.js applies `break-before`, `break-after` and `page` to the content without its body, so a rule of a break or of a named page that depends on a field starts at the text or at the template section, not at `body`: `main.paper-text[data-field-kapitelumbruch="nein"] h1 { break-before: auto; }`. |
 | `--field-<field>` | Each field as a CSS variable with a string, for the margin boxes: `@bottom-left { content: var(--field-author); }`. |
 | `.paper-template-<name>` | The section of a template, for example `.paper-template-cover`; give it `break-after: page` for a page of its own. |
 | `main.paper-text` | The text. |

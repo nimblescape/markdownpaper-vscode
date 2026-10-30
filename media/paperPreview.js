@@ -297,6 +297,12 @@
       .join('\n');
     const template = document.createElement('template');
     template.innerHTML = `${paper.before || ''}\n<main class="paper-text">\n${blocks}\n</main>\n${paper.after || ''}`;
+    // The text has the fields as attributes too, for the rules of breaks and named pages, which Paged.js applies to
+    // the content without its body.
+    const text = template.content.querySelector('main.paper-text');
+    for (const [name, value] of Object.entries(paper.attributes || {})) {
+      text.setAttribute(name, value);
+    }
     keepFromScripts(template.content);
     const old = document.querySelector('.nimblescape-paper-pages');
     const area = document.createElement('div');

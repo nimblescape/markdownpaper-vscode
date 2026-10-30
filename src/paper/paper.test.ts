@@ -170,12 +170,19 @@ describe('the page (R-REN-001, R-REN-008)', () => {
     expect(rendered.pdfName).toBe('Hannes-Stauss_Agenten.pdf');
     expect(rendered.html).toContain('url("https://resource/repo/layouts/thesis/fonts/a.ttf")');
     expect(rendered.html).toContain('url("https://e.com/b.png")');
-    expect(rendered.html).toContain('<section class="paper-template paper-template-cover" data-template="cover">\n<img src="https://resource/repo/layouts/thesis/images/logo.png"><h1>Agenten</h1>\n</section>');
+    expect(rendered.html).toMatch(/<section class="paper-template paper-template-cover" data-template="cover"[^>]*>\n<img src="https:\/\/resource\/repo\/layouts\/thesis\/images\/logo.png"><h1>Agenten<\/h1>\n<\/section>/);
     expect(rendered.html).not.toContain('alert(1)');
     expect(rendered.html).toContain(`script-src 'nonce-abc'`);
     expect(rendered.html).toContain('<base href="https://resource/repo/paper/">');
     expect(rendered.html).toContain('--field-kapitelumbruch: "ja";');
-    expect(rendered.html).toContain('data-field-author="Hannes Stauss"');
+    // The body, the template sections and the text have the fields as attributes, because Paged.js applies the
+    // breaks and the named pages to the content without its body.
+    expect(rendered.html).toMatch(/<body [^>]*data-field-author="Hannes Stauss"/);
+    for (const start of ['<section class="paper-template paper-template-cover" ', '<main class="paper-text" ']) {
+      const tag = rendered.html.slice(rendered.html.indexOf(start)).split('>')[0];
+      expect(tag).toContain('data-field-author="Hannes Stauss"');
+      expect(tag).toContain('data-field-kapitelumbruch="ja"');
+    }
     expect(rendered.html).toContain('<html lang="de-AT">');
     expect(rendered.html).toContain('<script nonce="abc" src="https://resource/paged.js"></script>');
   });

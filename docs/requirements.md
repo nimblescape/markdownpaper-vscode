@@ -399,7 +399,12 @@ of its layout in the front matter are not decided yet (see the
 **No logic in a layout.** A layout of version 1 holds only style sheets, the
 templates and the fields of the front matter, which the pages get as
 attributes, for example `kapitelumbruch: false` as
-`data-field-kapitelumbruch="false"` ([R-REN-001](#r-ren-001)). It holds no
+`data-field-kapitelumbruch="false"` ([R-REN-001](#r-ren-001)), on the body,
+on the text `main.paper-text` and on each template section. Paged.js applies
+the breaks and the named pages to the content without its body, so a rule
+of a break or of a named page that depends on a field starts at the text or
+at the template section, for example
+`main.paper-text[data-field-kapitelumbruch="nein"] h1 { break-before: auto; }`. It holds no
 script, because a layout from another repository would run its code on the
 computer of the author ([decision 19](#decisions)). The renderer removes
 scripts and event attributes from the templates ([R-LAY-004](#r-lay-004)).

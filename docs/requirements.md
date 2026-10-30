@@ -46,7 +46,7 @@ This document replaces it where the two differ.
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
 | 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; the command line is open |
-| 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark and the name wait for a decision |
+| 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark is decided, the form of the repository and the name in the front matter wait for a decision |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` with the cite of the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
 | 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
@@ -364,7 +364,14 @@ of the PHT for many students ([decision 18](#decisions)). The folder
 `layouts/` of the repository of the document counts first. The PHT layout
 gets a repository of its own in the organization `majikmate`, and such a
 repository has a mark on GitHub by which Markdown Paper finds it and applies
-it. The mark is not decided yet (see the [open questions](#open-questions)).
+it. The mark is the GitHub topic `nimblescape-markdownpaper-layout`: its name
+names Markdown Paper, and the page of the topic,
+<https://github.com/topics/nimblescape-markdownpaper-layout>, lists every
+layout repository ([decision 29](#decisions)). The papers of one repository
+can have different layouts, for example the thesis paper and the concept
+paper of `scalarion/transcribe`. The form of a layout repository and the name
+of its layout in the front matter are not decided yet (see the
+[open questions](#open-questions)).
 
 ### R-LAY-008
 
@@ -1178,19 +1185,24 @@ requirement ([R-GEN-007](#r-gen-007)).
     of links between hidden markers, such as `<!-- toc -->` and
     `<!-- /toc -->`, under a heading that the author writes; the renderer
     adds the page numbers.
+29. **The mark of a layout repository** ([R-LAY-007](#r-lay-007)): the GitHub
+    topic `nimblescape-markdownpaper-layout`, whose name names Markdown Paper.
 
 ## Open questions
 
 - The mark of a paper document ([R-DOC-004](#r-doc-004)): the field `layout`
   of the front matter, and later the citations; not confirmed yet.
-- The mark of a layout repository and the name of such a layout in the front
-  matter ([R-LAY-007](#r-lay-007)). The proposal: the repository has the
-  GitHub topic `nimblescape-layout` and `layout.json` at its root; Markdown
-  Paper searches GitHub for the topic with the GitHub sign-in of VS Code, so
-  private repositories that the author can read count too; a document names
-  a layout with a release tag, so its pages stay the same:
-  `layout: github:majikmate/pht-thesis@v1.0.0`. The form for an npm package is
-  open too.
+- The form of a layout repository and the name of such a layout in the front
+  matter ([R-LAY-007](#r-lay-007)). The proposal: one repository can hold
+  several layouts, one folder each with its own `layout.json`, for example
+  `majikmate/pht-layouts` with `thesis/` and `concept/`; each `layout.json`
+  has `"$schema"` with the URL of a layout schema in `markdownpaper-vscode`;
+  Markdown Paper searches GitHub for the topic of
+  [decision 29](#decisions) with the GitHub sign-in of VS Code, so private
+  repositories that the author can read count too; a document names a layout
+  with a release tag, so its pages stay the same:
+  `layout: github:majikmate/pht-layouts/thesis@v1.0.0`. The form for an npm
+  package is open too.
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
   `markdownpaper` has no extensions of VS Code, so its PDF shows a diagram as
   its source text. It can bring Mermaid itself; PlantUML needs Java or a

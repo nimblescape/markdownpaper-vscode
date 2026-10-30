@@ -68,6 +68,13 @@ describe('notes of nimblescape Markdown Notes (R-REN-002)', () => {
     expect(body.html).toContain('<p data-line="18">The next paragraph.</p>');
   });
 
+  test('the pages leave out the start marker of an argument to research and keep its "(RESEARCH)" (R-CITE-002)', () => {
+    const body = renderBody('<wbr><!--[research-->Feedback changes learning (RESEARCH).\n', layoutOf());
+    expect(body.html).toContain('>Feedback changes learning (RESEARCH).</p>');
+    expect(body.html).not.toContain('research--');
+    expect(body.html).not.toContain('<wbr>');
+  });
+
   test('a footnote of the document goes to the place of its reference, numbered without the notes', () => {
     const body = renderBody(example, layoutOf());
     expect(body.footnotes).toBe(1);

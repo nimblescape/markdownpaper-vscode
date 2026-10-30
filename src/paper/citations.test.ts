@@ -247,3 +247,13 @@ test('the problems name the database, the titles of the citations, the paragraph
   ]);
   expect(citationProblems(['Text.'], layout)).toEqual([]);
 });
+
+test('an argument to research ends at its "(RESEARCH)" in its paragraph, and a start marker without one is a warning (R-CITE-002)', () => {
+  const problems = (lines: string[]) => citationProblems(lines, layout).map((problem) => [problem.line, problem.message.slice(0, 30)]);
+  expect(problems(['<wbr><!--[research-->Feedback changes learning (RESEARCH).'])).toEqual([[0, '"(RESEARCH)" asks an AI agent ']]);
+  expect(problems(['<wbr><!--[research-->Feedback changes', 'learning (RESEARCH).'])).toEqual([[1, '"(RESEARCH)" asks an AI agent ']]);
+  expect(problems(['<wbr><!--[research-->Feedback changes learning.', '', 'Another paragraph (RESEARCH).'])).toEqual([
+    [0, 'The argument to research has n'],
+    [2, '"(RESEARCH)" asks an AI agent '],
+  ]);
+});

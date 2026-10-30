@@ -304,9 +304,19 @@ write the text of a citation or of an entry yourself.
    An entry starts with the anchor of its source,
    `<a id="hong2024"></a>Hong, S. (2024). …`; the format removes the entry of
    a source that the text no longer cites.
-5. **"(RESEARCH)"** in the text asks for a source. Find a source that supports
-   the statement, add it, and replace `(RESEARCH)` with its citation. When no
-   source supports it, keep `(RESEARCH)` and say so.
+5. **"(RESEARCH)"** in the text asks for the evidence of an argument. The
+   argument is the text from the hidden start marker `<wbr><!--[research-->`
+   to `(RESEARCH)`, which the author selected; without a start marker, it is
+   the sentence before `(RESEARCH)`:
+
+   ```markdown
+   <wbr><!--[research-->Feedback changes learning more than praise does (RESEARCH).
+   ```
+
+   Find sources that support the argument, add them with `markdownpaper
+   source`, remove the start marker, and replace `(RESEARCH)` with their
+   citations. When no source supports the argument, keep both marks and say
+   so.
 
 ## 10. Notes of nimblescape Markdown Notes
 

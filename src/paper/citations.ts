@@ -288,8 +288,12 @@ const noteMarkup = /<!--\[note-[a-z0-9]{4}|\[\^note-[a-z0-9]{4}\]/;
 /** headingLine matches an ATX heading. */
 const headingLine = /^ {0,3}#{1,6}(?:[ \t]|$)/;
 
-/** researchText asks an AI agent for a source of the statement before it. */
+/**
+ * researchText asks an AI agent for the evidence of the argument from the start marker `researchMark` to it, or of the
+ * sentence before it without a start marker ([R-CITE-002](../../docs/requirements.md#r-cite-002)).
+ */
 export const researchText = '(RESEARCH)';
+export const researchMark = '<!--[research-->';
 
 /**
  * textLines returns the indexes of the lines of a text that hold Markdown text: not the front matter, a fenced code
@@ -511,20 +515,34 @@ export function writeCitations(lines: readonly string[], layout: Layout, style: 
 /**
  * citationProblems returns the problems of the citations of a paper document: the lines of the database that the step
  * cannot read, a title of a citation with words that are no data, a paragraph of the reference list that is no entry
- * of a source, a cited source without an entry, and each "(RESEARCH)", which asks an AI agent for a source.
+ * of a source, a cited source without an entry, each "(RESEARCH)", which asks an AI agent for the evidence of an
+ * argument, and a start marker of an argument without its "(RESEARCH)".
  * @param lines - The lines of the text.
  * @param layout - The layout of the document.
  */
 export function citationProblems(lines: readonly string[], layout: Layout): Problem[] {
   const problems: Problem[] = [];
   const at = (line: number, column = 0, end = lines[line]?.length ?? 0) => ({ line, column, length: Math.max(end - column, 0) });
-  for (const line of textLines(lines)) {
+  const text = new Set(textLines(lines));
+  for (const line of text) {
     for (let column = lines[line].indexOf(researchText); column >= 0; column = lines[line].indexOf(researchText, column + 1)) {
       problems.push({
         severity: 'warning',
-        message: '"(RESEARCH)" asks an AI agent to find a source that supports the statement before it, to add it to the sources, and to cite it here.',
+        message: '"(RESEARCH)" asks an AI agent to find sources that support the argument before it, to add them to the sources, and to cite them here.',
         ...at(line, column, column + researchText.length),
       });
+    }
+    // The argument of a start marker ends at a "(RESEARCH)" in the same paragraph.
+    for (let column = lines[line].indexOf(researchMark); column >= 0; column = lines[line].indexOf(researchMark, column + 1)) {
+      let end = line;
+      let rest = lines[line].slice(column + researchMark.length);
+      while (!rest.includes(researchText) && text.has(end + 1) && lines[end + 1].trim() !== '') {
+        end++;
+        rest = lines[end];
+      }
+      if (!rest.includes(researchText)) {
+        problems.push({ severity: 'warning', message: 'The argument to research has no "(RESEARCH)" at its end in its paragraph.', ...at(line, column, column + researchMark.length) });
+      }
     }
   }
   const database = findDatabase(lines);

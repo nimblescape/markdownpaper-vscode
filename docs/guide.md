@@ -115,7 +115,9 @@ arXiv, a web page, an export of a reference manager or the DOI of a PDF; the
 agent must not write metadata from memory (`instructions document`,
 section 9). The checks name a line of the database that is no source, a title
 of a link that is no data of a citation, a cited source without an entry, and
-each `(RESEARCH)`.
+each `(RESEARCH)`. `(RESEARCH)` asks an AI agent for the evidence of an
+argument: in VS Code, select the argument and type `/research` (planned); the
+selection gets a hidden start marker and `(RESEARCH)` at its end.
 
 ## Front matter
 

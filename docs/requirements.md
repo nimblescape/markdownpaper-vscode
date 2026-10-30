@@ -58,6 +58,7 @@ This document replaces it where the two differ.
 | 27 | The parts of a document (front part, body, appendix part) as elements for their own pages, and a table of contents without the front part (`contents.front`); the PHT thesis layout in the look of its Word template | [R-REN-013](#r-ren-013), [R-REN-004](#r-ren-004), [R-LAY-002](#r-lay-002) | done |
 | 28 | The empty paper document and its preview PDF in each layout; the list of the layouts of `create` and "New Project" with the layouts on GitHub; `markdownpaper layouts` and `markdownpaper preview` | [R-LAY-009](#r-lay-009), [R-NEW-004](#r-new-004), [R-LAY-007](#r-lay-007) | done; the PHT layouts have their empty paper documents and previews |
 | 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of a running Zotero, and the merge of a chosen item into the database | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | planned; the open questions of the discussion document come first |
+| 30 | `/research` on a selected argument: the start marker and `(RESEARCH)`, the rules for AI agents and the checks; the slash command needs the slash commands on selected text of Markdown Notes | [R-CITE-002](#r-cite-002), [R-GEN-003](#r-gen-003) | the rules for AI agents and the checks done; the slash command planned |
 
 ## General
 
@@ -126,6 +127,13 @@ without it.
   Markdown Paper adds its format step with `registerFormatStep`
   ([R-CLI-002](#r-cli-002)); an older version of Markdown Notes without it
   gets no step.
+- Needed from Markdown Notes for `/research` ([decision 43](#decisions)): a
+  slash command of another extension that works on selected text, as `/note`
+  does: `registerSlashCommand` with `selection: true` offers the command only
+  when a typed slash replaced selected text, and `run(editor, range)` gets the
+  range of the selected text, which Markdown Notes puts back; and the clean
+  editing view hides the start marker `<wbr><!--[research-->` as it hides the
+  start marker of a note.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
@@ -1260,11 +1268,26 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
   comment or in a fenced code block is no citation.
 - The checks warn of a title with words that are no CSL term or value, such
   as `"S. 3"`, and the formatter keeps the text of such a link.
-- `(RESEARCH)` asks an AI agent to find a source for the statement before it,
-  to add it to the database, and to replace `(RESEARCH)` with its citation.
-  When no source supports the statement, the agent keeps `(RESEARCH)` and
-  says so. The checks warn of each `(RESEARCH)`. The slash command `/research`
-  inserts it.
+- `(RESEARCH)` asks an AI agent to research the evidence for an argument
+  ([decision 43](#decisions)). The author selects the argument in the text
+  editor and types `/research`, which works only with selected text. The
+  selection gets the hidden start marker `<wbr><!--[research-->` before it,
+  and `(RESEARCH)` at its end, before a period at the end of the selection,
+  where the citation goes:
+
+  ```markdown
+  <wbr><!--[research-->Feedback changes learning more than praise does (RESEARCH).
+  ```
+
+  The argument is the text from the start marker to `(RESEARCH)`; a
+  `(RESEARCH)` without a start marker asks for the sentence before it. The
+  agent finds sources that support the argument, adds them to the database
+  with `markdownpaper source` ([R-CITE-005](#r-cite-005)), removes the start
+  marker, and replaces `(RESEARCH)` with the citations. When no source
+  supports the argument, the agent keeps both marks and says so. The checks
+  warn of each `(RESEARCH)` and of a start marker without a `(RESEARCH)` after
+  it in its paragraph. The pages and the PDF show `(RESEARCH)` and leave the
+  start marker out.
 - The slash commands of the sources ([decision 15](#decisions),
   [decision 42](#decisions)): `/cite` inserts a citation of a source of the
   database, and with Zotero also of an item of Zotero
@@ -1610,6 +1633,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     source`, which stays. AI agents and the command `markdownpaper` do not use
     Zotero. The discussion document is
     [Zotero integration of Markdown Paper](https://claude.ai/artifact/2Q4BZy6wJzcqRn9SjTDFa3).
+43. **`/research` on a selected argument** ([R-CITE-002](#r-cite-002),
+    [R-GEN-003](#r-gen-003)): `/research` works only with selected text. The
+    selection is the argument for which an AI agent researches the evidence;
+    a hidden start marker before it and `(RESEARCH)` at its end mark the
+    argument in the file.
 
 ## Open questions
 

@@ -459,6 +459,14 @@ Table: Noten nach Schulstufe <a id="tab-grades"></a>
   of the file; the format step of the paper ([R-CLI-002](#r-cli-002)) will
   write them by the rules of the layout, so the file shows the numbers of the
   pages.
+- Markdown Notes defines the form of the anchors and of the links in
+  [R-XREF-001](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-001)
+  and
+  [R-XREF-002](https://github.com/nimblescape/nimblescape-markdown-notes/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-002):
+  it writes an anchor only at the end of the line of the image or of the
+  caption, with a name from up to three words of the caption, for example
+  `tab-participants-grade`, and its clean editing view hides the anchors. The
+  renderer also reads an anchor on the line after the caption.
 
 ## PDF
 
@@ -784,6 +792,13 @@ above follow them.
   installed browser ([decision 6](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
+- Links to headings and listings (open in Markdown Notes, no decision of
+  Hannes yet): `/ref` for a heading with its section number, such as
+  `[Section 2.1](#sec-…)` with the anchor at the end of the heading, and
+  `/listing` for a code block from marks in source code, with the caption
+  `Listing:` and the anchor `lst-…`. When Hannes decides them, the renderer
+  numbers these links by the rules of the layout as in
+  [R-REN-009](#r-ren-009), and a list of listings may join `LOF` and `LOT`.
 - The layout of the PHT thesis: today it lives in the skill
   `markdown-to-paper` of the repository `scalarion/transcribe`; it becomes a
   layout folder of that repository ([R-LAY-006](#r-lay-006)).

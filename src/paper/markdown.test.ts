@@ -93,7 +93,7 @@ describe('headings (R-REN-003)', () => {
 
   test('a heading with {-} and the headings below it get no number, and the marker does not show', () => {
     const html = renderBody('# Begriffe {-}\n\n## Glossar\n\n# Einleitung\n', layoutOf()).html;
-    expect(html).toContain('<h1 data-line="0" id="begriffe" class="unnumbered">Begriffe</h1>');
+    expect(html).toContain('<h1 data-line="0" id="begriffe--" class="unnumbered">Begriffe</h1>');
     expect(html).toContain('<h2 data-line="2" id="glossar" class="unnumbered">Glossar</h2>');
     expect(html).toContain('<span class="heading-number">1</span> Einleitung');
   });
@@ -107,9 +107,9 @@ describe('headings (R-REN-003)', () => {
     expect(renderBody('# Glossar\n\n# Einleitung\n', layoutOf({ unnumbered: ['^glossar$'] })).html).toContain('<h1 data-line="0" id="glossar" class="unnumbered">Glossar</h1>');
   });
 
-  test('two headings with the same text get two IDs', () => {
-    const body = renderBody('# Teil\n\n# Teil\n', layoutOf());
-    expect(body.headings.map((heading) => heading.id)).toEqual(['teil', 'teil-2']);
+  test('a heading has the ID that GitHub gives it, so that a Markdown link to it works on GitHub and on the pages', () => {
+    const body = renderBody('# Teil\n\n# Teil\n\n## Einführung: Ziele & `Code`\n\n# Quellen {BIB}\n', layoutOf());
+    expect(body.headings.map((heading) => heading.id)).toEqual(['teil', 'teil-1', 'einführung-ziele--code', 'quellen-bib']);
   });
 });
 
@@ -228,7 +228,7 @@ describe('links to figures and tables (R-REN-009)', () => {
     expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #tab-fehlt names no figure, table or heading of the file.', line: 21 }]);
   });
 
-  test('the anchor of /ref at the end of a heading is its ID, and a link to it gets the number of the heading or the label of the appendix', () => {
+  test('a Markdown link to a heading gets the number of the heading or the label of the appendix, also through an anchor at the end of the heading', () => {
     const markdown = [
       '# Inhaltsverzeichnis',
       '',
@@ -236,7 +236,7 @@ describe('links to figures and tables (R-REN-009)', () => {
       '',
       '## Methoden<a id="sec-methods"></a>',
       '',
-      'Siehe [Kapitel 1.4](#sec-methods), [Chapter 9](#sec-methods), [die Methoden](#sec-methods), [Anhang C](#sec-guide) und [Kapitel 3](#sec-toc).',
+      'Siehe [Kapitel 1.4](#methoden), [Chapter 9](#sec-methods), [die Methoden](#methoden), [Anhang C](#leitfaden-), [Anhang D](#sec-data) und [Kapitel 3](#literaturverzeichnis-bib-).',
       '',
       '# Literaturverzeichnis {BIB} <a id="sec-toc"></a>',
       '',
@@ -244,18 +244,24 @@ describe('links to figures and tables (R-REN-009)', () => {
       '',
       '## Leitfaden <a id="sec-guide"></a>',
       '',
-      '## Daten',
+      '## Daten<a id="sec-data"></a>',
       '',
-      '[Kapitel 5](#sec-weg)',
+      '[Kapitel 5](#sec-weg), [Kapitel 6](#leitfaden)',
       '',
     ].join('\n');
     const body = renderBody(markdown, layoutOf());
-    expect(body.html).toContain('<h2 data-line="4" id="sec-methods"><span class="heading-number">1.1</span> Methoden</h2>');
-    expect(body.html).toContain('<a href="#sec-methods">Kapitel 1.1</a>, <a href="#sec-methods">Chapter 1.1</a>, <a href="#sec-methods">die Methoden</a>, <a href="#sec-guide">Anhang A</a> und <a href="#sec-toc">Kapitel 3</a>');
-    expect(body.headings.find((heading) => heading.id === 'sec-toc')).toMatchObject({ text: 'Literaturverzeichnis', section: 'BIB' });
-    expect(body.html).toContain('<a href="#sec-methods"><span class="contents-number">1.1</span><span class="contents-text">Methoden</span></a>');
-    expect(body.html).not.toContain('<a id=');
-    expect(body.problems).toEqual([{ severity: 'warning', message: 'The link #sec-weg names no figure, table or heading of the file.', line: 16 }]);
+    expect(body.html).toContain('<h2 data-line="4" id="methoden"><span class="heading-number">1.1</span> Methoden<a id="sec-methods"></a></h2>');
+    expect(body.html).toContain(
+      '<a href="#methoden">Kapitel 1.1</a>, <a href="#sec-methods">Chapter 1.1</a>, <a href="#methoden">die Methoden</a>, <a href="#leitfaden-">Anhang A</a>, ' +
+        '<a href="#sec-data">Anhang B</a> und <a href="#literaturverzeichnis-bib-">Kapitel 3</a>',
+    );
+    expect(body.headings.find((heading) => heading.anchor === 'sec-toc')).toMatchObject({ id: 'literaturverzeichnis-bib-', text: 'Literaturverzeichnis', section: 'BIB' });
+    expect(body.html).toContain('<a href="#methoden"><span class="contents-number">1.1</span><span class="contents-text">Methoden</span></a>');
+    // GitHub keeps the space before the anchor in the ID, so `#leitfaden` names no heading.
+    expect(body.problems).toEqual([
+      { severity: 'warning', message: 'The link #sec-weg names no figure, table or heading of the file.', line: 16 },
+      { severity: 'warning', message: 'The link #leitfaden names no figure, table or heading of the file.', line: 16 },
+    ]);
   });
 });
 

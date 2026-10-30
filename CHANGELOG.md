@@ -32,9 +32,10 @@ The first version.
   is its caption, "Abbildung 1: …"; a paragraph `Table: …` directly before a
   table is its caption, "Tabelle 1: …". In the appendix they are numbered A1,
   B1. An anchor such as `<a id="fig-plan"></a>` at the end of the line names a
-  figure, a table or a heading, and a link to it, such as
-  `[Abbildung 1](#fig-plan)` or `[Kapitel 2.1](#sec-methods)`, shows the
-  number of the pages.
+  figure or a table, and a link to it, such as `[Abbildung 1](#fig-plan)`,
+  shows the number of the pages. A heading has the ID of GitHub, so a plain
+  Markdown link such as `[Kapitel 2.1](#methoden)` shows the number of the
+  heading.
 - The page preview beside the text editor shows the pages as the PDF prints
   them, updates them after a pause in typing and after a change of the layout,
   and shows the line of a click on a page in the text editor.

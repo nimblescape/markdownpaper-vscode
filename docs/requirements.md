@@ -38,7 +38,7 @@ This document replaces it where the two differ.
 | 7 | The page preview | [R-PRV-001](#r-prv-001) to [R-PRV-004](#r-prv-004) | done |
 | 8 | The scaffold: new document, new layout, new project with `inbox/` and `bib/` | [R-NEW-001](#r-new-001) to [R-NEW-003](#r-new-003) | done |
 | 9 | The command `markdownpaper` with `pdf`, `check`, `create`, `new` and `instructions` | [R-CLI-001](#r-cli-001), [R-CLI-003](#r-cli-003) | done |
-| 10 | The anchors of figures, tables and headings and the links to them, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-009](#r-ren-009) | done |
+| 10 | The anchors of figures and tables, the links to them and to headings, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-003](#r-ren-003), [R-REN-009](#r-ren-009) | done |
 | 11 | The interface of Markdown Notes: the file behind the clean editing view | [R-GEN-003](#r-gen-003) | done |
 | 12 | One formatter command: `markdownpaper format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | planned; needs the library of `@nimblescape/markdownnotes` |
 | 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | planned; the work of Markdown Notes moves here |
@@ -170,8 +170,9 @@ in the text editor as warnings after a pause in typing, and with
 - A problem of `layout.json` shows at the field `layout` and names the file.
 - Each required field of the layout must have a value; else a warning at the
   field, or at the field `layout` when the field is missing.
-- Each link to `#fig-…`, `#tab-…` or `#sec-…` must find its figure, table or
-  heading ([R-REN-009](#r-ren-009)).
+- Each link to `#fig-…`, `#tab-…` or `#sec-…`, and each link whose text is a
+  word and a number, such as `[Kapitel 2.1](#methoden)`, must find its figure,
+  table or heading ([R-REN-009](#r-ren-009).
 - The page preview adds the problems of the renderer, for example a template
   that does not exist. Each problem shows once.
 - `markdownpaper check` prints each problem as `file:line:column: severity:
@@ -322,9 +323,18 @@ the tokens of markdown-it.
 
 ### R-REN-003
 
-**Headings.** Each heading gets an ID from its text. When the layout numbers
-headings, the renderer numbers them as 1, 1.1, 1.1.1 to the depth of the
-layout.
+**Headings.** Each heading gets the ID that GitHub gives it, so that a
+Markdown link to a heading, such as `[Kapitel 2.1](#methoden)`, works on
+GitHub and on the pages without an added anchor (Hannes, 2026-10-30, 03:29:
+"isn't it just a markdown link?" and "we shall stay as close to markdown as
+possible"; [decision 16](#decisions)). When the layout numbers headings, the
+renderer numbers them as 1, 1.1, 1.1.1 to the depth of the layout.
+
+- The ID is the text of the heading as the file writes it, also a marker such
+  as `{BIB}`, in small letters, without punctuation and with a hyphen for each
+  space: `# Quellen {BIB}` is `quellen-bib`. The space before an HTML element
+  at the end counts, as on GitHub: `## Leitfaden <a id="x"></a>` is
+  `leitfaden-`. A second heading with the same ID gets `-1`, a third `-2`.
 
 - A heading with `{-}` or `{.unnumbered}` at its end gets no number, nor do
   the headings below it. The marker does not show.
@@ -440,21 +450,25 @@ inserts the figure with its caption and its anchor, `/table` inserts a table
 with its caption and its anchor, and `/ref` inserts a link to a figure, a
 table or a heading ("/ref also adds chapter numbers", Hannes, 2026-10-30, about
 03:20). The anchor stands at the end of the line of the image or of the
-caption, and at the end of the text of a heading:
+caption. A heading needs no anchor: a link to a heading is a plain Markdown
+link to the ID of the heading ([R-REN-003](#r-ren-003), [decision
+16](#decisions)):
 
 ```markdown
-## Methoden<a id="sec-methods"></a>
+## Methoden
 
 ![Der Plan der Studie](images/plan.png) <a id="fig-plan"></a>
 
 Table: Noten nach Schulstufe <a id="tab-grades"></a>
 
 [Abbildung 1](#fig-plan) zeigt den Plan, [Tabelle 1](#tab-grades) die Noten,
-[Kapitel 2.1](#sec-methods) die Methoden.
+[Kapitel 2.1](#methoden) die Methoden.
 ```
 
-- The anchor gives the figure, the table or the heading its ID, and does not
-  show; the table of contents shows the heading without it.
+- The anchor gives the figure or the table its ID, and does not show.
+- An anchor at the end of a heading, `## Methoden<a id="sec-methods"></a>`,
+  is a second ID of the heading for links, for files that have one; it does
+  not show, and the table of contents shows the heading without it.
 - The renderer writes the text of each link whose text is a word and a
   number anew: the label of a figure or a table ("Abbildung 1", "Tabelle
   A1"), the label of an appendix ("Anhang A"), and for another heading the
@@ -462,8 +476,8 @@ Table: Noten nach Schulstufe <a id="tab-grades"></a>
   always shows the number of the renderer. A link with other words, such as
   `[den Plan](#fig-plan)`, and a link to a heading without a number, for
   example of a special section, keep their text.
-- A link to `#fig-…`, `#tab-…` or `#sec-…` without its target is a warning
-  ([R-DOC-002](#r-doc-002)).
+- A link to `#fig-…`, `#tab-…` or `#sec-…`, or a link whose text is a word
+  and a number, without its target is a warning ([R-DOC-002](#r-doc-002)).
 - The formatter of Markdown Notes writes the numbers of the links in the order
   of the file; the format step of the paper ([R-CLI-002](#r-cli-002)) will
   write them by the rules of the layout, so the file shows the numbers of the
@@ -772,10 +786,10 @@ above follow them.
    of an image is its caption; a table gets its caption from a paragraph
    `Table: …` directly before it, which GitHub shows as well. The other
    choices for tables were a caption after the table and an HTML comment.
-9. **Appendix** ([R-REN-006](#r-ren-006), 2026-10-30, 02:11): the appendix
-   part `# Anhang` with one `##` heading for each appendix is built. The other
-   form, each appendix a chapter of its own (`# Anhang A: …`), waits for the
-   answer of Hannes on the card in the project thread.
+9. **Appendix** ([R-REN-006](#r-ren-006), 2026-10-30, 02:11, decided 03:30
+   with the option "One appendix heading, appendices below"): the appendix
+   part `# Anhang` with one `##` heading for each appendix. The other form,
+   each appendix a chapter of its own (`# Anhang A: …`), was not chosen.
 10. **Special sections without chapter numbers** ([R-REN-004](#r-ren-004),
     2026-10-30, 02:24 to 02:25): `TOC`, `LOF`, `LOT`, `BIB`, `ADT`, `AST`,
     `ACC`, `FWD`, `APX-A`, `APX-B`, …; the table of contents does not list
@@ -794,10 +808,14 @@ above follow them.
     `/table` and `/source` add an entry; `/ref` and `/cite` add a reference to
     an entry. `/figure`, `/table` and `/ref` belong to Markdown Notes,
     `/source`, `/cite` and `/research` to Markdown Paper.
+16. **Plain Markdown links to headings** ([R-REN-003](#r-ren-003),
+    [R-REN-009](#r-ren-009), 2026-10-30, 03:29): "we shall stay as close to
+    markdown as possible". A heading has the ID of GitHub, and a link to it is
+    a Markdown link such as `[Kapitel 2.1](#methoden)`, without an added HTML
+    anchor. The anchors `sec-…` of an earlier version of `/ref` still work.
 
 ## Open questions
 
-- The form of the appendix ([decision 9](#decisions)).
 - The npm name `@nimblescape/markdownpaper` ([decision 5](#decisions)) and the
   installed browser ([decision 6](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the

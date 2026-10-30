@@ -49,11 +49,16 @@ date: "30 October 2026"
   it: `# Abstract {-}`. The marker does not show.
 - The headings of the special sections get no number, nor do the headings
   below them (section 3).
-- An anchor at the end of a heading names it for links, as the slash command
-  `/ref` of nimblescape Markdown Notes writes it:
-  `## Methoden<a id="sec-methods"></a>`. A link whose text is a word and a
-  number, such as `[Kapitel 2.1](#sec-methods)`, shows the number of the
-  heading on the pages; a link to an appendix shows its label, "Anhang A".
+- A heading has the ID that GitHub gives it: its text in small letters,
+  without punctuation and with a hyphen for each space, so `## Methoden` is
+  `#methoden` and `# Quellen {BIB}` is `#quellen-bib`; a second heading of the
+  same text gets `-1`. A plain Markdown link to a heading, as the slash command
+  `/ref` of nimblescape Markdown Notes writes it, works on GitHub and on the
+  pages: a link whose text is a word and a number, such as
+  `[Kapitel 2.1](#methoden)`, shows the number of the heading on the pages; a
+  link to an appendix shows its label, "Anhang A". Do not add an anchor to a
+  heading; an anchor at its end, `<a id="sec-methods"></a>`, still works as a
+  second ID.
 
 ## 3. Special sections and generated lists
 
@@ -134,7 +139,8 @@ command `/table` of nimblescape Markdown Notes writes it:
 `Table: Teilnehmende nach Schulstufe <a id="tab-teilnehmende"></a>`. A link
 `[Tabelle 1](#tab-teilnehmende)` gets the label of the table, as for figures.
 `check` and the page preview warn about a link to `#fig-…`, `#tab-…` or
-`#sec-…` whose figure, table or heading does not exist.
+`#sec-…`, or a link whose text is a word and a number, whose figure, table or
+heading does not exist.
 
 ## 6. Footnotes
 

@@ -95,8 +95,9 @@ editor and in the Problems view after a pause in typing:
 
 - a layout that does not exist, or a problem of its `layout.json`;
 - a required field of the layout without a value;
-- a link to `#fig-…`, `#tab-…` or `#sec-…` whose figure, table or heading does
-  not exist.
+- a link to `#fig-…`, `#tab-…` or `#sec-…`, or a link whose text is a word
+  and a number such as `[Kapitel 2.1](#methoden)`, whose figure, table or
+  heading does not exist.
 
 The pointer on the key of a field shows its description from `layout.json`.
 `npx -y @nimblescape/markdownpaper check paper/paper.md` prints the same
@@ -109,11 +110,12 @@ Do not write the numbers. A heading with `{-}` at its end gets no number, nor
 do the headings below it: `# Vorbemerkung {-}`. A file whose headings start
 with numbers keeps them.
 
-An anchor at the end of a heading, which the slash command `/ref` of
-Markdown Notes writes, names the heading for links:
-`## Methoden<a id="sec-methods"></a>`. A link such as
-`[Kapitel 2.1](#sec-methods)` shows the number of the heading on the pages,
-and a link to an appendix its label, "Anhang A".
+A heading has the same ID as on GitHub, so a plain Markdown link to it works
+on GitHub and on the pages: `## Methoden` is `#methoden`, and
+`# Quellen {BIB}` is `#quellen-bib`. A link such as
+`[Kapitel 2.1](#methoden)`, which the slash command `/ref` of Markdown Notes
+writes, shows the number of the heading on the pages, and a link to an
+appendix its label, "Anhang A". A heading needs no anchor.
 
 ## Special sections
 

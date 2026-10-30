@@ -71,6 +71,8 @@ export interface Heading {
   section?: string;
   /** appendix is true for the heading of one appendix, whose number is its label, for example "Anhang A". */
   appendix?: boolean;
+  /** anchor is the ID of an anchor at the end of the heading, `<a id="sec-methods"></a>`, if any. */
+  anchor?: string;
   line: number;
 }
 
@@ -107,12 +109,9 @@ interface Found extends Omit<Body, 'html'> {
  */
 const slug = (text: string): string =>
   text
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s-]/gu, '')
-    .trim()
-    .replace(/\s+/g, '-') || 'section';
+    .replace(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, '')
+    .replace(/ /g, '-') || 'section';
 
 /**
  * plainText returns the text of inline tokens without their markup.
@@ -135,6 +134,16 @@ function plainText(tokens: readonly Token[]): string {
     .join('')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * headingSource returns the text of the inline tokens of a heading as GitHub reads it for the ID of the heading: the
+ * text and the code, with the spaces as they are, also the space before an anchor at the end, and without the text of
+ * images.
+ * @param tokens - The inline tokens of the heading.
+ */
+function headingSource(tokens: readonly Token[]): string {
+  return tokens.map((token) => (token.type === 'text' || token.type === 'code_inline' ? token.content : token.type === 'softbreak' ? ' ' : '')).join('');
 }
 
 /** anchorTag matches the anchor of a figure or a table, `<a id="tab-grades"></a>`, as one token or as its start tag. */
@@ -326,7 +335,7 @@ function paperRule(layout: Layout, found: Found) {
     const ids = new Set<string>();
     const unique = (base: string): string => {
       let id = base;
-      for (let count = 2; ids.has(id); count++) {
+      for (let count = 1; ids.has(id); count++) {
         id = `${base}-${count}`;
       }
       ids.add(id);
@@ -386,13 +395,13 @@ function paperRule(layout: Layout, found: Found) {
           references = 0;
         }
         const inline = tokens[index + 1];
-        // The anchor of /ref of Markdown Notes at the end of the heading, `<a id="sec-methods"></a>`, is its ID.
-        const anchor = trailingAnchor(inline.children ?? []);
-        if (anchor) {
-          inline.children = withoutTrailingSpace((inline.children ?? []).slice(0, anchor.start));
-        }
+        // The ID of a heading is the ID that GitHub gives it, from its text as the file writes it, so that a Markdown
+        // link such as [Kapitel 2](#methoden) works on GitHub and on the pages. An anchor at the end of the heading,
+        // `<a id="sec-methods"></a>`, stays as a second target.
         const children = inline.children ?? [];
-        const last = children[children.length - 1];
+        const anchor = trailingAnchor(children);
+        const source = headingSource(children);
+        const last = withoutTrailingSpace(anchor ? children.slice(0, anchor.start) : children).at(-1);
         let marker: string | undefined;
         if (last?.type === 'text' && headingMarker.test(last.content)) {
           marker = headingMarker.exec(last.content)?.[1];
@@ -407,10 +416,10 @@ function paperRule(layout: Layout, found: Found) {
           unnumberedBelow = 0;
         }
         let number = '';
+        const id = unique(slug(source));
         if (anchor) {
           ids.add(anchor.id);
         }
-        const id = anchor ? anchor.id : unique(slug(text));
         token.attrSet('id', id);
         let section: string | undefined = code;
         if (code) {
@@ -441,7 +450,7 @@ function paperRule(layout: Layout, found: Found) {
         if (section) {
           token.attrSet('data-section', section);
         }
-        found.headings.push({ level, id, number, text, ...(section ? { section } : {}), ...(appendixPart && level === 2 ? { appendix: true } : {}), line: token.map?.[0] ?? 0 });
+        found.headings.push({ level, id, number, text, ...(section ? { section } : {}), ...(appendixPart && level === 2 ? { appendix: true } : {}), ...(anchor ? { anchor: anchor.id } : {}), line: token.map?.[0] ?? 0 });
         output.push(token, inline, tokens[index + 2]);
         index += 2;
         if (code === 'TOC' || code === 'LOF' || code === 'LOT') {
@@ -529,21 +538,29 @@ function paperRule(layout: Layout, found: Found) {
     // ("Abbildung 1"), the label of an appendix ("Anhang A"), or the word of the link and the number of a heading
     // ("Kapitel 2.1"). A heading without a number keeps the text of its links.
     const labels = new Map([...found.figures, ...found.tables].map((caption) => [caption.id, caption.label]));
-    const headings = new Map(found.headings.map((heading) => [heading.id, heading]));
+    const headings = new Map(found.headings.flatMap((heading) => [[heading.id, heading], ...(heading.anchor ? [[heading.anchor, heading] as const] : [])]));
     for (const link of links) {
-      const target = decodeURIComponent(link.open.attrGet('href')?.slice(1) ?? '');
+      const href = link.open.attrGet('href')?.slice(1) ?? '';
+      let target = href;
+      try {
+        target = decodeURIComponent(href);
+      } catch {
+        // A link with a wrong escape keeps its text as it is.
+      }
       const heading = headings.get(target);
+      const text = link.text.map((child) => child.content).join('').trim();
+      const reference = link.text.length > 0 && link.text.every((child) => child.type === 'text') && referenceText.test(text);
       if (!labels.has(target) && !heading) {
-        if (/^(?:fig|tab|sec)-/.test(target) && !ids.has(target)) {
+        // A link of a cross reference, by its target or by its text, such as "Kapitel 2.1", must find its target.
+        if ((/^(?:fig|tab|sec)-/.test(target) || reference) && !ids.has(target)) {
           found.problems.push({ severity: 'warning', message: `The link #${target} names no figure, table or heading of the file.`, line: link.line });
         }
         continue;
       }
-      const words = /^(\p{L}+\.?)\s/u;
-      const text = link.text.map((child) => child.content).join('').trim();
-      if (link.text.length === 0 || !link.text.every((child) => child.type === 'text') || !referenceText.test(text)) {
+      if (!reference) {
         continue;
       }
+      const words = /^(\p{L}+\.?)\s/u;
       const label = labels.get(target) ?? (heading?.appendix ? heading.number : heading?.number ? `${words.exec(text)?.[1] ?? ''} ${heading.number}` : undefined);
       if (label !== undefined) {
         link.text[0].content = label;

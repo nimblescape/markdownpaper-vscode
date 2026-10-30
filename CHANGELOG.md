@@ -138,4 +138,5 @@ The first version.
   the ref and update the copy: a file that only the repository changed gets
   its new version, a file that only the project changed stays, and a file that
   both changed stops the update unless `--force` or a confirmation replaces it.
-  `--check` only tells whether a newer version exists.
+  `--check` only tells whether a newer version exists. The `layout.json` of a
+  copy keeps the form of the file of the layout, with `origin` at its end.

@@ -94,11 +94,15 @@ Marketplace does not accept extensions that use one.
 - Virtual workspaces: the page preview and the checks work; "Export PDF"
   needs a file on the disk, because the browser reads the file and its images
   from the disk.
-- The extension collects no telemetry and connects to no address. It starts
-  a program only for "Export PDF": the browser of [R-PDF-002](#r-pdf-002).
-  Only the command `markdownpaper source` connects to addresses: to the
-  services of the metadata of sources in [R-CITE-005](#r-cite-005), and only
-  for the identifiers and files that its call names.
+- The extension collects no telemetry. It connects only to GitHub: for the
+  layouts on GitHub in the list of "New Project" ([R-NEW-004](#r-new-004)), and
+  for "Update Layout" ([R-LAY-010](#r-lay-010)). It starts a program only for
+  "Export PDF": the browser of [R-PDF-002](#r-pdf-002).
+- The command `markdownpaper` connects to GitHub for `create`, `layouts`,
+  `new project` with a layout on GitHub, and `update`. `markdownpaper source`
+  connects to the services of the metadata of sources in
+  [R-CITE-005](#r-cite-005), only for the identifiers and files that its call
+  names. The other subcommands connect to no address.
 - The pages run only the scripts of the extensions of VS Code
   ([R-PRV-004](#r-prv-004)) and, in the PDF, those of the renderer
   ([R-REN-001](#r-ren-001)); a script in a Markdown file or in a layout does
@@ -527,6 +531,10 @@ a newer version ([decision 46](#decisions)):
   A copy of a copy keeps the origin; "New Layout" and `new layout` make a
   layout of their own, without an origin. A copy made by hand gets the field
   by hand, with the commit of its files.
+- The `layout.json` of a copy keeps the form of the file of the layout, for
+  example an array on one line: the scaffold and the update change only the
+  fields whose values differ, and add `origin` at the end. So a comparison of
+  the copy with the file of the repository shows only real changes.
 - `markdownpaper update [<layout folder>...]` and "Update Layout" in VS Code
   (in the Command Palette, and in the context menu of a folder in `layouts/`
   of the Explorer) read the newest commit of the ref. Without a folder, the

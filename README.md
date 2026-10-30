@@ -39,9 +39,11 @@ gives the same renderer to people and AI agents on the command line:
   contribute to the Markdown preview, as the preview does, and the page runs
   their scripts from their folders; a script in a Markdown file or in a
   layout does not run.
-- **Network.** The extension's own code connects to no address and collects
-  no telemetry. A document or a layout that names an image or a font on the
-  web makes the Markdown preview and the browser load it.
+- **Network.** The extension collects no telemetry. Its own code connects
+  only to GitHub: "New Project" lists the layouts on GitHub, and "Update
+  Layout" reads the newest version of a copied layout, with the GitHub sign-in
+  of VS Code when one exists. A document or a layout that names an image or a
+  font on the web makes the Markdown preview and the browser load it.
 - **Restricted Mode and virtual workspaces.** In Restricted Mode the page
   preview, the checks and the commands work, and only the settings of the
   user can name the program of the browser

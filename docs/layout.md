@@ -252,7 +252,9 @@ A new project writes the field `origin` into the `layout.json` of its copy
 copy when the branch of `origin` has a newer version: a file that only the
 repository changed gets its new version, a file that only the project changed
 stays, and a file that both changed stops the update, unless `--force` (or the
-confirmation in VS Code) replaces it. A copy made by hand, for example with
+confirmation in VS Code) replaces it. The `layout.json` of the copy keeps the
+form of the file of the repository, with `origin` at its end, so a comparison
+of the two files shows only real changes. A copy made by hand, for example with
 `git archive`, gets the field by hand, with the full commit of its files:
 
 ```json

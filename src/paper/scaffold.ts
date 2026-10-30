@@ -145,10 +145,19 @@ ${command} pdf paper/paper.md      # the PDF beside the document
 \`\`\`
 
 Process each file in \`${inboxFolder}/\`: read it, find the authors, the year and the title of the source, and move the
-file to \`${sourcesFolder}/\` with the ID of its citation as its name: the family name of the first author and the year,
-in small letters without spaces and accents, for example \`${sourcesFolder}/hong2024.pdf\`; a second work of the same
-author and year gets \`a\`, \`b\` (\`hong2024a.pdf\`). Ask the person when a file is no source or its author or year is
-unclear. \`${inboxFolder}/\` stays empty after the work.
+file to \`${sourcesFolder}/\` with the ID of its citation as its name, in small letters without spaces and accents:
+
+- a source by persons: the family name of the first author and the year, for example \`${sourcesFolder}/hong2024.pdf\`; a
+  second work of the same author and year gets \`a\`, \`b\` (\`hong2024a.pdf\`);
+- an organization: its full name as cited and the year, for example \`worldeconomicforum2025.pdf\`;
+- a law or a regulation: its Fundstelle (the place of its publication) with hyphens, for example
+  \`bgbl-ii-262-2015.pdf\`, \`eu-2024-1689.pdf\`;
+- a source without a date: no year, for example \`wirtschaftskammeroesterreich.pdf\`;
+- a second file of one source: the ID, a hyphen and an addition, for example
+  \`bgbl-242-1962-fassung-2027-08-01.pdf\`.
+
+Ask the person when a file is no source or its author or year is unclear. \`${inboxFolder}/\` stays empty after the
+work.
 
 Notes of nimblescape Markdown Notes (footnotes with the label \`note-\` and four letters or digits) are comments of the
 authors; the PDF leaves them out. Keep them as they are unless you are asked to change them.

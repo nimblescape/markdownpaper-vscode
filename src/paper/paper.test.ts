@@ -257,6 +257,13 @@ describe('scaffold (R-NEW-001 to R-NEW-003)', () => {
     expect(decoder.decode(encoder.encode(files[0].content as string))).toContain('npx -y @nimblescape/markdownpaper instructions document');
     expect(JSON.parse(files[1].content as string).language).toBe('de-AT');
   });
+
+  test('AGENTS.md names the files of the sources by the IDs of decision 22 (R-CITE-001)', () => {
+    const agents = newProjectFiles({ layout: plain, source: new Map(), language: 'de-AT', values: {} }, undefined)[0].content as string;
+    for (const example of ['bib/hong2024.pdf', 'hong2024a.pdf', 'worldeconomicforum2025.pdf', 'bgbl-ii-262-2015.pdf', 'eu-2024-1689.pdf', 'wirtschaftskammeroesterreich.pdf', 'bgbl-242-1962-fassung-2027-08-01.pdf']) {
+      expect(agents).toContain(example);
+    }
+  });
 });
 
 test('the instructions print the documents of docs/ without their license comment (R-CLI-003)', () => {

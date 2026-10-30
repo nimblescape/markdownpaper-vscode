@@ -865,14 +865,20 @@ cited or not, in one HTML comment at the end of the file, its database
   ([R-NEW-003](#r-new-003)).
 - No line holds `-->`: a `>` in a text is written as `>`.
 - An AI agent adds a source there, for example from a PDF in `inbox/`.
-- The ID of a source by persons is the family name of the first author and
-  the year, for example `hong2024`. For other sources, a proposal waits for
-  Hannes (2026-10-30, from the work on `scalarion/transcribe`): an
-  organization is its name as cited and the year (`oecd2019`), a law or a
-  regulation its reference with hyphens (`bgbl-ii-262-2015`, `eu-2024-1689`),
-  a source without a date has no year (`wirtschaftskammeroesterreich`), and a
-  second file of one source is the ID, a hyphen and an addition
-  (`bgbl-242-1962-fassung-2027-08-01.pdf`).
+- The ID of a source is in small letters, without spaces and accents
+  ([decision 22](#decisions); Hannes, 2026-10-30, 04:38, decided with the
+  option "Full name and Fundstelle"):
+  - a source by persons: the family name of the first author and the year,
+    for example `hong2024`; a second work of the same author and year gets
+    `a`, `b` (`hong2024a`);
+  - an organization: its full name as cited and the year, for example
+    `worldeconomicforum2025`;
+  - a law or a regulation: its Fundstelle (the place of its publication) with
+    hyphens, for example `bgbl-ii-262-2015`, `eu-2024-1689`;
+  - a source without a date: no year, for example
+    `wirtschaftskammeroesterreich`;
+  - a second file of one source: the ID, a hyphen and an addition, for
+    example `bib/bgbl-242-1962-fassung-2027-08-01.pdf`.
 - The checks report a line that is no JSON object, a source without a valid
   `id`, a second source with the same `id`, and a comment without its end.
 - The clean editing view of Markdown Notes leaves the database out (a hidden
@@ -1043,6 +1049,13 @@ Decision 20 is the technique that Claude chose for decision 17 of Hannes.
     `hasCustomMarkdownPreview`; Hannes' ask at 03:55 replaced it.
 21. **Only PDF** ([R-PDF-004](#r-pdf-004), 2026-10-30, about 03:37): no Word
     file.
+22. **The IDs of the sources** ([R-CITE-001](#r-cite-001), 2026-10-30, 04:38,
+    decided with the option "Full name and Fundstelle"): an organization is
+    its full name as cited and the year (`worldeconomicforum2025`), a law or a
+    regulation its Fundstelle with hyphens (`bgbl-ii-262-2015`), a source
+    without a date has no year, and a second file of one source is the ID, a
+    hyphen and an addition. The skill of `scalarion/transcribe` uses the same
+    IDs.
 
 ## Open questions
 

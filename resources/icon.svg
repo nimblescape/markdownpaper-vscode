@@ -1,0 +1,17 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- © 2026 Hannes Stauss (scalarion@nimblescape.com) -->
+<!-- The source of resources/icon.png, the Marketplace icon (256 × 256): two printed pages of a paper, one behind the other, with a heading and lines of justified text, on the tile of the nimblescape extensions. -->
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f6db3"/>
+      <stop offset="1" stop-color="#1a365d"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="44" fill="url(#tile)"/>
+  <g fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M78 52V40a12 12 0 0 1 12-12H196a12 12 0 0 1 12 12V178a12 12 0 0 1-12 12H184"/>
+    <rect x="48" y="62" width="130" height="166" rx="12" fill="#24548c"/>
+    <path d="M70 96H128M70 126H156M70 150H156M70 174H156M70 198H120"/>
+  </g>
+</svg>

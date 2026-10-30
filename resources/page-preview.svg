@@ -1,0 +1,8 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- © 2026 Hannes Stauss (scalarion@nimblescape.com) -->
+<!-- The icon of the tab of the page preview: two pages, one behind the other, with lines of text. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#c5c5c5" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M5.5 3V1.5h8v11H12"/>
+  <rect x="2.5" y="3.5" width="9" height="11" rx="0.5"/>
+  <path d="M4.5 6.5h4M4.5 8.5h5M4.5 10.5h5M4.5 12.5h3"/>
+</svg>

@@ -61,7 +61,7 @@ line below the list shows the address of the preview PDF;
 list, also a layout on GitHub:
 
 ```sh
-npx -y @nimblescape/markdownpaper create my-thesis --layout github:majikmate/markdownpaper-layout-pht/thesis-v2
+npx -y @nimblescape/markdownpaper create my-thesis --layout github:majikmate/markdownpaper-layout-pht/thesis
 ```
 
 With a sign-in to GitHub in VS Code, or with a token in `GITHUB_TOKEN` on the

@@ -235,10 +235,10 @@ folder for each layout, each with its own `layout.json`, up to two folder
 levels deep. The name of a folder is the name of its layout. `markdownpaper
 create` and "New Project" list these layouts, and
 `--layout github:<owner>/<repository>/<folder>@<branch, tag or commit>`
-chooses one; the new project gets a copy in `layouts/<folder>/`. A new version
-of a layout that changes its pages goes into a new folder, for example
-`thesis-v2/` beside `thesis-v1/`, so the documents of the older version keep
-their pages.
+chooses one; the new project gets a copy in `layouts/<folder>/`. Keep one
+folder for each kind of work, without a version in its name, for example
+`thesis/` and `concept/`: a project keeps its copy, so a change of the layout
+in its repository does not change the pages of an existing project.
 
 ## 9. A layout from a Word template
 

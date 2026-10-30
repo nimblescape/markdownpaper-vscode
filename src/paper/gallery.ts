@@ -57,7 +57,7 @@ export function parseRemote(text: string): RemoteSpec | undefined {
 
 /**
  * remoteName returns the name of a layout on GitHub for the option --layout, for example
- * `github:majikmate/markdownpaper-layout-pht/thesis-v4`.
+ * `github:majikmate/markdownpaper-layout-pht/thesis`.
  * @param remote - The layout.
  */
 export const remoteName = (remote: Pick<RemoteLayout, 'repository' | 'folder'>): string => `github:${remote.repository}${remote.folder ? `/${remote.folder}` : ''}`;

@@ -42,7 +42,7 @@ This document replaces it where the two differ.
 | 11 | The interface of Markdown Notes: the file behind the clean editing view | [R-GEN-003](#r-gen-003) | done |
 | 12 | One formatter command: `markdownpaper format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | the steps of the paper done (step 22); the steps of Markdown Notes on the command line need the library of `@nimblescape/markdownnotes` |
 | 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | the database, the citations, the reference list and their checks done, in the format step and in `markdownpaper format`; the slash commands and the database hidden in the clean editing view of Markdown Notes planned |
-| 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006) | instructions done; the first layout planned |
+| 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006), [R-LAY-007](#r-lay-007) | done: the instructions, and the PHT layouts `thesis/` and `concept/` |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
 | 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; the command line is open |
@@ -394,7 +394,10 @@ names Markdown Paper, and the page of the topic,
 <https://github.com/topics/nimblescape-markdownpaper-layout>, lists every
 layout repository ([decision 29](#decisions)). The papers of one repository
 can have different layouts, for example the thesis paper and the concept
-paper of `scalarion/transcribe`. The form of a layout repository and the name
+paper of `scalarion/transcribe`. The PHT layouts are `thesis/`, where each
+chapter starts on a new page, and `concept/`, the same pages for the concept
+paper, where a chapter follows the text before it; both have the look of the
+PHT template and its citation style. The form of a layout repository and the name
 of its layout in the front matter are not decided yet (see the
 [open questions](#open-questions)).
 
@@ -1394,7 +1397,3 @@ requirement ([R-GEN-007](#r-gen-007)).
   inserts a field between hidden markers, `<!--{title}-->value<!--{/title}-->`,
   and the formatter writes the value anew from the front matter. The pages
   show the value.
-- The layout of the PHT thesis: today it lives in the skill
-  `markdown-to-paper` of the repository `scalarion/transcribe`; it becomes the
-  folder `thesis/` of `majikmate/markdownpaper-layout-pht`, which
-  holds its citation style `pht-apa7.csl` already ([R-LAY-006](#r-lay-006)).

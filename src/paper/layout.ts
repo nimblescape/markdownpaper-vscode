@@ -36,10 +36,10 @@ export interface FieldSpec {
 }
 
 /**
- * SectionCode is the code of a special section of a document (Hannes, 2026-10-30): TOC the table of contents, LOF the
- * list of figures, LOT the list of tables, BIB the reference list, ADT the affidavit, AST the abstract, ACC the
- * acknowledgments, FWD the foreword, and APX the appendix part with the appendices A, B, …. None of them gets a
- * chapter number, and the table of contents does not list itself.
+ * SectionCode is the code of a special section of a document ([R-REN-004](../../docs/requirements.md#r-ren-004)):
+ * TOC the table of contents, LOF the list of figures, LOT the list of tables, BIB the reference list, ADT the
+ * affidavit, AST the abstract, ACC the acknowledgments, FWD the foreword, and APX the appendix part with the
+ * appendices A, B, …. None of them gets a chapter number, and the table of contents does not list itself.
  */
 export type SectionCode = 'TOC' | 'LOF' | 'LOT' | 'BIB' | 'ADT' | 'AST' | 'ACC' | 'FWD' | 'APX';
 

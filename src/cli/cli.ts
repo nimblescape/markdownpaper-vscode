@@ -9,8 +9,7 @@
  * - `pdf <file>` writes the PDF of a Markdown file in its layout, with an installed Chrome, Chromium or Edge.
  * - `check <file>...` checks the front matter of each file against its layout.
  * - `create [folder]` scaffolds a new project, as `npm create vite` does: it asks for the name, the layout, the
- *   language, the title and the author, or takes them from its options (Hannes, 2026-10-29: "it can scaffold, similar
- *   as a vite scaffold works").
+ *   language, the title and the author, or takes them from its options.
  * - `new document|layout|project` writes a new document, a new layout folder, or a new project without questions.
  * - `instructions [topic]` prints the rules of a topic for AI agents.
  *

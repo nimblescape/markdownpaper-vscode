@@ -102,9 +102,9 @@ export interface ProjectOptions {
 }
 
 /**
- * The folders of the sources of a project (Hannes, 2026-10-30, 02:42): `inbox/` is the drop folder for a source that no
- * program can load on its own, for example a PDF file; an AI agent processes each file there and moves it to `bib/`,
- * named after its citation.
+ * The folders of the sources of a project ([R-NEW-003](../../docs/requirements.md#r-new-003)): `inbox/` is the drop
+ * folder for a source that no program can load on its own, for example a PDF file; an AI agent processes each file
+ * there and moves it to `bib/`, named after its citation.
  */
 export const inboxFolder = 'inbox';
 export const sourcesFolder = 'bib';

@@ -4,10 +4,9 @@
 
 /**
  * The instructions for AI agents ([R-CLI-003](../../docs/requirements.md#r-cli-003)): `markdownpaper instructions
- * <topic>` prints the rules of a topic, so that an agent reads the rules of the installed version without web access
- * (Hannes, 2026-10-29: "our npmjs package has several commands to output agent instructions"). The texts are the
- * documents of docs/, which the build puts into the bundle, so the documents on GitHub and the printed rules are the
- * same text. The module uses no API of VS Code.
+ * <topic>` prints the rules of a topic, so that an agent reads the rules of the installed version without web access.
+ * The texts are the documents of docs/, which the build puts into the bundle, so the documents on GitHub and the
+ * printed rules are the same text. The module uses no API of VS Code.
  */
 
 import documentRules from '../../docs/document.md?raw';

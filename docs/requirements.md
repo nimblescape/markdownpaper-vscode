@@ -8,11 +8,11 @@ Licensed under the MIT License. See LICENSE in the repository root for details.
 
 This document lists what nimblescape Markdown Paper must do. It is the
 specification of the extension and of the npm package
-`@nimblescape/markdownpaper` (Hannes, 2026-10-30, 02:38: "all of our
-specifications go as a spec doc into the repository"). Each requirement has
-an ID as its heading, so that code, tests and pull requests can link to it,
-for example `[R-REN-004](docs/requirements.md#r-ren-004)`. A requirement
-names the message of Hannes that asks for it, with its date and time.
+`@nimblescape/markdownpaper`. Each requirement has an ID as its heading, so
+that code, tests and pull requests can link to it, for example
+`[R-REN-004](docs/requirements.md#r-ren-004)`. The requirements state what is
+decided, as a clean summary; the discussions that led to them are not part of
+this document ([R-GEN-007](#r-gen-007)).
 
 Markdown Paper makes the pages and the PDF of a document that is written in
 Markdown, in a layout that the repository of the document defines: a folder
@@ -43,10 +43,10 @@ This document replaces it where the two differ.
 | 12 | One formatter command: `markdownpaper format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | planned; needs the library of `@nimblescape/markdownnotes` |
 | 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | planned; the work of Markdown Notes moves here |
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006) | instructions done; the first layout planned |
-| 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when Hannes asks |
+| 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
 | 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; the command line is open |
-| 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark and the name wait for Hannes |
+| 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | planned; the mark and the name wait for a decision |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` and links `lst-…` | [R-REN-009](#r-ren-009) | planned |
 
@@ -58,11 +58,8 @@ This document replaces it where the two differ.
 paper: layouts, the renderer, the page preview, the PDF, the scaffold of new
 projects, the instructions for AI agents, and the citations
 ([decision 1](#decisions), [decision 11](#decisions)). Markdown Notes holds
-the notes and the footnotes of Markdown files and has its value on its own
-(Hannes, 2026-10-29, 22:07: "one markdonw-paper that creates and scaffolds all
-the paper workflow, then the markdownnotes which has its value on its own";
-22:11: "we want a clean split and and the notes shall still be markdown
-related").
+the notes and the footnotes of Markdown files and has its value on its own;
+the two packages are split cleanly, and the notes stay plain Markdown.
 
 - Markdown Paper uses Markdown Notes through its interface
   ([R-GEN-003](#r-gen-003)); Markdown Notes knows nothing of Markdown Paper.
@@ -97,29 +94,27 @@ Marketplace does not accept extensions that use one.
 **The interface of Markdown Notes.** Markdown Notes returns a versioned
 interface from its activation, as the Git extension of VS Code does:
 `getAPI(version)`. Markdown Paper asks for the version that it knows and works
-without it. The two threads of the build agreed on it on 2026-10-30, 02:08.
+without it.
 
 - Version 1: `fileOf(uri)` returns the file behind a document of the clean
   editing view of Markdown Notes (scheme `markdown-notes`), so that the page
   preview, the checks and "Export PDF" read the file itself, with its
   footnotes. Without the interface, the file is the open document with the
   same path.
-- Planned in the same version: `registerFormatStep(step)` with
-  `applies(lines, file)` and `format(lines, file)`, a step of the formatter of
-  Markdown Notes, for [R-CLI-002](#r-cli-002) and
-  [R-CITE-004](#r-cite-004); `registerHiddenBlocks({ find(lines) })`, blocks
-  at the end of a file that the clean editing view leaves out, for the
-  database of [R-CITE-001](#r-cite-001); `registerSlashCommand({ label,
-  description, detail, run(editor, range) })`, a slash command of the text
-  editor (a slash and small letters), for `/source`, `/cite` and `/research`
-  of [R-CITE-002](#r-cite-002). Each call returns a `Disposable`. Markdown
-  Notes has them since commit `bf3b719` of its
+- Planned in the same version: `registerFormatStep(step)` with `applies(lines,
+  file)` and `format(lines, file)`, a step of the formatter of Markdown Notes,
+  for [R-CLI-002](#r-cli-002) and [R-CITE-004](#r-cite-004);
+  `registerHiddenBlocks({ find(lines) })`, blocks at the end of a file that the
+  clean editing view leaves out, for the database of [R-CITE-001](#r-cite-001);
+  `registerSlashCommand({ label, description, detail, run(editor, range) })`, a
+  slash command of the text editor (a slash and small letters), for `/source`,
+  `/cite` and `/research` of [R-CITE-002](#r-cite-002). Each call returns a
+  `Disposable`. Markdown Notes has them since commit `bf3b719` of its
   [pull request 1](https://github.com/nimblescape/nimblescape-markdown-notes/pull/1).
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
-- The IDs: Markdown Notes is `nimblescape.nimblescape-markdownnotes`
-  (Hannes, 2026-10-30, 02:04).
+- The ID of Markdown Notes is `nimblescape.nimblescape-markdownnotes`.
 
 ### R-GEN-004
 
@@ -131,29 +126,33 @@ license and the place of its source code, and holds the text of each license.
 
 **Name and release.** The extension ID is `nimblescape.nimblescape-markdownpaper`,
 the display name "nimblescape Markdown Paper", and the repository
-`nimblescape/markdownpaper-vscode` (Hannes, 2026-10-30, 02:01). The publisher is
+`nimblescape/markdownpaper-vscode`. The publisher is
 `nimblescape`. The npm package is `@nimblescape/markdownpaper` with the command
 `markdownpaper` ([decision 5](#decisions)). The release uses the same
 workflows and checks as the other extensions of the publisher and follows
 the [release rules](../CONTRIBUTING.md#release-rules). Nobody publishes the
-extension or the npm package until Hannes asks for it.
+extension or the npm package until the owner asks for it.
 
 ### R-GEN-006
 
 **Language.** The code, the settings, the commands and the documentation use
 English terms: "table of contents", "list of figures", "list of tables",
-"reference list", "appendix" (Hannes, 2026-10-30, 02:07: "use the english terms
-for it"). The words that the renderer writes into a document, such as
-"Inhaltsverzeichnis", "Abbildung 1" or "Anhang A", come from the language of
-the layout ([R-LAY-005](#r-lay-005)).
+"reference list", "appendix". The words that the renderer writes into a
+document, such as "Inhaltsverzeichnis", "Abbildung 1" or "Anhang A", come from
+the language of the layout ([R-LAY-005](#r-lay-005)).
 
 ### R-GEN-007
 
 **This specification.** This document holds all requirements of Markdown
-Paper, the plan and the decisions (Hannes, 2026-10-30, 02:38: "all of our
-specifications go as a spec doc into the repository"). Each decision is also
-a requirement in it (03:48: "document any decision as a requirement"), and a
-change of the code changes this document in the same commit.
+Paper, the plan and the decisions ([decision 12](#decisions)). Each decision
+is also a requirement in it, and a change of the code changes this document
+in the same commit.
+
+- A requirement is the clean summary of a decision: what the extension or
+  the command does. It holds no texts of the discussion, such as quotes of
+  messages, their dates and times, or the choices that were not taken
+  ([decision 23](#decisions)). The discussion stays in discussion documents
+  outside the repository.
 
 ## Documents
 
@@ -190,8 +189,8 @@ in the text editor as warnings after a pause in typing, and with
 - Each link to `#fig-…`, `#tab-…` or `#sec-…`, and each link whose text is a
   word and a number, such as `[Kapitel 2.1](#methoden)`, must find its figure,
   table or heading ([R-REN-009](#r-ren-009)).
-- The Markdown preview of a paper document adds the problems of the renderer, for example a template
-  that does not exist. Each problem shows once.
+- The Markdown preview of a paper document adds the problems of the renderer,
+  for example a template that does not exist. Each problem shows once.
 - `markdownpaper check` prints each problem as `file:line:column: severity:
   message` on the standard error and exits with 0 without problems, 1 with
   problems and 2 when it cannot check.
@@ -206,9 +205,7 @@ required.
 
 **Paper documents and notes documents.** A Markdown file is a paper document
 when it uses a feature of Markdown Paper, and a notes document when it uses
-only features of Markdown Notes or none (Hannes, 2026-10-30, 03:40: "it is a
-notes doument when only notes features are in it", "it is a paper document
-when paper features are in it"; [decision 17](#decisions)).
+only features of Markdown Notes or none ([decision 17](#decisions)).
 
 - The features of Markdown Paper are the field `layout` of the front matter
   ([R-DOC-001](#r-doc-001)) and, when they are built, the citations
@@ -220,19 +217,16 @@ when paper features are in it"; [decision 17](#decisions)).
   the Markdown preview ([R-PRV-005](#r-prv-005)), and the buttons "Show Page
   Preview" and "Export PDF" in the title bar of the editor.
 - A notes document keeps the Markdown preview of VS Code, which Markdown Notes
-  uses ("notes is the standard markdown preview"). "Export PDF" in the Command
-  Palette and in the Explorer, and the command line, still make the PDF of
-  any Markdown file, with the built-in layout `plain` when the file names no
-  layout.
+  uses. "Export PDF" in the Command Palette and in the Explorer, and the
+  command line, still make the PDF of any Markdown file, with the built-in
+  layout `plain` when the file names no layout.
 
 ## Layouts
 
 ### R-LAY-001
 
 **The layout folder.** A layout is a folder `layouts/<name>/` in the
-repository of the document (Hannes, 2026-10-29, 21:51: "a repository could
-define the layout, the renderer uses that layout to generate the pdf and even
-the preview").
+repository of the document ([decision 3](#decisions)).
 
 - The renderer looks for the folder in the folder of the document, then in
   each folder above it up to the top folder of the workspace or of the
@@ -320,33 +314,24 @@ layout. Another language gets the English words until a layout gives its own.
 
 ### R-LAY-006
 
-**A layout from a Word template.** Many schools give a Word template, so an
-AI agent makes the layout from it (Hannes, 2026-10-29, 21:56: "many have just
-word templates and we shall generate the layout from such a template by an
-agent"). `instructions layout` gives the agent the steps: start the folder
-with `new layout`, read the XML files of the template (paper size, margins,
-styles, numbering, header, footer, images, fonts), write the style sheet and
-the templates, list the fields, make the PDF of an example document, and
-compare its pages with a PDF of the template page by page until they match.
-What CSS cannot do as Word does stays as a comment in the style sheet.
+**A layout from a Word template.** Many schools give a Word template, so an AI
+agent makes the layout from it. `instructions layout` gives the agent the
+steps: start the folder with `new layout`, read the XML files of the template
+(paper size, margins, styles, numbering, header, footer, images, fonts), write
+the style sheet and the templates, list the fields, make the PDF of an example
+document, and compare its pages with a PDF of the template page by page until
+they match. What CSS cannot do as Word does stays as a comment in the style
+sheet.
 
 ### R-LAY-007
 
 **A layout of another repository or of an npm package.** A layout can also
 come from another repository or from an npm package, for example one layout
-of the PHT for many students (Hannes, 2026-10-30, about 03:35, "yes" to the
-question; [decision 18](#decisions)). The folder `layouts/` of the
-repository of the document counts first. The PHT layout gets a repository
-of its own in the organization `majikmate`, and such a repository has a mark
-on GitHub by which Markdown Paper finds it and applies it (Hannes,
-2026-10-30, 03:43: "such repos shall have something that identifies them on
-github so that it can be found and applied; lets find a mechanism for
-that"). The proposal, which waits for Hannes: the repository has the GitHub
-topic `nimblescape-layout` and `layout.json` at its root; Markdown Paper
-searches GitHub for the topic with the GitHub sign-in of VS Code, so private
-repositories that the author can read count too, and lists the layouts; a
-document names one with a release tag, so its pages stay the same:
-`layout: github:majikmate/pht-thesis@v1.0.0`.
+of the PHT for many students ([decision 18](#decisions)). The folder
+`layouts/` of the repository of the document counts first. The PHT layout
+gets a repository of its own in the organization `majikmate`, and such a
+repository has a mark on GitHub by which Markdown Paper finds it and applies
+it. The mark is not decided yet (see the [open questions](#open-questions)).
 
 ### R-LAY-008
 
@@ -355,9 +340,8 @@ templates and the fields of the front matter, which the pages get as
 attributes, for example `kapitelumbruch: false` as
 `data-field-kapitelumbruch="false"` ([R-REN-001](#r-ren-001)). It holds no
 script, because a layout from another repository would run its code on the
-computer of the author (Hannes, 2026-10-30, about 03:36: "ok";
-[decision 19](#decisions)). The renderer removes scripts and event
-attributes from the templates ([R-LAY-004](#r-lay-004)).
+computer of the author ([decision 19](#decisions)). The renderer removes
+scripts and event attributes from the templates ([R-LAY-004](#r-lay-004)).
 
 ## Renderer
 
@@ -365,8 +349,8 @@ attributes from the templates ([R-LAY-004](#r-lay-004)).
 
 **One renderer for the preview and the PDF.** The renderer makes one HTML page
 of a document in its layout; Paged.js turns it into pages in the page preview
-and in the browser that prints the PDF (Hannes, 2026-10-29, 21:51: "the
-renderer can then also be what the preview shows"; [decision 2](#decisions)).
+and in the browser that prints the PDF ([decision 2](#decisions),
+[decision 3](#decisions)).
 
 1. It reads the front matter and finds the layout ([R-LAY-001](#r-lay-001)).
 2. It reads the style sheets and fills the templates with the fields.
@@ -392,12 +376,11 @@ the tokens of markdown-it.
 
 ### R-REN-003
 
-**Headings.** Each heading gets the ID that GitHub gives it, so that a
-Markdown link to a heading, such as `[Kapitel 2.1](#methoden)`, works on
-GitHub and on the pages without an added anchor (Hannes, 2026-10-30, 03:29:
-"isn't it just a markdown link?" and "we shall stay as close to markdown as
-possible"; [decision 16](#decisions)). When the layout numbers headings, the
-renderer numbers them as 1, 1.1, 1.1.1 to the depth of the layout.
+**Headings.** Each heading gets the ID that GitHub gives it, so that a Markdown
+link to a heading, such as `[Kapitel 2.1](#methoden)`, works on GitHub and on
+the pages without an added anchor ([decision 16](#decisions)). When the layout
+numbers headings, the renderer numbers them as 1, 1.1, 1.1.1 to the depth of
+the layout.
 
 - The ID is the text of the heading as the file writes it, also a marker such
   as `{BIB}`, in small letters, without punctuation and with a hyphen for each
@@ -415,11 +398,7 @@ renderer numbers them as 1, 1.1, 1.1.1 to the depth of the layout.
 ### R-REN-004
 
 **Special sections and generated lists.** These sections have no chapter
-number, nor do the headings below them (Hannes, 2026-10-30, 02:24 to 02:25:
-"TOC …, BIB …, LOF …, LOT … get no chapter numbers, TOC is not part of the
-TOC", "there is also ADT …, AST …, ACC … and FWD …, and APX-A (Anhang A,
-Appendix A), APX-B (Anhang B, Appendix B), …", "all of which have no chapter
-number"):
+number, nor do the headings below them ([decision 10](#decisions)):
 
 | Code | Section |
 | --- | --- |
@@ -442,9 +421,8 @@ number"):
   attribute `data-section` with the code, for example `data-section="BIB"`,
   and an appendix `data-section="APX-A"`.
 - The renderer generates the table of contents, the list of figures and the
-  list of tables in their sections, and replaces what stands there (Hannes,
-  2026-10-30, 02:06: "it will also have a TOC generate, a
-  Abbildungsverzeichnis, a Tabellenverzeichnis"). Each entry is a link with
+  list of tables in their sections, and replaces what stands there
+  ([decision 7](#decisions)). Each entry is a link with
   the page of its target, which Paged.js writes with `target-counter`.
 - The table of contents lists the headings to the depth of the layout, with
   their numbers, also the special sections and the appendices, but not its
@@ -460,8 +438,7 @@ number"):
 have a caption, and the lists of [R-REN-004](#r-ren-004) list them.
 
 - An image alone in its paragraph is a figure, and its text in the square
-  brackets is its caption (Hannes, 2026-10-30, 02:09: "every image in the
-  document gets its caption from the ![Caption](image)"):
+  brackets is its caption ([decision 8](#decisions)):
   `![Die Rollen von Agenten im Team](images/rollen.png)` shows "Abbildung 1:
   Die Rollen von Agenten im Team" below the image. An image with an empty text
   is a figure without a caption and without a number. An image within a line
@@ -478,10 +455,10 @@ have a caption, and the lists of [R-REN-004](#r-ren-004) list them.
 
 ### R-REN-006
 
-**Appendix.** A document can have an appendix part (Hannes, 2026-10-30, 02:11:
-"there is also an appendix section"). A chapter heading of the words of `APX`,
-such as `# Anhang` or `# Appendix`, starts it, usually after the reference
-list; each `##` heading in it is one appendix ([decision 9](#decisions)):
+**Appendix.** A document can have an appendix part. A chapter heading of the
+words of `APX`, such as `# Anhang` or `# Appendix`, starts it, usually after
+the reference list; each `##` heading in it is one appendix ([decision
+9](#decisions)):
 
 - The appendices are labeled with letters: "Anhang A", "Anhang B"
   (`data-section="APX-A"`, `APX-B`). A single appendix has no letter: "Anhang".
@@ -512,15 +489,14 @@ look.
 
 ### R-REN-009
 
-**Links to figures, tables and headings.** The slash commands of Markdown
-Notes write figures, tables and links to them (Hannes, 2026-10-30, 02:32 and
-02:45; [decision 15](#decisions)): `/figure` picks an image of the folder and
-inserts the figure with its caption and its anchor, `/table` inserts a table
-with its caption and its anchor, and `/ref` inserts a link to a figure, a
-table or a heading ("/ref also adds chapter numbers", Hannes, 2026-10-30, about
-03:20). The anchor stands at the end of the line of the image or of the
-caption. A heading needs no anchor: a link to a heading is a plain Markdown
-link to the ID of the heading ([R-REN-003](#r-ren-003), [decision
+**Links to figures, tables and headings.** The slash commands of Markdown Notes
+write figures, tables and links to them ([decision 13](#decisions), [decision
+15](#decisions)): `/figure` picks an image of the folder and inserts the figure
+with its caption and its anchor, `/table` inserts a table with its caption and
+its anchor, and `/ref` inserts a link to a figure, a table or a heading, with
+the number of a chapter. The anchor stands at the end of the line of the image
+or of the caption. A heading needs no anchor: a link to a heading is a plain
+Markdown link to the ID of the heading ([R-REN-003](#r-ren-003), [decision
 16](#decisions)):
 
 ```markdown
@@ -565,8 +541,7 @@ Table: Noten nach Schulstufe <a id="tab-grades"></a>
 
 **Markdown plugins.** The page preview and the PDF show what the Markdown
 extensions of VS Code add to the Markdown preview, for example the diagrams of
-Mermaid and PlantUML (Hannes, 2026-10-30, 03:40: "it shall recognize all
-markdown plugins though, ie, mermaid, plantuml, footnotes, etc.").
+Mermaid and PlantUML ([decision 17](#decisions)).
 
 - In the page preview, the plugins work because the pages are in the
   Markdown preview of VS Code ([R-PRV-005](#r-prv-005)).
@@ -625,10 +600,9 @@ through a network port. Without a browser, the message says how to install
 one or how to name it.
 
 - When no Chrome, Chromium or Edge is installed, the extension and the command
-  download Chromium once and use it (Hannes, 2026-10-30, 03:50: "ok" to the
-  proposal "an installed browser first, the download only when none is
-  found"; [decision 6](#decisions)). The download asks first in VS Code, and
-  needs the option `--download-browser` on the command line. Planned.
+  download Chromium once and use it ([decision 6](#decisions)). The download
+  asks first in VS Code, and needs the option `--download-browser` on the
+  command line. Planned.
 
 ### R-PDF-003
 
@@ -640,8 +614,7 @@ metadata, and "nimblescape Markdown Paper" as its creator.
 ### R-PDF-004
 
 **Only PDF.** The only output of a document is the PDF; there is no Word file
-(Hannes, 2026-10-30, about 03:37: "correct, no word";
-[decision 21](#decisions)).
+([decision 21](#decisions)).
 
 ## Page preview
 
@@ -683,11 +656,9 @@ this extension; a script in a Markdown file or in a layout does not run.
 ### R-PRV-005
 
 **The Markdown preview of a paper.** The Markdown preview of a paper document
-shows its pages: there is no other view for the pages (Hannes, 2026-10-30,
-03:40: "preview shall show the rendered paper according to the layout", "it
-is the markdown preview of a paper"; [decision 17](#decisions),
-[decision 20](#decisions)). A notes document keeps the Markdown preview as
-VS Code shows it.
+shows its pages: there is no other view for the pages ([decision
+17](#decisions), [decision 20](#decisions)). A notes document keeps the
+Markdown preview as VS Code shows it.
 
 - The extension gives VS Code a markdown-it plugin, as other extensions do
   (`markdown.markdownItPlugins`). For a paper document, the plugin adds the
@@ -724,12 +695,10 @@ VS Code shows it.
 ### R-PRV-006
 
 **The functions of plugins on the pages.** Every function that a Markdown
-plugin gives the Markdown preview works on the pages as well (Hannes,
-2026-10-30, 03:55: "all plugin functionality shall work in the rendered aper
-as well, such as marking a passage and adding a comment to it etc. as it
-would in the rendered markdown preview"). For Markdown Notes: the highlights
-of the notes, a click on a highlight that selects its note, and "Add Note"
-above a selected passage.
+plugin gives the Markdown preview works on the pages as well
+([decision 20](#decisions)). For Markdown Notes: the highlights of the notes,
+a click on a highlight that selects its note, and "Add Note" above a selected
+passage.
 
 - The pages are copies of the blocks of the preview, with their attributes,
   among them `data-line`; a script that listens on the document, not on one
@@ -760,8 +729,7 @@ above a selected passage.
 --layout <name>` write a Markdown file with the front matter of the layout:
 the comment line of [R-DOC-001](#r-doc-001), the field `layout`, and each field
 with its description as a YAML comment, and the start text of the layout. The
-values come from options or questions (Hannes, 2026-10-29, 22:01: "the command
-can create an initial markdown file and an initial layout.json").
+values come from options or questions.
 
 ### R-NEW-002
 
@@ -773,8 +741,7 @@ name and the language of the new layout in `layout.json`.
 
 **New project.** "New Project", `markdownpaper new project <folder>` and
 `npx -y @nimblescape/markdownpaper create` write the folders of a new paper,
-as a scaffold of Vite does (Hannes, 2026-10-29, 22:01: "and a folder
-structure"; 22:02: "it can scaffold, similar as a vite scaffold works"):
+as a scaffold of Vite does ([decision 4](#decisions)):
 
 | Folder or file | Content |
 | --- | --- |
@@ -785,14 +752,12 @@ structure"; 22:02: "it can scaffold, similar as a vite scaffold works"):
 | `bib/` | The files of the sources, each named after its citation. |
 | `images/` | The figures. |
 
-- `inbox/` and `bib/` (Hannes, 2026-10-30, 02:42: "the paper has a folder
-  named inbox, it is a drop folder for documents that cannot be loaded
-  automatically, and the agent will process and move it to the bib folder,
-  renaming it after the citation"): a person puts a source into `inbox/`, for
-  example a PDF file. An AI agent reads it, finds its authors, year and title,
-  and moves it to `bib/` with the ID of its citation as its name, for example
-  `bib/hong2024.pdf`. With the citations ([R-CITE-001](#r-cite-001)), the agent
-  also adds the metadata of the source to the database of the document.
+- `inbox/` and `bib/` ([decision 14](#decisions)): a person puts a source into
+  `inbox/`, for example a PDF file. An AI agent reads it, finds its authors,
+  year and title, and moves it to `bib/` with the ID of its citation as its
+  name, for example `bib/hong2024.pdf`. With the citations
+  ([R-CITE-001](#r-cite-001)), the agent also adds the metadata of the source
+  to the database of the document.
 - `create` asks for the name of the folder, the layout, the language, the
   title and the author when its options do not give them and a person runs
   it in a terminal; `--yes` asks nothing, for AI agents.
@@ -800,8 +765,7 @@ structure"; 22:02: "it can scaffold, similar as a vite scaffold works"):
   names the files.
 - A project can hold more than one document in `paper/`, for example
   `paper/paper.md` for the thesis and `paper/concept.md` for its concept
-  paper, which share `bib/` (the project `bachelor/` of the repository
-  `scalarion/transcribe`, 2026-10-30). A project can have more folders than
+  paper, which share `bib/`. A project can have more folders than
   the scaffold writes, for example `instructions/` for the documents of the
   school, `research/` for working notes and `archive/`.
 
@@ -811,8 +775,7 @@ structure"; 22:02: "it can scaffold, similar as a vite scaffold works"):
 
 **The command `markdownpaper`.** The npm package `@nimblescape/markdownpaper`
 gives the command `markdownpaper` for people and AI agents, with Node.js 22 or
-later, also through `npx` without an installation (Hannes, 2026-10-29, 21:58:
-"our npmjs package has several commands to output agent instructions").
+later, also through `npx` without an installation ([decision 4](#decisions)).
 
 - `pdf`, `check`, `create`, `new document|layout|project`, `instructions`,
   and later `format` ([R-CLI-002](#r-cli-002)).
@@ -824,10 +787,8 @@ later, also through `npx` without an installation (Hannes, 2026-10-29, 21:58:
 
 ### R-CLI-002
 
-**One formatter command.** Hannes asked how one formatter command stays when
-the notes and the paper are two packages (2026-10-30, 02:27: "now we do not
-have a single formatter command anymore, how to handle this", "in npmjs").
-The plan:
+**One formatter command.** A paper has one formatter command, although the
+notes and the paper are two packages. The plan:
 
 - `markdownpaper format <file>` is the one formatter of a paper. It calls the
   formatter of Markdown Notes as a library, `formatMarkdown(lines)` of
@@ -848,21 +809,19 @@ The topics are `document` (writing a document), `layout` (the layout folder,
 also from a Word template) and `render` (making the PDF and checking its
 pages); with the citations, `citations` and the style `apa7` follow. The
 documents in `docs/` are the source of the instructions, and the files and
-`layout.json` name the command, so an agent finds it (Hannes, 2026-10-29,
-21:56: "we need the agent instructions").
+`layout.json` name the command, so an agent finds it.
 
 ## Citations
 
-The citations and the sources go into Markdown Paper (Hannes, 2026-10-30,
-02:25, [decision 11](#decisions)). Their form was decided in the work on
-Markdown Notes on 2026-10-29 and is kept. The parts that Markdown Notes shows
-or formats use its interface ([R-GEN-003](#r-gen-003)).
+The citations and the sources go into Markdown Paper
+([decision 11](#decisions)). Their form was decided in the work on Markdown
+Notes and is kept. The parts that Markdown Notes shows or formats use its
+interface ([R-GEN-003](#r-gen-003)).
 
 ### R-CITE-001
 
 **The database of the sources.** A document holds the metadata of its sources,
-cited or not, in one HTML comment at the end of the file, its database
-(Hannes, 2026-10-29, 21:06: "the hidden metadata is the bib database"):
+cited or not, in one HTML comment at the end of the file, its database:
 
 ```markdown
 <!-- nimblescape-sources
@@ -877,8 +836,7 @@ cited or not, in one HTML comment at the end of the file, its database
 - No line holds `-->`: a `>` in a text is written as `>`.
 - An AI agent adds a source there, for example from a PDF in `inbox/`.
 - The ID of a source is in small letters, without spaces and accents
-  ([decision 22](#decisions); Hannes, 2026-10-30, 04:38, decided with the
-  option "Full name and Fundstelle"):
+  ([decision 22](#decisions)):
   - a source by persons: the family name of the first author and the year,
     for example `hong2024`; a second work of the same author and year gets
     `a`, `b` (`hong2024a`);
@@ -898,10 +856,8 @@ cited or not, in one HTML comment at the end of the file, its database
 ### R-CITE-002
 
 **Citations.** A citation is a Markdown link to the entry of its source in the
-reference list, and the title of the link holds the data of the citation
-(Hannes, 2026-10-29, 21:34: "the page is only in text form, not as data and
-text form can change or even be missing dependent on the citationstyle";
-21:43: decided "In the title of the link"):
+reference list, and the title of the link holds the data of the citation,
+because the text of a citation depends on the style and can change:
 
 ```markdown
 Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
@@ -914,37 +870,32 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
   `page 3`, `page 13-14`, `chapter 2`. A citation without a title is in
   parentheses, without a place. The parentheses stand outside the link.
 - The formatter writes the text of each link from the metadata, the title and
-  the style; it reads nothing from the old text (Hannes, 21:32: "how does the
-  formatter deterministically know what to remove?").
+  the style; it reads nothing from the old text.
 - `(RESEARCH)` asks an AI agent to find a source for the statement before it,
   to add it to the database, and to replace `(RESEARCH)` with its citation.
-  The slash command `/research` inserts it (Hannes, 2026-10-29, about 21:20).
-- The slash commands of the sources ([decision 15](#decisions); Hannes,
-  2026-10-30, 02:45: "lets rethink which command adds an entry in the
-  directory which adds a reference to it"): a command named by a noun adds an
-  entry, `/cite` adds a reference. `/source` picks a file of the folder `bib/`
-  ([R-NEW-003](#r-new-003)) and adds the source to the database and to the
-  reference list; `/cite` inserts a citation of a source of the database.
-  Markdown Paper registers `/source`, `/cite` and `/research` as slash
-  commands of Markdown Notes ([R-GEN-003](#r-gen-003)).
+  The slash command `/research` inserts it.
+- The slash commands of the sources ([decision 15](#decisions)): a command
+  named by a noun adds an entry, `/cite` adds a reference. `/source` picks a
+  file of the folder `bib/` ([R-NEW-003](#r-new-003)) and adds the source to
+  the database and to the reference list; `/cite` inserts a citation of a
+  source of the database. Markdown Paper registers `/source`, `/cite` and
+  `/research` as slash commands of Markdown Notes ([R-GEN-003](#r-gen-003)).
 
 ### R-CITE-003
 
 **The citation style.** The layout names the citation style with
 `citationStyle`. For now the only style is APA 7 in the German form of the
 guide of the PHT, "Zitationsrichtlinien für Abschlussarbeiten an der PHT,
-Zitation nach APA 7", version 2.0 (Hannes, 2026-10-29, 19:18: "for now we only
-support this APA 7"): one, two and three or more authors, `o. D.`, the letters
-`a`, `b`, the places with German labels such as `S. 13 – 14`, the entries with
-initials, `(Hrsg.)`, italics, DOIs and `Abgerufen am … von …`.
+Zitation nach APA 7", version 2.0: one, two and three or more authors, `o. D.`,
+the letters `a`, `b`, the places with German labels such as `S. 13 – 14`, the
+entries with initials, `(Hrsg.)`, italics, DOIs and `Abgerufen am … von …`.
 `markdownpaper instructions apa7` will print the rules.
 
 ### R-CITE-004
 
 **The reference list.** The formatter writes the entries of the cited sources
 under the heading of the reference list, the section `BIB` of
-[R-REN-004](#r-ren-004) (Hannes, 2026-10-29, 21:17: "the agent does not need to
-write the entry, the formatter will do it for the agent"):
+[R-REN-004](#r-ren-004); an AI agent does not write the entries:
 
 - Each entry is one paragraph that starts with the anchor of its source:
   `<a id="hong2024"></a>Hong, S., … (2024). *MetaGPT* …`, in the order of the
@@ -972,110 +923,90 @@ A value of a wrong type counts as the default.
 
 ## Decisions
 
-Hannes decided these questions on 2026-10-29 and 2026-10-30. The requirements
-above follow them, and each decision is a requirement ([R-GEN-007](#r-gen-007)).
-Decision 20 is the technique that Claude chose for decision 17 of Hannes.
+The requirements above follow these decisions, and each decision is a
+requirement ([R-GEN-007](#r-gen-007)).
 
-1. **Two packages** ([R-GEN-001](#r-gen-001), 2026-10-29, 22:07): Markdown
-   Paper for the paper workflow and Markdown Notes for the notes, with a clean
-   split (22:11). The other choice was one package for both.
-2. **HTML and CSS with Paged.js** ([R-REN-001](#r-ren-001), 2026-10-29, 21:55):
-   the renderer makes HTML, Paged.js makes the pages, a browser prints the
-   PDF. The other choices were Typst and Pandoc with LaTeX.
+1. **Two packages** ([R-GEN-001](#r-gen-001)): Markdown Paper for the paper
+   workflow and Markdown Notes for the notes, with a clean split.
+2. **HTML and CSS with Paged.js** ([R-REN-001](#r-ren-001)): the renderer
+   makes HTML, Paged.js makes the pages, a browser prints the PDF.
 3. **The layout is a folder in the repository of the document**
-   ([R-LAY-001](#r-lay-001), 2026-10-29, 21:51 to 21:52), and the renderer is
-   also the preview.
-4. **Instructions and scaffold as npm commands** ([R-CLI-003](#r-cli-003),
-   [R-NEW-003](#r-new-003), 2026-10-29, 21:58 to 22:02), not only linked
-   Markdown files.
-5. **Names** ([R-GEN-005](#r-gen-005), 2026-10-30, 02:01 and 02:04): the
-   extension IDs and repositories of Markdown Paper and Markdown Notes. The npm
-   package `@nimblescape/markdownpaper` with the command `markdownpaper`
-   follows the IDs; Hannes has not confirmed this name yet.
-6. **The installed browser prints the PDF** ([R-PDF-002](#r-pdf-002),
-   2026-10-30, 03:50): an installed Chrome, Chromium or Edge first, and a
-   download of Chromium only when none is found. The package itself holds no
-   Chromium, because about 150 MB for each user is too much for the
-   Marketplace package.
-7. **Generated lists** ([R-REN-004](#r-ren-004), 2026-10-30, 02:06): table of
-   contents, list of figures, list of tables; English terms in code and
-   documentation (02:07).
-8. **Captions** ([R-REN-005](#r-ren-005), 2026-10-30, 02:09 to 02:10): the text
-   of an image is its caption; a table gets its caption from a paragraph
-   `Table: …` directly before it, which GitHub shows as well. The other
-   choices for tables were a caption after the table and an HTML comment.
-9. **Appendix** ([R-REN-006](#r-ren-006), 2026-10-30, 02:11, decided 03:30
-   with the option "One appendix heading, appendices below"): the appendix
-   part `# Anhang` with one `##` heading for each appendix. The other form,
-   each appendix a chapter of its own (`# Anhang A: …`), was not chosen.
-10. **Special sections without chapter numbers** ([R-REN-004](#r-ren-004),
-    2026-10-30, 02:24 to 02:25): `TOC`, `LOF`, `LOT`, `BIB`, `ADT`, `AST`,
-    `ACC`, `FWD`, `APX-A`, `APX-B`, …; the table of contents does not list
-    itself.
+   ([R-LAY-001](#r-lay-001)), and the renderer also makes the preview.
+4. **Instructions and scaffold as npm commands** ([R-CLI-001](#r-cli-001),
+   [R-CLI-003](#r-cli-003), [R-NEW-003](#r-new-003)).
+5. **Names** ([R-GEN-005](#r-gen-005)): the extension IDs and repositories of
+   Markdown Paper and Markdown Notes. The npm package
+   `@nimblescape/markdownpaper` with the command `markdownpaper` follows the
+   IDs (see the [open questions](#open-questions)).
+6. **The installed browser prints the PDF** ([R-PDF-002](#r-pdf-002)): an
+   installed Chrome, Chromium or Edge first, and a download of Chromium only
+   when none is found. The package holds no Chromium.
+7. **Generated lists** ([R-REN-004](#r-ren-004)): table of contents, list of
+   figures, list of tables; English terms in code and documentation
+   ([R-GEN-006](#r-gen-006)).
+8. **Captions** ([R-REN-005](#r-ren-005)): the text of an image is its
+   caption; a table gets its caption from a paragraph `Table: …` directly
+   before it, which GitHub shows as well.
+9. **Appendix** ([R-REN-006](#r-ren-006)): the appendix part `# Anhang` with
+   one `##` heading for each appendix.
+10. **Special sections without chapter numbers** ([R-REN-004](#r-ren-004)):
+    `TOC`, `LOF`, `LOT`, `BIB`, `ADT`, `AST`, `ACC`, `FWD`, `APX-A`, `APX-B`,
+    …; the table of contents does not list itself.
 11. **Citations and sources in Markdown Paper** ([R-CITE-001](#r-cite-001) to
-    [R-CITE-004](#r-cite-004), 2026-10-30, 02:25), not in Markdown Notes.
-12. **One spec doc in the repository** ([R-GEN-007](#r-gen-007), 2026-10-30,
-    02:38, and 03:48 "document any decision as a requirement"): this
-    document.
-13. **Links to figures and tables** ([R-REN-009](#r-ren-009), 2026-10-30,
-    02:32): anchors at the end of the line of the image or of the caption, and
-    links to them.
-14. **`inbox/` and `bib/`** ([R-NEW-003](#r-new-003), 2026-10-30, 02:42): the
-    drop folder and the folder of the sources of a project.
+    [R-CITE-004](#r-cite-004)), not in Markdown Notes.
+12. **One specification in the repository** ([R-GEN-007](#r-gen-007)): this
+    document, in which each decision is a requirement.
+13. **Links to figures and tables** ([R-REN-009](#r-ren-009)): anchors at the
+    end of the line of the image or of the caption, and links to them.
+14. **`inbox/` and `bib/`** ([R-NEW-003](#r-new-003)): the drop folder and the
+    folder of the sources of a project.
 15. **Slash commands: entries by noun, references by `/ref` and `/cite`**
-    ([R-REN-009](#r-ren-009), [R-CITE-002](#r-cite-002), 2026-10-30, 02:47,
-    decided with the option "Entries by noun, /ref and /cite link"): `/figure`,
-    `/table` and `/source` add an entry; `/ref` and `/cite` add a reference to
-    an entry. `/figure`, `/table` and `/ref` belong to Markdown Notes,
-    `/source`, `/cite` and `/research` to Markdown Paper.
+    ([R-REN-009](#r-ren-009), [R-CITE-002](#r-cite-002)): `/figure`, `/table`
+    and `/source` add an entry; `/ref` and `/cite` add a reference to an
+    entry. `/figure`, `/table` and `/ref` belong to Markdown Notes, `/source`,
+    `/cite` and `/research` to Markdown Paper.
 16. **Plain Markdown links to headings** ([R-REN-003](#r-ren-003),
-    [R-REN-009](#r-ren-009), 2026-10-30, 03:29): "we shall stay as close to
-    markdown as possible". A heading has the ID of GitHub, and a link to it is
-    a Markdown link such as `[Kapitel 2.1](#methoden)`, without an added HTML
-    anchor. The anchors `sec-…` of an earlier version of `/ref` still work.
+    [R-REN-009](#r-ren-009)): the formats stay as close to Markdown as
+    possible. A heading has the ID of GitHub, and a link to it is a Markdown
+    link such as `[Kapitel 2.1](#methoden)`, without an added HTML anchor.
+    The anchors `sec-…` still work.
 17. **The page preview is the Markdown preview of a paper**
     ([R-DOC-004](#r-doc-004), [R-PRV-005](#r-prv-005),
-    [R-REN-010](#r-ren-010), 2026-10-30, 03:40, a comment of Hannes on the
-    outline of Markdown Notes): a file with features of the paper is a paper
-    document and gets the page preview as its Markdown preview, with all
-    Markdown plugins of VS Code; a file with only features of Markdown Notes is
-    a notes document with the Markdown preview of VS Code. That the field
-    `layout` is the feature that marks a paper document is the reading of
-    Claude, not yet confirmed.
-18. **Layouts from other places** ([R-LAY-007](#r-lay-007), 2026-10-30, about
-    03:35): a layout can also come from another repository or from an npm
-    package; `layouts/` of the repository counts first.
-19. **No logic in a layout** ([R-LAY-008](#r-lay-008), 2026-10-30, about
-    03:36): style sheets, templates and fields only, no scripts.
+    [R-REN-010](#r-ren-010)): a file with features of the paper is a paper
+    document, and its Markdown preview shows its pages, with all Markdown
+    plugins of VS Code; a file with only features of Markdown Notes is a
+    notes document with the Markdown preview of VS Code.
+18. **Layouts from other places** ([R-LAY-007](#r-lay-007)): a layout can also
+    come from another repository or from an npm package; `layouts/` of the
+    repository counts first.
+19. **No logic in a layout** ([R-LAY-008](#r-lay-008)): style sheets,
+    templates and fields only, no scripts.
 20. **The pages are in the Markdown preview of VS Code**
-    ([R-PRV-005](#r-prv-005), [R-PRV-006](#r-prv-006), 2026-10-30, 04:00, the
-    technique chosen by Claude for decision 17 and the ask of Hannes at
-    03:55). The functions of other plugins, such as "Add Note" of Markdown
-    Notes, work only in the Markdown preview of VS Code, which gives their
-    scripts their place, their links and the lines of the file. So the pages
-    are made there, and the measures of [R-PRV-005](#r-prv-005) keep the
-    scroll with the text editor and the double click to the line working. A
-    first version at 03:50 had a view of its own that took the place of the
-    Markdown preview, with its keys and the context key
-    `hasCustomMarkdownPreview`; Hannes' ask at 03:55 replaced it.
-21. **Only PDF** ([R-PDF-004](#r-pdf-004), 2026-10-30, about 03:37): no Word
-    file.
-22. **The IDs of the sources** ([R-CITE-001](#r-cite-001), 2026-10-30, 04:38,
-    decided with the option "Full name and Fundstelle"): an organization is
-    its full name as cited and the year (`worldeconomicforum2025`), a law or a
-    regulation its Fundstelle with hyphens (`bgbl-ii-262-2015`), a source
-    without a date has no year, and a second file of one source is the ID, a
-    hyphen and an addition. The skill of `scalarion/transcribe` uses the same
-    IDs.
+    ([R-PRV-005](#r-prv-005), [R-PRV-006](#r-prv-006)): every function of a
+    Markdown plugin, such as "Add Note" of Markdown Notes, works on the pages
+    as in the Markdown preview, because the pages are made there.
+21. **Only PDF** ([R-PDF-004](#r-pdf-004)): no Word file.
+22. **The IDs of the sources** ([R-CITE-001](#r-cite-001)): a person is the
+    family name of the first author and the year, an organization its full
+    name as cited and the year, a law or a regulation its Fundstelle with
+    hyphens, a source without a date has no year, and a second file of one
+    source is the ID, a hyphen and an addition.
+23. **Clean requirements** ([R-GEN-007](#r-gen-007)): the requirements hold
+    only the clean summary of the decisions, without the texts of the
+    discussion; the details stay in discussion documents.
 
 ## Open questions
 
 - The mark of a paper document ([R-DOC-004](#r-doc-004)): the field `layout`
-  of the front matter, and later the citations; Hannes has not confirmed it.
+  of the front matter, and later the citations; not confirmed yet.
 - The mark of a layout repository and the name of such a layout in the front
-  matter ([R-LAY-007](#r-lay-007)): the proposal is the topic
-  `nimblescape-layout` and `layout: github:majikmate/pht-thesis@v1.0.0`; the
-  form for an npm package is open too.
+  matter ([R-LAY-007](#r-lay-007)). The proposal: the repository has the
+  GitHub topic `nimblescape-layout` and `layout.json` at its root; Markdown
+  Paper searches GitHub for the topic with the GitHub sign-in of VS Code, so
+  private repositories that the author can read count too; a document names
+  a layout with a release tag, so its pages stay the same:
+  `layout: github:majikmate/pht-thesis@v1.0.0`. The form for an npm package is
+  open too.
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
   `markdownpaper` has no extensions of VS Code, so its PDF shows a diagram as
   its source text. It can bring Mermaid itself; PlantUML needs Java or a
@@ -1083,9 +1014,8 @@ Decision 20 is the technique that Claude chose for decision 17 of Hannes.
 - The npm name `@nimblescape/markdownpaper` ([decision 5](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
-- Listings: Markdown Notes has `/listing` since 2026-10-30, 04:00 (commit
-  ba8fa36 of its PR #1, R-CODE-001 to R-CODE-003 of its spec; the tags of
-  R-CODE-003 wait for Hannes): a caption line `Listing: …` with an anchor
+- Listings: Markdown Notes writes listings with `/listing` (R-CODE-001 to
+  R-CODE-003 of its requirements): a caption line `Listing: …` with an anchor
   `lst-…`, the comment `<!-- listing: ../src/x.ts#Symbol -->` and a fenced
   code block. The renderer will number them and their links as in
   [R-REN-009](#r-ren-009) (plan step 20); whether a list of listings joins

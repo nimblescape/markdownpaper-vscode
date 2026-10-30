@@ -4,8 +4,9 @@ This guide explains the files, the development, the tests and the release of
 the extension and of its npm package. The [README](README.md) describes the use
 in short, the [user guide](docs/guide.md) describes every feature, and
 [docs/requirements.md](docs/requirements.md) lists what the extension must do,
-each requirement with an ID, with the plan of the steps and the decisions of
-Hannes. A change of a feature updates its requirement in the same pull
+each requirement with an ID, with the plan of the steps and the decisions. A
+requirement is the clean summary of a decision, without the texts of the
+discussion. A change of a feature updates its requirement in the same pull
 request.
 
 ## Files
@@ -172,7 +173,7 @@ the lowest supported version.
 
 Every extension of the publisher `nimblescape` uses one name,
 `nimblescape-<name>`, for the package and the extension, and the repository
-`<name>-vscode` (Hannes, 2026-10-30, 02:01 and 02:04):
+`<name>-vscode` ([R-GEN-005](docs/requirements.md#r-gen-005)):
 
 | What | Form | This extension |
 | --- | --- | --- |

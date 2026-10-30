@@ -57,7 +57,7 @@ This document replaces it where the two differ.
 | 26 | Layouts close to a Word template: numbered special sections (`headings.numberedSections`), a hyphenated reference list (`references.hyphenate`), the natural spaces of the last line of a justified paragraph whose spaces shrink; the PHT concept layout in the look of its Word template | [R-REN-004](#r-ren-004), [R-REN-007](#r-ren-007), [R-REN-012](#r-ren-012), [R-LAY-002](#r-lay-002) | done |
 | 27 | The parts of a document (front part, body, appendix part) as elements for their own pages, and a table of contents without the front part (`contents.front`); the PHT thesis layout in the look of its Word template | [R-REN-013](#r-ren-013), [R-REN-004](#r-ren-004), [R-LAY-002](#r-lay-002) | done |
 | 28 | The empty paper document and its preview PDF in each layout; the list of the layouts of `create` and "New Project" with the layouts on GitHub; `markdownpaper layouts` and `markdownpaper preview` | [R-LAY-009](#r-lay-009), [R-NEW-004](#r-new-004), [R-LAY-007](#r-lay-007) | done; the PHT layouts have their empty paper documents and previews |
-| 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of a running Zotero, and the merge of a chosen item into the database | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | planned; the open questions of the discussion document come first |
+| 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, and the merge of a chosen item into the database | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | planned; the open questions of the discussion document come first |
 | 30 | `/research` on a selected argument: the start marker and `(RESEARCH)`, the rules for AI agents and the checks; the slash command needs the slash commands on selected text of Markdown Notes | [R-CITE-002](#r-cite-002), [R-GEN-003](#r-gen-003) | the rules for AI agents and the checks done; the slash command planned |
 
 ## General
@@ -1424,7 +1424,7 @@ writes no metadata ([decision 42](#decisions)). This is planned; the design
 waits for the answers to the questions of the discussion document.
 
 - `/cite` shows one list of the sources of the database of the document and,
-  when Zotero is set up and running, of the items of Zotero; a source that
+  when Zotero is set up, of the items of Zotero; a source that
   both have shows once. A search box filters the list by author, title and
   year.
 - A chosen item of Zotero is merged into the database as well as the data
@@ -1433,9 +1433,15 @@ waits for the answers to the questions of the discussion document.
   author confirms the change; nothing is removed from the line; the ID of the
   line never changes, so no citation breaks. An item that the database does
   not have becomes a new line with an ID by [decision 22](#decisions).
-- The extension reads Zotero through the local API of Zotero 7 on the same
-  computer (`http://localhost:23119/api/`), which the author allows in the
-  settings of Zotero. It sends nothing to the internet for Zotero.
+- The extension reads Zotero through the Zotero web API
+  (`https://api.zotero.org`), with an API key that the author makes on
+  zotero.org and gives to the extension once; the extension keeps the key in
+  the secret storage of VS Code. The web API reads the library that Zotero
+  syncs, also when Zotero does not run and in VS Code on another computer,
+  for example over SSH or in Codespaces, and gives the items as CSL JSON
+  (`format=csljson`). Whether the local API of Zotero 7
+  (`http://localhost:23119/api/`, the same addresses without a key) comes as
+  an addition is open ([open questions](#open-questions)).
 - AI agents and the command `markdownpaper` do not use Zotero; agents add
   sources with `markdownpaper source` ([R-CITE-005](#r-cite-005)).
 
@@ -1624,8 +1630,9 @@ requirement ([R-GEN-007](#r-gen-007)).
     project gets a copy of the chosen layout in `layouts/<folder>/`.
 42. **Zotero only through `/cite`, for the author** ([R-CITE-002](#r-cite-002),
     [R-CITE-006](#r-cite-006)): the author cites with `/cite`, which searches
-    the database of the document and, when Zotero is set up and running, the
-    items of Zotero, as one list. There is no slash command `/source`. A
+    the database of the document and, when Zotero is set up, the items of
+    Zotero, as one list. The extension reads Zotero through the Zotero web
+    API with an API key of the author. There is no slash command `/source`. A
     chosen item of Zotero is merged into the database: a missing field is
     added, a field with another value is updated from Zotero only after the
     author confirms, and nothing is removed. The database gets its sources
@@ -1650,11 +1657,11 @@ requirement ([R-GEN-007](#r-gen-007)).
   the release there is no release tag, so a document names a branch or a
   commit ([decision 36](#decisions)). The form for an npm package is open
   too.
-- Zotero in `/cite` ([R-CITE-006](#r-cite-006)): how an item finds its line
-  in the database, the Zotero key in the line, the copy of the PDF of an item
-  into `bib/`, VS Code on another computer, and a command that updates all
-  sources at once; the questions are in the discussion document of
-  [decision 42](#decisions).
+- Zotero in `/cite` ([R-CITE-006](#r-cite-006)): the local API of Zotero 7
+  as an addition to the web API, how an item finds its line in the database,
+  the Zotero key in the line, the copy of the PDF of an item into `bib/`, and
+  a command that updates all sources at once; the questions are in the
+  discussion document of [decision 42](#decisions).
 - Mermaid and PlantUML on the command line ([R-REN-010](#r-ren-010)):
   `markdownpaper` has no extensions of VS Code, so its PDF shows a diagram as
   its source text. It can bring Mermaid itself; PlantUML needs Java or a

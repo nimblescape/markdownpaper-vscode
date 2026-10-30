@@ -231,7 +231,63 @@ indented by four spaces after it belong to it.
 …
 ```
 
-## 9. Notes of nimblescape Markdown Notes
+## 9. Sources and citations
+
+The format writes the text of each citation and the entries of the reference
+list from the data of the sources, in the citation style of the layout. Do not
+write the text of a citation or of an entry yourself.
+
+1. **Add the source** as one line of CSL JSON to the comment
+   `nimblescape-sources` at the end of the file:
+
+   ```markdown
+   <!-- nimblescape-sources
+   {"id":"hong2024","type":"paper-conference","author":[{"family":"Hong","given":"Sirui"}],"issued":{"date-parts":[[2024]]},"title":"MetaGPT"}
+   -->
+   ```
+
+   - Take the metadata of a source with a DOI from doi.org, as CSL JSON:
+     `curl -sL -H "Accept: application/vnd.citationstyles.csl+json" https://doi.org/<DOI>`.
+     Keep the fields that describe the source, such as `type`, `author`,
+     `editor`, `issued`, `title`, `container-title`, `volume`, `issue`,
+     `page`, `publisher`, `DOI` and `URL`, and leave out the others, such as
+     `reference`.
+   - Take the metadata of a source without a DOI from the source itself: the
+     title page of a PDF in `inbox/`, the record of the source in the
+     database where you found it, or the catalog of a library.
+   - **You must not write metadata from memory.** Each field comes from
+     doi.org or from the source. Leave out a field that you cannot take from
+     there, and say which source has no metadata yet.
+   - Give the source its ID instead of the `id` of the downloaded metadata:
+     the family name of the first author and the year in small letters,
+     without accents and spaces (`hong2024`, a second work `hong2024a`); an
+     organization by its full name and the year
+     (`worldeconomicforum2025`); a law by its place of publication
+     (`bgbl-ii-262-2015`); no year without a date.
+   - Each source stays on one line. Write `>` in a text as `\u003e`.
+   - A web page that can change gets the day of the access:
+     `"accessed":{"date-parts":[[2026,10,30]]}`.
+2. **Cite the source** with a link to its ID where the text states what the
+   source says. The text of the link does not matter; the format writes it.
+   - In parentheses after the statement: `([Hong et al., 2024, S. 3](#hong2024 "page 3"))`.
+   - As a part of the sentence: `[Hong et al. (2024)](#hong2024 "narrative") zeigen …`.
+   - Two sources in one pair of parentheses:
+     `([Hong et al., 2024](#hong2024); [Shao, 2025](#shao2025))`.
+3. **Give the place** in the source in the title of the link, with a CSL term
+   and its value: `page 3`, `page 13-14`, `chapter 2`, `section 4.1`,
+   `figure 1`, `table 2`, `paragraph 5`. Add `narrative` for a citation in the
+   sentence: `"narrative page 3"`.
+4. **Format the file** (section 12). The format writes the text of each link,
+   and the entries of the cited sources under the heading of the reference
+   list (section 8); without the section, it adds one before the appendix part.
+   An entry starts with the anchor of its source,
+   `<a id="hong2024"></a>Hong, S. (2024). …`; the format removes the entry of
+   a source that the text no longer cites.
+5. **"(RESEARCH)"** in the text asks for a source. Find a source that supports
+   the statement, add it, and replace `(RESEARCH)` with its citation. When no
+   source supports it, keep `(RESEARCH)` and say so.
+
+## 10. Notes of nimblescape Markdown Notes
 
 A footnote whose label is `note-` and four small letters or digits, for
 example `[^note-7k2q]`, is a note of the authors (format of
@@ -239,12 +295,13 @@ nimblescape Markdown Notes, version 1). The pages leave the notes out: their
 references, their start markers `<wbr><!--[note-7k2q-->` and their
 definitions. Keep a note as it is unless you are asked to change it.
 
-## 10. What the pages do not show
+## 11. What the pages do not show
 
-- HTML comments, for example the comment of the format of the notes.
+- HTML comments, for example the comment of the format of the notes and the
+  comment of the sources.
 - Scripts: a script in the Markdown text or in a template does not run.
 
-## 11. Checks
+## 12. Checks
 
 ```sh
 npx -y @nimblescape/markdownpaper format paper/paper.md
@@ -252,6 +309,8 @@ npx -y @nimblescape/markdownpaper check paper/paper.md
 npx -y @nimblescape/markdownpaper pdf paper/paper.md
 ```
 
-`format` writes the lists of the special sections (section 3) into the file.
-`check` names a layout that does not exist and each missing required field.
+`format` writes the citations and the reference list (section 9) and the lists
+of the special sections (section 3) into the file. `check` names a layout that
+does not exist, each missing required field, and the problems of the sources
+and the citations.
 `pdf` writes the PDF beside the file; see `instructions render`.

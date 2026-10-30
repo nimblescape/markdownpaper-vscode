@@ -107,6 +107,21 @@ test('format writes the lists of the special sections, and --check exits with 1 
   expect(await run(['format', 'missing.md'], io())).toBe(2);
 });
 
+test('format writes the citations and the reference list in the style of a CSL file of the layout, and check names a citation of no data (R-CLI-002, R-CITE-003, R-CITE-004)', async () => {
+  fs.mkdirSync(path.join(folder, 'layouts/pht'), { recursive: true });
+  fs.writeFileSync(path.join(folder, 'layouts/pht/layout.json'), JSON.stringify({ format: 'nimblescape-layout 1.0.0', language: 'de-AT', citationStyle: 'pht-apa7.csl', stylesheets: [] }));
+  fs.copyFileSync(path.join(repository, 'test/fixtures/pht-apa7.csl'), path.join(folder, 'layouts/pht/pht-apa7.csl'));
+  const source = '{"id":"huber","type":"book","author":[{"family":"Huber","given":"Anna"}],"title":"Musik"}';
+  fs.writeFileSync(path.join(folder, 'a.md'), `---\nlayout: pht\n---\n\n# Einleitung\n\nText ([x](#huber "page 13-14")).\n\n<!-- nimblescape-sources\n${source}\n-->\n`);
+  expect(await run(['format', 'a.md'], io())).toBe(0);
+  expect(read('a.md')).toBe(
+    `---\nlayout: pht\n---\n\n# Einleitung\n\nText ([Huber, o.\u00a0D., S. 13\u00a0–\u00a014](#huber "page 13-14")).\n\n# Literaturverzeichnis\n\n<a id="huber"></a>Huber, A. (o.\u00a0D.). *Musik*.\n\n<!-- nimblescape-sources\n${source}\n-->\n`,
+  );
+  fs.writeFileSync(path.join(folder, 'a.md'), read('a.md').replace('"page 13-14"', '"S. 13"'));
+  expect(await run(['check', 'a.md'], io())).toBe(1);
+  expect([...out, ...err].join('\n')).toContain('The title of this citation holds "S. 13", which is no data of a citation.');
+});
+
 test('instructions prints the list of the topics and each topic (R-CLI-003)', async () => {
   expect(await run(['instructions'], io())).toBe(0);
   expect(out.join('\n')).toContain('document   writing a document');

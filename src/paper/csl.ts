@@ -215,15 +215,16 @@ export interface Cited {
  * @param language - The language tag of the document, which chooses the CSL locale.
  * @param sources - The sources of the document; cites of an unknown source get an empty text.
  * @param cites - The citations, in the order of the document.
+ * @param cited - The identifiers of the sources of the reference list; the sources of the cites when left out.
  * @throws An Error when the style is no CSL style.
  */
-export function cite(style: CitationStyle, language: string, sources: readonly Source[], cites: readonly Cite[]): Cited {
+export function cite(style: CitationStyle, language: string, sources: readonly Source[], cites: readonly Cite[], cited?: readonly string[]): Cited {
   const { engine, sources: known } = engineOf(style, language);
   known.clear();
   for (const source of sources) {
     known.set(source.id, itemOf(source));
   }
-  const ids = [...new Set(cites.map((one) => one.id).filter((id) => known.has(id)))];
+  const ids = [...new Set([...(cited ?? []), ...cites.map((one) => one.id)].filter((id) => known.has(id)))];
   engine.updateItems(ids);
   const and = engine.getTerm('and');
   const citations = cites.map((one) => {

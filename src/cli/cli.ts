@@ -8,7 +8,8 @@
  *
  * - `pdf <file>` writes the PDF of a Markdown file in its layout, with an installed Chrome, Chromium or Edge.
  * - `check <file>...` checks the front matter of each file against its layout.
- * - `format <file>...` runs the format steps of the paper on each file: the lists of the special sections.
+ * - `format <file>...` runs the format steps of the paper on each file: the citations and the reference list, and the
+ *   lists of the special sections.
  * - `create [folder]` scaffolds a new project, as `npm create vite` does: it asks for the name, the layout, the
  *   language, the title and the author, or takes them from its options.
  * - `new document|layout|project` writes a new document, a new layout folder, or a new project without questions.
@@ -25,10 +26,11 @@ import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { version } from '../../package.json';
 import { checkDocument } from '../paper/checks';
+import { citationStyleOf } from '../paper/csl';
+import { formatPaper } from '../paper/format';
 import { readFrontMatter } from '../paper/frontMatter';
 import { topicList, topics } from '../paper/instructions';
 import { formatText, type Layout, type Problem } from '../paper/layout';
-import { writeLists } from '../paper/lists';
 import { defaultLayout, documentLayout, findLayout, layoutName } from '../paper/render';
 import { type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, packageName } from '../paper/scaffold';
 import { type Assets, exportPdf, fileReader, folderUrl } from '../pdf/export';
@@ -48,7 +50,7 @@ export const usage = [
   '      --html <file.html>        also write the HTML page of the renderer, for a look at it in a browser',
   '      --browser <program>       the program of Chrome, Chromium or Edge (else MARKDOWNPAPER_BROWSER or a search)',
   '  check <file.md>...            check the front matter against the layout, and the links to figures and tables',
-  '  format <file.md>...           write the lists of the special sections, such as the table of contents',
+  '  format <file.md>...           write the citations, the reference list and the lists, such as the table of contents',
   '      --check                   write nothing; exit with 1 when the format would change a file',
   '  create [folder]               scaffold a new project; asks for what its options do not give',
   '      --layout <name>           the layout to copy into the project (default: plain)',
@@ -275,7 +277,8 @@ async function runFormat(args: readonly string[], io: Io): Promise<number> {
     }
     const text = fs.readFileSync(file, 'utf8');
     const { layout } = await documentLayout({ reader: fileReader, builtinLayouts: folderUrl(io.assets.layouts) }, pathToFileURL(file).href, readFrontMatter(text));
-    const formatted = writeLists(text.split(/\r?\n/), layout).join(text.includes('\r\n') ? '\r\n' : '\n');
+    const { style } = await citationStyleOf((url) => fileReader.read(url), layout);
+    const formatted = formatPaper(text.split(/\r?\n/), layout, style).join(text.includes('\r\n') ? '\r\n' : '\n');
     if (formatted === text) {
       continue;
     }

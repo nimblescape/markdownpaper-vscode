@@ -36,7 +36,7 @@ markdownpaper instructions document
 | `new layout <folder>` | Copies a layout into a new folder (`--from <name>`, `--language <tag>`). |
 | `pdf <file>` | Writes the PDF beside the file, with the name that the layout gives. `--output <file.pdf>`, `--html <file.html>`, `--browser <program>`. |
 | `check <file>...` | Checks the front matter against the layout and the links to figures and tables. |
-| `format <file>...` | Writes the lists of the special sections into each file: the table of contents, the list of figures, of tables and of listings. `--check` writes nothing and exits with 1 when the format would change a file. |
+| `format <file>...` | Writes into each file the text of the citations and the reference list in the citation style of the layout, and the lists of the special sections: the table of contents, the list of figures, of tables and of listings. `--check` writes nothing and exits with 1 when the format would change a file. |
 | `instructions [topic]` | Prints the rules of a topic for AI agents: `document`, `layout`, `render`. |
 | `--help` | Shows the help. |
 | `--version` | Shows the version of the command and of the format of the layouts. |

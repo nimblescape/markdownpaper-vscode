@@ -147,8 +147,9 @@ describes every feature.
   source text of a diagram.
 - A layout has no scripts. Its templates know fields and parts that show
   only with a field, no other logic.
-- The citations and the reference list from a database of sources are
-  planned; until then, write the reference list by hand.
+- The slash commands `/source`, `/cite` and `/research` for the citations are
+  planned; until then, an AI agent or you write the sources and the links of
+  the citations, and the format writes their text and the reference list.
 
 ---
 

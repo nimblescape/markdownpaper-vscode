@@ -41,7 +41,7 @@ This document replaces it where the two differ.
 | 10 | The anchors of figures and tables, the links to them and to headings, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-003](#r-ren-003), [R-REN-009](#r-ren-009) | done |
 | 11 | The interface of Markdown Notes: the file behind the clean editing view | [R-GEN-003](#r-gen-003) | done |
 | 12 | One formatter command: `markdownpaper format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | the steps of the paper done (step 22); the steps of Markdown Notes on the command line need the library of `@nimblescape/markdownnotes` |
-| 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | planned; the work of Markdown Notes moves here |
+| 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/source`, `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | the database, the citations, the reference list and their checks done, in the format step and in `markdownpaper format`; the slash commands and the database hidden in the clean editing view of Markdown Notes planned |
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006) | instructions done; the first layout planned |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
@@ -51,7 +51,7 @@ This document replaces it where the two differ.
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` with the cite of the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
 | 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
 | 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `markdownpaper format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | done |
-| 23 | Citation styles in CSL with citeproc-js: the built-in style `apa7`, a CSL file of the layout, the CSL locales; `pht-apa7.csl` in the PHT layouts | [R-CITE-003](#r-cite-003), [R-GEN-004](#r-gen-004) | the styles done; the formatter of the citations is step 13 |
+| 23 | Citation styles in CSL with citeproc-js: the built-in style `apa7`, a CSL file of the layout, the CSL locales; `pht-apa7.csl` in the PHT layouts | [R-CITE-003](#r-cite-003), [R-GEN-004](#r-gen-004) | done |
 
 ## General
 
@@ -957,9 +957,12 @@ notes and the paper are two packages. The plan:
 - `markdownnotes format` stays the formatter of files without a paper.
 - In VS Code, the extension registers the steps of the paper as a format step
   of Markdown Notes, so "Format Document" and format on save run all steps in
-  one change. The step needs the layout of the file, which the extension
-  reads when the file opens and when its front matter or a file of a layout
-  changes; a format before that leaves out the step of the paper once.
+  one change. The step needs the layout of the file and its citation style,
+  which the extension reads when the file opens and when its front matter or
+  a file of a layout changes; a format before that leaves out the step of the
+  paper once. The steps of the paper run in one order: first the citations
+  and the reference list, then the lists, so that a new reference list is in
+  the table of contents after one format.
 - Today `markdownpaper format` runs the steps of the paper; the steps of
   Markdown Notes join it when its library is published. Then it runs the
   steps of Markdown Notes and the steps of the paper again while the text
@@ -1007,7 +1010,15 @@ cited or not, in one HTML comment at the end of the file, its database:
   `hong2024`, which its citations and its file in `bib/` name
   ([R-NEW-003](#r-new-003)).
 - No line holds `-->`: a `>` in a text is written as `>`.
-- An AI agent adds a source there, for example from a PDF in `inbox/`.
+- An AI agent searches and collects the sources and adds each one there, also
+  with the browser of the author in the databases that the author can read,
+  such as databases with a paywall; it puts the files of the sources into
+  `inbox/`. It takes the metadata of a source with a DOI from doi.org as CSL
+  JSON, else from the source itself, for example a PDF in `inbox/`, or from
+  the record of the source in the database where it found it
+  ([decision 33](#decisions)).
+  An agent must not write metadata from memory: each field comes from doi.org
+  or from the source, and a field that it cannot take from there stays out.
 - The ID of a source is in small letters, without spaces and accents
   ([decision 22](#decisions)):
   - a source by persons: the family name of the first author and the year,
@@ -1230,6 +1241,9 @@ requirement ([R-GEN-007](#r-gen-007)).
     copy of `apa.csl` with the rules of the guide of the PHT, in the PHT
     layouts of `majikmate/nimblescape-markdownpaper-layout-pht`, which is
     under CC BY-SA 4.0.
+33. **Sources without Zotero** ([R-CITE-001](#r-cite-001)): an AI agent
+    searches and collects the sources; Markdown Paper has no integration of
+    Zotero or of another reference manager.
 
 ## Open questions
 

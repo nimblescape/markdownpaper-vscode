@@ -6,19 +6,22 @@
  * The format step of the paper in VS Code ([R-CLI-002](../docs/requirements.md#r-cli-002)): the extension adds the
  * steps of the paper to the formatter of Markdown Notes through `registerFormatStep` of its interface
  * ([R-GEN-003](../docs/requirements.md#r-gen-003)), so "Format Document" and the format on save run all steps in one
- * change. The step writes the lists of the special sections of a paper document
+ * change. The step writes the text of the citations and the reference list of a paper document in the citation
+ * style of its layout ([R-CITE-004](../docs/requirements.md#r-cite-004)), and then the lists of its special sections
  * ([R-REN-004](../docs/requirements.md#r-ren-004)).
  *
  * The formatter of Markdown Notes calls a step at once, and a layout is read from the disk. So the step keeps the
- * layout of each open paper document, read when the document opens and when its front matter or a file of a layout
- * changes. A paper document whose layout is not read yet gets no step; the next format writes its lists.
+ * layout of each open paper document and its citation style, read when the document opens and when its front matter
+ * or a file of a layout changes. A paper document whose layout is not read yet gets no step; the next format writes
+ * its citations and lists.
  */
 
 import * as vscode from 'vscode';
 import { notesApi, notesExtensionId } from './notesApi';
+import { type CitationStyle, citationStyleOf } from './paper/csl';
+import { formatPaper } from './paper/format';
 import { type FrontMatter, isPaperDocument, readFrontMatter } from './paper/frontMatter';
 import type { Layout } from './paper/layout';
-import { writeLists } from './paper/lists';
 import { documentLayout } from './paper/render';
 import { searchHost } from './workspaceHost';
 
@@ -30,10 +33,11 @@ export interface FormatStep {
   format(lines: readonly string[], file: vscode.Uri): readonly string[];
 }
 
-/** Entry is the layout of a document in the cache, with the key of the front matter that it was read for. */
+/** Entry is the layout of a document and its citation style in the cache, with the key of the front matter that they were read for. */
 interface Entry {
   key: string;
   layout?: Layout;
+  style?: CitationStyle;
 }
 
 /**
@@ -90,8 +94,12 @@ export class PaperFormatStep implements FormatStep, vscode.Disposable {
     }
     const entry: Entry = { key };
     this.layouts.set(name, entry);
-    documentLayout(searchHost(this.extension, document.uri), name, frontMatter).then(
+    const host = searchHost(this.extension, document.uri);
+    documentLayout(host, name, frontMatter)
+      .then(async (found) => ({ layout: found.layout, style: (await citationStyleOf((url) => host.reader.read(url), found.layout)).style }))
+      .then(
       (found) => {
+        entry.style = found.style;
         entry.layout = found.layout;
       },
       () => {
@@ -101,26 +109,26 @@ export class PaperFormatStep implements FormatStep, vscode.Disposable {
   }
 
   /**
-   * layoutOf returns the layout of a paper document for its lines, when the cache has it.
+   * entryOf returns the layout of a paper document for its lines and its citation style, when the cache has them.
    * @param lines - The lines of the file.
    * @param file - The URI of the file.
    */
-  private layoutOf(lines: readonly string[], file: vscode.Uri): Layout | undefined {
+  private entryOf(lines: readonly string[], file: vscode.Uri): { layout: Layout; style: CitationStyle } | undefined {
     const text = lines.join('\n');
     if (!isPaperDocument(text)) {
       return undefined;
     }
     const entry = this.layouts.get(file.toString());
-    return entry?.key === keyOf(readFrontMatter(text)) ? entry.layout : undefined;
+    return entry?.key === keyOf(readFrontMatter(text)) && entry.layout && entry.style ? { layout: entry.layout, style: entry.style } : undefined;
   }
 
   applies(lines: readonly string[], file: vscode.Uri): boolean {
-    return this.layoutOf(lines, file) !== undefined;
+    return this.entryOf(lines, file) !== undefined;
   }
 
   format(lines: readonly string[], file: vscode.Uri): readonly string[] {
-    const layout = this.layoutOf(lines, file);
-    return layout ? writeLists(lines, layout) : lines;
+    const entry = this.entryOf(lines, file);
+    return entry ? formatPaper(lines, entry.layout, entry.style) : lines;
   }
 
   dispose(): void {

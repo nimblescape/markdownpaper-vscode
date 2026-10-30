@@ -19,7 +19,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | Feature | Where | State | Requirements |
 | --- | --- | --- | --- |
 | [Start a project](#start-a-project) | Command Palette, command line | available | [R-NEW-001](requirements.md#r-new-001) to [R-NEW-003](requirements.md#r-new-003) |
-| [Sources in inbox and bib](#sources-in-inbox-and-bib) | the folders of a project | available; the database of the sources planned | [R-NEW-003](requirements.md#r-new-003), [R-CITE-001](requirements.md#r-cite-001) |
+| [Sources in inbox and bib](#sources-in-inbox-and-bib) | the folders of a project | available | [R-NEW-003](requirements.md#r-new-003), [R-CITE-001](requirements.md#r-cite-001) |
 | [Front matter](#front-matter) | the Markdown file | available | [R-DOC-001](requirements.md#r-doc-001) |
 | [Checks and hover](#checks-and-hover) | text editor, command line | available | [R-DOC-002](requirements.md#r-doc-002), [R-DOC-003](requirements.md#r-doc-003) |
 | [Headings](#headings) | pages | available | [R-REN-003](requirements.md#r-ren-003) |
@@ -38,7 +38,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Instructions for AI agents](#instructions-for-ai-agents) | command line | available | [R-CLI-003](requirements.md#r-cli-003) |
 | [Settings](#settings) | VS Code | available | [R-SET-001](requirements.md#r-set-001) |
 | The format step of the paper: the four lists in the file | VS Code (format of Markdown Notes), `markdownpaper format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
-| Citations, the database of the sources, the reference list, `/source`, `/cite`, `/research` | the Markdown file, text editor | planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-004](requirements.md#r-cite-004) |
+| [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format of Markdown Notes), `markdownpaper format` | available; `/source`, `/cite` and `/research` planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-004](requirements.md#r-cite-004) |
 | [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
 | [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line planned | [R-REN-010](requirements.md#r-ren-010) |
 
@@ -70,8 +70,31 @@ Put a source that no program can load on its own, for example a PDF file,
 into `inbox/`. An AI agent reads it, finds its authors, its year and its
 title, and moves it to `bib/` with the ID of its citation as its name, for
 example `bib/hong2024.pdf`. `AGENTS.md` of the project tells the agent this
-work. The database of the sources in the document, which the citations and the
-reference list will use, is planned.
+work. The agent adds the metadata of the source to the database of the
+document ([Citations](#citations)).
+
+## Citations
+
+The sources of a document are lines of CSL JSON in the comment
+`nimblescape-sources` at the end of the file; GitHub and the pages do not show
+it. A citation is a link to the ID of its source, with the place in the source
+in the title of the link:
+
+```markdown
+Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
+[Hong et al. (2024)](#hong2024 "narrative") describe three ways.
+```
+
+"Format Document" in VS Code (with Markdown Notes) and
+`markdownpaper format` write the text of each citation and the entries of the
+cited sources under the heading of the reference list, in the citation style
+of the layout: `citationStyle` in `layout.json`, the built-in style `apa7` or a
+CSL file of the layout, such as `pht-apa7.csl` of the PHT layouts. An AI agent
+searches and collects the sources; it takes the metadata from doi.org or from
+the source itself and must not write it from memory (`instructions document`,
+section 9). The checks name a line of the database that is no source, a title
+of a link that is no data of a citation, a cited source without an entry, and
+each `(RESEARCH)`.
 
 ## Front matter
 

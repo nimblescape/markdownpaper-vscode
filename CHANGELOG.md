@@ -77,3 +77,10 @@ The first version.
 - The npm package `@nimblescape/markdownpaper` with the command
   `markdownpaper`: `pdf`, `check`, `create`, `new document|layout|project` and
   `instructions document|layout|render`, the rules for AI agents.
+- Citations: the sources of a document as CSL JSON in a comment at the end of
+  the file, citations as links to their source with the place in the title of
+  the link, and the format writes the text of each citation and the reference
+  list in the citation style of the layout. citeproc-js applies the style: the
+  built-in style `apa7` (APA Style 7th edition of the Citation Style Language)
+  or a CSL file of the layout folder, with the words of the language of the
+  layout.

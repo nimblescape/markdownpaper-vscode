@@ -1506,6 +1506,17 @@ input is an identifier or a file:
   turns the types of Crossref and of MARC records into CSL types, joins a
   title and its subtitle with ": ", leaves out a first edition, the address
   of a source with a DOI and the day of a lookup.
+- A record of a catalog is wrong when its year comes before the first year of
+  ISBNs of its form: 1970, the year of the standard of the ISBN; 1966 for the
+  group 0, whose ISBNs continue the Standard Book Numbers; 2007 for the prefix
+  979. The command then asks the next catalog, and adds nothing when no
+  catalog has a right record; the agent writes the line from the source
+  itself. A source that only Open Library knows gets a note: the agent
+  compares its title, authors and year with the source itself.
+- `--title <words>` names words of the title of the one source of a call,
+  which the agent takes from the source itself, such as the title page of a
+  PDF. When the title of the record lacks one of the words, the command adds
+  nothing and names the record; case, accents and punctuation do not count.
 - Each new source gets its ID by [decision 22](#decisions); `--id <id>` gives
   the ID of the one new source of a call, for example of a law. A source
   whose DOI, ISBN, or title and year the database has already is not added

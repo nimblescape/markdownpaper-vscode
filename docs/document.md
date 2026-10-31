@@ -274,6 +274,12 @@ write the text of a citation or of an entry yourself.
    - `--id <id>` gives the ID of the one new source, for example of a law;
      `--dry-run` prints the new lines and writes nothing; `--offline` asks no
      service. The exit code is 1 when an input gave no source.
+   - When you have the source in hand, such as a PDF in `inbox/`, give words
+     of its title with `--title "<words>"`: a record whose title lacks one of
+     them adds nothing, because a catalog can give a DOI or an ISBN to another
+     work. A record of an ISBN from a year before ISBNs existed adds nothing,
+     and a record that only Open Library knows comes with a note: compare its
+     title, authors and year with the source itself.
    - **You must not write metadata from memory.** Each field comes from the
      command or from the source. Leave out a field that you cannot take from
      there, and say which source has no metadata yet. Write a line yourself

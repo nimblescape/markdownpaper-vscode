@@ -10,7 +10,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { describe, expect, test } from 'vitest';
-import { type Fetcher, lookUpFile, lookUpIdentifier, searchWorks } from './lookup';
+import { type Fetcher, lookUpFile, lookUpIdentifier, searchWorks, titleProblem } from './lookup';
 
 /**
  * fixture returns the text of a recorded answer.
@@ -92,7 +92,34 @@ describe('the lookup of an identifier', () => {
     const openLibrary = network({ 'https://openlibrary.org/': { body: fixture('openlibrary.json') } });
     const last = await lookUpIdentifier({ kind: 'isbn', value: '9780262033848' }, { fetch: openLibrary.fetch, today });
     expect(last).toMatchObject({ from: 'Open Library', sources: [{ title: 'Introduction to Algorithms', ISBN: '9780262033848' }] });
+    expect(last.notes).toEqual([
+      'Only Open Library knows this ISBN, and some of its records are wrong: compare the title, the authors and the year with the source itself, or name words of the title with --title.',
+    ]);
     expect(openLibrary.asked.map((url) => new URL(url).hostname)).toEqual(['services.dnb.de', 'sru.k10plus.de', 'openlibrary.org']);
+    expect(first.notes).toEqual([]);
+  });
+
+  test('a record of an ISBN from a year before ISBNs of its form is wrong and adds nothing', async () => {
+    // Open Library gave this ISBN of UNESCO to a book of 1968 on 2026-10-31.
+    const { fetch } = network({ 'https://openlibrary.org/': { body: fixture('openlibrary-wrong-year.json') } });
+    const found = await lookUpIdentifier({ kind: 'isbn', value: '978-92-3-100709-5' }, { fetch, today });
+    expect(found.sources).toEqual([]);
+    expect(found.problem).toBe(
+      'No catalog has a right record of the ISBN 978-92-3-100709-5: the German National Library does not know it; K10plus does not know it; Open Library gives it to "Music Theatre in a Changing Society: The Influence of the Technical Media" of 1968, but ISBNs of this form exist only since 1970, so the record is wrong. Write its line from the source itself.',
+    );
+
+    // The ISBNs of the group 0 continue the Standard Book Numbers of 1966; the prefix 979 came in 2007.
+    const book = (year: string) => network({ 'https://openlibrary.org/': { body: fixture('openlibrary.json').replace('"publish_date": "2009"', `"publish_date": "${year}"`) } }).fetch;
+    expect((await lookUpIdentifier({ kind: 'isbn', value: '9780262033848' }, { fetch: book('1967'), today })).sources).toHaveLength(1);
+    expect((await lookUpIdentifier({ kind: 'isbn', value: '9780262033848' }, { fetch: book('1965'), today })).problem).toContain('exist only since 1966');
+  });
+
+  test('a record whose title lacks a word of the title of the source in hand is of another work', () => {
+    const source = { id: '', title: 'Prüfungen in der Schule: Ein Überblick' };
+    expect(titleProblem(source, 'K10plus', 'prufungen, SCHULE überblick')).toBeUndefined();
+    expect(titleProblem(source, 'K10plus', 'Prüfungen an der Hochschule')).toBe(
+      'The title of the record from K10plus, "Prüfungen in der Schule: Ein Überblick", lacks the words of --title "an hochschule", so the record is of another work and nothing is added. Write its line from the source itself.',
+    );
   });
 
   test('an ISBN that no catalog knows gives a problem with the answer of each catalog', async () => {

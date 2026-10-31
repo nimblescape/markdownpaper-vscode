@@ -156,3 +156,8 @@ The first version.
 - The instructions for AI agents name the fields of a law or an ordinance:
   `container-title` and `number` of the first publication, `references` for
   the cited version, and `issued` for its day.
+- `markdownpaper source` adds nothing for a catalog record of an ISBN whose
+  year comes before ISBNs of its form existed, such as the book of 1968 that
+  Open Library gives for the ISBN 978-92-3-100709-5, and notes a source that
+  only Open Library knows. `--title <words>` checks the title of the record against
+  words of the title of the source in hand.

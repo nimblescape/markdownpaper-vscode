@@ -15,6 +15,7 @@ import {
   type Candidate,
   cleanIsbn,
   type Identifier,
+  isbn13,
   pdfIdentifiers,
   readBibtex,
   readCrossrefSearch,
@@ -141,14 +142,31 @@ async function withDoi(source: Source, from: string, fetch: Fetcher | undefined)
 }
 
 /**
+ * firstYearOf returns the first year of a book with an ISBN of this form: 2007 for the prefix 979, which came with the
+ * ISBNs of 13 digits; 1966 for the group 0, whose ISBNs continue the Standard Book Numbers of the United Kingdom; else
+ * 1970, the year of the standard of the ISBN.
+ * @param digits - The digits of an ISBN, from cleanIsbn.
+ */
+function firstYearOf(digits: string): number {
+  const isbn = isbn13(digits);
+  return isbn.startsWith('979') ? 2007 : isbn.startsWith('9780') ? 1966 : 1970;
+}
+
+/** openLibraryNote warns that a record comes only from Open Library, whose records can be wrong. */
+const openLibraryNote =
+  'Only Open Library knows this ISBN, and some of its records are wrong: compare the title, the authors and the year with the source itself, or name words of the title with --title.';
+
+/**
  * byIsbn returns the source of an ISBN from the catalog of the German National Library, else from K10plus, else from
- * Open Library.
+ * Open Library. A record whose year is before the first year of such an ISBN is wrong, and the next catalog answers.
  * @param isbn - The ISBN.
  * @param fetch - The network.
  */
 async function byIsbn(isbn: string, fetch: Fetcher): Promise<Lookup> {
   const digits = cleanIsbn(isbn);
+  const first = firstYearOf(digits);
   const problems: string[] = [];
+  let wrong = false;
   const catalogs: [string, string, (text: string) => Source[]][] = [
     ['the German National Library', `https://services.dnb.de/sru/dnb?version=1.1&operation=searchRetrieve&query=num%3D${digits}&recordSchema=MARC21-xml`, (text) => readMarcXml(text, digits)],
     ['K10plus', `https://sru.k10plus.de/opac-de-627?version=1.1&operation=searchRetrieve&query=pica.isb%3D${digits}&maximumRecords=10&recordSchema=marcxml`, (text) => readMarcXml(text, digits)],
@@ -162,11 +180,49 @@ async function byIsbn(isbn: string, fetch: Fetcher): Promise<Lookup> {
     }
     const source = read(textOf(response))[0];
     if (source?.title && source.ISBN === digits) {
-      return { sources: [source], from: name, notes: [] };
+      const year = Number(source.issued?.['date-parts']?.[0]?.[0]);
+      if (year < first) {
+        wrong = true;
+        problems.push(`${name} gives it to "${source.title}" of ${year}, but ISBNs of this form exist only since ${first}, so the record is wrong`);
+        continue;
+      }
+      return { sources: [source], from: name, notes: name === 'Open Library' ? [openLibraryNote] : [] };
     }
     problems.push(`${name} does not know it`);
   }
-  return { sources: [], from: 'the library catalogs', notes: [], problem: `No catalog knows the ISBN ${isbn}: ${problems.join('; ')}.` };
+  const problem = wrong
+    ? `No catalog has a right record of the ISBN ${isbn}: ${problems.join('; ')}. Write its line from the source itself.`
+    : `No catalog knows the ISBN ${isbn}: ${problems.join('; ')}.`;
+  return { sources: [], from: 'the library catalogs', notes: [], problem };
+}
+
+/**
+ * wordsOf returns the words of a text in small letters, without accents and punctuation.
+ * @param text - The text.
+ */
+const wordsOf = (text: string): string[] =>
+  text
+    .normalize('NFKD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
+
+/**
+ * titleProblem tells why a source that a lookup found is not the source in hand: its title lacks a word of the title
+ * that the agent took from the source itself. Case, accents and punctuation do not count.
+ * @param source - The source of the lookup.
+ * @param from - Where the metadata came from.
+ * @param words - The words of the title of the source in hand.
+ */
+export function titleProblem(source: Source, from: string, words: string): string | undefined {
+  const title = typeof source.title === 'string' ? source.title : '';
+  const have = new Set(wordsOf(title));
+  const missing = wordsOf(words).filter((word) => !have.has(word));
+  if (missing.length === 0) {
+    return undefined;
+  }
+  return `The title of the record from ${from}, "${title}", lacks the words of --title "${missing.join(' ')}", so the record is of another work and nothing is added. Write its line from the source itself.`;
 }
 
 /**

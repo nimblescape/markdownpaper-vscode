@@ -1503,8 +1503,9 @@ repos:
   Ctrl+click on the name of the reference of a listing. A missing clone offers `mp get` in a terminal of VS Code.
 - In the clean editing view of Markdown Notes, the whole front matter is
   read-only (R-TEXT-009 of Markdown Notes): a change there goes back, with a
-  message in the status bar. The text editor with the markup and the
-  commands, such as `mp get`, still write the references.
+  message in the status bar that names "Open File with Markup". The text
+  editor with the markup and the commands, such as `mp get`, still write the
+  references, and the view shows a change of `mp get`.
 - `get <owner>/<repository>@<rev>` with more than one paper in the project
   needs the paper: `get <owner>/<repository>@<rev> <file.md>`.
 - `get -u` also moves each reference to a tag to the newest tag of its

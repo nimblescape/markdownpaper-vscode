@@ -1500,6 +1500,10 @@ repos:
   VS Code, where Source Control shows its Git repository: the author chooses
   the reference from `repos` and `layout`, or a command of Markdown Notes
   passes its name. A missing clone offers `mp get` in a terminal of VS Code.
+- In the clean editing view of Markdown Notes, the whole front matter is
+  read-only (R-TEXT-009 of Markdown Notes): a change there goes back, with a
+  message in the status bar. The text editor with the markup and the
+  commands, such as `mp get`, still write the references.
 - `get <owner>/<repository>@<rev>` with more than one paper in the project
   needs the paper: `get <owner>/<repository>@<rev> <file.md>`.
 - `get -u` also moves each reference to a tag to the newest tag of its

@@ -1439,7 +1439,10 @@ repos:
   extension connects to no other address for it.
 - `build` makes the PDF, in place of `pdf`. CI runs `get` before `build`, so
   the PDF shows what the references state: the head of a branch at the time of
-  the build, or the pinned tag or commit.
+  the build, or the pinned tag or commit. CI gets every repository that the
+  paper names, not only the layout, because the formatter writes the code of
+  the listings at each format; for a private repository, CI needs a token with
+  read access to it.
 - The renderer reads the layout of a reference from its clone. An author who
   changes a layout copies it into `layouts/<name>/`.
 - `create` needs a layout: `--layout <owner>/<repository>/<folder>@<rev>`, or
@@ -2063,7 +2066,8 @@ requirement ([R-GEN-007](#r-gen-007)).
     moves each tag to the newest tag. `get` replaces `update`, `build`
     replaces `pdf`, and `mp create` needs a layout and writes its reference in
     place of a copy. The renderer reads a layout from its clone, and CI runs
-    `mp get` before `mp build`. The command runs Git with the access of the
+    `mp get` for every reference before `mp build`, with a token for each
+    private repository. The command runs Git with the access of the
     author, only when the author or CI runs it. The extension ships `mp` in
     the terminals of VS Code, as nimblescape TypeScript ships `ts`; outside
     VS Code, npm installs it. A layout comes from `layouts/`, from the
@@ -2077,10 +2081,6 @@ requirement ([R-GEN-007](#r-gen-007)).
   of the front matter, and later the citations; not confirmed yet.
 - A setting of the extension for the name of the script `mp` in the
   terminals of VS Code, as a second name ([R-CLI-001](#r-cli-001)).
-- `mp get --layout`, which gets only the layout, for CI
-  ([R-CLI-004](#r-cli-004)): the PDF needs only the layout, because the code
-  blocks hold the code, so CI would need no token for private repositories of
-  code.
 - Private repositories of code ([R-CLI-004](#r-cli-004)): a reader without
   access gets an error page from the link of a caption.
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the

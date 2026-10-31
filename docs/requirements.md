@@ -1640,7 +1640,8 @@ requirement ([R-GEN-007](#r-gen-007)).
 5. **Names** ([R-GEN-005](#r-gen-005)): the extension IDs and repositories of
    Markdown Paper and Markdown Notes. The npm package
    `@nimblescape/markdownpaper` with the command `markdownpaper` follows the
-   IDs (see the [open questions](#open-questions)).
+   IDs, as `@nimblescape/markdownnotes` does; Hannes confirmed the name on
+   2026-10-31.
 6. **The installed browser prints the PDF** ([R-PDF-002](#r-pdf-002)): an
    installed Chrome, Chromium or Edge first, and a download of Chromium only
    when none is found. The package holds no Chromium.
@@ -1864,7 +1865,6 @@ requirement ([R-GEN-007](#r-gen-007)).
   `markdownpaper` has no extensions of VS Code, so its PDF shows a diagram as
   its source text. It can bring Mermaid itself; PlantUML needs Java or a
   PlantUML server. In VS Code, "Export PDF" shows the diagrams.
-- The npm name `@nimblescape/markdownpaper` ([decision 5](#decisions)).
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
 - Values of the front matter in the text (planned in Markdown Notes): `/ref`

@@ -198,11 +198,6 @@
         }
       ]
     },
-    "configurationDefaults": {
-      "files.readonlyInclude": {
-        "**/.markdownpaper/repos/**": true
-      }
-    },
     "jsonValidation": [
       {
         "fileMatch": [

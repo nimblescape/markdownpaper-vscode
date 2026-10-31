@@ -133,8 +133,7 @@ The first version.
   <owner>/<repository>@<rev>` adds a reference, and `mp get -u` moves the
   references to tags to the newest tags. The renderer reads a layout from its
   clone, and the checks name a missing clone. "Open Repository in New Window"
-  opens the clone of a reference in a new window of VS Code; in the window of
-  the paper, the files of the clones are read-only.
+  opens the clone of a reference in a new window of VS Code.
 - Citations: the sources of a document as CSL JSON in a comment at the end of
   the file, citations as links to their source with the place in the title of
   the link, and the format writes the text of each citation and the reference

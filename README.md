@@ -124,11 +124,9 @@ Node.js 22 or newer.
   a layout. "Update Layout" updates a copy of a layout on GitHub in
   `layouts/` of an older project from its repository when the repository has
   a newer version, and keeps the changes of the project.
-- **Clones.** The files in `.markdownpaper/repos/` are read-only in the
-  window of the paper: the extension sets the default of the setting
-  `files.readonlyInclude`. "Open Repository in New Window" opens the clone of
-  a reference of the paper in a new window of VS Code, where its files can be
-  changed and Source Control shows its Git repository.
+- **Clones.** "Open Repository in New Window" opens the clone of a reference
+  of the paper in `.markdownpaper/repos/` in a new window of VS Code, where
+  Source Control shows its Git repository.
 - **Notes.** The notes of nimblescape Markdown Notes do not show on the pages.
   The page preview and the PDF of a file in its clean editing view show the
   file itself. The clean editing view hides the database of the sources.

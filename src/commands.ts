@@ -485,7 +485,7 @@ export async function cloneOfReference(context: Context, uri?: unknown, name?: u
 /**
  * openRepositoryCommand opens the clone of a reference of a paper in a new window of VS Code
  * ([R-CLI-004](../docs/requirements.md#r-cli-004), [decision 55](../docs/requirements.md#decisions)), where Source
- * Control shows its Git repository and its files can be changed; the window of the paper shows them read-only.
+ * Control shows its Git repository.
  * @param context - The context.
  * @param uri - The paper, as for cloneOfReference.
  * @param name - The name of the reference, as for cloneOfReference.

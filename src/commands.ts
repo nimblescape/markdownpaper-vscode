@@ -7,6 +7,8 @@
  * "New Project", "New Document" and "New Layout" ([R-NEW-001](../docs/requirements.md#r-new-001) to
  * [R-NEW-004](../docs/requirements.md#r-new-004)), which write no file over an existing one, and "Update Layout"
  * ([R-LAY-010](../docs/requirements.md#r-lay-010)), which updates a copy of a layout on GitHub from its repository.
+ * "Open Repository in New Window" ([R-CLI-004](../docs/requirements.md#r-cli-004)) opens the clone of a reference of a
+ * paper.
  */
 
 import * as path from 'node:path';
@@ -16,7 +18,8 @@ import { fileOf, textOf } from './notesApi';
 import { downloadRemote, findRemotes, previewUrl, type RemoteLayout, type RemoteSpec, readOrigin, remoteName } from './paper/gallery';
 import type { Layout } from './paper/layout';
 import type { Fetcher } from './paper/lookup';
-import { defaultLayout, findLayout, layoutName } from './paper/render';
+import { clonesFolder, type Reference, referencesOf } from './paper/references';
+import { defaultLayout, findClone, findLayout, layoutName } from './paper/render';
 import { type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, startFiles } from './paper/scaffold';
 import { planUpdate, type Update } from './paper/update';
 import { defaultPlace, downloadBrowser, downloadSize } from './pdf/download';
@@ -423,6 +426,77 @@ export async function newProjectCommand(context: Context, uri?: unknown): Promis
     }
   }
   return target;
+}
+
+/** ReferenceItem is an entry of the list of the references of "Open Repository in New Window". */
+interface ReferenceItem extends vscode.QuickPickItem {
+  reference: Reference;
+}
+
+/**
+ * cloneOfReference finds the clone of a reference of a paper in `.markdownpaper/repos/<name>/` for "Open Repository
+ * in New Window": the reference with the name, else the one that the author chooses from the references of the front
+ * matter, `repos` and `layout`. A missing clone offers `mp get` in a terminal of VS Code.
+ * @param context - The context.
+ * @param uri - The paper of the Explorer or of Markdown Notes, else the paper of the active editor.
+ * @param name - The name of the reference, for example from a listing in Markdown Notes.
+ * @returns The URI of the folder of the clone, or undefined.
+ */
+export async function cloneOfReference(context: Context, uri?: unknown, name?: unknown): Promise<vscode.Uri | undefined> {
+  const file = targetOf(context, uri);
+  if (!file) {
+    void vscode.window.showErrorMessage('Open Repository in New Window: open a paper document first.');
+    return undefined;
+  }
+  const references = referencesOf(await textOf(file)).references.sort((a, b) => Number(a.key === 'layout') - Number(b.key === 'layout'));
+  let reference: Reference | undefined;
+  if (typeof name === 'string') {
+    reference = references.find((candidate) => candidate.name === name);
+    if (!reference) {
+      void vscode.window.showErrorMessage(`Open Repository in New Window: the front matter of ${path.basename(file.path)} names no reference "${name}".`);
+      return undefined;
+    }
+  } else if (references.length === 0) {
+    void vscode.window.showInformationMessage(`Open Repository in New Window: the front matter of ${path.basename(file.path)} names no repository on GitHub in "layout" or "repos".`);
+    return undefined;
+  } else if (references.length === 1) {
+    reference = references[0];
+  } else {
+    const items: ReferenceItem[] = references.map((candidate) => ({ label: candidate.name, description: candidate.text, detail: candidate.key === 'layout' ? 'The layout' : 'A repository of the listings', reference: candidate }));
+    reference = (await vscode.window.showQuickPick(items, { title: 'Open Repository in New Window', placeHolder: 'The reference whose clone opens in a new window' }))?.reference;
+  }
+  if (!reference) {
+    return undefined;
+  }
+  const clone = await findClone(searchHost(context.extension, file), file.toString(), reference.name);
+  if (!clone) {
+    // The message does not hold the command back, so a caller gets its answer at once.
+    const missing = reference;
+    void vscode.window.showInformationMessage(`${clonesFolder}/${missing.name}/ is missing: "${terminalCommand} get" clones ${missing.text}.`, `Run ${terminalCommand} get`).then((choice) => {
+      if (choice) {
+        runInTerminal(vscode.Uri.joinPath(file, '..'), `${terminalCommand} get`);
+      }
+    });
+    return undefined;
+  }
+  return vscode.Uri.parse(clone.replace(/\/$/, ''));
+}
+
+/**
+ * openRepositoryCommand opens the clone of a reference of a paper in a new window of VS Code
+ * ([R-CLI-004](../docs/requirements.md#r-cli-004), [decision 55](../docs/requirements.md#decisions)), where Source
+ * Control shows its Git repository and its files can be changed; the window of the paper shows them read-only.
+ * @param context - The context.
+ * @param uri - The paper, as for cloneOfReference.
+ * @param name - The name of the reference, as for cloneOfReference.
+ * @returns The URI of the opened clone, or undefined.
+ */
+export async function openRepositoryCommand(context: Context, uri?: unknown, name?: unknown): Promise<vscode.Uri | undefined> {
+  const folder = await cloneOfReference(context, uri, name);
+  if (folder) {
+    await vscode.commands.executeCommand('vscode.openFolder', folder, { forceNewWindow: true });
+  }
+  return folder;
 }
 
 /** CopyItem is an entry of the list of the copies of layouts on GitHub of "Update Layout". */

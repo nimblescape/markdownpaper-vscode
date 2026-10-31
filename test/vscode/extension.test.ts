@@ -4,7 +4,8 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 // Tests in a real VS Code (npm run test:vscode, .vscode-test.mjs): mocha runs them in the extension host. They write a
-// layout and Markdown files into a temporary folder, and check the commands of the extension, the checks of the front
+// layout and Markdown files into a temporary folder, and check the commands of the extension, among them "Open
+// Repository in New Window" (R-CLI-004), the checks of the front
 // matter and their hover (R-DOC-002, R-DOC-003), the format step of the paper (R-REN-004, R-CLI-002), the slash
 // commands /research and /cite (R-CITE-002), the plugin of
 // the pages in the Markdown preview of VS Code for a paper document and none for a notes document (R-PRV-001,
@@ -19,6 +20,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
 import * as vscode from 'vscode';
+import { type Context, cloneOfReference } from '../../src/commands';
 import type { Api } from '../../src/extension';
 import { markdownExtensions, plantUmlOptions } from '../../src/markdownExtensions';
 import { findBrowser } from '../../src/pdf/browser';
@@ -86,7 +88,7 @@ describe('nimblescape Markdown Paper', function () {
   it('the extension starts and has its commands', async () => {
     await api();
     const commands = await vscode.commands.getCommands(true);
-    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'connectZotero', 'updateSourcesFromZotero']) {
+    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'openRepository', 'connectZotero', 'updateSourcesFromZotero']) {
       assert.ok(commands.includes(`nimblescape.markdownPaper.${name}`), name);
     }
   });
@@ -97,6 +99,19 @@ describe('nimblescape Markdown Paper', function () {
     const script = path.join(folder, process.platform === 'win32' ? 'mp.cmd' : 'mp');
     const { stdout } = await promisify(execFile)(script, ['--version'], { shell: process.platform === 'win32' });
     assert.match(stdout, /^mp \d+\.\d+\.\d+ \(layouts: nimblescape-layout 1\.0\.0\)$/m);
+  });
+
+  it('"Open Repository in New Window" finds the clone of a reference of the paper, and nothing for a missing clone (R-CLI-004)', async () => {
+    await api();
+    const file = write('repositories/paper/paper.md', '---\nlayout: plain\nrepos:\n  server: myorg/server@v2.1.0\n  client: myorg/client@main\n---\n\n# Code\n');
+    write('repositories/.markdownpaper/repos/server/.git/HEAD', `${'a'.repeat(40)}\n`);
+    // The command opens the folder in a new window, which would run these tests again; the test asks only for the folder.
+    const context: Context = { extension: vscode.extensions.getExtension(extensionId)!.extensionUri, browserPath: () => '', openPdf: () => false, previewFile: () => undefined };
+    const clone = await cloneOfReference(context, file, 'server');
+    assert.equal(clone?.fsPath, path.join(folder, 'repositories', '.markdownpaper', 'repos', 'server'));
+    // The clone of client is missing, and the paper names no reference "tools".
+    assert.equal(await cloneOfReference(context, file, 'client'), undefined);
+    assert.equal(await cloneOfReference(context, file, 'tools'), undefined);
   });
 
   it('a missing required field of the layout is a warning at the field layout, with the description in its hover (R-DOC-002, R-DOC-003)', async () => {

@@ -76,6 +76,15 @@ pages as they are; a branch follows the changes of the layout.
 after a clone of the project or in CI, and brings the head of each branch;
 `get -u` moves a reference to a tag to the newest tag.
 
+The repositories of the code of the listings are references too, in the field
+`repos` of the front matter, for example `server: myorg/server@v2.1.0`, and
+`mp get` clones them in the same way. Each clone is a full Git repository. In
+the window of the paper, its files are read-only, and Source Control shows
+only the repository of the paper. "Markdown Paper: Open Repository in New
+Window" in the Command Palette opens the clone of a reference in a new window
+of VS Code, where you can change its files and use Git; when the clone is
+missing, it offers `mp get`.
+
 The terminals of VS Code have the command `mp` of the extension, with its Tab
 completion in bash and zsh, so `mp get` and `mp build paper/paper.md` work
 there without an installation. A terminal that was open before the extension

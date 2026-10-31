@@ -105,6 +105,10 @@ test('the manifest contributes the commands of the extension, and no other', () 
   }
 });
 
+test('the files of the clones of the references are read-only in the window of the paper, as Markdown Notes makes them (R-CLI-004)', () => {
+  expect(manifest.contributes.configurationDefaults).toEqual({ 'files.readonlyInclude': { '**/.markdownpaper/repos/**': true } });
+});
+
 test('"Show Page Preview" is a button of the title of a paper document, and "Export PDF" a button of its menu "Run" and of its Markdown preview (R-PRV-001, R-PDF-001, R-DOC-004)', () => {
   const menus = manifest.contributes.menus;
   expect(menus['editor/title']).toContainEqual({ command: commands.showPagePreview, group: 'navigation', when: `editorLangId == markdown && ${paperDocumentKey}` });

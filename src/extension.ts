@@ -15,7 +15,7 @@
 import type MarkdownIt from 'markdown-it';
 import * as vscode from 'vscode';
 import { citeCommand, citeContext, connectZoteroCommand, updateSourcesCommand } from './cite';
-import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, updateLayoutCommand } from './commands';
+import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, openRepositoryCommand, updateLayoutCommand } from './commands';
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
 import { PaperPreview } from './markdownPreview';
@@ -36,6 +36,7 @@ export const commands = {
   newDocument: 'nimblescape.markdownPaper.newDocument',
   newLayout: 'nimblescape.markdownPaper.newLayout',
   updateLayout: 'nimblescape.markdownPaper.updateLayout',
+  openRepository: 'nimblescape.markdownPaper.openRepository',
   connectZotero: 'nimblescape.markdownPaper.connectZotero',
   updateSources: 'nimblescape.markdownPaper.updateSourcesFromZotero',
 };
@@ -115,6 +116,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     vscode.commands.registerCommand(commands.newDocument, (uri?: unknown) => newDocumentCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.newLayout, (uri?: unknown) => newLayoutCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.updateLayout, (uri?: unknown) => updateLayoutCommand(commandContext, uri)),
+    vscode.commands.registerCommand(commands.openRepository, (uri?: unknown, name?: unknown) => openRepositoryCommand(commandContext, uri, name)),
     vscode.commands.registerCommand(commands.connectZotero, () => connectZoteroCommand(citations)),
     vscode.commands.registerCommand(commands.updateSources, (uri?: unknown) => updateSourcesCommand(citations, uri)),
   );

@@ -67,6 +67,7 @@ This document replaces it where the two differ.
 | 36 | The command `mp` in place of `markdownpaper`; the references of a paper: the keys `layout` and `repos` of the front matter with GitHub references, `get` with its clones, `get -u`, `create` that needs a layout and writes its reference, `build` in place of `pdf`, no `update`, the layout read from its clone, and the clones of `repos` for the listings of Markdown Notes | [R-CLI-001](#r-cli-001), [R-CLI-004](#r-cli-004), [R-LAY-007](#r-lay-007), [R-LAY-010](#r-lay-010), [R-NEW-004](#r-new-004) | done ([decision 51](#decisions)); the listings from the clones are step 68 of Markdown Notes |
 | 37 | The command in the terminals of VS Code, as nimblescape TypeScript ships `ts`; "New Project" of VS Code with the reference of a layout on GitHub and `mp get` in a terminal of VS Code; the installation of the command from GitHub before the release | [R-CLI-001](#r-cli-001), [R-NEW-004](#r-new-004) | done ([decision 51](#decisions)) |
 | 38 | The links of the PDF: a link for every reference inside the paper, also for each citation, in the color of the text without a mark; the addresses of the links to the outside in footnotes; the link of a listing from a public repository on its cite | [R-PDF-005](#r-pdf-005), [R-REN-011](#r-ren-011) | done ([decision 52](#decisions), [decision 54](#decisions)) |
+| 39 | "Open Repository in New Window" in VS Code for the clone of a reference; the files of the clones read-only in the window of the paper | [R-CLI-004](#r-cli-004) | done ([decision 55](#decisions)); Markdown Notes opens the same folder with Ctrl+click on the name of the reference of a listing |
 
 ## General
 
@@ -1491,6 +1492,20 @@ repos:
   its files stays as it is. `get` also updates the copies of layouts in
   `layouts/` of the project ([R-LAY-010](#r-lay-010)); there is no subcommand
   `update`.
+- A clone is a full Git repository with its `.git` folder
+  ([decision 55](#decisions)). The Git repository of the paper ignores it, so
+  Source Control of VS Code shows only the paper repository in the window of
+  the paper. "Open Repository in New Window" in the Command Palette opens the
+  clone of a reference of the paper of the active editor in a new window of
+  VS Code, where Source Control shows its Git repository: the author chooses
+  the reference from `repos` and `layout`, or a command of Markdown Notes
+  passes its name. A missing clone offers `mp get` in a terminal of VS Code.
+- The files of the clones are read-only in the window of the paper: the
+  extension sets the default of `files.readonlyInclude` to
+  `**/.markdownpaper/repos/**`, as Markdown Notes does, so that it holds with
+  either extension alone. In the window of a clone, the pattern does not
+  match, because it counts from the folder of the window, and the files can be
+  changed there.
 - `get <owner>/<repository>@<rev>` with more than one paper in the project
   needs the paper: `get <owner>/<repository>@<rev> <file.md>`.
 - `get -u` also moves each reference to a tag to the newest tag of its
@@ -2171,6 +2186,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     [R-PDF-005](#r-pdf-005)): `mp get` learns whether a repository of `repos`
     is public with one request to GitHub without a sign-in, and keeps the
     answer with its clone. The front matter has no key for it.
+
+55. **Full clones, opened in their own window** ([R-CLI-004](#r-cli-004)):
+    a clone of a reference keeps its `.git` folder. "Open Repository in New
+    Window" opens it in a new window of VS Code. In the window of the paper,
+    its files are read-only.
 
 ## Open questions
 

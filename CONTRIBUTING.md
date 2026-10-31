@@ -20,7 +20,7 @@ request.
 | `src/workspaceHost.ts` | The host of the renderer in VS Code: it reads the files through VS Code, the open documents first, and finds the layouts in the workspace and in the extension. |
 | `src/pagePreview.ts`, `media/pagePreview.js`, `media/pagePreview.css` | The page preview ([R-PRV-001](docs/requirements.md#r-prv-001) to [R-PRV-004](docs/requirements.md#r-prv-004)): the webview panel of each file, its first page and its updates after a pause, the restore after a restart, and the script of the webview that makes the new pages with Paged.js beside the old ones, keeps the place on the page and passes a click to the extension. |
 | `src/frontMatterChecks.ts` | The warnings of the checks in the text editor and the hover of the fields of the front matter ([R-DOC-002](docs/requirements.md#r-doc-002), [R-DOC-003](docs/requirements.md#r-doc-003)). |
-| `src/commands.ts` | "Export PDF", "New Project", "New Document" and "New Layout" in VS Code. |
+| `src/commands.ts` | "Export PDF", "New Project", "New Document", "New Layout", "Update Layout" and "Open Repository in New Window" in VS Code. |
 | `src/paper/frontMatter.ts` | The front matter: its fields with their places in the file, and the text after it with an empty line for each line of the front matter. |
 | `src/paper/layout.ts` | `layout.json` and its format `nimblescape-layout 1.0.0`, the codes of the special sections, the words of the languages, and the problems of a layout ([R-LAY-002](docs/requirements.md#r-lay-002), [R-LAY-005](docs/requirements.md#r-lay-005)). |
 | `src/paper/template.ts` | The templates of a layout with their fields, and the name of the PDF ([R-LAY-004](docs/requirements.md#r-lay-004)). |

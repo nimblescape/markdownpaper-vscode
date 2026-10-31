@@ -37,8 +37,8 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [A layout from a Word template](#a-layout-from-a-word-template) | AI agent | instructions available | [R-LAY-006](requirements.md#r-lay-006) |
 | [Instructions for AI agents](#instructions-for-ai-agents) | command line | available | [R-CLI-003](requirements.md#r-cli-003) |
 | [Settings](#settings) | VS Code | available | [R-SET-001](requirements.md#r-set-001) |
-| The format step of the paper: the four lists in the file, the numbers of the headings in the links to them | VS Code (format of Markdown Notes), `markdownpaper format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
-| [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format, `/cite` and `/research` of Markdown Notes, Zotero), `markdownpaper format`, `markdownpaper source` | available | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-006](requirements.md#r-cite-006) |
+| The format step of the paper: the four lists in the file, the numbers of the headings in the links to them | VS Code (format of Markdown Notes), `mp format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
+| [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format, `/cite` and `/research` of Markdown Notes, Zotero), `mp format`, `mp source` | available | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-006](requirements.md#r-cite-006) |
 | [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
 | [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line PlantUML and Mermaid available | [R-REN-010](requirements.md#r-ren-010), [R-REN-015](requirements.md#r-ren-015), [R-REN-016](requirements.md#r-ren-016) |
 
@@ -48,7 +48,8 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 folder, the name of the project folder, a layout, a language, the title and
 the author, and writes the folders of a paper. On the
 command line, `npx -y @nimblescape/markdownpaper create` asks the same
-questions; `--yes` asks nothing, for AI agents.
+questions; `--yes` asks nothing, for AI agents, and then `--layout` names the
+layout.
 
 The list of the layouts holds the layouts of the workspace, the built-in
 layouts and, when GitHub answers, the layouts on GitHub: each layout folder of
@@ -57,12 +58,22 @@ a repository with the topic
 In VS Code, the button of a layout on GitHub opens its preview PDF, the pages
 of its empty paper document. In a terminal, the arrow keys choose and the
 line below the list shows the address of the preview PDF;
-`markdownpaper layouts` prints the list. `--layout` chooses without the
-list, also a layout on GitHub:
+`mp layouts` prints the list. `--layout` chooses without the
+list, also a layout on GitHub, with a branch, a tag or a commit after `@`:
 
 ```sh
-npx -y @nimblescape/markdownpaper create my-thesis --layout github:majikmate/markdownpaper-layout-pht/thesis
+npx -y @nimblescape/markdownpaper create my-thesis --layout majikmate/markdownpaper-layout-pht/thesis@main
 ```
+
+On the command line, a layout on GitHub stays in its repository: `create`
+clones it with Git into `.markdownpaper/repos/` of the project, a folder that
+Git ignores, and the document names its reference in the field `layout`, for
+example `layout: majikmate/markdownpaper-layout-pht/thesis@main`. A tag or a
+commit after `@` keeps the pages as they are; a branch follows the changes of
+the layout. `npx -y @nimblescape/markdownpaper get` clones what is missing,
+for example after a clone of the project or in CI, and brings the head of each
+branch; `get -u` moves a reference to a tag to the newest tag. "New Project" in
+VS Code still copies a layout on GitHub into `layouts/`.
 
 With a sign-in to GitHub in VS Code, or with a token in `GITHUB_TOKEN` on the
 command line, the list also holds the private repositories that you can read,
@@ -71,7 +82,7 @@ and GitHub allows more requests.
 | Folder or file | Content |
 | --- | --- |
 | `AGENTS.md` | The instructions for AI agents: the commands of the rules, of the checks and of the PDF. |
-| `layouts/<name>/` | The copy of the layout. |
+| `layouts/<name>/` | The copy of the layout, or for a layout on GitHub on the command line its clone in `.markdownpaper/repos/<name>/`. |
 | `paper/paper.md` | The document: the empty paper document of the layout, with the values of the cover page in the front matter and chapters that explain how to work with the layout. |
 | `images/` | The figures, first the example figure of the empty paper document, if it has one. |
 | `code/`, … | The other files that the empty paper document links to, such as the code of an example listing. |
@@ -89,8 +100,9 @@ Layout", in the Command Palette and in the context menu of a folder in
 `layouts/`, reads the newest version from the repository of the layout: the
 files that only the repository changed get their new versions, and your own
 changes stay. When you and the repository changed the same file, VS Code asks
-before it replaces your change. On the command line:
-`npx -y @nimblescape/markdownpaper update`.
+before it replaces your change. On the command line,
+`npx -y @nimblescape/markdownpaper get` updates the copies together with the
+clones; `--force` replaces the files that both changed.
 
 ## Sources in inbox and bib
 
@@ -151,11 +163,11 @@ the database of the open document at once, with one question for all changed
 values.
 
 "Format Document" in VS Code (with Markdown Notes) and
-`markdownpaper format` write the text of each citation and the entries of the
+`mp format` write the text of each citation and the entries of the
 cited sources under the heading of the reference list, in the citation style
 of the layout: `citationStyle` in `layout.json`, the built-in style `apa7` or a
 CSL file of the layout, such as `pht-apa7.csl` of the PHT layouts. An AI agent
-searches and collects the sources and adds them with `markdownpaper source`,
+searches and collects the sources and adds them with `mp source`,
 which takes the metadata from doi.org, the catalogs of the libraries, PubMed,
 arXiv, a web page, an export of a reference manager or the DOI of a PDF; the
 agent must not write metadata from memory (`instructions document`,
@@ -385,13 +397,13 @@ Chromium or Microsoft Edge; `nimblescape.markdownPaper.browserPath` names
 another program. Without one, "Export PDF" asks whether it may download
 Chromium once, the headless shell of Chrome for Testing (about 120 MB), into
 the cache folder of your user account; the command line uses it too, and
-`markdownpaper pdf --download-browser` downloads it on the command line. The PDF shows what the Markdown extensions of VS Code add to
+`mp build --download-browser` downloads it on the command line. The PDF shows what the Markdown extensions of VS Code add to
 the Markdown preview, for example the diagrams of Mermaid and the math of
 KaTeX, in the colors of a light theme; a diagram stands in the middle of the
 text. On the command line, which has no extensions of VS Code:
 
 ```sh
-npx -y @nimblescape/markdownpaper pdf paper/paper.md
+npx -y @nimblescape/markdownpaper build paper/paper.md
 ```
 
 Every PDF, also on the command line, shows the PlantUML diagrams of the
@@ -421,7 +433,7 @@ A layout is a folder `layouts/<name>/`:
 | `page.css` | The style sheet with CSS Paged Media: page size, margins, header and footer. |
 | `cover.html` and other templates | The fixed pages, with the fields as `{{title}}`. |
 | `document.md` | The empty paper document: the start of a new document, with example texts that explain the layout. |
-| `document.pdf` | The preview: the PDF of `document.md`, written by `markdownpaper preview layouts/<name>`. |
+| `document.pdf` | The preview: the PDF of `document.md`, written by `mp preview layouts/<name>`. |
 | `fonts/`, `images/` | Fonts and images of the layout, also the images of `document.md`. |
 
 `npx -y @nimblescape/markdownpaper instructions layout` prints the whole

@@ -241,7 +241,26 @@ describe('the page (R-REN-001, R-REN-008)', () => {
     const files = { 'file:///repo/layouts/a/layout.json': JSON.stringify({ format: formatText }), 'file:///layouts/b/layout.json': JSON.stringify({ format: formatText }) };
     expect((await findLayout(hostOf(files), 'file:///repo/x/y/doc.md', 'a')).layout?.folder).toBe('file:///repo/layouts/a/');
     expect((await findLayout(hostOf(files), 'file:///repo/x/y/doc.md', 'b')).layout).toBeUndefined();
-    expect((await findLayout(hostOf(files), 'file:///repo/doc.md', '../a')).problems[0].message).toContain('no name of a folder');
+    expect((await findLayout(hostOf(files), 'file:///repo/doc.md', '.a')).problems[0].message).toContain('no name of a folder');
+    expect((await findLayout(hostOf(files), 'file:///repo/doc.md', '../a')).problems[0].message).toContain('no reference to a layout on GitHub');
+  });
+
+  test('a layout on GitHub comes from its clone in .markdownpaper/repos/ of the project, and a missing clone is an error (R-CLI-004)', async () => {
+    const json = JSON.stringify({ format: formatText, name: 'Thesis' });
+    const files = {
+      'file:///repo/.markdownpaper/repos/layouts/thesis/layout.json': json,
+      'file:///repo/.markdownpaper/repos/layouts/thesis/page.css': '@page { size: A4; }',
+      'file:///repo/.markdownpaper/repos/root/layout.json': json,
+    };
+    const found = await findLayout(hostOf(files), 'file:///repo/paper/paper.md', 'school/layouts/thesis@v1.0.0');
+    expect(found.layout).toMatchObject({ id: 'thesis', name: 'Thesis', folder: 'file:///repo/.markdownpaper/repos/layouts/thesis/' });
+    expect((await findLayout(hostOf(files), 'file:///repo/paper.md', 'github:school/root@main')).layout).toMatchObject({ id: 'root', folder: 'file:///repo/.markdownpaper/repos/root/' });
+    expect((await findLayout(hostOf(files), 'file:///repo/paper.md', 'school/layouts/concept@main')).problems[0].message).toBe(
+      'The layout school/layouts/concept@main is not in .markdownpaper/repos/ of the project yet: run "mp get" in the folder of the project.',
+    );
+    const rendered = await render(hostOf(files), 'file:///repo/paper/paper.md', '---\nlayout: school/layouts/thesis@v1.0.0\n---\n# Einleitung\n');
+    expect(rendered.layout.id).toBe('thesis');
+    expect(rendered.problems).toEqual([]);
   });
 
   test('relative addresses only: a style sheet and a template keep the addresses with a scheme, an anchor or a root', () => {

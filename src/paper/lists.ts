@@ -20,7 +20,7 @@
  * headings by the rules of the layout, and the numbers of the captions of the file. It replaces the lines between the
  * markers, or adds the markers and the list after the heading, and keeps the rest of the section. The module uses no
  * API of VS Code: the extension runs it as a step of the formatter of Markdown Notes, and the command line in
- * `markdownpaper format`.
+ * `mp format`.
  */
 
 import { bodyOf, readFrontMatter } from './frontMatter';

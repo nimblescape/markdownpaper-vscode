@@ -9,10 +9,10 @@
 # package @nimblescape/plantuml from GitHub, checks the types, runs the unit
 # tests and the tests in a real VS Code (stable),
 # packages the VSIX with vsce, which first bundles the extension and the
-# command markdownpaper with esbuild and also validates the manifest and the
+# command mp with esbuild and also validates the manifest and the
 # README, and packs the npm package @nimblescape/markdownpaper of cli/ with
 # npm pack. Both stay workflow artifacts for inspection. The job "command"
-# runs the tests of the built command markdownpaper on Linux and macOS, with
+# runs the tests of the built command mp on Linux and macOS, with
 # the oldest Node.js that the command supports (engines of cli/package.json)
 # and the newest LTS release. The tests of the PDF use the Google Chrome that the
 # runners of GitHub have installed. This workflow publishes nothing: the release
@@ -112,7 +112,7 @@ jobs:
           if-no-files-found: error
 
   command:
-    name: Command markdownpaper on ${{ matrix.os }} with Node.js ${{ matrix.node }}
+    name: Command mp on ${{ matrix.os }} with Node.js ${{ matrix.node }}
     # The workflow "VS Code versions" tests only the parts that depend on VS Code.
     if: ${{ !inputs.vscode-version }}
     strategy:
@@ -140,6 +140,6 @@ jobs:
       - name: Install @nimblescape/plantuml from GitHub
         run: node scripts/install-plantuml.mjs
 
-      # The tests run the built cli/dist/markdownpaper.js with this Node.js.
-      - name: Run the tests of the command markdownpaper
+      # The tests run the built cli/dist/mp.js with this Node.js.
+      - name: Run the tests of the command mp
         run: npm run test:cli

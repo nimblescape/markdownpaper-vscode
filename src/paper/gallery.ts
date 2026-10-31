@@ -9,9 +9,8 @@
  * copies the chosen one into the new project. The module reads GitHub through a fetcher and uses no API of VS Code.
  */
 
-import { type Layout, layoutFile, parseLayout, type Problem } from './layout';
+import { type Layout, layoutFile, layoutName, parseLayout, type Problem } from './layout';
 import type { Fetcher, Response } from './lookup';
-import { layoutName } from './render';
 
 /** layoutTopic is the topic of GitHub that marks a repository of layouts of nimblescape Markdown Paper. */
 export const layoutTopic = 'nimblescape-markdownpaper-layout';
@@ -37,7 +36,10 @@ export interface RemoteLayout {
  * ([R-LAY-010](../../docs/requirements.md#r-lay-010)).
  */
 export interface Origin {
-  /** layout is the name of the layout on GitHub, for example `github:majikmate/markdownpaper-layout-pht/thesis`. */
+  /**
+   * layout is the name of the layout on GitHub, for example `majikmate/markdownpaper-layout-pht/thesis`; an older copy
+   * has `github:` before it.
+   */
   layout: string;
   /** ref is the branch, the tag or the commit that the copy follows. */
   ref: string;
@@ -45,7 +47,10 @@ export interface Origin {
   commit: string;
 }
 
-/** RemoteSpec names a layout on GitHub: `github:owner/repository/folder`, with `@ref` for a branch, a tag or a commit. */
+/**
+ * RemoteSpec is a reference to a repository on GitHub, or to a layout folder in it: `owner/repository/folder`, with
+ * `@ref` for a branch, a tag or a commit ([R-CLI-004](../../docs/requirements.md#r-cli-004)).
+ */
 export interface RemoteSpec {
   repository: string;
   folder: string;
@@ -58,12 +63,13 @@ const json = 'application/vnd.github+json';
 const decoder = new TextDecoder();
 
 /**
- * parseRemote reads the name of a layout on GitHub, `github:owner/repository/folder@ref`, or returns undefined for
- * another name, such as the name of a folder in `layouts/`.
- * @param text - The name.
+ * parseRemote reads a reference to a repository on GitHub or to a layout in it, `owner/repository/folder@ref`, also
+ * with `github:` before it as an older name of a layout has, or returns undefined for another name, such as the name of
+ * a folder in `layouts/`.
+ * @param text - The reference.
  */
 export function parseRemote(text: string): RemoteSpec | undefined {
-  const match = /^github:([A-Za-z0-9-]+\/[A-Za-z0-9._-]+)((?:\/[A-Za-z0-9._-]+)*)(?:@([^\s@]+))?$/.exec(text.trim());
+  const match = /^(?:github:)?([A-Za-z0-9-]+\/[A-Za-z0-9._-]+)((?:\/[A-Za-z0-9._-]+)*)(?:@([^\s@]+))?$/.exec(text.trim());
   if (!match) {
     return undefined;
   }
@@ -71,11 +77,17 @@ export function parseRemote(text: string): RemoteSpec | undefined {
 }
 
 /**
- * remoteName returns the name of a layout on GitHub for the option --layout, for example
- * `github:majikmate/markdownpaper-layout-pht/thesis`.
+ * remoteName returns the name of a layout on GitHub without its ref, for example
+ * `majikmate/markdownpaper-layout-pht/thesis`.
  * @param remote - The layout.
  */
-export const remoteName = (remote: Pick<RemoteLayout, 'repository' | 'folder'>): string => `github:${remote.repository}${remote.folder ? `/${remote.folder}` : ''}`;
+export const remoteName = (remote: Pick<RemoteLayout, 'repository' | 'folder'>): string => `${remote.repository}${remote.folder ? `/${remote.folder}` : ''}`;
+
+/**
+ * referenceText returns the text of a reference, for example `majikmate/markdownpaper-layout-pht/thesis@main`.
+ * @param spec - The reference.
+ */
+export const referenceText = (spec: RemoteSpec): string => `${remoteName(spec)}${spec.ref ? `@${spec.ref}` : ''}`;
 
 /**
  * originOf returns the origin of a copy of a layout on GitHub.

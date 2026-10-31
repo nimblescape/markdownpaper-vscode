@@ -3,7 +3,7 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 // Bundle the extension into dist/extension.js, and the command markdownpaper (docs/requirements.md, R-CLI-001) into
-// cli/dist/markdownpaper.js, the file of the npm package @nimblescape/markdownpaper of cli/, for Node.js 22 or later
+// cli/dist/mp.js, the file of the npm package @nimblescape/markdownpaper of cli/, for Node.js 22 or later
 // (engines of cli/package.json). Both bundles hold markdown-it, its footnotes, yaml, the hyphenation patterns and
 // pdf-lib. The build copies the files that the renderer reads at run time: Paged.js (paged.polyfill.js) into media/
 // for the extension and into cli/dist/ for the npm package, and paged.js, which does not start on its own, into media/
@@ -37,7 +37,7 @@ const raw = {
 const production = process.argv.includes('--production');
 const bundles = [
   { entryPoints: ['src/extension.ts'], outfile: 'dist/extension.js', target: 'node24' },
-  { entryPoints: ['src/cli/main.ts'], outfile: 'cli/dist/markdownpaper.js', target: 'node22', banner: { js: '#!/usr/bin/env node' } },
+  { entryPoints: ['src/cli/main.ts'], outfile: 'cli/dist/mp.js', target: 'node22', banner: { js: '#!/usr/bin/env node' } },
 ];
 
 fs.mkdirSync('cli/dist', { recursive: true });

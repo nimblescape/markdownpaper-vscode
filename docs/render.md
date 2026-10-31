@@ -13,10 +13,16 @@ Print them with `npx -y @nimblescape/markdownpaper instructions render`.
 ## 1. The PDF
 
 ```sh
-npx -y @nimblescape/markdownpaper pdf paper/paper.md
+npx -y @nimblescape/markdownpaper get
+npx -y @nimblescape/markdownpaper build paper/paper.md
 ```
 
-- The command writes the PDF beside the Markdown file, with the name that
+- `get` clones the repositories that the front matter of the paper names, such
+  as its layout on GitHub, into `.markdownpaper/repos/` of the project, or
+  brings the head of each branch; CI runs it before `build` too. A private
+  repository needs a token with read access to it in `GITHUB_TOKEN` or
+  `GH_TOKEN`.
+- `build` writes the PDF beside the Markdown file, with the name that
   `pdfName` of the layout gives, and prints its path.
 - `--output <file.pdf>` names another file, `--html <file.html>` also writes
   the HTML page, which a browser shows as pages, for a look at a problem.

@@ -13,7 +13,7 @@ matter, the hyphenation, the PDF library that finishes the PDF, and
 citeproc-js, which writes the citations and the reference list in a citation
 style. The
 command `markdownpaper` of the npm package `@nimblescape/markdownpaper`,
-`cli/dist/markdownpaper.js`, contains the same packages.
+`cli/dist/mp.js`, contains the same packages.
 
 The extension and the npm package also hold the file `paged.polyfill.js` of
 Paged.js, which makes the pages in the page preview and in the browser that

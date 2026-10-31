@@ -8,7 +8,7 @@
  * The script of the page of the PDF that draws the diagrams of Mermaid on the command line
  * ([R-REN-016](../../docs/requirements.md#r-ren-016)), which has no Mermaid extension of VS Code. It draws them as the
  * Mermaid extension of VS Code draws them in the Markdown preview with a light theme, so that the PDF of
- * `markdownpaper pdf` shows the diagrams as "Export PDF" in VS Code does: the same version of Mermaid, the same
+ * `mp build` shows the diagrams as "Export PDF" in VS Code does: the same version of Mermaid, the same
  * layouts (ELK and tidy tree), the theme "vscode" from the colors of the theme on the page, the same IDs, and the
  * message of an error in an element `pre.mermaid-error`. It has neither the diagrams of ZenUML nor the icon packs
  * `logos` and `mdi` of the extension: the package of ZenUML holds React and other packages without their notices,

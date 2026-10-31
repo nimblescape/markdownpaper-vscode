@@ -26,8 +26,10 @@ import { baseCss } from './baseCss';
 import { extensionCss } from './extensionStyles';
 import { bodyOf, type FrontMatter, readFrontMatter } from './frontMatter';
 import { hyphenatorOf } from './hyphenate';
-import { type Layout, layoutFile, type Problem, parseLayout, termsFor } from './layout';
+import { parseRemote } from './gallery';
+import { type Layout, layoutFile, layoutName, type Problem, parseLayout, termsFor } from './layout';
 import { type Body, type MarkdownPlugin, renderBody } from './markdown';
+import { cloneName, clonesFolder } from './references';
 import { escapeHtml, fill, pdfNameOf } from './template';
 
 /** Reader reads files by their URLs. */
@@ -84,8 +86,7 @@ export interface Rendered {
   problems: Problem[];
 }
 
-/** layoutName matches a valid name of a layout: the name of a folder. */
-export const layoutName = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+export { layoutName } from './layout';
 
 /** defaultLayout is the built-in layout of a file without the field `layout`. */
 export const defaultLayout = 'plain';
@@ -108,24 +109,71 @@ function parentOf(folder: string): string | undefined {
 export const folderOf = (file: string): string => new URL('.', file).href;
 
 /**
- * findLayout finds the layout that a document names, and reads it.
+ * foldersAbove returns the URL of the folder of a document and of each folder above it, up to the top folder of the
+ * search.
+ * @param host - The host with the top folder.
+ * @param document - The URL of the document.
+ */
+function foldersAbove(host: Pick<Host, 'top'>, document: string): string[] {
+  const top = host.top && !host.top.endsWith('/') ? `${host.top}/` : host.top;
+  const folders: string[] = [];
+  for (let folder: string | undefined = folderOf(document); folder; folder = folder === top ? undefined : parentOf(folder)) {
+    folders.push(folder);
+    if (top && !folder.startsWith(top)) {
+      break;
+    }
+  }
+  return folders;
+}
+
+/**
+ * findClone finds the folder of the clone of a reference that `mp get` made in `.markdownpaper/repos/` of the project
+ * of a document ([R-CLI-004](../../docs/requirements.md#r-cli-004)), or returns undefined when it is missing.
+ * @param host - The reader of the files and the top folder of the search.
+ * @param document - The URL of the document.
+ * @param name - The name of the clone.
+ * @param file - A file of the clone that must exist, relative to its folder.
+ */
+export async function findClone(host: Pick<Host, 'reader' | 'top'>, document: string, name: string, file = '.git/HEAD'): Promise<string | undefined> {
+  for (const folder of foldersAbove(host, document)) {
+    const clone = `${folder}${clonesFolder}/${name}/`;
+    if (await host.reader.read(`${clone}${file}`)) {
+      return clone;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * findLayout finds the layout that a document names, and reads it: a folder of `layouts/` of the folder of the
+ * document or of a folder above it, a layout on GitHub in its clone ([R-CLI-004](../../docs/requirements.md#r-cli-004)),
+ * or a built-in layout.
  * @param host - The host.
  * @param document - The URL of the document.
- * @param name - The name of the layout.
+ * @param name - The name of the layout, or its reference on GitHub.
  */
 export async function findLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 'top'>, document: string, name: string): Promise<{ layout?: Layout; problems: Problem[] }> {
+  if (name.includes('/')) {
+    const spec = parseRemote(name);
+    if (!spec) {
+      return { problems: [{ severity: 'error', message: `The layout "${name}" is no reference to a layout on GitHub: <owner>/<repository>/<folder>@<rev>.` }] };
+    }
+    const path = spec.folder ? `${spec.folder}/` : '';
+    const clone = await findClone(host, document, cloneName(spec), `${path}${layoutFile}`);
+    if (!clone) {
+      return { problems: [{ severity: 'error', message: `The layout ${name} is not in ${clonesFolder}/ of the project yet: run "mp get" in the folder of the project.` }] };
+    }
+    const bytes = await host.reader.read(`${clone}${path}${layoutFile}`);
+    return parseLayout(bytes ? decoder.decode(bytes) : '', spec.folder.split('/').pop() || cloneName(spec), `${clone}${path}`);
+  }
   if (!layoutName.test(name)) {
     return { problems: [{ severity: 'error', message: `The layout "${name}" is no name of a folder: letters, digits, ".", "-" and "_".` }] };
   }
-  const top = host.top && !host.top.endsWith('/') ? `${host.top}/` : host.top;
-  for (let folder: string | undefined = folderOf(document); folder; folder = folder === top ? undefined : parentOf(folder)) {
+  for (const folder of foldersAbove(host, document)) {
     const candidate = `${folder}layouts/${name}/`;
     const bytes = await host.reader.read(`${candidate}${layoutFile}`);
     if (bytes) {
       return parseLayout(decoder.decode(bytes), name, candidate);
-    }
-    if (top && !folder.startsWith(top)) {
-      break;
     }
   }
   const builtin = `${host.builtinLayouts}${name}/`;

@@ -3,7 +3,7 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 /**
- * The start of the command markdownpaper in Node.js ([R-CLI-001](../../docs/requirements.md#r-cli-001)): it runs
+ * The start of the command mp in Node.js ([R-CLI-001](../../docs/requirements.md#r-cli-001)): it runs
  * [cli.ts](cli.ts) with the arguments of the command line, the standard streams, the questions and the lists of a terminal, and the
  * files of its package beside the bundle: the built-in layouts in layouts/, Paged.js in paged.polyfill.js, the page
  * files of nimblescape PlantUML in plantuml/ and the script that draws the diagrams of Mermaid in mermaid/.

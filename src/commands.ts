@@ -108,7 +108,7 @@ export async function exportPdfCommand(context: Context, uri?: unknown): Promise
 
 /**
  * downloadChromium asks whether Markdown Paper may download Chromium for the PDF when no browser is installed, and
- * downloads it once into the cache of the user, which the command markdownpaper shares
+ * downloads it once into the cache of the user, which the command mp shares
  * ([R-PDF-002](../docs/requirements.md#r-pdf-002)).
  * @param context - The context.
  * @param progress - The progress of "Export PDF", which shows the download.
@@ -124,7 +124,7 @@ async function downloadChromium(context: Context, progress: vscode.Progress<{ me
     'No Google Chrome, Chromium or Microsoft Edge is installed for the PDF.',
     {
       modal: true,
-      detail: `Markdown Paper can download Chromium ${place.release.version}, the headless shell of Chrome for Testing, once from storage.googleapis.com (about ${size} MB) into ${place.cache}. The command markdownpaper uses it too.`,
+      detail: `Markdown Paper can download Chromium ${place.release.version}, the headless shell of Chrome for Testing, once from storage.googleapis.com (about ${size} MB) into ${place.cache}. The command mp uses it too.`,
     },
     'Download Chromium',
     'Set Browser Path',

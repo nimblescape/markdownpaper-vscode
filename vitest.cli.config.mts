@@ -4,7 +4,7 @@
 
 import { defineConfig } from 'vitest/config';
 
-// The tests of the built command markdownpaper (npm run test:cli). They need the bundle cli/dist/markdownpaper.js
+// The tests of the built command markdownpaper (npm run test:cli). They need the bundle cli/dist/mp.js
 // and run it with the Node.js of the tests.
 export default defineConfig({
   test: {

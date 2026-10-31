@@ -12,8 +12,10 @@ Edge. The notes of [nimblescape Markdown Notes](https://github.com/nimblescape/m
 in the same file stay out of the pages.
 
 The npm package [`@nimblescape/markdownpaper`](https://github.com/nimblescape/markdownpaper-vscode/blob/main/cli/README.md)
-gives the same renderer to people and AI agents on the command line:
-`npx -y @nimblescape/markdownpaper pdf paper/paper.md`.
+gives the same renderer to people and AI agents on the command line, with the
+command `mp`: `npx -y @nimblescape/markdownpaper build paper/paper.md`. `mp get`
+clones the repositories that a paper names in its front matter, such as its
+layout on GitHub, into `.markdownpaper/repos/` of the project.
 
 ## What the extension does on your computer
 
@@ -184,7 +186,7 @@ describes every feature.
   personal library of Zotero and the group libraries of a setting through the
   web API of zotero.org, not the other group libraries, and copies a PDF only
   when Zotero stores it on zotero.org. AI agents and the command line do not use Zotero: an agent adds
-  sources with `markdownpaper source`.
+  sources with `mp source`.
 
 ---
 

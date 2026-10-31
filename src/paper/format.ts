@@ -4,7 +4,7 @@
 
 /**
  * The format of a paper document ([R-CLI-002](../../docs/requirements.md#r-cli-002)): the steps of the paper in their
- * order, the same in VS Code and in `markdownpaper format`. First the citations and the reference list
+ * order, the same in VS Code and in `mp format`. First the citations and the reference list
  * ([R-CITE-004](../../docs/requirements.md#r-cite-004)), whose new section the table of contents then lists, then the
  * numbers of the headings in the links to them ([R-REN-009](../../docs/requirements.md#r-ren-009)), then the lists of
  * the special sections ([R-REN-004](../../docs/requirements.md#r-ren-004)). The module uses no API of VS Code.

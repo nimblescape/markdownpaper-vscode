@@ -42,7 +42,7 @@ The first version.
   heading.
 - The format step of the paper writes the four lists into the file and keeps
   them current: in VS Code in "Format Document" and the format on save of
-  nimblescape Markdown Notes, and with `markdownpaper format`, whose option
+  nimblescape Markdown Notes, and with `mp format`, whose option
   `--check` exits with 1 when the format would change a file.
 - Listings of nimblescape Markdown Notes: a paragraph `Listing 1: …` before the
   comment of the source and the code block is the caption of the listing,
@@ -67,7 +67,7 @@ The first version.
   and the math of KaTeX.
 - Without an installed browser, "Export PDF" offers to download Chromium
   once, the headless shell of Chrome for Testing with a checked SHA-256 hash,
-  into the cache folder of the user; `markdownpaper pdf --download-browser`
+  into the cache folder of the user; `mp build --download-browser`
   does the same on the command line.
 - Diagrams in every PDF as vector graphics: the PlantUML diagrams with the
   renderer of nimblescape PlantUML, its settings and its included files, in
@@ -94,24 +94,34 @@ The first version.
 - "New Project", "New Document" and "New Layout": a project gets `AGENTS.md`
   for AI agents, a copy of the layout, `paper/paper.md`, the drop folder
   `inbox/` for sources, the folder `bib/` for the files of the sources, and
-  `images/`. "New Project" and `markdownpaper create` without `--layout`
+  `images/`. "New Project" and `mp create` without `--layout`
   list the layouts of the workspace, the built-in layouts and the layouts on
   GitHub (the repositories with the topic
   `nimblescape-markdownpaper-layout`), with their preview PDF; `--layout
-  github:<owner>/<repository>/<folder>` names a layout on GitHub.
+  <owner>/<repository>/<folder>@<rev>` names a layout on GitHub. `mp create`
+  needs a layout, clones a layout on GitHub into `.markdownpaper/repos/` of
+  the project and writes its reference into the field `layout`.
 - The empty paper document and its preview: each layout names in
   `layout.json` its empty paper document (`document`), which a new document
   starts from, with the values of the cover page and example texts that
   explain the layout, and its PDF (`preview`); the files that the document
-  links to go into the new project. `markdownpaper preview` writes the PDF,
-  and `markdownpaper layouts` lists the layouts.
+  links to go into the new project. `mp preview` writes the PDF,
+  and `mp layouts` lists the layouts.
 - The settings `nimblescape.markdownPaper.browserPath`,
   `nimblescape.markdownPaper.previewDelay` and
   `nimblescape.markdownPaper.openPdf`.
-- The npm package `@nimblescape/markdownpaper` with the command
-  `markdownpaper`: `pdf`, `check`, `create`, `new document|layout|project`,
-  `layouts`, `preview` and `instructions document|layout|render`, the rules
-  for AI agents.
+- The npm package `@nimblescape/markdownpaper` with the command `mp`:
+  `build`, `check`, `create`, `get`, `new document|layout|project`, `layouts`,
+  `preview` and `instructions document|layout|render`, the rules for AI
+  agents.
+- The references of a paper: the front matter names its layout on GitHub
+  (`layout: <owner>/<repository>/<folder>@<rev>`) and the repositories of the
+  code of its listings (`repos`), each with a branch, a tag or a commit. `mp
+  get` clones them with Git into `.markdownpaper/repos/<name>/`, which Git
+  ignores, brings the head of each branch and keeps the pins; `mp get
+  <owner>/<repository>@<rev>` adds a reference, and `mp get -u` moves the
+  references to tags to the newest tags. The renderer reads a layout from its
+  clone, and the checks name a missing clone.
 - Citations: the sources of a document as CSL JSON in a comment at the end of
   the file, citations as links to their source with the place in the title of
   the link, and the format writes the text of each citation and the reference
@@ -119,7 +129,7 @@ The first version.
   built-in style `apa7` (APA Style 7th edition of the Citation Style Language)
   or a CSL file of the layout folder, with the words of the language of the
   layout.
-- `markdownpaper source <file> <input>...` adds sources to the database of a
+- `mp source <file> <input>...` adds sources to the database of a
   document with the metadata of the places that publish it: a DOI from
   doi.org (Crossref, DataCite, mEDRA, JaLC), an ISBN from the German National
   Library, K10plus or Open Library, a PubMed ID from PubMed, an arXiv ID with
@@ -143,11 +153,11 @@ The first version.
   list is only for the entries, `.references > p`.
 - The update of a copy of a layout on GitHub: a new project writes the field
   `origin` (the layout, the ref and the commit) into the `layout.json` of its
-  copy. `markdownpaper update` and "Update Layout" read the newest commit of
+  copy. `mp get` and "Update Layout" read the newest commit of
   the ref and update the copy: a file that only the repository changed gets
   its new version, a file that only the project changed stays, and a file that
   both changed stops the update unless `--force` or a confirmation replaces it.
-  `--check` only tells whether a newer version exists. The `layout.json` of a
+  The `layout.json` of a
   copy keeps the form of the file of the layout, with `origin` at its end.
 - `/cite` with Markdown Notes inserts a citation of a source of the database
   of the document or of an item of the Zotero library of the author. "Connect
@@ -164,7 +174,7 @@ The first version.
 - The instructions for AI agents name the fields of a law or an ordinance:
   `container-title` and `number` of the first publication, `references` for
   the cited version, and `issued` for its day.
-- `markdownpaper source` adds nothing for a catalog record of an ISBN whose
+- `mp source` adds nothing for a catalog record of an ISBN whose
   year comes before ISBNs of its form existed, such as the book of 1968 that
   Open Library gives for the ISBN 978-92-3-100709-5, and notes a source that
   only Open Library knows. `--title <words>` checks the title of the record

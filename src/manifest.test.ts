@@ -212,20 +212,20 @@ test('the package needs no dependency at run time, because the bundle holds ever
   expect(manifest).not.toHaveProperty('extensionDependencies');
 });
 
-/** cli is the manifest of the npm package of the command markdownpaper (R-CLI-001). */
+/** cli is the manifest of the npm package of the command mp (R-CLI-001). */
 const cli = JSON.parse(read('cli/package.json'));
 
-test('the npm package has the version of the extension, the command markdownpaper and a public scope (R-CLI-001)', () => {
+test('the npm package has the version of the extension, the command mp and a public scope (R-CLI-001)', () => {
   expect(cli.name).toBe('@nimblescape/markdownpaper');
   expect(cli.version, 'the release sets one version in both manifests').toBe(manifest.version);
   const lock = JSON.parse(read('cli/package-lock.json'));
   expect([lock.version, lock.packages[''].version]).toEqual([cli.version, cli.version]);
-  expect(cli.bin).toEqual({ markdownpaper: 'dist/markdownpaper.js' });
+  expect(cli.bin).toEqual({ mp: 'dist/mp.js' });
   expect(cli.publishConfig).toEqual({ access: 'public' });
   expect(cli.license).toBe(manifest.license);
   expect(cli.repository).toEqual({ type: 'git', url: `git+${manifest.repository.url}`, directory: 'cli' });
   expect(cli.engines).toEqual({ node: '>=22' });
-  expect(read('esbuild.mjs')).toContain(`outfile: 'cli/${cli.bin.markdownpaper}', target: 'node22'`);
+  expect(read('esbuild.mjs')).toContain(`outfile: 'cli/${cli.bin.mp}', target: 'node22'`);
   expect(cli).not.toHaveProperty('dependencies');
 });
 
@@ -254,7 +254,7 @@ test('the npm package holds the bundle, Paged.js, the page files of @nimblescape
   const mermaid = filesOf('cli/dist/mermaid')
     .filter((file) => !file.endsWith('.map'))
     .map((file) => `dist/mermaid/${file}`);
-  const expected = ['LICENSE', 'README.md', 'THIRD-PARTY-NOTICES.md', 'package.json', 'dist/markdownpaper.js', 'dist/paged.polyfill.js', ...layouts, ...plantUml, ...mermaid].filter(
+  const expected = ['LICENSE', 'README.md', 'THIRD-PARTY-NOTICES.md', 'package.json', 'dist/mp.js', 'dist/paged.polyfill.js', ...layouts, ...plantUml, ...mermaid].filter(
     (file) => !built(file) || fs.existsSync(path.join(repository, 'cli', file)),
   );
   expect(files.sort()).toEqual(expected.sort());

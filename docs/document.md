@@ -13,9 +13,12 @@ into pages and a PDF. They are for people and for AI agents. Print them with
 ## 1. Front matter and layout
 
 The file starts with a front matter: YAML between two lines `---`. The field
-`layout` names the layout, the name of a folder `layouts/<name>/` in the
-folder of the file or in a folder above it. Without the field, the file gets
-the built-in layout `plain`.
+`layout` names the layout: the name of a folder `layouts/<name>/` in the
+folder of the file or in a folder above it, a built-in layout such as
+`plain`, or a layout on GitHub with its reference
+`<owner>/<repository>/<folder>@<rev>`, for example
+`layout: majikmate/markdownpaper-layout-pht/thesis@main`. Without the field,
+the file gets the built-in layout `plain`.
 
 ```markdown
 ---
@@ -38,6 +41,16 @@ date: "30 October 2026"
 - The field `lang`, for example `lang: de-AT`, changes the language of the
   layout for this file: the hyphenation and the words that the renderer
   writes, such as "Abbildung" or "Figure".
+- The paper names each other repository that it uses as a reference with a
+  rev: the layout in `layout`, and the repositories of the code of its
+  listings in the map `repos`, `<name>: <owner>/<repository>@<rev>`, for
+  example `server: org/server@v2.1.0`. A tag or a commit as the rev pins the
+  version; a branch, for example `@main`, takes the head of the branch.
+  `npx -y @nimblescape/markdownpaper get` clones them into
+  `.markdownpaper/repos/<name>/` of the project, which Git ignores; run it
+  before `format`, `check` and `build`, and change nothing in the clones.
+  `get <owner>/<repository>@<rev>` adds a reference to `repos`, and `get -u`
+  moves the references to tags to the newest tags.
 - Do not write a cover page into the text: the layout makes it from the
   fields.
 
@@ -241,10 +254,10 @@ write the text of a citation or of an entry yourself.
 
 1. **Add the source** to the comment `nimblescape-sources` at the end of the
    file, one line of CSL JSON for each source, with the command
-   `markdownpaper source`:
+   `mp source`:
 
    ```sh
-   markdownpaper source paper/paper.md 10.3390/bs9040039 978-3-8252-4753-9 inbox/export.ris
+   mp source paper/paper.md 10.3390/bs9040039 978-3-8252-4753-9 inbox/export.ris
    ```
 
    ```markdown
@@ -260,7 +273,7 @@ write the text of a citation or of an entry yourself.
      catalogs of the libraries, PubMed or arXiv, or from the file, gives each
      new source its ID, and does not add a source that the database has
      already.
-   - `markdownpaper source --search "<title>"` lists up to ten works of
+   - `mp source --search "<title>"` lists up to ten works of
      Crossref with their DOIs. Add the right one by its DOI.
    - For each input, the command prints the ID, where the metadata came from,
      and the fields that the source needs and did not get. Take such a field
@@ -336,7 +349,7 @@ write the text of a citation or of an entry yourself.
    <wbr><!--[research-->Feedback changes learning more than praise does (RESEARCH).
    ```
 
-   Find sources that support the argument, add them with `markdownpaper
+   Find sources that support the argument, add them with `mp
    source`, remove the start marker, and replace `(RESEARCH)` with their
    citations. When no source supports the argument, keep both marks and say
    so.
@@ -358,13 +371,17 @@ definitions. Keep a note as it is unless you are asked to change it.
 ## 12. Checks
 
 ```sh
+npx -y @nimblescape/markdownpaper get
 npx -y @nimblescape/markdownpaper format paper/paper.md
 npx -y @nimblescape/markdownpaper check paper/paper.md
-npx -y @nimblescape/markdownpaper pdf paper/paper.md
+npx -y @nimblescape/markdownpaper build paper/paper.md
 ```
+
+`get` clones the repositories that the front matter names, or brings the head
+of each branch (section 1).
 
 `format` writes the citations and the reference list (section 9) and the lists
 of the special sections (section 3) into the file. `check` names a layout that
 does not exist, each missing required field, and the problems of the sources
 and the citations.
-`pdf` writes the PDF beside the file; see `instructions render`.
+`build` writes the PDF beside the file; see `instructions render`.

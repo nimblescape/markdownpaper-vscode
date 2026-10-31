@@ -2,7 +2,7 @@
 // © 2026 Hannes Stauss (scalarion@nimblescape.com)
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
-// The tests of the built command markdownpaper (cli/dist/markdownpaper.js, npm run test:cli) on Linux and macOS
+// The tests of the built command mp (cli/dist/mp.js, npm run test:cli) on Linux and macOS
 // (R-CLI-001). Each test runs the command in a folder in the temporary folder of the system with the Node.js of the
 // tests, as a person, a program or an AI agent runs it after `npm install` or with npx. The test of the PDF runs when
 // a Chrome, Chromium or Edge is installed, as on the runners of GitHub, or MARKDOWNPAPER_BROWSER names one.
@@ -18,7 +18,7 @@ import { findBrowser } from '../../src/pdf/browser';
 import { Browser } from '../../src/pdf/cdp';
 
 const repository = path.resolve(import.meta.dirname, '../..');
-const command = path.join(repository, 'cli', 'dist', 'markdownpaper.js');
+const command = path.join(repository, 'cli', 'dist', 'mp.js');
 const cli = JSON.parse(fs.readFileSync(path.join(repository, 'cli', 'package.json'), 'utf8'));
 
 const folders: string[] = [];
@@ -33,9 +33,9 @@ function temporary(): string {
   return folder;
 }
 
-/** Runs the command in `cwd` with the arguments; returns its exit code and its output. */
-function run(cwd: string, args: string[], timeout = 30_000) {
-  const result = spawnSync(process.execPath, [command, ...args], { cwd, encoding: 'utf8', timeout });
+/** Runs the command in `cwd` with the arguments, and the environment if given; returns its exit code and its output. */
+function run(cwd: string, args: string[], timeout = 30_000, env?: NodeJS.ProcessEnv) {
+  const result = spawnSync(process.execPath, [command, ...args], { cwd, encoding: 'utf8', timeout, ...(env ? { env } : {}) });
   return { code: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
@@ -48,14 +48,47 @@ const browser = (() => {
   }
 })();
 
-describe('the command markdownpaper', () => {
+describe('the command mp', () => {
   it('shows its version and the version of the format of the layouts', () => {
-    expect(run(temporary(), ['--version'])).toEqual({ code: 0, stdout: `markdownpaper ${cli.version} (layouts: nimblescape-layout 1.0.0)\n`, stderr: '' });
+    expect(run(temporary(), ['--version'])).toEqual({ code: 0, stdout: `mp ${cli.version} (layouts: nimblescape-layout 1.0.0)\n`, stderr: '' });
+  });
+
+  it('clones a layout on GitHub for a new project and the repositories of its paper with Git (R-CLI-004)', () => {
+    // Git reaches the repositories of a temporary folder in place of those of GitHub.
+    const remotes = temporary();
+    const env: NodeJS.ProcessEnv = { ...process.env, GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: `url.${pathToFileURL(remotes).href}/.insteadOf`, GIT_CONFIG_VALUE_0: 'https://github.com/' };
+    delete env.GITHUB_TOKEN;
+    delete env.GH_TOKEN;
+    const git = (cwd: string, ...args: string[]) => spawnSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.org', ...args], { cwd, encoding: 'utf8' });
+    for (const [repository, files] of [
+      ['school/layouts.git', { 'thesis/layout.json': JSON.stringify({ format: 'nimblescape-layout 1.0.0', name: 'Thesis', stylesheets: [], document: 'document.md', preview: 'document.pdf' }), 'thesis/document.md': '# Start\n' }],
+      ['org/server.git', { 'src/api.ts': 'export const a = 1;\n' }],
+    ] as const) {
+      const work = path.join(remotes, repository);
+      fs.mkdirSync(work, { recursive: true });
+      git(work, 'init', '--quiet', '--initial-branch=main');
+      for (const [file, content] of Object.entries(files)) {
+        fs.mkdirSync(path.dirname(path.join(work, file)), { recursive: true });
+        fs.writeFileSync(path.join(work, file), content);
+      }
+      git(work, 'add', '--all');
+      git(work, 'commit', '--quiet', '-m', 'files');
+      git(work, 'tag', 'v1.0.0');
+    }
+    const folder = temporary();
+    expect(run(folder, ['create', 'project', '--yes', '--layout', 'school/layouts/thesis@v1.0.0'], 30_000, env).code).toBe(0);
+    const project = path.join(folder, 'project');
+    expect(fs.readFileSync(path.join(project, 'paper', 'paper.md'), 'utf8')).toContain('layout: school/layouts/thesis@v1.0.0\n');
+    const got = run(project, ['get', 'org/server@v1.0.0'], 30_000, env);
+    expect(got).toMatchObject({ code: 0, stderr: '' });
+    expect(got.stdout).toMatch(/^server: org\/server@v1\.0\.0 at [0-9a-f]{7} \(new clone\)\npaper\/paper\.md: server: org\/server@v1\.0\.0\n$/);
+    expect(fs.readFileSync(path.join(project, '.markdownpaper', 'repos', 'server', 'src', 'api.ts'), 'utf8')).toBe('export const a = 1;\n');
+    expect(run(project, ['check', 'paper/paper.md'], 30_000, env)).toEqual({ code: 0, stdout: 'paper/paper.md: no problems\n', stderr: '' });
   });
 
   it('scaffolds a project without questions, which the check accepts', () => {
     const folder = temporary();
-    const created = run(folder, ['create', 'paper-project', '--yes', '--language', 'de-AT', '--title', 'Agenten', '--author', 'Hannes Stauss']);
+    const created = run(folder, ['create', 'paper-project', '--yes', '--layout', 'plain', '--language', 'de-AT', '--title', 'Agenten', '--author', 'Hannes Stauss']);
     expect(created.code).toBe(0);
     expect(created.stdout).toContain(path.join('paper-project', 'paper', 'paper.md'));
     expect(run(folder, ['check', 'paper-project/paper/paper.md'])).toEqual({ code: 0, stdout: 'paper-project/paper/paper.md: no problems\n', stderr: '' });
@@ -73,7 +106,7 @@ describe('the command markdownpaper', () => {
       path.join(folder, 'paper.md'),
       '---\ntitle: Agenten im Team\nauthor: Hannes Stauss\nlang: de-AT\n---\n\n# Inhaltsverzeichnis\n\n# Einleitung\n\nDie Agenten <wbr><!--[note-7k2q-->verändern die Arbeit[^note-7k2q] von Teams.[^1]\n\n[^note-7k2q]: **hannes** · 2026-10-28 10:15+01:00\n\n    Eine Notiz.\n\n[^1]: Eine Fußnote.\n',
     );
-    const result = run(folder, ['pdf', 'paper.md', '--html', 'page.html'], 120_000);
+    const result = run(folder, ['build', 'paper.md', '--html', 'page.html'], 120_000);
     expect(result.stderr).toBe('');
     expect(result).toMatchObject({ code: 0, stdout: 'paper.pdf\n' });
     const pdf = fs.readFileSync(path.join(folder, 'paper.pdf'));
@@ -96,7 +129,7 @@ describe('the command markdownpaper', () => {
       path.join(folder, 'paper', 'paper.md'),
       '---\ntitle: Agenten\n---\n\n# Ablauf\n\n```plantuml\n!include ../actors.iuml\nAnna -> Bernd : Frage\nBernd -> Carla : Auftrag\n```\n\nDer Text nach dem Diagramm.\n',
     );
-    const result = run(path.join(folder, 'paper'), ['pdf', 'paper.md', '--html', 'page.html'], 120_000);
+    const result = run(path.join(folder, 'paper'), ['build', 'paper.md', '--html', 'page.html'], 120_000);
     expect(result.stderr).toBe('');
     expect(result).toMatchObject({ code: 0, stdout: 'paper.pdf\n' });
     const html = fs.readFileSync(path.join(folder, 'paper', 'page.html'), 'utf8');
@@ -135,7 +168,7 @@ describe('the command markdownpaper', () => {
       path.join(folder, 'paper.md'),
       '---\ntitle: Agenten\n---\n\n# Ablauf\n\n```mermaid\ngraph LR\n  Alpha --> Beta\n```\n\n::: mermaid\nsequenceDiagram\n  Anna->>Bernd: Frage\n:::\n\n```mermaid\ngraph LR\n  Alpha -->\n```\n\nDer Text nach den Diagrammen.\n',
     );
-    const result = run(folder, ['pdf', 'paper.md', '--html', 'page.html'], 120_000);
+    const result = run(folder, ['build', 'paper.md', '--html', 'page.html'], 120_000);
     expect(result.stderr).toBe('');
     expect(result).toMatchObject({ code: 0, stdout: 'paper.pdf\n' });
     const html = fs.readFileSync(path.join(folder, 'page.html'), 'utf8');
@@ -176,7 +209,7 @@ describe('the command markdownpaper', () => {
     fs.writeFileSync(path.join(folder, 'layouts', 'word', 'page.css'), '@page { size: A5; margin: 20mm; }\nbody { font: 11pt serif; }\np { text-align: justify; word-spacing: -0.05em; }\n');
     const words = 'The agents change the work of teams in three ways, and the teams change the agents in turn.';
     fs.writeFileSync(path.join(folder, 'paper.md'), `---\nlayout: word\n---\n\n${words} ${words} ${words}\n`);
-    expect(run(folder, ['pdf', 'paper.md', '--html', 'page.html'], 120_000)).toMatchObject({ code: 0 });
+    expect(run(folder, ['build', 'paper.md', '--html', 'page.html'], 120_000)).toMatchObject({ code: 0 });
     const page = await Browser.launch(browser!);
     try {
       const { targetId } = await page.send('Target.createTarget', { url: 'about:blank' });

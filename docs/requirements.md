@@ -66,7 +66,7 @@ This document replaces it where the two differ.
 | 34 | The Mermaid diagrams in the PDF of the command line, as the Mermaid extension of VS Code draws them, as inline SVG | [R-REN-016](#r-ren-016), [R-REN-010](#r-ren-010) | done |
 | 36 | The command `mp` in place of `markdownpaper`; the references of a paper: the keys `layout` and `repos` of the front matter with GitHub references, `get` with its clones, `get -u`, `create` that needs a layout and writes its reference, `build` in place of `pdf`, no `update`, the layout read from its clone, and the clones of `repos` for the listings of Markdown Notes | [R-CLI-001](#r-cli-001), [R-CLI-004](#r-cli-004), [R-LAY-007](#r-lay-007), [R-LAY-010](#r-lay-010), [R-NEW-004](#r-new-004) | done ([decision 51](#decisions)); the listings from the clones are step 68 of Markdown Notes |
 | 37 | The command in the terminals of VS Code, as nimblescape TypeScript ships `ts`; "New Project" of VS Code with the reference of a layout on GitHub and `mp get` in a terminal of VS Code; the installation of the command from GitHub before the release | [R-CLI-001](#r-cli-001), [R-NEW-004](#r-new-004) | done ([decision 51](#decisions)) |
-| 38 | The links of the PDF: a link for every reference inside the paper, also for each citation, in the color of the text without a mark; the addresses of the links to the outside in footnotes; the link of a listing from a public repository on its cite | [R-PDF-005](#r-pdf-005), [R-REN-011](#r-ren-011) | done ([decision 52](#decisions)); whether a repository is public comes from one request without a sign-in, which is not confirmed yet (open questions) |
+| 38 | The links of the PDF: a link for every reference inside the paper, also for each citation, in the color of the text without a mark; the addresses of the links to the outside in footnotes; the link of a listing from a public repository on its cite | [R-PDF-005](#r-pdf-005), [R-REN-011](#r-ren-011) | done ([decision 52](#decisions), [decision 54](#decisions)) |
 
 ## General
 
@@ -1507,7 +1507,8 @@ repos:
   and writes the answer into the Git configuration of its clone as
   `markdownpaper.public`: `true`, or `false` when GitHub answers 404. Without
   an answer, for example without a network, the clone keeps its value. The
-  renderer reads it for the link of a listing ([R-PDF-005](#r-pdf-005)).
+  renderer reads it for the link of a listing ([R-PDF-005](#r-pdf-005),
+  [decision 54](#decisions)); the front matter has no key for it.
 - `build` makes the PDF, in place of `pdf`. CI runs `get` before `build`, so
   the PDF shows what the references state: the head of a branch at the time of
   the build, or the pinned tag or commit. CI gets every repository that the
@@ -2166,16 +2167,15 @@ requirement ([R-GEN-007](#r-gen-007)).
     `npx -y @nimblescape/markdownpaper <command>`, for example `get` before
     `build`, not an installed `mp`. The topics of `instructions` hold the
     rules of [decision 51](#decisions) and [decision 52](#decisions).
+54. **Public repositories by a request to GitHub** ([R-CLI-004](#r-cli-004),
+    [R-PDF-005](#r-pdf-005)): `mp get` learns whether a repository of `repos`
+    is public with one request to GitHub without a sign-in, and keeps the
+    answer with its clone. The front matter has no key for it.
 
 ## Open questions
 
 - The mark of a paper document ([R-DOC-004](#r-doc-004)): the field `layout`
   of the front matter, and later the citations; not confirmed yet.
-- How `mp get` learns whether a repository of `repos` is public, for the link
-  of a listing in the PDF ([R-PDF-005](#r-pdf-005)): built with one request
-  without a sign-in to GitHub ([R-CLI-004](#r-cli-004)), the proposal of the
-  discussion document; a key in the front matter is the other way. Not
-  confirmed yet.
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
 - Values of the front matter in the text (planned in Markdown Notes): `/ref`

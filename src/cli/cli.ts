@@ -54,7 +54,7 @@ import { planUpdate } from '../paper/update';
 import { defaultPlace, downloadBrowser, downloadSize, type Place } from '../pdf/download';
 import { type Assets, exportPdf, fileReader, folderUrl } from '../pdf/export';
 import { completionScript, shells } from './completion';
-import { type Git, GitError, getClone, gitOf } from './git';
+import { type Git, GitError, getClone, gitOf, revsOf } from './git';
 import { httpFetcher } from './net';
 
 /** command is the name of the command, the `bin` of cli/package.json, as the shell calls it. */
@@ -97,7 +97,9 @@ export const usage = [
   '      --force                   also replace the files of a copy that the project changed when the repository did',
   '  get <owner>/<repository>[@<rev>] [<file.md>]',
   '                                write the reference into the field repos of the paper and clone the repository; the',
-  '                                rev is a branch, a tag or a commit, and the default branch without it',
+  '                                rev is a branch, a tag or a commit; without it, a terminal shows the branches and',
+  '                                the tags with the default branch first, and otherwise the default branch is taken',
+  '      --yes                     ask nothing: take the default branch',
   '      --name <name>             the name of the reference (default: the name of the repository)',
   '  instructions [topic]          print the rules of a topic for AI agents; without a topic, the list',
   '  source <file.md> <input>...   add sources to the database of the file, with the metadata from doi.org, the library',
@@ -951,6 +953,38 @@ async function markPublic(io: Io, git: Git, folder: string, repository: string):
   }
 }
 
+/** shownBranches and shownTags are the most branches and tags that the choice of a rev lists. */
+const shownBranches = 30;
+const shownTags = 20;
+
+/**
+ * chooseRev asks the author in a terminal for the rev of a new reference without `@<rev>`
+ * ([decision 57](../../docs/requirements.md#decisions)): a list with the default branch first and marked, the other
+ * branches, and the tags from the newest release. Enter takes the default branch.
+ * @param io - The streams and the choice.
+ * @param git - The runner of Git.
+ * @param repository - The owner and the name of the repository.
+ * @returns The chosen rev.
+ */
+async function chooseRev(io: Io, git: Git, repository: string): Promise<string> {
+  const revs = await revsOf(git, repository, io.cwd);
+  const branch = 'A branch: the clone is on the branch, and the author can add snippets there and push them.';
+  const tag = 'A tag: the clone pins this version, and its snippets are the ones that are there.';
+  const entries: { rev: string; choice: Choice }[] = [
+    ...(revs.defaultBranch ? [{ rev: revs.defaultBranch, choice: { label: revs.defaultBranch, hint: 'default branch', detail: branch } }] : []),
+    ...revs.branches.slice(0, shownBranches).map((rev) => ({ rev, choice: { label: rev, hint: 'branch', detail: branch } })),
+    ...revs.tags.slice(0, shownTags).map((rev) => ({ rev, choice: { label: rev, hint: 'tag', detail: tag } })),
+  ];
+  if (entries.length === 0) {
+    throw new GitError(`${repository} has no branch and no tag.`);
+  }
+  const index = await io.choose?.(`Rev of ${repository}`, entries.map((entry) => entry.choice), 0);
+  if (index === undefined) {
+    throw new UsageError('No rev was chosen, so nothing was written.');
+  }
+  return entries[index].rev;
+}
+
 /**
  * runGet runs `get` ([R-CLI-004](../../docs/requirements.md#r-cli-004)): with a reference, it writes the reference
  * into the field `repos` of a paper and clones the repository; without one, it clones each repository that the papers
@@ -964,7 +998,7 @@ async function runGet(args: readonly string[], io: Io): Promise<number> {
   const { positional, options } = parse(
     args.filter((arg) => arg !== '-u'),
     ['name'],
-    ['force'],
+    ['force', 'yes'],
   );
   const files = positional.filter((arg) => /\.md$/i.test(arg));
   const targets = positional.filter((arg) => !/\.md$/i.test(arg));
@@ -984,7 +1018,7 @@ async function runGet(args: readonly string[], io: Io): Promise<number> {
   const git = io.git ?? gitOf();
   const relative = (file: string): string => path.relative(io.cwd, file) || file;
   if (targets.length === 1) {
-    const spec = parseRemote(targets[0]);
+    let spec = parseRemote(targets[0]);
     if (!spec || spec.folder !== '') {
       throw new UsageError(`"${targets[0]}" is no reference to a repository: <owner>/<repository>@<rev>. The field layout names the layout.`);
     }
@@ -1000,6 +1034,9 @@ async function runGet(args: readonly string[], io: Io): Promise<number> {
     const present = referencesOf(text).references.find((reference) => reference.name === name);
     if (present && present.spec.repository.toLowerCase() !== spec.repository.toLowerCase()) {
       throw new UsageError(`${relative(paper)} names ${present.text} as "${name}" already; --name gives the new reference another name.`);
+    }
+    if (spec.ref === undefined && options.yes === undefined && io.choose) {
+      spec = { ...spec, ref: await chooseRev(io, git, spec.repository) };
     }
     ignoreClones(project);
     const folder = path.join(project, clonesFolder, name);

@@ -47,11 +47,15 @@ const decoder = new TextDecoder();
  * targetOf returns the file of a command: the file of the Explorer, else of the active Markdown preview, else of the
  * active text editor.
  * @param context - The context.
- * @param uri - The URI that the Explorer or a menu passes, if any.
+ * @param uri - The URI that the Explorer or a menu passes, or the text of a URI of a command link, if any.
  */
 function targetOf(context: Context, uri: unknown): vscode.Uri | undefined {
   if (uri instanceof vscode.Uri) {
     return fileOf(uri);
+  }
+  // A command link passes the URI as its text.
+  if (typeof uri === 'string' && /^[a-z][a-z0-9+.-]*:/i.test(uri)) {
+    return fileOf(vscode.Uri.parse(uri));
   }
   const preview = context.previewFile();
   if (preview) {

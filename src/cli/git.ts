@@ -15,7 +15,7 @@ import { execFile } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { RemoteSpec } from '../paper/gallery';
-import { newestTag } from '../paper/references';
+import { newestTag, sortTags } from '../paper/references';
 
 /** Git runs the program git with arguments in a folder and returns its standard output. */
 export type Git = (args: readonly string[], cwd: string) => Promise<string>;
@@ -53,6 +53,42 @@ export function gitOf(env: NodeJS.ProcessEnv = process.env, interactive = Boolea
  * @param repository - The owner and the name of the repository.
  */
 export const repositoryUrl = (repository: string): string => `https://github.com/${repository}.git`;
+
+/** Revs are the branches and tags of a repository on GitHub, for the choice of `get` without a rev. */
+export interface Revs {
+  /** defaultBranch is the branch of HEAD of the repository, or '' when GitHub names none. */
+  defaultBranch: string;
+  /** branches are the other branches by their names, and tags the tags from the newest release. */
+  branches: string[];
+  tags: string[];
+}
+
+/**
+ * revsOf asks GitHub for the branches and the tags of a repository, without a clone.
+ * @param git - The runner of Git.
+ * @param repository - The owner and the name of the repository.
+ * @param cwd - The folder in which Git runs.
+ */
+export async function revsOf(git: Git, repository: string, cwd: string): Promise<Revs> {
+  const output = await git(['ls-remote', '--symref', repositoryUrl(repository), 'HEAD', 'refs/heads/*', 'refs/tags/*'], cwd);
+  let defaultBranch = '';
+  const branches: string[] = [];
+  const tags: string[] = [];
+  for (const line of output.split(/\r?\n/)) {
+    const symbolic = /^ref: refs\/heads\/(.+)\tHEAD$/.exec(line);
+    if (symbolic) {
+      defaultBranch = symbolic[1];
+      continue;
+    }
+    const ref = line.split('\t')[1] ?? '';
+    if (ref.startsWith('refs/heads/')) {
+      branches.push(ref.slice('refs/heads/'.length));
+    } else if (ref.startsWith('refs/tags/') && !ref.endsWith('^{}')) {
+      tags.push(ref.slice('refs/tags/'.length));
+    }
+  }
+  return { defaultBranch, branches: branches.filter((branch) => branch !== defaultBranch).sort((a, b) => a.localeCompare(b)), tags: sortTags(tags) };
+}
 
 /** Got is the result of `getClone`: the checked out commit, the rev and its kind, and the commit before. */
 export interface Got {

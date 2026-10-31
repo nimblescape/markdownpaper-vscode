@@ -42,7 +42,7 @@ export const verbs: readonly Verb[] = [
   { name: 'new', description: 'write a new document, layout or project', options: ['--layout', '--title', '--author', '--from', '--language'], values: ['document', 'layout', 'project'] },
   { name: 'layouts', description: 'list the layouts that create offers' },
   { name: 'preview', description: 'write the preview PDF of a layout', options: ['--write', '--browser', '--download-browser'], files: 'folder' },
-  { name: 'get', description: 'clone the repositories that the papers name', options: ['-u', '--force', '--name'], files: 'markdown' },
+  { name: 'get', description: 'clone the repositories that the papers name', options: ['-u', '--force', '--name', '--yes'], files: 'markdown' },
   { name: 'instructions', description: 'print the rules for AI agents', values: ['document', 'layout', 'render'] },
   { name: 'source', description: 'add sources to the database of a file', options: ['--id', '--title', '--offline', '--dry-run', '--search'], files: 'markdown' },
   { name: 'completion', description: 'print the Tab completion script of a shell', values: shells },

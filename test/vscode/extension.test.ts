@@ -113,6 +113,20 @@ describe('nimblescape Markdown Paper', function () {
     // The clone of client is missing, and the paper names no reference "tools".
     assert.equal(await cloneOfReference(context, file, 'client'), undefined);
     assert.equal(await cloneOfReference(context, file, 'tools'), undefined);
+    // Each reference of the front matter is a link to the command, with the paper and the name of the reference.
+    await vscode.workspace.openTextDocument(file);
+    const links = await vscode.commands.executeCommand<vscode.DocumentLink[]>('vscode.executeLinkProvider', file);
+    const references = links.filter((link) => link.target?.scheme === 'command' && link.target.path === 'nimblescape.markdownPaper.openRepository');
+    assert.deepEqual(
+      references.map((link) => [link.range.start.line, link.range.start.character, link.range.end.character]),
+      [
+        [3, 10, 29],
+        [4, 10, 27],
+      ],
+    );
+    const args = JSON.parse(decodeURIComponent(references[0].target!.query)) as [string, string];
+    assert.deepEqual(args, [file.toString(), 'server']);
+    assert.equal((await cloneOfReference(context, args[0], args[1]))?.fsPath, clone?.fsPath);
   });
 
   it('"Edit Front Matter" opens the view "Front Matter" for a file, and a change of the form is one edit of the file (R-DOC-005)', async () => {

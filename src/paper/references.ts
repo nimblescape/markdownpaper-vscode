@@ -179,6 +179,32 @@ export function setReference(text: string, key: 'layout' | { repos: string }, sp
   return insert(end, [`${' '.repeat(indent)}${key.repos}: ${value}`]);
 }
 
+/**
+ * referenceRanges returns the place of the value of each reference of the front matter in its line: the line, and the
+ * first and the end column of the reference text, without the quotes of YAML. The link of a reference covers it
+ * ([R-CLI-004](../../docs/requirements.md#r-cli-004)).
+ * @param text - The Markdown text.
+ */
+export function referenceRanges(text: string): { reference: Reference; line: number; start: number; end: number }[] {
+  const lines = text.split(/\r?\n/);
+  return referencesOf(text).references.flatMap((reference) => {
+    const start = (lines[reference.line] ?? '').indexOf(reference.text, reference.column);
+    return start < 0 ? [] : [{ reference, line: reference.line, start, end: start + reference.text.length }];
+  });
+}
+
+/**
+ * sortTags sorts the tags of a repository for a choice: the tags of releases, such as `v2.1.0`, from the newest, and
+ * then the other tags.
+ * @param tags - The tags.
+ */
+export function sortTags(tags: readonly string[]): string[] {
+  const compare = (a: number[], b: number[]): number => b[0] - a[0] || b[1] - a[1] || b[2] - a[2];
+  const releases = tags.filter((tag) => versionOf(tag)).sort((a, b) => compare(versionOf(a) as number[], versionOf(b) as number[]));
+  const others = tags.filter((tag) => !versionOf(tag)).sort((a, b) => b.localeCompare(a));
+  return [...releases, ...others];
+}
+
 /** versionOf reads a tag of a release, such as `v2.1.0` or `1.4`, as its numbers, or returns undefined for another tag. */
 function versionOf(tag: string): number[] | undefined {
   const match = /^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?$/.exec(tag);

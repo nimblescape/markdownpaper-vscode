@@ -70,6 +70,8 @@ This document replaces it where the two differ.
 | 39 | "Open Repository in New Window" in VS Code for the clone of a reference | [R-CLI-004](#r-cli-004) | done ([decision 55](#decisions)); Markdown Notes opens the same folder with Ctrl+click on the name of the reference of a listing |
 | 40 | The view "Front Matter" in the side bar: the form of the front matter with one row for each field of the layout, and "Edit Front Matter" for the link of Markdown Notes | [R-DOC-005](#r-doc-005) | done ([decision 56](#decisions)); questions 2 and 3 of the discussion document are open, the form follows their proposals |
 | 41 | The clone of a reference to a branch on its local branch, which `mp get` pulls only with a fast-forward; the clone of a tag or a commit without a branch; a clone with work of the author that is not committed or not pushed stays as it is | [R-CLI-004](#r-cli-004) | done ([decision 57](#decisions)); Markdown Notes adds snippets only in the clone of a branch (its decision 60) |
+| 42 | Ctrl+click on the value of a reference in the front matter opens its clone in a new window, also in the clean editing view of Markdown Notes | [R-CLI-004](#r-cli-004) | done ([decision 58](#decisions)) |
+| 43 | `mp get <owner>/<repository>` without `@<rev>`: the list of the default branch, the branches and the tags in a terminal, and the default branch without one or with `--yes` | [R-CLI-004](#r-cli-004) | done ([decision 59](#decisions)) |
 
 ## General
 
@@ -1509,14 +1511,21 @@ repos:
 - A reference names a repository on GitHub and a rev:
   `<owner>/<repository>@<rev>`. The reference of `layout` also names the
   folder of the layout: `<owner>/<repository>/<folder>@<rev>`. A tag or a
-  commit pins the version; a branch takes the head of the branch. Without
-  `@<rev>`, the command writes the default branch. The front matter holds no
-  other commit, and a paper has no lock file. A value of `layout` without a
+  commit pins the version; a branch takes the head of the branch. The front
+  matter always holds the rev after `@`, and no other commit; a paper has no
+  lock file. A value of `layout` without a
   slash names a folder of `layouts/` or a built-in layout, as before.
 - `get <owner>/<repository>@<rev> [--name <name>]` writes a reference into
   `repos`, or changes the rev of a reference that is there, and clones or
   pulls the repository. The name of a reference is the name of the
   repository, or the name after `--name`. There is no subcommand `add`.
+- `get <owner>/<repository>` without `@<rev>` asks in a terminal for the rev
+  with a list: the default branch first and marked, so that Enter takes it,
+  then the other branches and the tags from the newest release. It writes the
+  choice with its `@<rev>` into the front matter, for example
+  `server: org/server@main`. Without a terminal, for example in CI or for an
+  AI agent, or with `--yes`, it asks nothing and takes the default branch
+  ([decision 59](#decisions)).
 - `get` without an argument takes each paper of the project, a Markdown file
   whose front matter names a layout; the project is the folder of the Git
   repository of the paper, else the current folder. It clones each repository
@@ -1546,7 +1555,10 @@ repos:
   clone of a reference of the paper of the active editor in a new window of
   VS Code, where Source Control shows its Git repository: the author chooses
   the reference from `repos` and `layout`, or another extension passes its
-  name to the command. Markdown Notes opens the same folder itself with
+  name to the command. Ctrl+click (Cmd+click on macOS) on the value of a
+  reference in the front matter, in the text editor and in the clean editing
+  view of Markdown Notes, opens its clone in the same way
+  ([decision 58](#decisions)). Markdown Notes opens the same folder itself with
   Ctrl+click on the name of the reference of a listing. A missing clone offers `mp get` in a terminal of VS Code.
 - In the clean editing view of Markdown Notes, the whole front matter is
   read-only (R-TEXT-009 of Markdown Notes): a change there goes back, with a
@@ -2252,6 +2264,15 @@ requirement ([R-GEN-007](#r-gen-007)).
     without a branch, and its snippets are the ones that are there. The
     discussion document is
     [Opening a clone and the read-only front matter](https://claude.ai/artifact/HZ9e48LJkb8KuPCkGao5vt).
+58. **Ctrl+click on a reference opens its clone** ([R-CLI-004](#r-cli-004)):
+    the value of each reference of the front matter, in `layout` and in
+    `repos`, is a link in the text editor and in the clean editing view of
+    Markdown Notes, which opens the clone of the reference in a new window of
+    VS Code. Markdown Paper gives the link, and Markdown Notes adds none there.
+59. **The rev of a new reference from a list** ([R-CLI-004](#r-cli-004)):
+    `mp get <owner>/<repository>` without `@<rev>` asks in a terminal for the
+    rev, with the default branch first and marked; without a terminal it takes
+    the default branch. The front matter always holds the rev.
 
 ## Open questions
 

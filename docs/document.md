@@ -52,8 +52,9 @@ date: "30 October 2026"
   branch: add a snippet there only when the author asks for it, and commit
   and push it in the clone. Change nothing in the clone of a tag or a commit:
   it pins the version.
-  `get <owner>/<repository>@<rev>` adds a reference to `repos`, and `get -u`
-  moves the references to tags to the newest tags.
+  `get <owner>/<repository>@<rev>` adds a reference to `repos`; without
+  `@<rev>` and without a terminal, it takes the default branch and writes it.
+  `get -u` moves the references to tags to the newest tags.
 - Do not write a cover page into the text: the layout makes it from the
   fields.
 

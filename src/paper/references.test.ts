@@ -3,7 +3,7 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 import { describe, expect, test } from 'vitest';
-import { newestTag, referencesOf, setReference } from './references';
+import { newestTag, referenceRanges, referencesOf, setReference, sortTags } from './references';
 
 describe('the references of a paper (R-CLI-004)', () => {
   test('the field layout with a slash and each entry of repos are references, with their places in the file', () => {
@@ -44,5 +44,17 @@ describe('the references of a paper (R-CLI-004)', () => {
     expect(newestTag(['1.0', '1.1'], '1.0')).toBe('1.1');
     expect(newestTag(['v1.0.0'], 'v1.0.0')).toBeUndefined();
     expect(newestTag(['v2.0.0'], 'stable')).toBeUndefined();
+  });
+
+  test('referenceRanges covers the text of each reference in its line, without the quotes of YAML', () => {
+    const text = '---\nlayout: "school/layouts/thesis@v1"\nrepos:\n  server: org/server@main   # the API\n  bad: nothing\n---\n';
+    expect(referenceRanges(text).map(({ reference, line, start, end }) => [reference.name, line, start, end])).toEqual([
+      ['layouts', 1, 9, 33],
+      ['server', 3, 10, 25],
+    ]);
+  });
+
+  test('sortTags puts the tags of releases first, from the newest, and then the other tags', () => {
+    expect(sortTags(['v1.0.0', 'nightly', 'v1.10.0', '2.0', 'v1.2.0', 'beta'])).toEqual(['2.0', 'v1.10.0', 'v1.2.0', 'v1.0.0', 'nightly', 'beta']);
   });
 });

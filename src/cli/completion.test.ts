@@ -66,7 +66,7 @@ describe('the Tab completion of mp (R-CLI-001)', () => {
         return execFileSync('bash', ['-c', script], { cwd: folder, encoding: 'utf8' }).split('\n').filter(Boolean).sort();
       };
       expect(complete('mp', 'bu')).toEqual(['build']);
-      expect(complete('mp', 'get', '-')).toEqual(['--force', '--name', '-u']);
+      expect(complete('mp', 'get', '-')).toEqual(['--force', '--name', '--yes', '-u']);
       expect(complete('mp', 'build', 'p')).toEqual(['paper.md']);
       expect(complete('mp', 'instructions', '')).toEqual(['document', 'layout', 'render']);
     } finally {

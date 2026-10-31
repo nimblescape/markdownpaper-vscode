@@ -89,7 +89,15 @@ In the window of the paper, Source Control shows only the repository of the
 paper. "Markdown Paper: Open Repository in New Window" in the Command Palette
 opens the clone of a reference in a new window of VS Code, where Source
 Control shows its Git repository; when the clone is missing, it offers
-`mp get`.
+`mp get`. Ctrl+click (Cmd+click on macOS) on a reference in the front matter,
+such as `myorg/server@v2.1.0`, does the same, also in the clean editing view
+of Markdown Notes.
+
+`mp get myorg/server` without `@` asks for the rev with a list in the
+terminal: the default branch comes first and is marked, so Enter takes it;
+below it are the other branches and the tags. The front matter gets the
+choice with its `@`, for example `server: myorg/server@main`. Without a
+terminal, or with `--yes`, `mp get` takes the default branch.
 
 The terminals of VS Code have the command `mp` of the extension, with its Tab
 completion in bash and zsh, so `mp get` and `mp build paper/paper.md` work

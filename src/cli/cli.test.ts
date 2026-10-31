@@ -523,6 +523,39 @@ test('get keeps the work of the author in the clone of a branch and pulls the br
   expect(err).toEqual([`server: warning: The clone ${clone} has changes of its files that are not committed, so it stays as it is. The reference pins the tag v1: remove the changes; a layout that the project changes belongs in layouts/.`]);
 });
 
+test('get without a rev asks for it in a terminal, with the default branch first, and else takes the default branch (R-CLI-004, decision 57)', async () => {
+  await commitTo('org/server', { 'a.txt': 'a' }, 'v1.0.0');
+  await commitTo('org/server', { 'a.txt': 'b' }, 'v1.2.0');
+  const remote = path.join(remotes, 'org/server.git');
+  await git(['branch', 'develop'], remote);
+  await git(['tag', 'nightly'], remote);
+  fs.mkdirSync(path.join(folder, '.git'));
+  fs.writeFileSync(path.join(folder, 'paper.md'), '---\nlayout: plain\n---\n');
+  const lists: string[][] = [];
+  const terminal: Io = {
+    ...io(),
+    git,
+    choose: async (question, choices, initial) => {
+      lists.push([question, String(initial), ...choices.map((choice) => `${choice.label} | ${choice.hint ?? ''}`)]);
+      return choices.findIndex((choice) => choice.label === 'v1.2.0');
+    },
+  };
+  expect(await run(['get', 'org/server'], terminal)).toBe(0);
+  expect(lists).toEqual([['Rev of org/server', '0', 'main | default branch', 'develop | branch', 'v1.2.0 | tag', 'v1.0.0 | tag', 'nightly | tag']]);
+  expect(read('paper.md')).toContain('repos:\n  server: org/server@v1.2.0\n');
+  // --yes and a call without a terminal ask nothing and take the default branch.
+  expect(await run(['get', 'org/server', '--name', 'second', '--yes'], terminal)).toBe(0);
+  expect(await run(['get', 'org/server', '--name', 'third'], { ...io(), git })).toBe(0);
+  expect(lists).toHaveLength(1);
+  expect(read('paper.md')).toContain('  second: org/server@main\n  third: org/server@main\n');
+  // A stopped choice writes nothing.
+  err.length = 0;
+  expect(await run(['get', 'org/server', '--name', 'fourth'], { ...terminal, choose: async () => undefined })).toBe(2);
+  expect(err.join('\n')).toContain('No rev was chosen, so nothing was written.');
+  expect(read('paper.md')).not.toContain('fourth');
+  expect(fs.existsSync(path.join(folder, '.markdownpaper/repos/fourth'))).toBe(false);
+});
+
 test('get finds two papers that give one clone two revs, and needs the paper for a new reference (R-CLI-004)', async () => {
   await commitTo('org/server', { 'a.txt': 'a' }, 'v1');
   fs.writeFileSync(path.join(folder, 'a.md'), '---\nlayout: plain\nrepos:\n  server: org/server@v1\n---\n');

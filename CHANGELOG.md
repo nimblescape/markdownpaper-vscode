@@ -139,7 +139,10 @@ The first version.
   ignores, brings the head of each branch with a fast-forward and keeps the
   pins. The clone of a branch is on that branch, so the author can add
   snippets there and push them; the clone of a tag or a commit has no branch.
-  A clone with work that is not committed or not pushed stays as it is. `mp get
+  A clone with work that is not committed or not pushed stays as it is. `mp
+  get <owner>/<repository>` without `@` asks for the rev with a list in a
+  terminal, the default branch first. Ctrl+click on a reference in the front
+  matter opens its clone in a new window. `mp get
   <owner>/<repository>@<rev>` adds a reference, and `mp get -u` moves the
   references to tags to the newest tags. The renderer reads a layout from its
   clone, and the checks name a missing clone. "Open Repository in New Window"

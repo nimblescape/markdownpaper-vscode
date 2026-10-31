@@ -19,6 +19,7 @@ import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectComma
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
 import { FrontMatterView, frontMatterViewId } from './frontMatterView';
+import { ReferenceLinks, referenceLinkSelector } from './referenceLinks';
 import { PaperPreview } from './markdownPreview';
 import { fileOf, type SlashCommand } from './notesApi';
 import { registerNotesParts, researchCommand } from './notesParts';
@@ -125,6 +126,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     // The view "Front Matter" follows the active editor; Markdown Notes opens it for a file of its clean editing view.
     frontMatterView,
     vscode.window.registerWebviewViewProvider(frontMatterViewId, frontMatterView),
+    vscode.languages.registerDocumentLinkProvider(referenceLinkSelector, new ReferenceLinks(commands.openRepository)),
     vscode.commands.registerCommand(commands.editFrontMatter, async (uri?: unknown) => {
       const editor = vscode.window.activeTextEditor;
       const target = uri instanceof vscode.Uri ? uri : editor?.document.languageId === 'markdown' ? editor.document.uri : undefined;

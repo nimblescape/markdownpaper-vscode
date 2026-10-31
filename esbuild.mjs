@@ -8,7 +8,9 @@
 // pdf-lib. The build copies the files that the renderer reads at run time: Paged.js (paged.polyfill.js) into media/
 // for the extension and into cli/dist/ for the npm package, and paged.js, which does not start on its own, into media/
 // for the script of the pages in the Markdown preview, and the built-in layouts of layouts/ into cli/dist/layouts/;
-// the extension reads layouts/ of its own folder. npm puts the license of the folder of a package into the package,
+// the extension reads layouts/ of its own folder. The page of the PDF draws the PlantUML diagrams with the files of the
+// page of the npm package @nimblescape/plantuml (scripts/install-plantuml.mjs installs it): the build copies them with
+// the notices of the package into media/plantuml/ and cli/dist/plantuml/. npm puts the license of the folder of a package into the package,
 // so the build copies LICENSE and THIRD-PARTY-NOTICES.md into cli/. VS Code provides the module `vscode` at run time,
 // so the bundle leaves it out. The bundles are readable JavaScript: not minified, so that they keep the names of the
 // source and anyone can read the code of the packages and compare it with the source (CONTRIBUTING.md, "Reviewing the
@@ -43,6 +45,15 @@ fs.copyFileSync('node_modules/pagedjs/dist/paged.js', 'media/paged.js');
 fs.copyFileSync('node_modules/pagedjs/dist/paged.polyfill.js', 'cli/dist/paged.polyfill.js');
 fs.rmSync('cli/dist/layouts', { recursive: true, force: true });
 fs.cpSync('layouts', 'cli/dist/layouts', { recursive: true });
+const plantUml = 'node_modules/@nimblescape/plantuml';
+if (!fs.existsSync(`${plantUml}/dist/page/markdownPreview.js`)) {
+  throw new Error('The npm package @nimblescape/plantuml is missing: run node scripts/install-plantuml.mjs.');
+}
+for (const folder of ['media/plantuml', 'cli/dist/plantuml']) {
+  fs.rmSync(folder, { recursive: true, force: true });
+  fs.cpSync(`${plantUml}/dist/page`, folder, { recursive: true });
+  fs.copyFileSync(`${plantUml}/THIRD-PARTY-NOTICES.md`, `${folder}/THIRD-PARTY-NOTICES.md`);
+}
 
 for (const bundle of bundles) {
   // A production build writes no source map: remove the map of an earlier development build, so that no map that does

@@ -37,7 +37,11 @@ const io = (answers?: string[]): Io => ({
   err: (line) => err.push(line),
   ...(answers ? { ask: async () => answers.shift() ?? '' } : {}),
   cwd: folder,
-  assets: { layouts: path.join(repository, 'layouts'), pagedJs: path.join(repository, 'node_modules/pagedjs/dist/paged.polyfill.js') },
+  assets: {
+    layouts: path.join(repository, 'layouts'),
+    pagedJs: path.join(repository, 'node_modules/pagedjs/dist/paged.polyfill.js'),
+    plantUml: path.join(repository, 'node_modules/@nimblescape/plantuml/dist/page'),
+  },
 });
 
 const read = (file: string): string => fs.readFileSync(path.join(folder, file), 'utf8');

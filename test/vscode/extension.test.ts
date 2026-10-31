@@ -18,7 +18,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { Api } from '../../src/extension';
-import { markdownExtensions } from '../../src/markdownExtensions';
+import { markdownExtensions, plantUmlOptions } from '../../src/markdownExtensions';
 import { findBrowser } from '../../src/pdf/browser';
 import { Browser } from '../../src/pdf/cdp';
 import { exportPdf } from '../../src/pdf/export';
@@ -218,7 +218,7 @@ describe('nimblescape Markdown Paper', function () {
     assert.equal(fs.readFileSync(pdf.fsPath).subarray(0, 5).toString('latin1'), '%PDF-');
   });
 
-  it('the pages of the PDF show the diagrams of Mermaid and the math of KaTeX of the Markdown extensions of VS Code (R-REN-010)', async function () {
+  it('the pages of the PDF show the diagrams of Mermaid and the math of KaTeX of the Markdown extensions of VS Code (R-REN-010), and the PlantUML diagrams of nimblescape PlantUML (R-REN-015)', async function () {
     let browser: string;
     try {
       browser = findBrowser(vscode.workspace.getConfiguration('nimblescape.markdownPaper').get<string>('browserPath') ?? '');
@@ -229,20 +229,29 @@ describe('nimblescape Markdown Paper', function () {
     await api();
     const own = vscode.extensions.getExtension(extensionId)?.extensionUri;
     assert.ok(own);
-    const extensions = await markdownExtensions(own);
+    const file = write(
+      'paper/diagram.md',
+      '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nDie Formel $a^2 + b^2 = c^2$.\n\n```mermaid\ngraph LR\n  Alpha --> Beta\n```\n\n```plantuml\nAnna -> Bernd : Frage\n```\n',
+    );
+    const extensions = await markdownExtensions(own, file);
+    assert.deepEqual(extensions.env, { currentDocument: file });
     assert.ok(extensions.plugins.length >= 2, 'the plugins of Markdown Math and Mermaid');
     assert.ok(
       extensions.scripts.some((script) => 'src' in script && script.module && /mermaid/.test(script.src)),
       'the module script of Mermaid',
     );
     assert.ok(!extensions.scripts.some((script) => 'src' in script && /markdown-language-features\/|paperPreview\.js/.test(script.src)), 'not the scripts of the preview itself');
-    const file = write('paper/diagram.md', '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nDie Formel $a^2 + b^2 = c^2$.\n\n```mermaid\ngraph LR\n  Alpha --> Beta\n```\n');
     const html = path.join(folder, 'paper', 'diagram.html');
     const result = await exportPdf(file.fsPath, {
-      assets: { layouts: vscode.Uri.joinPath(own, 'layouts').fsPath, pagedJs: vscode.Uri.joinPath(own, 'media', 'paged.polyfill.js').fsPath },
+      assets: {
+        layouts: vscode.Uri.joinPath(own, 'layouts').fsPath,
+        pagedJs: vscode.Uri.joinPath(own, 'media', 'paged.polyfill.js').fsPath,
+        plantUml: vscode.Uri.joinPath(own, 'media', 'plantuml').fsPath,
+      },
       browser,
       html,
       extensions,
+      plantUml: plantUmlOptions(file),
     });
     assert.equal(fs.readFileSync(result.pdf).subarray(0, 5).toString('latin1'), '%PDF-');
     assert.deepEqual(result.messages, []);
@@ -261,6 +270,7 @@ describe('nimblescape Markdown Paper', function () {
         {
           expression: `new Promise((resolve) => { const done = () => { const pages = document.querySelector('.pagedjs_pages'); resolve({
             diagram: [...pages.querySelectorAll('svg')].some((svg) => svg.textContent.includes('Alpha') && svg.textContent.includes('Beta')),
+            plantUml: [...pages.querySelectorAll('.nimblescape-paper-plantuml > svg')].some((svg) => svg.textContent.includes('Anna') && svg.textContent.includes('Frage')),
             inside: [...pages.querySelectorAll('svg')].every((svg) => svg.getBoundingClientRect().right <= svg.closest('.pagedjs_page_content').getBoundingClientRect().right + 1),
             buttons: [...pages.querySelectorAll('.mermaid-zoom-controls')].filter((element) => getComputedStyle(element).display !== 'none').length,
             math: pages.querySelectorAll('.katex').length,
@@ -271,9 +281,9 @@ describe('nimblescape Markdown Paper', function () {
           returnByValue: true,
         },
         sessionId,
-      )) as { result: { value: { diagram: boolean; inside: boolean; buttons: number; math: number; font: boolean; light: boolean } } };
-      // The diagram stands inside the text of its page, without the buttons of the screen.
-      assert.deepEqual(evaluated.result.value, { diagram: true, inside: true, buttons: 0, math: 1, font: true, light: true });
+      )) as { result: { value: { diagram: boolean; plantUml: boolean; inside: boolean; buttons: number; math: number; font: boolean; light: boolean } } };
+      // The diagrams stand inside the text of their page, without the buttons of the screen.
+      assert.deepEqual(evaluated.result.value, { diagram: true, plantUml: true, inside: true, buttons: 0, math: 1, font: true, light: true });
     } finally {
       await running.close();
     }

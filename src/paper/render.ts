@@ -324,8 +324,15 @@ function attributesHtml(attributes: Record<string, string>): string {
  * @param document - The URL of the file.
  * @param text - The text of the file, with its unsaved changes.
  * @param plugins - The markdown-it plugins of other extensions ([R-REN-010](../../docs/requirements.md#r-ren-010)).
+ * @param pluginEnv - The values that these plugins find in the environment of markdown-it, such as `currentDocument`.
  */
-export async function render(host: Host, document: string, text: string, plugins: readonly MarkdownPlugin[] = []): Promise<Rendered> {
+export async function render(
+  host: Host,
+  document: string,
+  text: string,
+  plugins: readonly MarkdownPlugin[] = [],
+  pluginEnv: Readonly<Record<string, unknown>> = {},
+): Promise<Rendered> {
   const problems: Problem[] = [];
   const frontMatter = readFrontMatter(text);
   for (const error of frontMatter?.errors ?? []) {
@@ -336,7 +343,7 @@ export async function render(host: Host, document: string, text: string, plugins
   const layout = loaded.layout;
   const values = valuesOf(layout, frontMatter, document);
   const hyphenate = layout.hyphenate ? hyphenatorOf(layout.language) : undefined;
-  const body = renderBody(bodyOf(text, frontMatter), layout, hyphenate, plugins);
+  const body = renderBody(bodyOf(text, frontMatter), layout, hyphenate, plugins, pluginEnv);
   problems.push(...body.problems.map((problem) => ({ ...problem, file: problem.file ?? document })));
   const composed = compose(loaded, values, host.resource);
   const attributes = attributesHtml(composed.attributes);
@@ -381,9 +388,11 @@ ${handlersJs.replace(/<\/script/gi, '<\\/script')}
 <script nonce="${host.nonce}">
 window.PagedConfig = {
   auto: true,
-  // The scripts of the Markdown extensions draw after the page has loaded, for example the diagrams of Mermaid.
-  // Paged.js makes the pages when the page has not changed for 200 milliseconds and no diagram of Mermaid waits, at
-  // the latest after 10 seconds.
+  // The scripts of the Markdown extensions draw after the page has loaded, for example the diagrams of Mermaid and of
+  // nimblescape PlantUML. Paged.js makes the pages when the page has not changed for 200 milliseconds and no diagram
+  // waits, at the latest after 10 seconds; while nimblescape PlantUML renders, until 65 seconds after it drew its last
+  // block, since it gives up on a diagram after 60 seconds. The PlantUML blocks then get copies of their diagrams, which
+  // the extension draws into shadow roots, which the pages of Paged.js would lose.
   before: function () {
     // The handlers of the renderer: the page numbers (R-REN-013), and the natural spaces of the last lines of the
     // justified paragraphs whose spaces shrink (R-REN-012).
@@ -392,14 +401,21 @@ window.PagedConfig = {
       function start() {
         var end = Date.now() + 10000;
         var last = Date.now();
+        var drawn = -1;
         var observer = new MutationObserver(function () {
           last = Date.now();
         });
         observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
         function check() {
-          var waiting = document.querySelector('.mermaid:not(:has(svg))');
+          var plantUml = window.paperHandlers.plantUmlProgress(document.body);
+          if (plantUml.rendering && plantUml.drawn !== drawn) {
+            drawn = plantUml.drawn;
+            end = Math.max(end, Date.now() + 65000);
+          }
+          var waiting = window.paperHandlers.drawingsPending(document.body);
           if (Date.now() > end || (!waiting && Date.now() - last >= 200)) {
             observer.disconnect();
+            window.paperHandlers.copyPlantUml(document.body, document.body);
             resolve();
           } else {
             setTimeout(check, 50);

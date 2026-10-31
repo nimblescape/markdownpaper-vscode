@@ -46,6 +46,7 @@
     "test": "vitest run",
     "test:cli": "node esbuild.mjs && vitest run --config vitest.cli.config.mts",
     "test:vscode": "node esbuild.mjs && node scripts/build-vscode-tests.mjs && vscode-test --label vscode",
+    "postinstall": "node scripts/install-plantuml.mjs",
     "vscode:prepublish": "node esbuild.mjs --production",
     "package": "vsce package --no-dependencies",
     "install-local": "node scripts/install-local.mjs",

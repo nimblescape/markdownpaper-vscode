@@ -86,6 +86,47 @@ describe('the command markdownpaper', () => {
     expect(html).toContain('<span class="footnote"><span class="footnote-paragraph">Eine Fußnote.</span></span>');
   }, 150_000);
 
+  it.skipIf(!browser)('draws the PlantUML diagrams with the settings and the included files of the workspace folder (R-REN-015)', async () => {
+    const folder = temporary();
+    fs.mkdirSync(path.join(folder, '.vscode'));
+    fs.writeFileSync(path.join(folder, '.vscode', 'settings.json'), '{\n  // The notation of PlantUML\n  "nimblescape.plantuml.umlNotation": false,\n}\n');
+    fs.mkdirSync(path.join(folder, 'paper'));
+    fs.writeFileSync(path.join(folder, 'actors.iuml'), 'participant Carla\n');
+    fs.writeFileSync(
+      path.join(folder, 'paper', 'paper.md'),
+      '---\ntitle: Agenten\n---\n\n# Ablauf\n\n```plantuml\n!include ../actors.iuml\nAnna -> Bernd : Frage\nBernd -> Carla : Auftrag\n```\n\nDer Text nach dem Diagramm.\n',
+    );
+    const result = run(path.join(folder, 'paper'), ['pdf', 'paper.md', '--html', 'page.html'], 120_000);
+    expect(result.stderr).toBe('');
+    expect(result).toMatchObject({ code: 0, stdout: 'paper.pdf\n' });
+    const html = fs.readFileSync(path.join(folder, 'paper', 'page.html'), 'utf8');
+    expect(html).toContain('data-plantuml-settings="{&quot;umlNotation&quot;:false}"');
+    expect(html).toContain('{&quot;../actors.iuml&quot;:{&quot;text&quot;:&quot;participant Carla\\n&quot;}}');
+    const page = await Browser.launch(browser!);
+    try {
+      const { targetId } = await page.send('Target.createTarget', { url: 'about:blank' });
+      const { sessionId } = (await page.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
+      await page.send('Page.enable', {}, sessionId);
+      const loaded = page.once('Page.loadEventFired', sessionId);
+      await page.send('Page.navigate', { url: pathToFileURL(path.join(folder, 'paper', 'page.html')).href }, sessionId);
+      await loaded;
+      const expression = `new Promise((resolve) => {
+        const read = () => resolve([...document.querySelectorAll('.pagedjs_page .nimblescape-paper-plantuml')].map((block) => [...block.children].map((child) => child.localName + ':' + child.textContent)));
+        if (window.paperRendered) { read(); } else { document.addEventListener('paper-rendered', read); }
+      })`;
+      const { result: read } = (await page.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)) as { result: { value: string[][] } };
+      // One block with one diagram as SVG, with the participant of the included file.
+      expect(read.value).toHaveLength(1);
+      expect(read.value[0]).toHaveLength(1);
+      expect(read.value[0][0]).toMatch(/^svg:/);
+      for (const text of ['Anna', 'Bernd', 'Carla', 'Frage', 'Auftrag']) {
+        expect(read.value[0][0]).toContain(text);
+      }
+    } finally {
+      await page.close();
+    }
+  }, 150_000);
+
   it.skipIf(!browser)('gives the last line of a justified paragraph with shrinking spaces its natural spaces (R-REN-012)', async () => {
     const folder = temporary();
     fs.mkdirSync(path.join(folder, 'layouts', 'word'), { recursive: true });

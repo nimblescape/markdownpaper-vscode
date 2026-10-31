@@ -10,7 +10,8 @@
 // 1. lets the content of the preview stay in the page, hidden and off screen, so that VS Code keeps changing it and
 //    the scripts of other extensions keep drawing in it, for example the diagrams of Mermaid;
 // 2. waits until these scripts are done, and lets Paged.js make the pages from a copy of the content, with the style
-//    sheets and the templates of the layout, in a hidden area before the content;
+//    sheets and the templates of the layout, in a hidden area before the content; in the copy, each PlantUML block of
+//    nimblescape PlantUML gets copies of the diagrams that the extension drew into its shadow root (paperHandlers.js);
 // 3. shows the new pages in place of the old ones, so the pages do not flicker, and keeps the place on the page; the
 //    pages get smaller when the preview is narrower than a page;
 // 4. lets VS Code read the lines of the blocks again, now on the pages, so that the double click to the line and the
@@ -208,10 +209,6 @@
     }
   }
 
-  // pending matches the content that a script of another extension has still to draw: a diagram of Mermaid without
-  // its SVG element, whose script loads its parts the first time.
-  const pending = '.mermaid:not(:has(svg))';
-
   // settle waits until the scripts of other extensions stop changing the content: a short time without a change and
   // nothing left to draw, at most a few seconds.
   function settle(root) {
@@ -220,7 +217,9 @@
       let wait;
       const observer = new MutationObserver(() => later(200));
       function done() {
-        if (root.querySelector(pending) && Date.now() - start < 5000) {
+        // A diagram that a script of another extension has still to draw, such as one of Mermaid, whose script loads
+        // its parts the first time, or a PlantUML block of nimblescape PlantUML (paperHandlers.js).
+        if (window.paperHandlers.drawingsPending(root) && Date.now() - start < 5000) {
           later(200);
           return;
         }
@@ -289,7 +288,7 @@
     await settle(body);
     // A script that draws only after an update, such as the one of Mermaid for the first content, draws after the
     // update that the script sends below; then the script makes the pages once more.
-    const unfinished = Boolean(body.querySelector(pending));
+    const unfinished = window.paperHandlers.drawingsPending(body);
     if (!paperData()) {
       leavePaperMode();
       return;
@@ -311,6 +310,7 @@
     for (const [name, value] of Object.entries(paper.attributes || {})) {
       text.setAttribute(name, value);
     }
+    window.paperHandlers.copyPlantUml(body, template.content);
     keepFromScripts(template.content);
     const old = document.querySelector('.nimblescape-paper-pages');
     const area = document.createElement('div');

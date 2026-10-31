@@ -7,7 +7,9 @@
  * parts of the Markdown preview of VS Code that the script uses: the data of the preview with its source, a style sheet
  * of the Markdown extension of VS Code and the style of the theme, the classes of a dark theme on the body, and a
  * small stand-in for the script of VS Code, which puts the content into the page after the scripts of the extensions
- * ran, and for each message `updateContent` changes the content and sends the event `vscode.markdown.updateContent`.
+ * ran, and for each message `updateContent` changes the content and sends the event `vscode.markdown.updateContent`,
+ * and a stand-in for the script of nimblescape PlantUML, which draws the PlantUML blocks of the markdown-it plugin of
+ * its npm package into shadow roots after a while.
  * They need an installed Chrome, Chromium or Edge, as the PDF does; on the runners of GitHub there is one.
  */
 
@@ -15,6 +17,8 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { extendMarkdownIt } from '@nimblescape/plantuml';
+import type MarkdownIt from 'markdown-it';
 import { afterAll, describe, expect, it } from 'vitest';
 import { baseCss } from './paper/baseCss';
 import { renderBody } from './paper/markdown';
@@ -54,7 +58,15 @@ async function paperContent(text: string): Promise<string> {
   const frontMatter = readFrontMatter(text);
   const loaded = await loadLayout({ reader: fileReader, builtinLayouts: folderUrl(path.join(repository, 'layouts')) }, document, frontMatter);
   const composed = compose(loaded, valuesOf(loaded.layout, frontMatter, document), (url) => url);
-  const body = renderBody(text.replace(/^---[\s\S]*?\n---\n/, ''), loaded.layout);
+  // The Markdown preview of VS Code gives every block its line, also a fenced code block, which the renderer does not.
+  const lines = (md: MarkdownIt) => {
+    md.core.ruler.push('lines', (state) => {
+      for (const token of state.tokens.filter((token) => token.type === 'fence' && token.map)) {
+        token.attrSet('data-line', String(token.map![0]));
+      }
+    });
+  };
+  const body = renderBody(text.replace(/^---[\s\S]*?\n---\n/, ''), loaded.layout, undefined, [lines, (md) => extendMarkdownIt(md)]);
   const data = { layout: loaded.layout.id, language: loaded.layout.language, styles: [baseCss, ...composed.styles, composed.variables], before: composed.before, after: composed.after, attributes: composed.attributes, delay: 0 };
   // A diagram as the script of Mermaid of VS Code draws it: an SVG element whose style sheet names its ID.
   const diagram = '<pre class="mermaid" id="mermaid-1"><svg id="dmermaid-1"><style>#dmermaid-1 rect { fill: rgb(1, 2, 3); }</style><rect width="40" height="20"></rect></svg></pre>';
@@ -84,6 +96,18 @@ function writePage(): string {
 <body class="vscode-body vscode-dark">
 <script src="paperPreview.js"></script>
 <script>
+// The stand-in for the script of nimblescape PlantUML: it marks each new block as pending, and after half a second
+// draws a diagram into the open shadow root of its content element and marks the block as drawn.
+new MutationObserver(() => {
+  for (const content of document.querySelectorAll('.markdown-body .nimblescape-plantuml-content:not([data-plantuml-state])')) {
+    content.setAttribute('data-plantuml-state', 'pending');
+    setTimeout(() => {
+      const shadow = content.shadowRoot || content.attachShadow({ mode: 'open' });
+      shadow.innerHTML = '<svg part="diagram" width="80" height="30"><text x="5" y="20">Anna</text></svg>';
+      content.setAttribute('data-plantuml-state', 'drawn');
+    }, 500);
+  }
+}).observe(document.body, { childList: true, subtree: true });
 window.messages = [];
 window.rendered = [];
 window.addEventListener('nimblescape-paper-rendered', (event) => window.rendered.push(event.detail.pages));
@@ -127,7 +151,7 @@ const waitFor = (condition: string): string =>
 describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-006)', () => {
   it.skipIf(!browser)('makes the pages of a paper document before the hidden content, as white paper, and gives the preview back for a notes document', { timeout: 90_000 }, async () => {
     const paragraph = 'Ein Absatz über die Arbeit von Teams mit Agenten. '.repeat(12);
-    const text = `---\nlayout: plain\ntitle: Agenten\nauthor: Hannes\n---\n\n# Einleitung\n\n${`${paragraph}\n\n`.repeat(20)}## Methode\n\nText.\n`;
+    const text = `---\nlayout: plain\ntitle: Agenten\nauthor: Hannes\n---\n\n# Einleitung\n\n${`${paragraph}\n\n`.repeat(20)}## Methode\n\nText.\n\n\`\`\`plantuml\nAnna -> Bernd\n\`\`\`\n`;
     const paper = await paperContent(text);
     const page = writePage();
     const running = await Browser.launch(browser as string);
@@ -155,6 +179,7 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
         heading: string;
         fits: boolean;
         diagram: { mermaid: number; id: string; fill: string };
+        plantUml: { blocks: number; diagram: string | undefined; line: boolean; originals: number; includes: number };
       }>(
         session,
         `(() => {
@@ -174,8 +199,15 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
             fits: pages.querySelector('.pagedjs_page').getBoundingClientRect().right <= document.documentElement.clientWidth,
             diagram: {
               mermaid: pages.querySelectorAll('.mermaid').length,
-              id: pages.querySelector('svg').id,
+              id: pages.querySelector('svg[id*="mermaid"]').id,
               fill: getComputedStyle(pages.querySelector('svg rect')).fill,
+            },
+            plantUml: {
+              blocks: pages.querySelectorAll('.nimblescape-paper-plantuml').length,
+              diagram: pages.querySelector('.nimblescape-paper-plantuml > svg[part~="diagram"]')?.textContent,
+              line: pages.querySelector('.nimblescape-paper-plantuml').hasAttribute('data-line'),
+              originals: pages.querySelectorAll('.nimblescape-plantuml').length,
+              includes: pages.querySelectorAll('.nimblescape-plantuml-page-includes').length,
             },
           };
         })()`,
@@ -195,6 +227,8 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       expect(state.fits).toBe(true);
       // The script of Mermaid does not find the diagrams on the pages, which keep their style.
       expect(state.diagram).toEqual({ mermaid: 0, id: 'nimblescape-paper-dmermaid-1', fill: 'rgb(1, 2, 3)' });
+      // The pages wait for the PlantUML diagram and show a copy of it, with the line of the block for the scrolling.
+      expect(state.plantUml).toEqual({ blocks: 1, diagram: 'Anna', line: true, originals: 0, includes: 0 });
 
       // A notes document in the same preview: no pages, and the preview as VS Code shows it.
       await evaluate(

@@ -11,7 +11,7 @@
 
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { markdownExtensions } from './markdownExtensions';
+import { markdownExtensions, plantUmlOptions } from './markdownExtensions';
 import { fileOf, textOf } from './notesApi';
 import { downloadRemote, findRemotes, type Origin, originOf, previewUrl, type RemoteLayout, readOrigin, remoteName } from './paper/gallery';
 import type { Layout } from './paper/layout';
@@ -75,11 +75,16 @@ export async function exportPdfCommand(context: Context, uri?: unknown): Promise
   try {
     const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Export PDF: ${path.basename(file.fsPath)}` }, async () =>
       exportPdf(file.fsPath, {
-        assets: { layouts: vscode.Uri.joinPath(context.extension, 'layouts').fsPath, pagedJs: vscode.Uri.joinPath(context.extension, 'media', 'paged.polyfill.js').fsPath },
+        assets: {
+          layouts: vscode.Uri.joinPath(context.extension, 'layouts').fsPath,
+          pagedJs: vscode.Uri.joinPath(context.extension, 'media', 'paged.polyfill.js').fsPath,
+          plantUml: vscode.Uri.joinPath(context.extension, 'media', 'plantuml').fsPath,
+        },
         text: await textOf(file),
         browser: context.browserPath(),
         ...(folder?.uri.scheme === 'file' ? { top: folder.uri.fsPath } : {}),
-        extensions: await markdownExtensions(context.extension),
+        extensions: await markdownExtensions(context.extension, file),
+        plantUml: plantUmlOptions(file),
       }),
     );
     const pdf = vscode.Uri.file(result.pdf);

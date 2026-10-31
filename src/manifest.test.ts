@@ -160,7 +160,7 @@ test('the README, the guide and the requirements name every setting that the man
   }
 });
 
-test('the package holds the bundle, Paged.js, the scripts and the style of the pages in the Markdown preview, the built-in layouts, the icon and the documents only', () => {
+test('the package holds the bundle, Paged.js, the page files of @nimblescape/plantuml, the scripts and the style of the pages in the Markdown preview, the built-in layouts, the icon and the documents only', () => {
   const patterns = read('.vscodeignore')
     .split('\n')
     .filter((line) => line && !line.startsWith('#'));
@@ -169,6 +169,7 @@ test('the package holds the bundle, Paged.js, the scripts and the style of the p
     '!dist/extension.js',
     '!media/paged.js',
     '!media/paged.polyfill.js',
+    '!media/plantuml/**',
     '!media/paperHandlers.js',
     '!media/paperPreview.css',
     '!media/paperPreview.js',
@@ -182,8 +183,9 @@ test('the package holds the bundle, Paged.js, the scripts and the style of the p
     '!LICENSE',
     '!THIRD-PARTY-NOTICES.md',
   ]);
-  // The build writes dist/ and copies Paged.js into media/ (esbuild.mjs).
-  for (const pattern of patterns.filter((pattern) => pattern.startsWith('!') && !pattern.startsWith('!dist/') && !pattern.startsWith('!media/paged.'))) {
+  // The build writes dist/ and copies Paged.js and the page files of @nimblescape/plantuml into media/ (esbuild.mjs).
+  const built = (pattern: string) => pattern.startsWith('!dist/') || pattern.startsWith('!media/paged.') || pattern.startsWith('!media/plantuml/');
+  for (const pattern of patterns.filter((pattern) => pattern.startsWith('!') && !built(pattern))) {
     expect(fs.existsSync(path.join(repository, pattern.slice(1).replace('/**', ''))), pattern).toBe(true);
   }
 });
@@ -225,16 +227,28 @@ test('the npm package has the version of the extension, the command markdownpape
   expect(cli).not.toHaveProperty('dependencies');
 });
 
-test('the npm package holds the bundle, Paged.js, the built-in layouts, the notices, the README and the license (npm pack --dry-run)', () => {
+/**
+ * filesOf returns the files of a folder of the repository and its subfolders, as paths with slashes in that folder, or
+ * no files for a missing folder.
+ * @param folder - The path of the folder in the repository.
+ */
+const filesOf = (folder: string): string[] =>
+  fs.existsSync(path.join(repository, folder))
+    ? fs
+        .readdirSync(path.join(repository, folder), { recursive: true, encoding: 'utf8' })
+        .filter((file) => fs.statSync(path.join(repository, folder, file)).isFile())
+        .map((file) => file.split(path.sep).join('/'))
+    : [];
+
+test('the npm package holds the bundle, Paged.js, the page files of @nimblescape/plantuml, the built-in layouts, the notices, the README and the license (npm pack --dry-run)', () => {
   const listed = execFileSync('npm', ['pack', './cli', '--dry-run', '--json'], { cwd: repository, encoding: 'utf8' });
   const files = (JSON.parse(listed) as { files: { path: string }[] }[])[0].files.map((file) => file.path);
-  // The build writes dist/ with the layouts, LICENSE and THIRD-PARTY-NOTICES.md (esbuild.mjs).
+  // The build writes dist/ with the layouts, the page files of @nimblescape/plantuml with its notices, LICENSE and
+  // THIRD-PARTY-NOTICES.md (esbuild.mjs).
   const built = (file: string) => file === 'LICENSE' || file === 'THIRD-PARTY-NOTICES.md' || file.startsWith('dist/');
-  const layouts = fs
-    .readdirSync(path.join(repository, 'layouts'), { recursive: true, encoding: 'utf8' })
-    .filter((file) => fs.statSync(path.join(repository, 'layouts', file)).isFile())
-    .map((file) => `dist/layouts/${file.split(path.sep).join('/')}`);
-  const expected = ['LICENSE', 'README.md', 'THIRD-PARTY-NOTICES.md', 'package.json', 'dist/markdownpaper.js', 'dist/paged.polyfill.js', ...layouts].filter(
+  const layouts = filesOf('layouts').map((file) => `dist/layouts/${file}`);
+  const plantUml = [...filesOf('node_modules/@nimblescape/plantuml/dist/page'), 'THIRD-PARTY-NOTICES.md'].map((file) => `dist/plantuml/${file}`);
+  const expected = ['LICENSE', 'README.md', 'THIRD-PARTY-NOTICES.md', 'package.json', 'dist/markdownpaper.js', 'dist/paged.polyfill.js', ...layouts, ...plantUml].filter(
     (file) => !built(file) || fs.existsSync(path.join(repository, 'cli', file)),
   );
   expect(files.sort()).toEqual(expected.sort());

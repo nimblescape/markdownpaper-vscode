@@ -1073,15 +1073,23 @@ export function finishBody(html: string, found: Found, layout: Layout, hyphenate
  * @param layout - The layout of the document.
  * @param hyphenate - The hyphenation of a text, or undefined for no hyphens.
  * @param plugins - The markdown-it plugins of other extensions, which work before the rule of the renderer.
+ * @param pluginEnv - The values that these plugins find in the environment of markdown-it, as in the Markdown preview of
+ *   VS Code, for example `currentDocument`, by which nimblescape PlantUML finds its settings and included files.
  */
-export function renderBody(markdown: string, layout: Layout, hyphenate?: (text: string) => string, plugins: readonly MarkdownPlugin[] = []): Body {
+export function renderBody(
+  markdown: string,
+  layout: Layout,
+  hyphenate?: (text: string) => string,
+  plugins: readonly MarkdownPlugin[] = [],
+  pluginEnv: Readonly<Record<string, unknown>> = {},
+): Body {
   const found = emptyFound();
   let md = new MarkdownIt({ html: true, linkify: true, typographer: false });
   for (const plugin of plugins) {
     md = plugin(md) ?? md;
   }
   paperPlugin(md);
-  const env: { nimblescapePaper: PaperEnv } = { nimblescapePaper: { layout, found } };
+  const env: { nimblescapePaper: PaperEnv } = { ...pluginEnv, nimblescapePaper: { layout, found } };
   const html = finishBody(md.render(markdown, env), found, layout, hyphenate);
   return { html, ...found };
 }

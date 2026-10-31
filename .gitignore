@@ -11,10 +11,12 @@ out/
 *.vsix
 *.tgz
 
-# The license, the notices and Paged.js that the build copies into the npm
-# package and into the package of the extension: paged.polyfill.js for the PDF,
-# paged.js for the pages in the Markdown preview.
+# The license, the notices, Paged.js and the page files of @nimblescape/plantuml
+# that the build copies into the npm package and into the package of the
+# extension: paged.polyfill.js for the PDF, paged.js for the pages in the
+# Markdown preview, plantuml/ for the PlantUML diagrams of the PDF.
 cli/LICENSE
 cli/THIRD-PARTY-NOTICES.md
 media/paged.js
 media/paged.polyfill.js
+media/plantuml/

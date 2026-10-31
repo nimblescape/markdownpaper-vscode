@@ -40,7 +40,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | The format step of the paper: the four lists in the file, the numbers of the headings in the links to them | VS Code (format of Markdown Notes), `markdownpaper format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
 | [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format, `/cite` and `/research` of Markdown Notes, Zotero), `markdownpaper format`, `markdownpaper source` | available; the group libraries of Zotero in `/cite` planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-006](requirements.md#r-cite-006) |
 | [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
-| [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line planned | [R-REN-010](requirements.md#r-ren-010) |
+| [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line PlantUML available, Mermaid planned | [R-REN-010](requirements.md#r-ren-010), [R-REN-015](requirements.md#r-ren-015) |
 
 ## Start a project
 
@@ -357,7 +357,8 @@ document stays as VS Code shows it. The pages in the preview:
 - scroll with the text editor, and a double click on a block shows its line
   in the text editor;
 - show what the other Markdown extensions of VS Code add, for example the
-  diagrams of Mermaid and the math of KaTeX, and the functions of their
+  diagrams of Mermaid, the diagrams of nimblescape PlantUML and the math of
+  KaTeX, and the functions of their
   scripts work on the pages, for example the highlights of the notes and "Add
   Note" of Markdown Notes above a selected passage;
 - open a web link outside VS Code, and go to the place of a link in the
@@ -382,6 +383,16 @@ text. On the command line, which has no extensions of VS Code:
 ```sh
 npx -y @nimblescape/markdownpaper pdf paper/paper.md
 ```
+
+Every PDF, also on the command line, shows the PlantUML diagrams of the
+fenced code blocks with the info string `plantuml` as vector graphics, drawn by the renderer of the
+extension nimblescape PlantUML, as its Markdown preview shows them, also
+when the extension is not installed. The diagrams use the settings
+`nimblescape.plantuml.*`, such as `umlNotation`: in VS Code the settings of
+the document, on the command line the file `.vscode/settings.json` of the
+nearest folder above the document with a folder `.vscode` or `.git`. A
+diagram includes files (`!include`) relative to the document, from the
+workspace folders, or on the command line from that folder.
 
 ## Layouts
 

@@ -93,7 +93,10 @@ gives the same renderer to people and AI agents on the command line:
   file writes the PDF beside the file, with the name that the layout gives,
   for example `{{matrikelnummer}}_{{author}}`. The PDF shows what the other
   Markdown extensions add, such as the diagrams of Mermaid and the math of
-  KaTeX.
+  KaTeX. The PlantUML diagrams look as in the Markdown preview with the
+  extension [nimblescape PlantUML](https://github.com/nimblescape/nimblescape-plantuml),
+  whose renderer draws them as vector graphics in every PDF, also on the
+  command line.
 - **New project, document and layout.** "New Project" lists the layouts of
   the workspace, the built-in layouts and the layouts on GitHub, with a button
   that opens the preview PDF of a layout on GitHub. It writes the folders of a
@@ -162,7 +165,9 @@ describes every feature.
 - The diagrams of Mermaid, PlantUML and the other Markdown extensions of
   VS Code show on the pages of the preview and in the PDF of "Export PDF" in
   VS Code. The command line has no extensions of VS Code: its PDF shows the
-  source text of a diagram.
+  PlantUML diagrams, and the source text of the other diagrams. The pages of
+  the preview show the PlantUML diagrams when nimblescape PlantUML is
+  installed.
 - A layout has no scripts. Its templates know fields and parts that show
   only with a field, no other logic.
 - `/cite` and `/research` need nimblescape Markdown Notes. `/cite` reads the

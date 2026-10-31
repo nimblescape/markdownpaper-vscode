@@ -30,6 +30,7 @@
   "files": [
     "dist/*.js",
     "dist/layouts/**",
+    "dist/plantuml/**",
     "THIRD-PARTY-NOTICES.md"
   ],
   "engines": {

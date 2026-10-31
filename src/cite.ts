@@ -5,9 +5,10 @@
 /**
  * The citations from the editor ([R-CITE-002](../docs/requirements.md#r-cite-002),
  * [R-CITE-006](../docs/requirements.md#r-cite-006)): the slash command `/cite` inserts a citation of a source of the
- * database of the document or of an item of the Zotero library of the author, "Connect Zotero" keeps the API key of
- * Zotero in the secret storage of VS Code, and "Update Sources from Zotero" merges each item of Zotero into its line
- * of the database. The rules of the merge are in [paper/zotero.ts](paper/zotero.ts).
+ * database of the document or of an item of the Zotero library of the author or of a group library of the setting
+ * `zoteroGroups`, "Connect Zotero" keeps the API key of Zotero in the secret storage of VS Code, and "Update Sources
+ * from Zotero" merges each item of these libraries into its line of the database. The rules of the merge are in
+ * [paper/zotero.ts](paper/zotero.ts).
  */
 
 import * as vscode from 'vscode';
@@ -19,7 +20,22 @@ import { cite, type Source } from './paper/csl';
 import { isPaperDocument } from './paper/frontMatter';
 import type { Fetcher } from './paper/lookup';
 import { sourcesFolder } from './paper/scaffold';
-import { allItems, itemOf, keyUser, type Merge, matchItem, mergeItem, newSource, pdfOf, searchItems, showValue, type ZoteroItem, zoteroField } from './paper/zotero';
+import {
+  allLibraryItems,
+  groupLibraries,
+  itemOf,
+  keyUser,
+  type Merge,
+  matchItem,
+  mergeItem,
+  newSource,
+  pdfOf,
+  searchLibraries,
+  showValue,
+  type ZoteroItem,
+  zoteroField,
+} from './paper/zotero';
+import { checkedSettings, settingsSection } from './settings';
 
 /** secretName is the name of the API key of Zotero and its library in the secret storage of VS Code. */
 const secretName = 'nimblescape.markdownPaper.zotero';
@@ -64,6 +80,17 @@ async function connection(secrets: vscode.SecretStorage): Promise<Connection | u
 }
 
 /**
+ * librariesOf returns the libraries of Zotero for a document: the personal library of the connection, then the group
+ * libraries of the setting `zoteroGroups` of the document.
+ * @param zotero - The connection to Zotero.
+ * @param file - The file of the document.
+ */
+function librariesOf(zotero: Connection, file: vscode.Uri): string[] {
+  const configuration = vscode.workspace.getConfiguration(settingsSection, file);
+  return [zotero.library, ...groupLibraries(checkedSettings((key) => configuration.get(key)).zoteroGroups)];
+}
+
+/**
  * connectZoteroCommand asks for the API key of Zotero, reads the library of its user, and keeps both in the secret
  * storage. An empty key removes the connection.
  * @param context - The context of the citations.
@@ -86,7 +113,9 @@ export async function connectZoteroCommand(context: CiteContext): Promise<void> 
   try {
     const library = await keyUser(context.fetch, key.trim());
     await context.secrets.store(secretName, JSON.stringify({ key: key.trim(), library }));
-    void vscode.window.showInformationMessage(`Zotero is connected: /cite shows the items of the library ${library}.`);
+    void vscode.window.showInformationMessage(
+      `Zotero is connected: /cite shows the items of the library ${library}, and of the group libraries of the setting ${settingsSection}.zoteroGroups.`,
+    );
   } catch (error) {
     void vscode.window.showErrorMessage(`Connect Zotero: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -112,22 +141,26 @@ interface CiteItem extends vscode.QuickPickItem {
 
 /**
  * listItems returns the entries of the list of `/cite`: first the sources of the database, then the items of Zotero
- * that the database does not have. An item of Zotero whose line the database has shows once, as that source.
+ * that the database does not have. An item of Zotero whose line the database has shows once, as that source, and an
+ * item of a group library with the DOI or the ISBN of an item before it in the list does not show.
  * @param sources - The sources of the database.
- * @param items - The items of Zotero.
- * @param problem - Why Zotero gave no items, if it gave none.
+ * @param items - The items of Zotero, of the personal library first.
+ * @param problems - Why a library of Zotero gave no items.
  */
-function listItems(sources: readonly Source[], items: readonly ZoteroItem[], problem?: string): CiteItem[] {
+function listItems(sources: readonly Source[], items: readonly ZoteroItem[], problems: readonly string[] = []): CiteItem[] {
   const matched = new Map<string, ZoteroItem>();
   const others: ZoteroItem[] = [];
   for (const item of items) {
     const match = matchItem(item, sources);
     if (match) {
-      matched.set(match.source.id, item);
-    } else {
+      if (!matched.has(match.source.id)) {
+        matched.set(match.source.id, item);
+      }
+    } else if (!matchItem(item, others.map((other, index) => ({ ...other.source, id: String(index) })))) {
       others.push(item);
     }
   }
+  const problem = problems.join('; ');
   const list: CiteItem[] = sources.map((source) => ({
     label: source.title ?? source.id,
     description: [authorsOf(source), yearOf(source)].filter((part) => part !== '').join(', '),
@@ -142,7 +175,7 @@ function listItems(sources: readonly Source[], items: readonly ZoteroItem[], pro
     list.push({
       label: item.source.title ?? item.ref,
       description: [item.creators, item.year].filter((part) => part !== '').join(', '),
-      detail: 'Zotero: a new source of the document',
+      detail: item.group ? `Zotero, ${item.group}: a new source of the document` : 'Zotero: a new source of the document',
       alwaysShow: true,
       item,
     });
@@ -152,12 +185,13 @@ function listItems(sources: readonly Source[], items: readonly ZoteroItem[], pro
 
 /**
  * pickSource shows the list of `/cite` and returns the chosen entry. With Zotero, the list shows the items changed
- * last, and the items of a search of Zotero after a pause in typing.
+ * last, and the items of a search of Zotero after a pause in typing, of each library.
  * @param context - The context of the citations.
  * @param sources - The sources of the database.
  * @param zotero - The connection to Zotero, if any.
+ * @param libraries - The libraries of Zotero, the personal library first.
  */
-async function pickSource(context: CiteContext, sources: readonly Source[], zotero: Connection | undefined): Promise<CiteItem | undefined> {
+async function pickSource(context: CiteContext, sources: readonly Source[], zotero: Connection | undefined, libraries: readonly string[]): Promise<CiteItem | undefined> {
   const pick = vscode.window.createQuickPick<CiteItem>();
   pick.title = 'Cite a source';
   pick.placeholder = zotero
@@ -174,15 +208,15 @@ async function pickSource(context: CiteContext, sources: readonly Source[], zote
     }
     const number = ++asked;
     pick.busy = true;
-    searchItems(context.fetch, zotero.key, zotero.library, words).then(
-      (items) => {
+    searchLibraries(context.fetch, zotero.key, libraries, words).then(
+      (found) => {
         if (number === asked) {
-          pick.items = listItems(sources, items);
+          pick.items = listItems(sources, found.items, found.problems);
         }
       },
       (error: unknown) => {
         if (number === asked) {
-          pick.items = listItems(sources, [], error instanceof Error ? error.message : String(error));
+          pick.items = listItems(sources, [], [error instanceof Error ? error.message : String(error)]);
         }
       },
     ).finally(() => {
@@ -340,7 +374,7 @@ export async function citeAt(context: CiteContext, editor: vscode.TextEditor, ra
     return false;
   }
   const zotero = await connection(context.secrets);
-  const chosen = await pickSource(context, findDatabase(document.getText().split(/\r?\n/))?.sources ?? [], zotero);
+  const chosen = await pickSource(context, findDatabase(document.getText().split(/\r?\n/))?.sources ?? [], zotero, zotero ? librariesOf(zotero, file) : []);
   if (!chosen) {
     return false;
   }
@@ -406,8 +440,9 @@ export function citeCommand(context: CiteContext): SlashCommand {
 
 /**
  * updateSourcesCommand merges each item of Zotero whose line the database of the open paper document has into that
- * line: by the field `zotero` of the line, then by the DOI, then by the ISBN. It adds the fields that a line does not
- * have, and asks once whether the values of Zotero replace the other values.
+ * line: by the field `zotero` of the line, then by the DOI, then by the ISBN. It reads the personal library and the
+ * group libraries of the setting `zoteroGroups`. It adds the fields that a line does not have, and asks once whether
+ * the values of Zotero replace the other values.
  * @param context - The context of the citations.
  * @param uri - The file of the Explorer, else the file of the active text editor.
  */
@@ -428,14 +463,19 @@ export async function updateSourcesCommand(context: CiteContext, uri?: unknown):
     void vscode.window.showInformationMessage('Update Sources from Zotero: the document has no sources.');
     return;
   }
+  const libraries = librariesOf(zotero, document.uri);
   let merges: Merge[];
+  let problems: string[] = [];
   try {
-    merges = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Reading the Zotero library' }, async () => {
-      const items = await allItems(context.fetch, zotero.key, zotero.library);
-      // A line of another library, such as a group library, gets its item by its reference.
+    merges = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Reading the Zotero libraries' }, async () => {
+      const read = await allLibraryItems(context.fetch, zotero.key, libraries);
+      const items = read.items;
+      problems = read.problems;
+      // A line of another library, such as a group library that the setting does not name, gets its item by its
+      // reference.
       for (const source of sources) {
         const ref = source[zoteroField];
-        if (typeof ref === 'string' && !ref.startsWith(`${zotero.library}/`) && !items.some((item) => item.ref === ref)) {
+        if (typeof ref === 'string' && !libraries.some((library) => ref.startsWith(`${library}/`)) && !items.some((item) => item.ref === ref)) {
           const item = await itemOf(context.fetch, zotero.key, ref);
           if (item) {
             items.push(item);
@@ -471,7 +511,10 @@ export async function updateSourcesCommand(context: CiteContext, uri?: unknown):
   }
   const values = replace ? merges.reduce((sum, merge) => sum + merge.changed.length, 0) : 0;
   const fields = merges.reduce((sum, merge) => sum + merge.added.length, 0);
-  void vscode.window.showInformationMessage(
-    `Update Sources from Zotero: ${merges.length} of ${sources.length} sources have an item in Zotero; ${changed.size} lines changed, with ${fields} added fields and ${values} new values.`,
-  );
+  const summary = `Update Sources from Zotero: ${merges.length} of ${sources.length} sources have an item in Zotero; ${changed.size} lines changed, with ${fields} added fields and ${values} new values.`;
+  if (problems.length > 0) {
+    void vscode.window.showWarningMessage(`${summary} Not read: ${problems.join('; ')}`);
+  } else {
+    void vscode.window.showInformationMessage(summary);
+  }
 }

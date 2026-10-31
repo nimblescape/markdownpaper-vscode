@@ -4,7 +4,8 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 // Tests in a real VS Code (npm run test:vscode, .vscode-test.mjs): mocha runs them in the extension host. They write a
-// layout and Markdown files into a temporary folder, and check the commands of the extension, the checks of the front
+// layout and Markdown files into a temporary folder, and check the commands of the extension, among them "Open
+// Repository in New Window" (R-CLI-004) and the view "Front Matter" (R-DOC-005), the checks of the front
 // matter and their hover (R-DOC-002, R-DOC-003), the format step of the paper (R-REN-004, R-CLI-002), the slash
 // commands /research and /cite (R-CITE-002), the plugin of
 // the pages in the Markdown preview of VS Code for a paper document and none for a notes document (R-PRV-001,
@@ -13,12 +14,16 @@
 // The test of the script of the pages, which needs a browser page, is in src/paperPreview.test.ts.
 
 import * as assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { promisify } from 'node:util';
 import * as vscode from 'vscode';
+import { type Context, cloneOfReference } from '../../src/commands';
+import { applyFrontMatterChange, formFor } from '../../src/frontMatterView';
 import type { Api } from '../../src/extension';
-import { markdownExtensions } from '../../src/markdownExtensions';
+import { markdownExtensions, plantUmlOptions } from '../../src/markdownExtensions';
 import { findBrowser } from '../../src/pdf/browser';
 import { Browser } from '../../src/pdf/cdp';
 import { exportPdf } from '../../src/pdf/export';
@@ -84,9 +89,66 @@ describe('nimblescape Markdown Paper', function () {
   it('the extension starts and has its commands', async () => {
     await api();
     const commands = await vscode.commands.getCommands(true);
-    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'connectZotero', 'updateSourcesFromZotero']) {
+    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'openRepository', 'editFrontMatter', 'connectZotero', 'updateSourcesFromZotero']) {
       assert.ok(commands.includes(`nimblescape.markdownPaper.${name}`), name);
     }
+  });
+
+  it('the terminals of VS Code get the command mp of the extension at the end of their PATH (R-CLI-001)', async () => {
+    const folder = (await api()).terminalFolder;
+    assert.ok(folder, 'the folder of the script mp');
+    const script = path.join(folder, process.platform === 'win32' ? 'mp.cmd' : 'mp');
+    const { stdout } = await promisify(execFile)(script, ['--version'], { shell: process.platform === 'win32' });
+    assert.match(stdout, /^mp \d+\.\d+\.\d+ \(layouts: nimblescape-layout 1\.0\.0\)$/m);
+  });
+
+  it('"Open Repository in New Window" finds the clone of a reference of the paper, and nothing for a missing clone (R-CLI-004)', async () => {
+    await api();
+    const file = write('repositories/paper/paper.md', '---\nlayout: plain\nrepos:\n  server: myorg/server@v2.1.0\n  client: myorg/client@main\n---\n\n# Code\n');
+    write('repositories/.markdownpaper/repos/server/.git/HEAD', `${'a'.repeat(40)}\n`);
+    // The command opens the folder in a new window, which would run these tests again; the test asks only for the folder.
+    const context: Context = { extension: vscode.extensions.getExtension(extensionId)!.extensionUri, browserPath: () => '', openPdf: () => false, previewFile: () => undefined };
+    const clone = await cloneOfReference(context, file, 'server');
+    assert.equal(clone?.fsPath, path.join(folder, 'repositories', '.markdownpaper', 'repos', 'server'));
+    // The clone of client is missing, and the paper names no reference "tools".
+    assert.equal(await cloneOfReference(context, file, 'client'), undefined);
+    assert.equal(await cloneOfReference(context, file, 'tools'), undefined);
+    // Each reference of the front matter is a link to the command, with the paper and the name of the reference.
+    await vscode.workspace.openTextDocument(file);
+    const links = await vscode.commands.executeCommand<vscode.DocumentLink[]>('vscode.executeLinkProvider', file);
+    const references = links.filter((link) => link.target?.scheme === 'command' && link.target.path === 'nimblescape.markdownPaper.openRepository');
+    assert.deepEqual(
+      references.map((link) => [link.range.start.line, link.range.start.character, link.range.end.character]),
+      [
+        [3, 10, 29],
+        [4, 10, 27],
+      ],
+    );
+    const args = JSON.parse(decodeURIComponent(references[0].target!.query)) as [string, string];
+    assert.deepEqual(args, [file.toString(), 'server']);
+    assert.equal((await cloneOfReference(context, args[0], args[1]))?.fsPath, clone?.fsPath);
+  });
+
+  it('"Edit Front Matter" opens the view "Front Matter" for a file, and a change of the form is one edit of the file (R-DOC-005)', async () => {
+    const extension = await api();
+    const file = write('paper/form.md', '---\nlayout: thesis\nsigned: yes\n---\n\n# Einleitung\n');
+    await vscode.commands.executeCommand('nimblescape.markdownPaper.editFrontMatter', file);
+    await waitFor(() => (extension.frontMatter().shown ? true : undefined), 'the page of the view');
+    assert.equal(extension.frontMatter().file?.toString(), file.toString());
+    const self = vscode.extensions.getExtension(extensionId)!.extensionUri;
+    const form = await formFor(self, file);
+    assert.deepEqual(
+      form.fields.map((field) => [field.key, field.required, field.warning]),
+      [['title', true, 'The layout needs this field.']],
+    );
+    assert.deepEqual(form.unknown, [{ key: 'signed', value: 'yes' }]);
+    // The value goes into the file, which is saved because it had no unsaved changes; layout and repos stay.
+    assert.equal(await applyFrontMatterChange(self, file, { key: 'title', value: 'Agenten im Team' }), true);
+    assert.equal(await applyFrontMatterChange(self, file, { key: 'layout', value: 'plain' }), false);
+    assert.equal(await applyFrontMatterChange(self, file, { key: 'signed', value: '' }), true);
+    const document = await vscode.workspace.openTextDocument(file);
+    assert.equal(document.isDirty, false);
+    assert.equal(fs.readFileSync(file.fsPath, 'utf8'), '---\nlayout: thesis\ntitle: Agenten im Team\n---\n\n# Einleitung\n');
   });
 
   it('a missing required field of the layout is a warning at the field layout, with the description in its hover (R-DOC-002, R-DOC-003)', async () => {
@@ -218,7 +280,7 @@ describe('nimblescape Markdown Paper', function () {
     assert.equal(fs.readFileSync(pdf.fsPath).subarray(0, 5).toString('latin1'), '%PDF-');
   });
 
-  it('the pages of the PDF show the diagrams of Mermaid and the math of KaTeX of the Markdown extensions of VS Code (R-REN-010)', async function () {
+  it('the pages of the PDF show the diagrams of Mermaid and the math of KaTeX of the Markdown extensions of VS Code (R-REN-010), and the PlantUML diagrams of nimblescape PlantUML (R-REN-015)', async function () {
     let browser: string;
     try {
       browser = findBrowser(vscode.workspace.getConfiguration('nimblescape.markdownPaper').get<string>('browserPath') ?? '');
@@ -229,20 +291,29 @@ describe('nimblescape Markdown Paper', function () {
     await api();
     const own = vscode.extensions.getExtension(extensionId)?.extensionUri;
     assert.ok(own);
-    const extensions = await markdownExtensions(own);
+    const file = write(
+      'paper/diagram.md',
+      '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nDie Formel $a^2 + b^2 = c^2$.\n\n```mermaid\ngraph LR\n  Alpha --> Beta\n```\n\n```plantuml\nAnna -> Bernd : Frage\n```\n',
+    );
+    const extensions = await markdownExtensions(own, file);
+    assert.deepEqual(extensions.env, { currentDocument: file });
     assert.ok(extensions.plugins.length >= 2, 'the plugins of Markdown Math and Mermaid');
     assert.ok(
       extensions.scripts.some((script) => 'src' in script && script.module && /mermaid/.test(script.src)),
       'the module script of Mermaid',
     );
     assert.ok(!extensions.scripts.some((script) => 'src' in script && /markdown-language-features\/|paperPreview\.js/.test(script.src)), 'not the scripts of the preview itself');
-    const file = write('paper/diagram.md', '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nDie Formel $a^2 + b^2 = c^2$.\n\n```mermaid\ngraph LR\n  Alpha --> Beta\n```\n');
     const html = path.join(folder, 'paper', 'diagram.html');
     const result = await exportPdf(file.fsPath, {
-      assets: { layouts: vscode.Uri.joinPath(own, 'layouts').fsPath, pagedJs: vscode.Uri.joinPath(own, 'media', 'paged.polyfill.js').fsPath },
+      assets: {
+        layouts: vscode.Uri.joinPath(own, 'layouts').fsPath,
+        pagedJs: vscode.Uri.joinPath(own, 'media', 'paged.polyfill.js').fsPath,
+        plantUml: vscode.Uri.joinPath(own, 'media', 'plantuml').fsPath,
+      },
       browser,
       html,
       extensions,
+      plantUml: plantUmlOptions(file),
     });
     assert.equal(fs.readFileSync(result.pdf).subarray(0, 5).toString('latin1'), '%PDF-');
     assert.deepEqual(result.messages, []);
@@ -261,6 +332,7 @@ describe('nimblescape Markdown Paper', function () {
         {
           expression: `new Promise((resolve) => { const done = () => { const pages = document.querySelector('.pagedjs_pages'); resolve({
             diagram: [...pages.querySelectorAll('svg')].some((svg) => svg.textContent.includes('Alpha') && svg.textContent.includes('Beta')),
+            plantUml: [...pages.querySelectorAll('.nimblescape-paper-plantuml > svg')].some((svg) => svg.textContent.includes('Anna') && svg.textContent.includes('Frage')),
             inside: [...pages.querySelectorAll('svg')].every((svg) => svg.getBoundingClientRect().right <= svg.closest('.pagedjs_page_content').getBoundingClientRect().right + 1),
             buttons: [...pages.querySelectorAll('.mermaid-zoom-controls')].filter((element) => getComputedStyle(element).display !== 'none').length,
             math: pages.querySelectorAll('.katex').length,
@@ -271,9 +343,9 @@ describe('nimblescape Markdown Paper', function () {
           returnByValue: true,
         },
         sessionId,
-      )) as { result: { value: { diagram: boolean; inside: boolean; buttons: number; math: number; font: boolean; light: boolean } } };
-      // The diagram stands inside the text of its page, without the buttons of the screen.
-      assert.deepEqual(evaluated.result.value, { diagram: true, inside: true, buttons: 0, math: 1, font: true, light: true });
+      )) as { result: { value: { diagram: boolean; plantUml: boolean; inside: boolean; buttons: number; math: number; font: boolean; light: boolean } } };
+      // The diagrams stand inside the text of their page, without the buttons of the screen.
+      assert.deepEqual(evaluated.result.value, { diagram: true, plantUml: true, inside: true, buttons: 0, math: 1, font: true, light: true });
     } finally {
       await running.close();
     }

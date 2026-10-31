@@ -26,8 +26,10 @@ import { baseCss } from './baseCss';
 import { extensionCss } from './extensionStyles';
 import { bodyOf, type FrontMatter, readFrontMatter } from './frontMatter';
 import { hyphenatorOf } from './hyphenate';
-import { type Layout, layoutFile, type Problem, parseLayout, termsFor } from './layout';
+import { parseRemote } from './gallery';
+import { type Layout, layoutFile, layoutName, type Problem, parseLayout, termsFor } from './layout';
 import { type Body, type MarkdownPlugin, renderBody } from './markdown';
+import { cloneName, clonesFolder, referencesOf } from './references';
 import { escapeHtml, fill, pdfNameOf } from './template';
 
 /** Reader reads files by their URLs. */
@@ -84,8 +86,7 @@ export interface Rendered {
   problems: Problem[];
 }
 
-/** layoutName matches a valid name of a layout: the name of a folder. */
-export const layoutName = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+export { layoutName } from './layout';
 
 /** defaultLayout is the built-in layout of a file without the field `layout`. */
 export const defaultLayout = 'plain';
@@ -108,24 +109,94 @@ function parentOf(folder: string): string | undefined {
 export const folderOf = (file: string): string => new URL('.', file).href;
 
 /**
- * findLayout finds the layout that a document names, and reads it.
+ * foldersAbove returns the URL of the folder of a document and of each folder above it, up to the top folder of the
+ * search.
+ * @param host - The host with the top folder.
+ * @param document - The URL of the document.
+ */
+function foldersAbove(host: Pick<Host, 'top'>, document: string): string[] {
+  const top = host.top && !host.top.endsWith('/') ? `${host.top}/` : host.top;
+  const folders: string[] = [];
+  for (let folder: string | undefined = folderOf(document); folder; folder = folder === top ? undefined : parentOf(folder)) {
+    folders.push(folder);
+    if (top && !folder.startsWith(top)) {
+      break;
+    }
+  }
+  return folders;
+}
+
+/**
+ * findClone finds the folder of the clone of a reference that `mp get` made in `.markdownpaper/repos/` of the project
+ * of a document ([R-CLI-004](../../docs/requirements.md#r-cli-004)), or returns undefined when it is missing.
+ * @param host - The reader of the files and the top folder of the search.
+ * @param document - The URL of the document.
+ * @param name - The name of the clone.
+ * @param file - A file of the clone that must exist, relative to its folder.
+ */
+export async function findClone(host: Pick<Host, 'reader' | 'top'>, document: string, name: string, file = '.git/HEAD'): Promise<string | undefined> {
+  for (const folder of foldersAbove(host, document)) {
+    const clone = `${folder}${clonesFolder}/${name}/`;
+    if (await host.reader.read(`${clone}${file}`)) {
+      return clone;
+    }
+  }
+  return undefined;
+}
+
+/** publicKey matches the key `public = true` of the section `[markdownpaper]` of the Git configuration of a clone. */
+const publicKey = /^\[markdownpaper\][^[]*^\s*public\s*=\s*true\s*$/im;
+
+/**
+ * publicRepositoriesOf returns the repositories of the field `repos` of a document that are public, `owner/repository`
+ * in small letters: `mp get` writes `markdownpaper.public` into the Git configuration of each clone, from one request
+ * without a sign-in to GitHub ([R-PDF-005](../../docs/requirements.md#r-pdf-005)). A missing clone or answer is not public.
+ * @param host - The reader of the files and the top folder of the search.
+ * @param document - The URL of the document.
+ * @param text - The text of the document.
+ */
+export async function publicRepositoriesOf(host: Pick<Host, 'reader' | 'top'>, document: string, text: string): Promise<string[]> {
+  const repositories: string[] = [];
+  for (const reference of referencesOf(text).references) {
+    const clone = reference.key === 'repos' ? await findClone(host, document, reference.name, '.git/config') : undefined;
+    const config = clone ? await host.reader.read(`${clone}.git/config`) : undefined;
+    if (config && publicKey.test(decoder.decode(config))) {
+      repositories.push(reference.spec.repository.toLowerCase());
+    }
+  }
+  return repositories;
+}
+
+/**
+ * findLayout finds the layout that a document names, and reads it: a folder of `layouts/` of the folder of the
+ * document or of a folder above it, a layout on GitHub in its clone ([R-CLI-004](../../docs/requirements.md#r-cli-004)),
+ * or a built-in layout.
  * @param host - The host.
  * @param document - The URL of the document.
- * @param name - The name of the layout.
+ * @param name - The name of the layout, or its reference on GitHub.
  */
 export async function findLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 'top'>, document: string, name: string): Promise<{ layout?: Layout; problems: Problem[] }> {
+  if (name.includes('/')) {
+    const spec = parseRemote(name);
+    if (!spec) {
+      return { problems: [{ severity: 'error', message: `The layout "${name}" is no reference to a layout on GitHub: <owner>/<repository>/<folder>@<rev>.` }] };
+    }
+    const path = spec.folder ? `${spec.folder}/` : '';
+    const clone = await findClone(host, document, cloneName(spec), `${path}${layoutFile}`);
+    if (!clone) {
+      return { problems: [{ severity: 'error', message: `The layout ${name} is not in ${clonesFolder}/ of the project yet: run "mp get" in the folder of the project.` }] };
+    }
+    const bytes = await host.reader.read(`${clone}${path}${layoutFile}`);
+    return parseLayout(bytes ? decoder.decode(bytes) : '', spec.folder.split('/').pop() || cloneName(spec), `${clone}${path}`);
+  }
   if (!layoutName.test(name)) {
     return { problems: [{ severity: 'error', message: `The layout "${name}" is no name of a folder: letters, digits, ".", "-" and "_".` }] };
   }
-  const top = host.top && !host.top.endsWith('/') ? `${host.top}/` : host.top;
-  for (let folder: string | undefined = folderOf(document); folder; folder = folder === top ? undefined : parentOf(folder)) {
+  for (const folder of foldersAbove(host, document)) {
     const candidate = `${folder}layouts/${name}/`;
     const bytes = await host.reader.read(`${candidate}${layoutFile}`);
     if (bytes) {
       return parseLayout(decoder.decode(bytes), name, candidate);
-    }
-    if (top && !folder.startsWith(top)) {
-      break;
     }
   }
   const builtin = `${host.builtinLayouts}${name}/`;
@@ -202,6 +273,8 @@ export interface LoadedLayout {
   /** before and after are the templates of the fixed pages before and after the text, with their URLs. */
   before: { url: string; name: string; text: string }[];
   after: { url: string; name: string; text: string }[];
+  /** publicRepositories are the public repositories of the field `repos` of the document, from publicRepositoriesOf. */
+  publicRepositories: string[];
   problems: Problem[];
 }
 
@@ -232,12 +305,14 @@ export async function documentLayout(host: Pick<Host, 'reader' | 'builtinLayouts
 }
 
 /**
- * loadLayout finds the layout of a document and reads its style sheets and its templates.
+ * loadLayout finds the layout of a document and reads its style sheets and its templates, and finds the public
+ * repositories of the document.
  * @param host - The reader of the files and the places of the layouts.
  * @param document - The URL of the document.
  * @param frontMatter - The front matter of the document.
+ * @param text - The text of the document, whose field `repos` names the repositories.
  */
-export async function loadLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 'top'>, document: string, frontMatter: FrontMatter | undefined): Promise<LoadedLayout> {
+export async function loadLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 'top'>, document: string, frontMatter: FrontMatter | undefined, text = ''): Promise<LoadedLayout> {
   const { layout, problems } = await documentLayout(host, document, frontMatter);
   const read = async (file: string): Promise<{ url: string; text: string } | undefined> => {
     const url = `${layout.folder}${file}`;
@@ -264,7 +339,7 @@ export async function loadLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 
     }
     return parts;
   };
-  return { layout, styles, before: await templates(layout.before), after: await templates(layout.after), problems };
+  return { layout, styles, before: await templates(layout.before), after: await templates(layout.after), publicRepositories: await publicRepositoriesOf(host, document, text), problems };
 }
 
 /** Composed is the part of a page that comes from the layout and the fields of a document. */
@@ -324,19 +399,26 @@ function attributesHtml(attributes: Record<string, string>): string {
  * @param document - The URL of the file.
  * @param text - The text of the file, with its unsaved changes.
  * @param plugins - The markdown-it plugins of other extensions ([R-REN-010](../../docs/requirements.md#r-ren-010)).
+ * @param pluginEnv - The values that these plugins find in the environment of markdown-it, such as `currentDocument`.
  */
-export async function render(host: Host, document: string, text: string, plugins: readonly MarkdownPlugin[] = []): Promise<Rendered> {
+export async function render(
+  host: Host,
+  document: string,
+  text: string,
+  plugins: readonly MarkdownPlugin[] = [],
+  pluginEnv: Readonly<Record<string, unknown>> = {},
+): Promise<Rendered> {
   const problems: Problem[] = [];
   const frontMatter = readFrontMatter(text);
   for (const error of frontMatter?.errors ?? []) {
     problems.push({ severity: 'warning', message: `Front matter: ${error.message}`, file: document, line: error.line });
   }
-  const loaded = await loadLayout(host, document, frontMatter);
+  const loaded = await loadLayout(host, document, frontMatter, text);
   problems.push(...loaded.problems);
   const layout = loaded.layout;
   const values = valuesOf(layout, frontMatter, document);
   const hyphenate = layout.hyphenate ? hyphenatorOf(layout.language) : undefined;
-  const body = renderBody(bodyOf(text, frontMatter), layout, hyphenate, plugins);
+  const body = renderBody(bodyOf(text, frontMatter), layout, hyphenate, plugins, pluginEnv, loaded.publicRepositories);
   problems.push(...body.problems.map((problem) => ({ ...problem, file: problem.file ?? document })));
   const composed = compose(loaded, values, host.resource);
   const attributes = attributesHtml(composed.attributes);
@@ -381,9 +463,11 @@ ${handlersJs.replace(/<\/script/gi, '<\\/script')}
 <script nonce="${host.nonce}">
 window.PagedConfig = {
   auto: true,
-  // The scripts of the Markdown extensions draw after the page has loaded, for example the diagrams of Mermaid.
-  // Paged.js makes the pages when the page has not changed for 200 milliseconds and no diagram of Mermaid waits, at
-  // the latest after 10 seconds.
+  // The scripts of the Markdown extensions draw after the page has loaded, for example the diagrams of Mermaid and of
+  // nimblescape PlantUML. Paged.js makes the pages when the page has not changed for 200 milliseconds and no diagram
+  // waits, at the latest after 10 seconds; while nimblescape PlantUML renders, until 65 seconds after it drew its last
+  // block, since it gives up on a diagram after 60 seconds. The PlantUML blocks then get copies of their diagrams, which
+  // the extension draws into shadow roots, which the pages of Paged.js would lose.
   before: function () {
     // The handlers of the renderer: the page numbers (R-REN-013), and the natural spaces of the last lines of the
     // justified paragraphs whose spaces shrink (R-REN-012).
@@ -392,14 +476,21 @@ window.PagedConfig = {
       function start() {
         var end = Date.now() + 10000;
         var last = Date.now();
+        var drawn = -1;
         var observer = new MutationObserver(function () {
           last = Date.now();
         });
         observer.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
         function check() {
-          var waiting = document.querySelector('.mermaid:not(:has(svg))');
+          var plantUml = window.paperHandlers.plantUmlProgress(document.body);
+          if (plantUml.rendering && plantUml.drawn !== drawn) {
+            drawn = plantUml.drawn;
+            end = Math.max(end, Date.now() + 65000);
+          }
+          var waiting = window.paperHandlers.drawingsPending(document.body);
           if (Date.now() > end || (!waiting && Date.now() - last >= 200)) {
             observer.disconnect();
+            window.paperHandlers.copyPlantUml(document.body, document.body);
             resolve();
           } else {
             setTimeout(check, 50);

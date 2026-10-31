@@ -25,6 +25,9 @@ export const instructionsCommand = 'npx -y @nimblescape/markdownpaper instructio
 /** layoutFile is the name of the file of a layout folder that describes the layout. */
 export const layoutFile = 'layout.json';
 
+/** layoutName matches a valid name of a layout: the name of a folder. */
+export const layoutName = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
 /** FieldSpec is a field of the front matter that the layout uses. */
 export interface FieldSpec {
   /** description says what the field holds, for the hover of the editor and for the agents that write documents. */

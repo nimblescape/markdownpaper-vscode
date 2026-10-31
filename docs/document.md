@@ -13,9 +13,12 @@ into pages and a PDF. They are for people and for AI agents. Print them with
 ## 1. Front matter and layout
 
 The file starts with a front matter: YAML between two lines `---`. The field
-`layout` names the layout, the name of a folder `layouts/<name>/` in the
-folder of the file or in a folder above it. Without the field, the file gets
-the built-in layout `plain`.
+`layout` names the layout: the name of a folder `layouts/<name>/` in the
+folder of the file or in a folder above it, a built-in layout such as
+`plain`, or a layout on GitHub with its reference
+`<owner>/<repository>/<folder>@<rev>`, for example
+`layout: majikmate/markdownpaper-layout-pht/thesis@main`. Without the field,
+the file gets the built-in layout `plain`.
 
 ```markdown
 ---
@@ -38,6 +41,20 @@ date: "30 October 2026"
 - The field `lang`, for example `lang: de-AT`, changes the language of the
   layout for this file: the hyphenation and the words that the renderer
   writes, such as "Abbildung" or "Figure".
+- The paper names each other repository that it uses as a reference with a
+  rev: the layout in `layout`, and the repositories of the code of its
+  listings in the map `repos`, `<name>: <owner>/<repository>@<rev>`, for
+  example `server: org/server@v2.1.0`. A tag or a commit as the rev pins the
+  version; a branch, for example `@main`, takes the head of the branch.
+  `npx -y @nimblescape/markdownpaper get` clones them into
+  `.markdownpaper/repos/<name>/` of the project, which Git ignores; run it
+  before `format`, `check` and `build`. The clone of a branch is on that
+  branch: add a snippet there only when the author asks for it, and commit
+  and push it in the clone. Change nothing in the clone of a tag or a commit:
+  it pins the version.
+  `get <owner>/<repository>@<rev>` adds a reference to `repos`; without
+  `@<rev>` and without a terminal, it takes the default branch and writes it.
+  `get -u` moves the references to tags to the newest tags.
 - Do not write a cover page into the text: the layout makes it from the
   fields.
 
@@ -191,7 +208,8 @@ export function readFields(lines: readonly string[]): Map<string, string> {
 ````
 
 The page shows "Listing 1: Reading the fields (fields.ts, L12-L30)" above the
-code, without the link. A link `[Listing 1](#lst-reading-fields)` gets the
+code, without the link. A listing of a public repository of `repos` (section
+1) has the link to its lines on the cite, and its address in a footnote. A link `[Listing 1](#lst-reading-fields)` gets the
 label of the listing. Do not change the code, the link or the cite of a
 listing by hand: the formatter of Markdown Notes writes them from the source.
 
@@ -210,6 +228,19 @@ The renderer numbers the footnotes 1, 2, 3 in the order of their first
 references, whatever their labels are. A second reference shows the number of
 the footnote again. The definition can stand anywhere in the file; lines
 indented by four spaces after it belong to it.
+
+Links in the PDF:
+
+- Write every reference inside the paper as a Markdown link to its target: a
+  heading, a figure, a table, a listing (sections 2 and 4 to 6) or a source
+  (section 9). The PDF links it in the color of the text, without a mark.
+- Write a link to the outside as a Markdown link with its own text, such as
+  `[the report of the agency](https://example.org/report.pdf)`, or as the
+  bare address. The PDF shows the text of the link and gives its address in
+  a footnote, so that a printed page shows it. Do not write a footnote with
+  the address yourself.
+- The reference list writes the full address of a source, a DOI as
+  `https://doi.org/…`; the format writes it (section 9).
 
 ## 8. Reference list and appendix
 
@@ -241,10 +272,10 @@ write the text of a citation or of an entry yourself.
 
 1. **Add the source** to the comment `nimblescape-sources` at the end of the
    file, one line of CSL JSON for each source, with the command
-   `markdownpaper source`:
+   `mp source`:
 
    ```sh
-   markdownpaper source paper/paper.md 10.3390/bs9040039 978-3-8252-4753-9 inbox/export.ris
+   mp source paper/paper.md 10.3390/bs9040039 978-3-8252-4753-9 inbox/export.ris
    ```
 
    ```markdown
@@ -260,7 +291,7 @@ write the text of a citation or of an entry yourself.
      catalogs of the libraries, PubMed or arXiv, or from the file, gives each
      new source its ID, and does not add a source that the database has
      already.
-   - `markdownpaper source --search "<title>"` lists up to ten works of
+   - `mp source --search "<title>"` lists up to ten works of
      Crossref with their DOIs. Add the right one by its DOI.
    - For each input, the command prints the ID, where the metadata came from,
      and the fields that the source needs and did not get. Take such a field
@@ -336,7 +367,7 @@ write the text of a citation or of an entry yourself.
    <wbr><!--[research-->Feedback changes learning more than praise does (RESEARCH).
    ```
 
-   Find sources that support the argument, add them with `markdownpaper
+   Find sources that support the argument, add them with `mp
    source`, remove the start marker, and replace `(RESEARCH)` with their
    citations. When no source supports the argument, keep both marks and say
    so.
@@ -358,13 +389,17 @@ definitions. Keep a note as it is unless you are asked to change it.
 ## 12. Checks
 
 ```sh
+npx -y @nimblescape/markdownpaper get
 npx -y @nimblescape/markdownpaper format paper/paper.md
 npx -y @nimblescape/markdownpaper check paper/paper.md
-npx -y @nimblescape/markdownpaper pdf paper/paper.md
+npx -y @nimblescape/markdownpaper build paper/paper.md
 ```
+
+`get` clones the repositories that the front matter names, or brings the head
+of each branch (section 1).
 
 `format` writes the citations and the reference list (section 9) and the lists
 of the special sections (section 3) into the file. `check` names a layout that
 does not exist, each missing required field, and the problems of the sources
 and the citations.
-`pdf` writes the PDF beside the file; see `instructions render`.
+`build` writes the PDF beside the file; see `instructions render`.

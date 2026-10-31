@@ -3,7 +3,7 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 /**
- * The instructions for AI agents ([R-CLI-003](../../docs/requirements.md#r-cli-003)): `markdownpaper instructions
+ * The instructions for AI agents ([R-CLI-003](../../docs/requirements.md#r-cli-003)): `mp instructions
  * <topic>` prints the rules of a topic, so that an agent reads the rules of the installed version without web access.
  * The texts are the documents of docs/, which the build puts into the bundle, so the documents on GitHub and the
  * printed rules are the same text. The module uses no API of VS Code.
@@ -34,7 +34,7 @@ export const topics: readonly Topic[] = [
 ];
 
 /**
- * topicList returns the list of the topics, for `markdownpaper instructions` without a topic.
+ * topicList returns the list of the topics, for `mp instructions` without a topic.
  * @param command - The command that prints a topic.
  */
 export const topicList = (command: string): string =>

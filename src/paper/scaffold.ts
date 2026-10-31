@@ -4,15 +4,16 @@
 
 /**
  * The scaffold ([R-NEW-001](../../docs/requirements.md#r-new-001) to [R-NEW-003](../../docs/requirements.md#r-new-003)):
- * the files of a new document, of a new layout and of a new project, as `markdownpaper create`, `markdownpaper new`
+ * the files of a new document, of a new layout and of a new project, as `mp create`, `mp new`
  * and the commands "New Document", "New Layout" and "New Project" of the extension write them. The module returns the
  * files; the host writes them, and never over an existing file. It uses no API of VS Code.
  */
 
 import { readFrontMatter } from './frontMatter';
-import { type Origin, readOrigin } from './gallery';
+import { type Origin, type RemoteSpec, readOrigin, referenceText } from './gallery';
 import { editJsonText } from './jsonText';
 import { type FieldSpec, formatText, type Layout, layoutFile } from './layout';
+import { cloneName, clonesFolder } from './references';
 
 /** NewFile is a file to write: its path, relative to the folder of the new project or layout, and its content. */
 export interface NewFile {
@@ -20,10 +21,10 @@ export interface NewFile {
   content: string | Uint8Array;
 }
 
-/** packageName is the name of the npm package with the command markdownpaper. */
+/** packageName is the name of the npm package with the command mp. */
 export const packageName = '@nimblescape/markdownpaper';
 
-/** command is the command that runs markdownpaper without an installation. */
+/** command is the command that runs mp without an installation. */
 export const command = `npx -y ${packageName}`;
 
 const decoder = new TextDecoder();
@@ -39,9 +40,10 @@ const yamlString = (text: string): string => JSON.stringify(text);
  * rules, the field `layout`, and each field of the layout with its description in a comment above it.
  * @param layout - The layout.
  * @param values - The values of fields that the document gets, for example the title.
+ * @param name - The value of the field `layout`: the name of the layout, or its reference on GitHub.
  */
-export function frontMatterOf(layout: Pick<Layout, 'id' | 'fields'>, values: Readonly<Record<string, string>> = {}): string {
-  const lines = ['---', `# nimblescape Markdown Paper. The rules of this file: ${command} instructions document`, `layout: ${layout.id}`];
+export function frontMatterOf(layout: Pick<Layout, 'id' | 'fields'>, values: Readonly<Record<string, string>> = {}, name = layout.id): string {
+  const lines = ['---', `# nimblescape Markdown Paper. The rules of this file: ${command} instructions document`, `layout: ${name}`];
   const entries: [string, FieldSpec][] = Object.entries(layout.fields);
   for (const [key, spec] of entries) {
     if (spec.description || spec.values) {
@@ -81,11 +83,12 @@ export function splitStart(start: string): { values: Record<string, string>; bod
  * @param layout - The layout.
  * @param start - The text of the empty paper document of the layout, or undefined.
  * @param values - The values of fields that the document gets, before the values of the empty paper document.
+ * @param name - The value of the field `layout`: the name of the layout, or its reference on GitHub.
  */
-export function newDocumentText(layout: Pick<Layout, 'id' | 'fields' | 'terms'>, start: string | undefined, values: Readonly<Record<string, string>> = {}): string {
+export function newDocumentText(layout: Pick<Layout, 'id' | 'fields' | 'terms'>, start: string | undefined, values: Readonly<Record<string, string>> = {}, name = layout.id): string {
   const parts = start?.trim() ? splitStart(start) : undefined;
   const body = parts?.body || `# ${layout.terms.figure === 'Abbildung' ? 'Einleitung' : 'Introduction'}\n\n`;
-  return `${frontMatterOf(layout, { ...parts?.values, ...values })}\n\n${body.trimEnd()}\n`;
+  return `${frontMatterOf(layout, { ...parts?.values, ...values }, name)}\n\n${body.trimEnd()}\n`;
 }
 
 /** decodePath returns a path of a link without its escapes, or the path as it is when its escapes are wrong. */
@@ -248,6 +251,11 @@ export interface ProjectOptions {
    * for example of a copy in `layouts/` of the workspace.
    */
   origin?: Origin;
+  /**
+   * reference is the reference of a layout on GitHub in its clone ([R-CLI-004](../../docs/requirements.md#r-cli-004)):
+   * the document names it in its field `layout`, and the project gets no copy of the layout.
+   */
+  reference?: RemoteSpec;
 }
 
 /**
@@ -261,9 +269,10 @@ export const sourcesFolder = 'bib';
 /**
  * agentsText returns the text of the file AGENTS.md of a new project, which tells every AI agent the commands of the
  * rules and of the PDF.
- * @param layout - The name of the layout of the project.
+ * @param layout - The folder of the layout of the project: its copy in `layouts/`, or its clone.
+ * @param reference - The reference of a layout on GitHub, whose clone `mp get` makes.
  */
-export function agentsText(layout: string): string {
+export function agentsText(layout: string, reference?: string): string {
   return `# Instructions for AI agents
 
 This project writes a document in Markdown and makes its pages and its PDF with
@@ -273,7 +282,7 @@ commands; \`npx\` needs no installation.
 | Folder or file | Content |
 | --- | --- |
 | \`paper/paper.md\` | The document: front matter with the fields of the layout, then the text in Markdown. |
-| \`layouts/${layout}/\` | The layout of the pages: \`layout.json\`, the style sheets, the templates of the fixed pages, fonts and images. |
+| \`${layout}/\` | The layout of the pages: \`layout.json\`, the style sheets, the templates of the fixed pages, fonts and images.${reference ? ` The clone of ${reference}, which \`${command} get\` makes and Git ignores; change nothing in it.` : ''} |
 | \`${inboxFolder}/\` | The drop folder: a person puts a source here that no program can load on its own, for example a PDF file. |
 | \`${sourcesFolder}/\` | The files of the sources, each named after its citation. |
 | \`images/\` | The figures of the document. |
@@ -289,8 +298,8 @@ ${command} instructions render     # making the PDF and checking its pages
 After a change:
 
 \`\`\`sh
-${command} check paper/paper.md    # the front matter against the layout
-${command} pdf paper/paper.md      # the PDF beside the document
+${reference ? `${command} get                   # the repositories that the paper names, such as its layout, into .markdownpaper/repos/\n` : ''}${command} check paper/paper.md    # the front matter against the layout
+${command} build paper/paper.md    # the PDF beside the document
 \`\`\`
 
 Process each file in \`${inboxFolder}/\`: read it, find the authors, the year and the title of the source, and move the
@@ -323,11 +332,17 @@ authors; the PDF leaves them out. Keep them as they are unless you are asked to 
 export function newProjectFiles(options: ProjectOptions, start: string | undefined): NewFile[] {
   const json = options.source.get(layoutFile);
   const origin = options.origin ?? (json ? readOrigin(decoder.decode(json)) : undefined);
-  const layoutFiles = newLayoutFiles(options.source, { name: options.layout.name, language: options.language, ...(origin ? { origin } : {}) }).map((file) => ({ ...file, path: `layouts/${options.layout.id}/${file.path}` }));
+  const { reference } = options;
+  const layoutFiles = reference
+    ? []
+    : newLayoutFiles(options.source, { name: options.layout.name, language: options.language, ...(origin ? { origin } : {}) }).map((file) => ({ ...file, path: `layouts/${options.layout.id}/${file.path}` }));
   const linked = startFiles(start, options.source);
-  const text = newDocumentText(options.layout, start, options.values);
+  const values = reference && options.language && options.language !== options.layout.language ? { ...options.values, lang: options.language } : options.values;
+  const text = newDocumentText(options.layout, start, values, reference ? referenceText(reference) : options.layout.id);
+  const folder = reference ? [clonesFolder, cloneName(reference), reference.folder].filter(Boolean).join('/') : `layouts/${options.layout.id}`;
   return [
-    { path: 'AGENTS.md', content: agentsText(options.layout.id) },
+    { path: 'AGENTS.md', content: agentsText(folder, reference && referenceText(reference)) },
+    ...(reference ? [{ path: '.markdownpaper/.gitignore', content: '*\n' }] : []),
     ...layoutFiles,
     ...linked,
     { path: 'paper/paper.md', content: rebaseLinks(text, linked.map((file) => file.path), '../') },

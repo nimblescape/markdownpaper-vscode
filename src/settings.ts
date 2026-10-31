@@ -18,10 +18,31 @@ export interface Settings {
   previewDelay: number;
   /** openPdf is true when "Export PDF" opens the written PDF with the program of the system. */
   openPdf: boolean;
+  /**
+   * zoteroGroups are the numbers of the group libraries of Zotero that `/cite` and "Update Sources from Zotero" read
+   * besides the personal library (decision 50).
+   */
+  zoteroGroups: string[];
 }
 
 /** defaults are the defaults of the settings, the same as in package.json. */
-export const defaults: Settings = { browserPath: '', previewDelay: 800, openPdf: true };
+export const defaults: Settings = { browserPath: '', previewDelay: 800, openPdf: true, zoteroGroups: [] };
+
+/**
+ * groupNumber returns the number of a group library of Zotero from a value of the setting `zoteroGroups`: the number,
+ * also as a text, or the address of the group on zotero.org, for example `https://www.zotero.org/groups/1234567/thesis`.
+ * @param value - The value.
+ * @returns The number as a text, or undefined for another value.
+ */
+function groupNumber(value: unknown): string | undefined {
+  if (typeof value === 'number') {
+    return Number.isSafeInteger(value) && value > 0 ? String(value) : undefined;
+  }
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  return /^\s*(\d+)\s*$/.exec(value)?.[1] ?? /^\s*https:\/\/(?:www\.)?zotero\.org\/groups\/(\d+)(?:[/?#]\S*)?\s*$/i.exec(value)?.[1];
+}
 
 /**
  * checkedSettings returns the settings with the default for each value that is missing or of a wrong type.
@@ -31,9 +52,12 @@ export function checkedSettings(get: (key: keyof Settings) => unknown): Settings
   const browserPath = get('browserPath');
   const previewDelay = get('previewDelay');
   const openPdf = get('openPdf');
+  const zoteroGroups = get('zoteroGroups');
   return {
     browserPath: typeof browserPath === 'string' ? browserPath : defaults.browserPath,
     previewDelay: typeof previewDelay === 'number' && Number.isFinite(previewDelay) ? Math.min(Math.max(previewDelay, 100), 10_000) : defaults.previewDelay,
     openPdf: typeof openPdf === 'boolean' ? openPdf : defaults.openPdf,
+    // A value that names no group is left out, and each group counts once.
+    zoteroGroups: Array.isArray(zoteroGroups) ? [...new Set(zoteroGroups.map(groupNumber).filter((group) => group !== undefined))] : defaults.zoteroGroups,
   };
 }

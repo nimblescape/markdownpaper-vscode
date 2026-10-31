@@ -11,7 +11,7 @@ import { describe, expect, test } from 'vitest';
 import { findDatabase, updateSources } from './citations';
 import type { Source } from './csl';
 import type { Fetcher } from './lookup';
-import { allItems, itemOf, keyUser, matchItem, mergeItem, newSource, pdfOf, readItems, searchItems, type ZoteroItem } from './zotero';
+import { allItems, allLibraryItems, groupLibraries, itemOf, keyUser, matchItem, mergeItem, newSource, pdfOf, readItems, searchItems, searchLibraries, type ZoteroItem } from './zotero';
 
 const encoder = new TextEncoder();
 const api = 'https://api.zotero.org';
@@ -54,6 +54,34 @@ describe('the Zotero web API (R-CITE-006)', () => {
     expect(items[0].source).toEqual({ id: '', type: 'article-journal', title: 'Feedback in der Schule', author: [{ family: 'Muster', given: 'Anna' }], issued: { 'date-parts': [[2024, 3, 1]] }, DOI: '10.1000/xyz' });
     expect(items[0]).toMatchObject({ creators: 'Muster', year: '2024', children: 1 });
     expect(readItems(JSON.stringify({ ...article, library: { type: 'group', id: 99 } }))[0].ref).toBe('groups/99/ABCD1234');
+    // An item of a group library has the name of its group.
+    expect(items[0].group).toBeUndefined();
+    expect(readItems(JSON.stringify({ ...article, library: { type: 'group', id: 99, name: 'PHT Thesis' } }))[0].group).toBe('PHT Thesis');
+    expect(readItems(JSON.stringify({ ...article, library: { type: 'group', id: 99 } }))[0].group).toBe('group 99');
+  });
+
+  test('the search of several libraries gives the items of the personal library first, and a group that the key may not read adds a problem (decision 50)', async () => {
+    const group = { ...book, library: { type: 'group', id: 7654321, name: 'PHT Thesis' } };
+    const fetch = zotero({
+      [`${api}/users/1234567/items/top?q=didaktik&qmode=titleCreatorYear&format=json&include=data,csljson&limit=25`]: [article],
+      [`${api}/groups/7654321/items/top?q=didaktik&qmode=titleCreatorYear&format=json&include=data,csljson&limit=25`]: [group],
+    });
+    const libraries = ['users/1234567', ...groupLibraries(['7654321', '1111111'])];
+    expect(libraries).toEqual(['users/1234567', 'groups/7654321', 'groups/1111111']);
+    const found = await searchLibraries(fetch, key, libraries, 'didaktik');
+    expect(found.items.map((item) => item.ref)).toEqual(['users/1234567/ABCD1234', 'groups/7654321/BOOK0001']);
+    expect(found.problems).toEqual(['the group 1111111: Zotero has no such item or file (status 404).']);
+  });
+
+  test('all items of several libraries: a group without an answer adds a problem, and the personal library must answer (decision 50)', async () => {
+    const fetch = zotero({
+      [`${api}/users/1234567/items/top?format=json&include=data,csljson&limit=100&start=0`]: [article],
+      [`${api}/groups/7654321/items/top?format=json&include=data,csljson&limit=100&start=0`]: [{ ...book, library: { type: 'group', id: 7654321 } }],
+    });
+    const found = await allLibraryItems(fetch, key, ['users/1234567', 'groups/7654321', 'groups/1111111']);
+    expect(found.items.map((item) => item.ref)).toEqual(['users/1234567/ABCD1234', 'groups/7654321/BOOK0001']);
+    expect(found.problems).toHaveLength(1);
+    await expect(allLibraryItems(fetch, key, ['users/7', 'groups/7654321'])).rejects.toThrow('status 404');
   });
 
   test('the search asks for the title, the creators and the year; without words it gives the items changed last', async () => {

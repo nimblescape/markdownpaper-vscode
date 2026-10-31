@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, test } from 'vitest';
-import { downloadRemote, findRemote, findRemotes, layoutFolders, parseRemote, previewUrl, remoteName } from './gallery';
+import { downloadRemote, findRemote, findRemotes, layoutFolders, parseRemote, previewUrl, referenceText, remoteName } from './gallery';
 import { formatText } from './layout';
 import type { Fetcher } from './lookup';
 
@@ -65,13 +65,18 @@ const pht: Record<string, string> = {
 };
 
 describe('the names of the layouts on GitHub (R-LAY-007)', () => {
-  test('a name github:owner/repository/folder with an optional @ref is read, and another name is none', () => {
+  test('a reference owner/repository/folder with an optional @rev is read, also with github: before it, and another name is none (R-CLI-004)', () => {
+    expect(parseRemote('majikmate/markdownpaper-layout-pht/thesis@main')).toEqual({ repository: 'majikmate/markdownpaper-layout-pht', folder: 'thesis', ref: 'main' });
+    expect(parseRemote('org/server@v2.1.0')).toEqual({ repository: 'org/server', folder: '', ref: 'v2.1.0' });
     expect(parseRemote('github:majikmate/markdownpaper-layout-pht/thesis-v4')).toEqual({ repository: 'majikmate/markdownpaper-layout-pht', folder: 'thesis-v4' });
     expect(parseRemote('github:majikmate/markdownpaper-layout-pht/thesis-v4@claude/x')).toEqual({ repository: 'majikmate/markdownpaper-layout-pht', folder: 'thesis-v4', ref: 'claude/x' });
     expect(parseRemote('github:owner/layout@v1.0.0')).toEqual({ repository: 'owner/layout', folder: '', ref: 'v1.0.0' });
     expect(parseRemote('github:owner')).toBeUndefined();
     expect(parseRemote('thesis-v4')).toBeUndefined();
-    expect(remoteName({ repository: 'owner/layout', folder: '' })).toBe('github:owner/layout');
+    expect(parseRemote('../thesis')).toBeUndefined();
+    expect(remoteName({ repository: 'owner/layout', folder: '' })).toBe('owner/layout');
+    expect(referenceText({ repository: 'owner/layout', folder: 'thesis', ref: 'v1.0.0' })).toBe('owner/layout/thesis@v1.0.0');
+    expect(referenceText({ repository: 'owner/layout', folder: '' })).toBe('owner/layout');
   });
 
   test('the layout folders are the root and the folders up to two levels deep with a layout.json and a valid name', () => {
@@ -84,8 +89,8 @@ describe('the list of the layouts on GitHub (R-NEW-004)', () => {
     const asked: { url: string; headers: Readonly<Record<string, string>> }[] = [];
     const { layouts, problems } = await findRemotes(github(pht, asked), 'token-1');
     expect(layouts.map((layout) => [remoteName(layout), layout.layout.name, layout.commit])).toEqual([
-      ['github:majikmate/markdownpaper-layout-pht/concept-v2', 'PHT Konzeptpapier v2', commit],
-      ['github:majikmate/markdownpaper-layout-pht/thesis-v4', 'PHT Abschlussarbeit v4', commit],
+      ['majikmate/markdownpaper-layout-pht/concept-v2', 'PHT Konzeptpapier v2', commit],
+      ['majikmate/markdownpaper-layout-pht/thesis-v4', 'PHT Abschlussarbeit v4', commit],
     ]);
     expect(problems).toEqual([`broken/layouts: GitHub answered 404 for ${api}/broken/layouts/commits/main.`]);
     expect(asked.some((request) => request.url.includes('old/layouts'))).toBe(false);

@@ -13,17 +13,25 @@ Print them with `npx -y @nimblescape/markdownpaper instructions render`.
 ## 1. The PDF
 
 ```sh
-npx -y @nimblescape/markdownpaper pdf paper/paper.md
+npx -y @nimblescape/markdownpaper get
+npx -y @nimblescape/markdownpaper build paper/paper.md
 ```
 
-- The command writes the PDF beside the Markdown file, with the name that
+- `get` clones the repositories that the front matter of the paper names, such
+  as its layout on GitHub, into `.markdownpaper/repos/` of the project, or
+  brings the head of each branch; CI runs it before `build` too. A private
+  repository needs a token with read access to it in `GITHUB_TOKEN` or
+  `GH_TOKEN`.
+- `build` writes the PDF beside the Markdown file, with the name that
   `pdfName` of the layout gives, and prints its path.
 - `--output <file.pdf>` names another file, `--html <file.html>` also writes
   the HTML page, which a browser shows as pages, for a look at a problem.
 - The command needs Node.js 22 or later and an installed Google Chrome,
   Chromium or Microsoft Edge. It finds them at their usual places;
   `--browser <program>` or the environment variable `MARKDOWNPAPER_BROWSER`
-  names another program.
+  names another program. Without one, `--download-browser` downloads
+  Chromium once (about 120 MB) into the cache folder of the user, and the
+  next runs use it.
 - The exit code is 0 for a PDF without problems, 1 for a PDF with problems of
   the document, which the command prints, and 2 when no PDF was written.
 

@@ -78,14 +78,38 @@ describe('notes of nimblescape Markdown Notes (R-REN-002)', () => {
   test('a footnote of the document goes to the place of its reference, numbered without the notes', () => {
     const body = renderBody(example, layoutOf());
     expect(body.footnotes).toBe(1);
-    expect(body.html).toContain('three ways.<span class="footnote"><span class="footnote-paragraph">Planning, writing and checking.</span></span>');
+    expect(body.html).toContain('three ways.<span class="footnote"><span class="footnote-paragraph" id="paper-footnote-1">Planning, writing and checking.</span></span>');
     expect(body.html).not.toContain('footnotes-sep');
   });
 
-  test('a second reference of a footnote shows its number', () => {
+  test('a second reference of a footnote shows its number as a link to the footnote (R-PDF-005)', () => {
     const body = renderBody('A[^a] B[^b] C[^a]\n\n[^a]: One.\n\n[^b]: Two.\n', layoutOf());
     expect(body.footnotes).toBe(2);
-    expect(body.html).toContain('<sup class="footnote-again">1</sup>');
+    expect(body.html).toContain('A<span class="footnote"><span class="footnote-paragraph" id="paper-footnote-1">One.</span></span>');
+    expect(body.html).toContain('<sup class="footnote-again"><a href="#paper-footnote-1">1</a></sup>');
+  });
+
+  test('a link to the outside with its own text gets a footnote with its address, numbered with the footnotes (R-PDF-005)', () => {
+    const body = renderBody(
+      'See [the site](https://example.org/a?b=1&c=2)[^a], [again](https://example.org/a?b=1&c=2), [example.org](https://example.org), https://example.com, <https://example.net> and [mail](mailto:a@example.org).\n\n[^a]: From [the list](https://example.org/l) of [x.org](https://x.org/).\n',
+      layoutOf(),
+    );
+    expect(body.footnotes).toBe(3);
+    expect(body.html).toContain(
+      '<a href="https://example.org/a?b=1&amp;c=2">the site</a><span class="footnote link-footnote"><span class="footnote-paragraph" id="paper-footnote-1"><a class="link-address" href="https://example.org/a?b=1&amp;c=2">https://example.org/a?b=1&amp;c=2</a></span></span>',
+    );
+    // The footnote of the document after the link is the second footnote; its link gets the address after its text.
+    expect(body.html).toContain('<span class="footnote"><span class="footnote-paragraph" id="paper-footnote-2">From <a href="https://example.org/l">the list</a> (<span class="link-address">https://example.org/l</span>) of <a href="https://x.org/">x.org</a>.</span></span>');
+    expect(body.html).toContain('<a href="https://example.org/a?b=1&amp;c=2">again</a><sup class="footnote-again"><a href="#paper-footnote-1">1</a></sup>');
+    // A link that shows its address, a bare address and an autolink get no footnote.
+    expect(body.html).toContain('<a href="https://example.org">example.org</a>, <a href="https://example.com">https://example.com</a>, <a href="https://example.net">https://example.net</a>');
+    expect(body.html).toContain('<a href="mailto:a@example.org">mail</a><span class="footnote link-footnote"><span class="footnote-paragraph" id="paper-footnote-3"><a class="link-address" href="mailto:a@example.org">a@example.org</a></span></span>.');
+  });
+
+  test('a link inside the paper gets no footnote (R-PDF-005)', () => {
+    const body = renderBody('# Methods\n\nSee [Kapitel 1](#methods) and [Hong (2024)](#hong2024).\n', layoutOf());
+    expect(body.footnotes).toBe(0);
+    expect(body.html).not.toContain('footnote');
   });
 
   test('a reference of a note in a code span stays as it is', () => {
@@ -499,6 +523,22 @@ describe('listings (R-REN-011)', () => {
     const body = renderBody(markdown, layoutOf());
     expect(body.html).toContain('<span class="caption-text">Der Server</span><span class="caption-source"> (server.py)</span></p>');
     expect(body.listings.map((listing) => listing.text)).toEqual(['Der Server']);
+  });
+
+  test('a listing of a public repository has the link to its lines on its cite, with the address in a footnote; a private one has none (R-PDF-005)', () => {
+    const address = 'https://github.com/Org/Server/blob/0123456789abcdef0123456789abcdef01234567/src/api.ts#L12-L30';
+    const markdown = (repository: string): string =>
+      `Listing 1: [Reading the API](${address.replace('Org/Server', repository)}) (api.ts, L12-L30)<a id="lst-api"></a>\n\n<!-- listing: server:src/api.ts#read -->\n\n\`\`\`ts\nread();\n\`\`\`\n`;
+    const shown = renderBody(markdown('Org/Server'), layoutOf(), undefined, [], {}, ['org/server']);
+    expect(shown.html).toContain(
+      '<span class="caption-text">Reading the API</span><span class="caption-source"> ' +
+        `<a href="${address}">(api.ts, L12-L30)</a><span class="footnote link-footnote"><span class="footnote-paragraph" id="paper-footnote-1"><a class="link-address" href="${address}">${address}</a></span></span></span></p>`,
+    );
+    expect(shown.listings.map((listing) => listing.text)).toEqual(['Reading the API']);
+    for (const hidden of [renderBody(markdown('Org/Server'), layoutOf()), renderBody(markdown('org/tools'), layoutOf(), undefined, [], {}, ['org/server'])]) {
+      expect(hidden.html).toContain('<span class="caption-text">Reading the API</span><span class="caption-source"> (api.ts, L12-L30)</span></p>');
+      expect(hidden.footnotes).toBe(0);
+    }
   });
 
   test('the layout puts the number of each line from 1 before the code of each listing, and not before other code', () => {

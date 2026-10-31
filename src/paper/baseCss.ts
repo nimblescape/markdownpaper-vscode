@@ -6,11 +6,20 @@
  * baseCss is the style sheet of the renderer before the style sheets of the layout
  * ([R-REN-008](../../docs/requirements.md#r-ren-008)): only the rules without which a part of the renderer does not work
  * in Paged.js. A footnote goes to the foot of its page with its number in the text, the generated lists show the page of
- * each entry, and the number of a line of a listing shows ([R-REN-011](../../docs/requirements.md#r-ren-011)). A layout
- * changes the look of each of them with its own rules, and decides whether a template is a page of its own.
+ * each entry, and the number of a line of a listing shows ([R-REN-011](../../docs/requirements.md#r-ren-011)). A link
+ * has the color of the text without a mark, and a long address breaks at the end of a line
+ * ([R-PDF-005](../../docs/requirements.md#r-pdf-005)). A layout changes the look of each of them with its own rules, and
+ * decides whether a template is a page of its own.
  */
 export const baseCss = `.footnote {
   float: footnote;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+.link-address {
+  overflow-wrap: anywhere;
 }
 /* Paged.js sets the number of a footnote in the text with font-variant-position, which most fonts do not have. */
 [data-footnote-call]::after {

@@ -20,6 +20,8 @@ import { drawingsCss, lightThemeColors } from './paper/extensionStyles';
 import { sectionCodes } from './paper/layout';
 import { paperDocumentKey } from './paperDocuments';
 import { defaults, settingsSection } from './settings';
+// @ts-expect-error The script of the build has no declarations.
+import { packageFolders, thirdPartyNotices } from '../scripts/third-party-notices.mjs';
 
 // The modules of the extension import the editor API; these tests read only their constants.
 vi.mock('vscode', () => ({}));
@@ -103,6 +105,11 @@ test('the manifest contributes the commands of the extension, and no other', () 
   }
 });
 
+test('the view "Front Matter" stands in the container of the view of Markdown Notes, and "Edit Front Matter" opens it (R-DOC-005)', () => {
+  expect(manifest.contributes.views).toEqual({ 'nimblescape-markdownnotes': [{ type: 'webview', id: 'nimblescape.markdownPaper.frontMatter', name: 'Front Matter', contextualTitle: 'Markdown Paper' }] });
+  expect(manifest.contributes.menus.commandPalette).toContainEqual({ command: commands.editFrontMatter, when: 'editorLangId == markdown' });
+});
+
 test('"Show Page Preview" is a button of the title of a paper document, and "Export PDF" a button of its menu "Run" and of its Markdown preview (R-PRV-001, R-PDF-001, R-DOC-004)', () => {
   const menus = manifest.contributes.menus;
   expect(menus['editor/title']).toContainEqual({ command: commands.showPagePreview, group: 'navigation', when: `editorLangId == markdown && ${paperDocumentKey}` });
@@ -160,15 +167,25 @@ test('the README, the guide and the requirements name every setting that the man
   }
 });
 
-test('the package holds the bundle, Paged.js, the scripts and the style of the pages in the Markdown preview, the built-in layouts, the icon and the documents only', () => {
+test('the package holds the bundle, Paged.js, the page files of @nimblescape/plantuml, the scripts and the style of the pages in the Markdown preview, the built-in layouts, the copy of the npm package in cli/, the icon and the documents only', () => {
   const patterns = read('.vscodeignore')
     .split('\n')
     .filter((line) => line && !line.startsWith('#'));
   expect(patterns).toEqual([
     '**',
     '!dist/extension.js',
+    '!cli/package.json',
+    '!cli/dist/mp.js',
+    '!cli/dist/paged.polyfill.js',
+    '!cli/dist/layouts/**',
+    '!cli/dist/plantuml/**',
+    '!cli/dist/mermaid/*.js',
+    '!cli/dist/mermaid/THIRD-PARTY-NOTICES.md',
+    '!media/frontMatter.css',
+    '!media/frontMatter.js',
     '!media/paged.js',
     '!media/paged.polyfill.js',
+    '!media/plantuml/**',
     '!media/paperHandlers.js',
     '!media/paperPreview.css',
     '!media/paperPreview.js',
@@ -182,8 +199,10 @@ test('the package holds the bundle, Paged.js, the scripts and the style of the p
     '!LICENSE',
     '!THIRD-PARTY-NOTICES.md',
   ]);
-  // The build writes dist/ and copies Paged.js into media/ (esbuild.mjs).
-  for (const pattern of patterns.filter((pattern) => pattern.startsWith('!') && !pattern.startsWith('!dist/') && !pattern.startsWith('!media/paged.'))) {
+  // The build writes dist/ and cli/dist/, and copies Paged.js and the page files of @nimblescape/plantuml into media/
+  // (esbuild.mjs).
+  const built = (pattern: string) => pattern.startsWith('!dist/') || pattern.startsWith('!cli/dist/') || pattern.startsWith('!media/paged.') || pattern.startsWith('!media/plantuml/');
+  for (const pattern of patterns.filter((pattern) => pattern.startsWith('!') && !built(pattern))) {
     expect(fs.existsSync(path.join(repository, pattern.slice(1).replace('/**', ''))), pattern).toBe(true);
   }
 });
@@ -208,33 +227,49 @@ test('the package needs no dependency at run time, because the bundle holds ever
   expect(manifest).not.toHaveProperty('extensionDependencies');
 });
 
-/** cli is the manifest of the npm package of the command markdownpaper (R-CLI-001). */
+/** cli is the manifest of the npm package of the command mp (R-CLI-001). */
 const cli = JSON.parse(read('cli/package.json'));
 
-test('the npm package has the version of the extension, the command markdownpaper and a public scope (R-CLI-001)', () => {
+test('the npm package has the version of the extension, the command mp and a public scope (R-CLI-001)', () => {
   expect(cli.name).toBe('@nimblescape/markdownpaper');
   expect(cli.version, 'the release sets one version in both manifests').toBe(manifest.version);
   const lock = JSON.parse(read('cli/package-lock.json'));
   expect([lock.version, lock.packages[''].version]).toEqual([cli.version, cli.version]);
-  expect(cli.bin).toEqual({ markdownpaper: 'dist/markdownpaper.js' });
+  expect(cli.bin).toEqual({ mp: 'dist/mp.js' });
   expect(cli.publishConfig).toEqual({ access: 'public' });
   expect(cli.license).toBe(manifest.license);
   expect(cli.repository).toEqual({ type: 'git', url: `git+${manifest.repository.url}`, directory: 'cli' });
   expect(cli.engines).toEqual({ node: '>=22' });
-  expect(read('esbuild.mjs')).toContain(`outfile: 'cli/${cli.bin.markdownpaper}', target: 'node22'`);
+  expect(read('esbuild.mjs')).toContain(`outfile: 'cli/${cli.bin.mp}', target: 'node22'`);
   expect(cli).not.toHaveProperty('dependencies');
 });
 
-test('the npm package holds the bundle, Paged.js, the built-in layouts, the notices, the README and the license (npm pack --dry-run)', () => {
+/**
+ * filesOf returns the files of a folder of the repository and its subfolders, as paths with slashes in that folder, or
+ * no files for a missing folder.
+ * @param folder - The path of the folder in the repository.
+ */
+const filesOf = (folder: string): string[] =>
+  fs.existsSync(path.join(repository, folder))
+    ? fs
+        .readdirSync(path.join(repository, folder), { recursive: true, encoding: 'utf8' })
+        .filter((file) => fs.statSync(path.join(repository, folder, file)).isFile())
+        .map((file) => file.split(path.sep).join('/'))
+    : [];
+
+test('the npm package holds the bundle, Paged.js, the page files of @nimblescape/plantuml, the script of Mermaid, the built-in layouts, the notices, the README and the license (npm pack --dry-run)', () => {
   const listed = execFileSync('npm', ['pack', './cli', '--dry-run', '--json'], { cwd: repository, encoding: 'utf8' });
   const files = (JSON.parse(listed) as { files: { path: string }[] }[])[0].files.map((file) => file.path);
-  // The build writes dist/ with the layouts, LICENSE and THIRD-PARTY-NOTICES.md (esbuild.mjs).
+  // The build writes dist/ with the layouts, the page files of @nimblescape/plantuml with its notices, the script of
+  // Mermaid in parts with its notices, LICENSE and THIRD-PARTY-NOTICES.md (esbuild.mjs). The source maps of a
+  // development build stay out.
   const built = (file: string) => file === 'LICENSE' || file === 'THIRD-PARTY-NOTICES.md' || file.startsWith('dist/');
-  const layouts = fs
-    .readdirSync(path.join(repository, 'layouts'), { recursive: true, encoding: 'utf8' })
-    .filter((file) => fs.statSync(path.join(repository, 'layouts', file)).isFile())
-    .map((file) => `dist/layouts/${file.split(path.sep).join('/')}`);
-  const expected = ['LICENSE', 'README.md', 'THIRD-PARTY-NOTICES.md', 'package.json', 'dist/markdownpaper.js', 'dist/paged.polyfill.js', ...layouts].filter(
+  const layouts = filesOf('layouts').map((file) => `dist/layouts/${file}`);
+  const plantUml = [...filesOf('node_modules/@nimblescape/plantuml/dist/page'), 'THIRD-PARTY-NOTICES.md'].map((file) => `dist/plantuml/${file}`);
+  const mermaid = filesOf('cli/dist/mermaid')
+    .filter((file) => !file.endsWith('.map'))
+    .map((file) => `dist/mermaid/${file}`);
+  const expected = ['LICENSE', 'README.md', 'THIRD-PARTY-NOTICES.md', 'package.json', 'dist/mp.js', 'dist/paged.polyfill.js', ...layouts, ...plantUml, ...mermaid].filter(
     (file) => !built(file) || fs.existsSync(path.join(repository, 'cli', file)),
   );
   expect(files.sort()).toEqual(expected.sort());
@@ -291,6 +326,35 @@ test('the third-party notices name every package that the build bundles, and the
   const pagedJs = JSON.parse(read('node_modules/pagedjs/package.json')).version;
   expect(fs.readFileSync(path.join(repository, 'node_modules/pagedjs/dist/paged.polyfill.js'), 'utf8').slice(0, 200)).toContain(`Paged.js v${pagedJs}`);
 });
+
+test('the notices of the script of Mermaid name every package that it bundles, with its version, its license and the text of its license (R-REN-016, R-GEN-004)', async () => {
+  const result = await esbuild.build({
+    entryPoints: { mermaid: path.join(repository, 'src/page/mermaid.ts') },
+    bundle: true,
+    splitting: true,
+    format: 'esm',
+    platform: 'browser',
+    write: false,
+    outdir: path.join(repository, 'out/manifest-test'),
+    metafile: true,
+    logLevel: 'silent',
+  });
+  const folders = packageFolders(result.metafile) as string[];
+  expect(folders).toContain('node_modules/mermaid');
+  expect(folders).toContain('node_modules/@mermaid-js/layout-elk');
+  const { text, missing } = thirdPartyNotices(result.metafile, '# Notices') as { text: string; missing: string[] };
+  expect(missing).toEqual([]);
+  const headings = [...text.matchAll(/^## (.+)$/gm)].map((match) => anchorOf(match[1]));
+  const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const folder of folders) {
+    const { name, version } = JSON.parse(fs.readFileSync(path.join(repository, folder, 'package.json'), 'utf8'));
+    const row = new RegExp(String.raw`^\| \[${escape(name)}\]\((#[^)]+)\) \| ${escape(version)} \| [^|]+ \|$`, 'm').exec(text);
+    expect(row, name).not.toBeNull();
+    expect(headings, name).toContain(row![1]);
+  }
+  // The version of Mermaid is the version of the Mermaid extension of VS Code (R-REN-016).
+  expect(manifest.devDependencies.mermaid).toBe(JSON.parse(read('node_modules/mermaid/package.json')).version);
+}, 60_000);
 
 test('the documents of the package use full links, so that each link works in the repository, in the package and on the Marketplace', () => {
   for (const file of ['README.md', 'CHANGELOG.md', 'SUPPORT.md', 'cli/README.md']) {

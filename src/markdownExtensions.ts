@@ -13,17 +13,25 @@
  * - their scripts of `markdown.previewScripts`, also ECMAScript modules.
  *
  * It leaves out the Markdown extension of VS Code itself, whose style sheets are those of the preview, Markdown Notes,
- * because the PDF shows no notes ([R-REN-002](../docs/requirements.md#r-ren-002)), and this extension.
+ * because the PDF shows no notes ([R-REN-002](../docs/requirements.md#r-ren-002)), nimblescape PlantUML, whose
+ * renderer the PDF has from its npm package in every case ([R-REN-015](../docs/requirements.md#r-ren-015)), and this
+ * extension. The PDF draws the PlantUML diagrams with the settings of nimblescape PlantUML for the document and with
+ * the files of the workspace folders, as the extension does.
  */
 
+import { defaultSettings, settingsOf, settingsSection } from '@nimblescape/plantuml';
 import * as vscode from 'vscode';
 import { notesExtensionId } from './notesApi';
 import type { MarkdownPlugin } from './paper/markdown';
 import { rewriteCss, type Script } from './paper/render';
 import type { MarkdownExtensions } from './pdf/export';
+import type { PlantUmlOptions } from './pdf/plantUml';
 
 /** markdownExtensionId is the ID of the Markdown extension of VS Code, which holds the Markdown preview. */
 const markdownExtensionId = 'vscode.markdown-language-features';
+
+/** plantUmlExtensionId is the ID of nimblescape PlantUML, whose npm package draws the PlantUML diagrams of the PDF. */
+export const plantUmlExtensionId = 'nimblescape.nimblescape-plantuml';
 
 /** Contributes is the part of the manifest of an extension that adds to the Markdown preview. */
 interface Contributes {
@@ -41,15 +49,22 @@ const decoder = new TextDecoder();
 
 /**
  * markdownExtensions returns the markdown-it plugins, the style sheets and the scripts of the Markdown extensions of
- * VS Code for the PDF. An extension that does not start or a file that cannot be read is left out.
+ * VS Code for the PDF of a document, and the environment that the plugins find in the Markdown preview: the URI of the
+ * document in `currentDocument`. An extension that does not start or a file that cannot be read is left out.
  * @param own - The folder of this extension, which is left out.
+ * @param document - The URI of the document.
  */
-export async function markdownExtensions(own: vscode.Uri): Promise<MarkdownExtensions> {
+export async function markdownExtensions(own: vscode.Uri, document: vscode.Uri): Promise<MarkdownExtensions> {
   const plugins: MarkdownPlugin[] = [];
   const styles: string[] = [];
   const scripts: Script[] = [];
   for (const extension of vscode.extensions.all) {
-    if (extension.id === markdownExtensionId || extension.id === notesExtensionId || extension.extensionUri.toString() === own.toString()) {
+    if (
+      extension.id === markdownExtensionId ||
+      extension.id === notesExtensionId ||
+      extension.id === plantUmlExtensionId ||
+      extension.extensionUri.toString() === own.toString()
+    ) {
       continue;
     }
     const contributes = ((extension.packageJSON as { contributes?: Contributes }).contributes ?? {}) satisfies Contributes;
@@ -77,5 +92,17 @@ export async function markdownExtensions(own: vscode.Uri): Promise<MarkdownExten
       scripts.push({ src: vscode.Uri.joinPath(extension.extensionUri, relative).toString(), module: typeof script !== 'string' && script.type === 'module' });
     }
   }
-  return { plugins, styles, scripts };
+  return { plugins, styles, scripts, env: { currentDocument: document } };
+}
+
+/**
+ * plantUmlOptions returns the settings of nimblescape PlantUML for a document, as VS Code gives them to the extension
+ * whether it is installed or not, and the workspace folders on the disk, whose files the diagrams may include.
+ * @param document - The URI of the document.
+ */
+export function plantUmlOptions(document: vscode.Uri): PlantUmlOptions {
+  const configuration = vscode.workspace.getConfiguration(settingsSection, document);
+  const values = Object.fromEntries(Object.keys(defaultSettings).map((name) => [`${settingsSection}.${name}`, configuration.get(name)]));
+  const folders = (vscode.workspace.workspaceFolders ?? []).filter((folder) => folder.uri.scheme === 'file').map((folder) => folder.uri.fsPath);
+  return { settings: settingsOf(values), folders };
 }

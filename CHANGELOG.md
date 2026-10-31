@@ -42,7 +42,7 @@ The first version.
   heading.
 - The format step of the paper writes the four lists into the file and keeps
   them current: in VS Code in "Format Document" and the format on save of
-  nimblescape Markdown Notes, and with `markdownpaper format`, whose option
+  nimblescape Markdown Notes, and with `mp format`, whose option
   `--check` exits with 1 when the format would change a file.
 - Listings of nimblescape Markdown Notes: a paragraph `Listing 1: …` before the
   comment of the source and the code block is the caption of the listing,
@@ -65,6 +65,27 @@ The first version.
   language in its metadata. In VS Code, the PDF shows what the other Markdown
   extensions add to the Markdown preview, for example the diagrams of Mermaid
   and the math of KaTeX.
+- The view "Front Matter" in the side bar, beside the view of Markdown Notes:
+  a form of the front matter of the active Markdown file with one row for
+  each field of its layout, choice lists for the fields with names, read-only
+  rows for `layout` and `repos`, and a button that removes a key that the
+  layout does not know. Each change is one edit of the file. "Edit Front
+  Matter" opens the view for a file, also from the clean editing view of
+  Markdown Notes.
+- The links of the PDF: every reference inside the paper is a link, also
+  each citation to its entry in the reference list and a second reference to
+  a footnote, in the color of the text without a mark. A link to the outside
+  with its own text gets a footnote with its address, so that a printed page
+  shows it. A listing of a public repository has the link to its lines on its
+  cite; `mp get` asks GitHub without a sign-in whether a repository is public.
+- Without an installed browser, "Export PDF" offers to download Chromium
+  once, the headless shell of Chrome for Testing with a checked SHA-256 hash,
+  into the cache folder of the user; `mp build --download-browser`
+  does the same on the command line.
+- Diagrams in every PDF as vector graphics: the PlantUML diagrams with the
+  renderer of nimblescape PlantUML, its settings and its included files, in
+  VS Code and on the command line, and on the command line the diagrams of
+  Mermaid, as the Mermaid extension of VS Code draws them.
 - Checks of the front matter: a layout that does not exist, a missing required
   field, a value that is not one of the names of a parameter, and a link to a
   figure, a table or a listing that does not exist are warnings in the text
@@ -86,24 +107,46 @@ The first version.
 - "New Project", "New Document" and "New Layout": a project gets `AGENTS.md`
   for AI agents, a copy of the layout, `paper/paper.md`, the drop folder
   `inbox/` for sources, the folder `bib/` for the files of the sources, and
-  `images/`. "New Project" and `markdownpaper create` without `--layout`
+  `images/`. "New Project" and `mp create` without `--layout`
   list the layouts of the workspace, the built-in layouts and the layouts on
   GitHub (the repositories with the topic
   `nimblescape-markdownpaper-layout`), with their preview PDF; `--layout
-  github:<owner>/<repository>/<folder>` names a layout on GitHub.
+  <owner>/<repository>/<folder>@<rev>` names a layout on GitHub. `mp create`
+  needs a layout, clones a layout on GitHub into `.markdownpaper/repos/` of
+  the project and writes its reference into the field `layout`. "New
+  Project" writes the same reference and runs `mp get` in a terminal of
+  VS Code.
 - The empty paper document and its preview: each layout names in
   `layout.json` its empty paper document (`document`), which a new document
   starts from, with the values of the cover page and example texts that
   explain the layout, and its PDF (`preview`); the files that the document
-  links to go into the new project. `markdownpaper preview` writes the PDF,
-  and `markdownpaper layouts` lists the layouts.
+  links to go into the new project. `mp preview` writes the PDF,
+  and `mp layouts` lists the layouts.
 - The settings `nimblescape.markdownPaper.browserPath`,
   `nimblescape.markdownPaper.previewDelay` and
   `nimblescape.markdownPaper.openPdf`.
-- The npm package `@nimblescape/markdownpaper` with the command
-  `markdownpaper`: `pdf`, `check`, `create`, `new document|layout|project`,
-  `layouts`, `preview` and `instructions document|layout|render`, the rules
-  for AI agents.
+- The npm package `@nimblescape/markdownpaper` with the command `mp`:
+  `build`, `check`, `create`, `get`, `new document|layout|project`, `layouts`,
+  `preview`, `instructions document|layout|render`, the rules for AI
+  agents, and `completion bash|zsh|fish`, the Tab completion scripts.
+- The command `mp` in the terminals of VS Code: the extension holds a copy of
+  the npm package, and the terminals of VS Code get a script `mp` at the end
+  of their `PATH` and the Tab completion of `mp` in bash and zsh.
+- The references of a paper: the front matter names its layout on GitHub
+  (`layout: <owner>/<repository>/<folder>@<rev>`) and the repositories of the
+  code of its listings (`repos`), each with a branch, a tag or a commit. `mp
+  get` clones them with Git into `.markdownpaper/repos/<name>/`, which Git
+  ignores, brings the head of each branch with a fast-forward and keeps the
+  pins. The clone of a branch is on that branch, so the author can add
+  snippets there and push them; the clone of a tag or a commit has no branch.
+  A clone with work that is not committed or not pushed stays as it is. `mp
+  get <owner>/<repository>` without `@` asks for the rev with a list in a
+  terminal, the default branch first. Ctrl+click on a reference in the front
+  matter opens its clone in a new window. `mp get
+  <owner>/<repository>@<rev>` adds a reference, and `mp get -u` moves the
+  references to tags to the newest tags. The renderer reads a layout from its
+  clone, and the checks name a missing clone. "Open Repository in New Window"
+  opens the clone of a reference in a new window of VS Code.
 - Citations: the sources of a document as CSL JSON in a comment at the end of
   the file, citations as links to their source with the place in the title of
   the link, and the format writes the text of each citation and the reference
@@ -111,7 +154,7 @@ The first version.
   built-in style `apa7` (APA Style 7th edition of the Citation Style Language)
   or a CSL file of the layout folder, with the words of the language of the
   layout.
-- `markdownpaper source <file> <input>...` adds sources to the database of a
+- `mp source <file> <input>...` adds sources to the database of a
   document with the metadata of the places that publish it: a DOI from
   doi.org (Crossref, DataCite, mEDRA, JaLC), an ISBN from the German National
   Library, K10plus or Open Library, a PubMed ID from PubMed, an arXiv ID with
@@ -133,13 +176,13 @@ The first version.
   GitHub does. A hint at the start of the reference list stays before the
   entries and keeps the form of its box: the hanging indent of the reference
   list is only for the entries, `.references > p`.
-- The update of a copy of a layout on GitHub: a new project writes the field
-  `origin` (the layout, the ref and the commit) into the `layout.json` of its
-  copy. `markdownpaper update` and "Update Layout" read the newest commit of
+- The update of a copy of a layout on GitHub: the copy names its origin in
+  the field `origin` (the layout, the ref and the commit) of its
+  `layout.json`. `mp get` and "Update Layout" read the newest commit of
   the ref and update the copy: a file that only the repository changed gets
   its new version, a file that only the project changed stays, and a file that
   both changed stops the update unless `--force` or a confirmation replaces it.
-  `--check` only tells whether a newer version exists. The `layout.json` of a
+  The `layout.json` of a
   copy keeps the form of the file of the layout, with `origin` at its end.
 - `/cite` with Markdown Notes inserts a citation of a source of the database
   of the document or of an item of the Zotero library of the author. "Connect
@@ -156,8 +199,11 @@ The first version.
 - The instructions for AI agents name the fields of a law or an ordinance:
   `container-title` and `number` of the first publication, `references` for
   the cited version, and `issued` for its day.
-- `markdownpaper source` adds nothing for a catalog record of an ISBN whose
+- `mp source` adds nothing for a catalog record of an ISBN whose
   year comes before ISBNs of its form existed, such as the book of 1968 that
   Open Library gives for the ISBN 978-92-3-100709-5, and notes a source that
   only Open Library knows. `--title <words>` checks the title of the record
   against words of the title of the source in hand.
+- The format step of the paper writes the numbers of the headings into the
+  links to them, by the rules of the layout: `[Kapitel 7](#methoden)` becomes
+  `[Kapitel 2.1](#methoden)` in the file, as on the pages.

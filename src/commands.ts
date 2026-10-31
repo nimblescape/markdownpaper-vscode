@@ -7,19 +7,25 @@
  * "New Project", "New Document" and "New Layout" ([R-NEW-001](../docs/requirements.md#r-new-001) to
  * [R-NEW-004](../docs/requirements.md#r-new-004)), which write no file over an existing one, and "Update Layout"
  * ([R-LAY-010](../docs/requirements.md#r-lay-010)), which updates a copy of a layout on GitHub from its repository.
+ * "Open Repository in New Window" ([R-CLI-004](../docs/requirements.md#r-cli-004)) opens the clone of a reference of a
+ * paper.
  */
 
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { markdownExtensions } from './markdownExtensions';
+import { markdownExtensions, plantUmlOptions } from './markdownExtensions';
 import { fileOf, textOf } from './notesApi';
-import { downloadRemote, findRemotes, type Origin, originOf, previewUrl, type RemoteLayout, readOrigin, remoteName } from './paper/gallery';
+import { downloadRemote, findRemotes, previewUrl, type RemoteLayout, type RemoteSpec, readOrigin, remoteName } from './paper/gallery';
 import type { Layout } from './paper/layout';
 import type { Fetcher } from './paper/lookup';
-import { defaultLayout, findLayout, layoutName } from './paper/render';
+import { clonesFolder, type Reference, referencesOf } from './paper/references';
+import { defaultLayout, findClone, findLayout, layoutName } from './paper/render';
 import { type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, startFiles } from './paper/scaffold';
 import { planUpdate, type Update } from './paper/update';
+import { defaultPlace, downloadBrowser, downloadSize } from './pdf/download';
 import { exportPdf } from './pdf/export';
+import { settingsSection } from './settings';
+import { command as terminalCommand, runInTerminal } from './terminal';
 import { folderUrl, readFolder, searchHost, workspaceReader } from './workspaceHost';
 
 /** Context is what the commands need from the extension. */
@@ -41,11 +47,15 @@ const decoder = new TextDecoder();
  * targetOf returns the file of a command: the file of the Explorer, else of the active Markdown preview, else of the
  * active text editor.
  * @param context - The context.
- * @param uri - The URI that the Explorer or a menu passes, if any.
+ * @param uri - The URI that the Explorer or a menu passes, or the text of a URI of a command link, if any.
  */
 function targetOf(context: Context, uri: unknown): vscode.Uri | undefined {
   if (uri instanceof vscode.Uri) {
     return fileOf(uri);
+  }
+  // A command link passes the URI as its text.
+  if (typeof uri === 'string' && /^[a-z][a-z0-9+.-]*:/i.test(uri)) {
+    return fileOf(vscode.Uri.parse(uri));
   }
   const preview = context.previewFile();
   if (preview) {
@@ -73,13 +83,19 @@ export async function exportPdfCommand(context: Context, uri?: unknown): Promise
   }
   const folder = vscode.workspace.getWorkspaceFolder(file);
   try {
-    const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Export PDF: ${path.basename(file.fsPath)}` }, async () =>
+    const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Export PDF: ${path.basename(file.fsPath)}` }, async (progress) =>
       exportPdf(file.fsPath, {
-        assets: { layouts: vscode.Uri.joinPath(context.extension, 'layouts').fsPath, pagedJs: vscode.Uri.joinPath(context.extension, 'media', 'paged.polyfill.js').fsPath },
+        assets: {
+          layouts: vscode.Uri.joinPath(context.extension, 'layouts').fsPath,
+          pagedJs: vscode.Uri.joinPath(context.extension, 'media', 'paged.polyfill.js').fsPath,
+          plantUml: vscode.Uri.joinPath(context.extension, 'media', 'plantuml').fsPath,
+        },
         text: await textOf(file),
         browser: context.browserPath(),
+        download: () => downloadChromium(context, progress),
         ...(folder?.uri.scheme === 'file' ? { top: folder.uri.fsPath } : {}),
-        extensions: await markdownExtensions(context.extension),
+        extensions: await markdownExtensions(context.extension, file),
+        plantUml: plantUmlOptions(file),
       }),
     );
     const pdf = vscode.Uri.file(result.pdf);
@@ -96,6 +112,39 @@ export async function exportPdfCommand(context: Context, uri?: unknown): Promise
     void vscode.window.showErrorMessage(`Export PDF: ${error instanceof Error ? error.message : String(error)}`);
     return undefined;
   }
+}
+
+/**
+ * downloadChromium asks whether Markdown Paper may download Chromium for the PDF when no browser is installed, and
+ * downloads it once into the cache of the user, which the command mp shares
+ * ([R-PDF-002](../docs/requirements.md#r-pdf-002)).
+ * @param context - The context.
+ * @param progress - The progress of "Export PDF", which shows the download.
+ * @returns The program of Chromium, or undefined when the person does not want the download or the system has no build.
+ */
+async function downloadChromium(context: Context, progress: vscode.Progress<{ message?: string }>): Promise<string | undefined> {
+  const place = defaultPlace();
+  const size = downloadSize(place);
+  if (size === undefined) {
+    return undefined;
+  }
+  const choice = await vscode.window.showWarningMessage(
+    'No Google Chrome, Chromium or Microsoft Edge is installed for the PDF.',
+    {
+      modal: true,
+      detail: `Markdown Paper can download Chromium ${place.release.version}, the headless shell of Chrome for Testing, once from storage.googleapis.com (about ${size} MB) into ${place.cache}. The command mp uses it too.`,
+    },
+    'Download Chromium',
+    'Set Browser Path',
+  );
+  if (choice === 'Set Browser Path') {
+    void vscode.commands.executeCommand('workbench.action.openSettings', `${settingsSection}.browserPath`);
+  }
+  if (choice !== 'Download Chromium') {
+    return undefined;
+  }
+  progress.report({ message: `downloading Chromium (about ${size} MB) …` });
+  return downloadBrowser(fetcher(`nimblescape-markdownpaper/${context.version ?? '0'}`), place);
 }
 
 /**
@@ -193,7 +242,7 @@ interface LayoutItem extends vscode.QuickPickItem {
  * @param context - The context.
  * @param near - The URI of a file in the folder where the search starts.
  */
-async function pickProjectLayout(context: Context, near: vscode.Uri): Promise<{ layout: Layout; source: Map<string, Uint8Array>; start?: string; origin?: Origin } | undefined> {
+async function pickProjectLayout(context: Context, near: vscode.Uri): Promise<{ layout: Layout; source: Map<string, Uint8Array>; start?: string; reference?: RemoteSpec } | undefined> {
   const found = await vscode.workspace.findFiles('**/layouts/*/layout.json', '**/node_modules/**', 50);
   const names = [...new Set(found.map((uri) => uri.path.split('/').slice(-2, -1)[0]))].filter((name) => layoutName.test(name)).sort();
   const local: LayoutItem[] = [
@@ -245,7 +294,8 @@ async function pickProjectLayout(context: Context, near: vscode.Uri): Promise<{ 
     const remote = choice.remote;
     const source = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `New Project: reading ${remoteName(remote)} from GitHub` }, () => downloadRemote(fetch, remote));
     const start = remote.layout.document ? source.get(remote.layout.document.replace(/^\.\//, '')) : undefined;
-    return { layout: remote.layout, source, origin: originOf(remote), ...(start ? { start: decoder.decode(start) } : {}) };
+    // The document names the layout by its reference, and mp get clones it (R-CLI-004); the project gets no copy.
+    return { layout: remote.layout, source, reference: { repository: remote.repository, folder: remote.folder, ref: remote.ref }, ...(start ? { start: decoder.decode(start) } : {}) };
   }
   const result = await findLayout(searchHost(context.extension, near), near.toString(), choice.name);
   if (!result.layout) {
@@ -320,8 +370,9 @@ export async function newLayoutCommand(context: Context, uri?: unknown): Promise
 }
 
 /**
- * newProjectCommand writes a new project: AGENTS.md, a copy of a layout, the document and the folders of the sources
- * and of the images, and opens the document.
+ * newProjectCommand writes a new project: AGENTS.md, a copy of a layout of the workspace or of a built-in layout, or
+ * the reference of a layout on GitHub, whose clone `mp get` makes in a terminal of VS Code, the document and the
+ * folders of the sources and of the images, and opens the document.
  * @param context - The context.
  * @param uri - The folder of the Explorer, if any.
  */
@@ -358,10 +409,15 @@ export async function newProjectCommand(context: Context, uri?: unknown): Promis
   if (author) {
     values.author = author;
   }
-  const files = newProjectFiles({ layout: picked.layout, source: picked.source, language: language || picked.layout.language, values, ...(picked.origin ? { origin: picked.origin } : {}) }, picked.start);
+  const files = newProjectFiles({ layout: picked.layout, source: picked.source, language: language || picked.layout.language, values, ...(picked.reference ? { reference: picked.reference } : {}) }, picked.start);
   const written = await writeNew(target, files);
   if (!written) {
     return undefined;
+  }
+  // mp get clones the layout on GitHub into .markdownpaper/repos/ in a terminal of VS Code, with the Git and the access
+  // of the author (R-NEW-004).
+  if (picked.reference) {
+    runInTerminal(target, `${terminalCommand} get`);
   }
   const paper = vscode.Uri.joinPath(target, 'paper', 'paper.md');
   const inWorkspace = vscode.workspace.getWorkspaceFolder(target) !== undefined;
@@ -374,6 +430,77 @@ export async function newProjectCommand(context: Context, uri?: unknown): Promis
     }
   }
   return target;
+}
+
+/** ReferenceItem is an entry of the list of the references of "Open Repository in New Window". */
+interface ReferenceItem extends vscode.QuickPickItem {
+  reference: Reference;
+}
+
+/**
+ * cloneOfReference finds the clone of a reference of a paper in `.markdownpaper/repos/<name>/` for "Open Repository
+ * in New Window": the reference with the name, else the one that the author chooses from the references of the front
+ * matter, `repos` and `layout`. A missing clone offers `mp get` in a terminal of VS Code.
+ * @param context - The context.
+ * @param uri - The paper of the Explorer or of another extension, else the paper of the active editor.
+ * @param name - The name of the reference, when another extension passes it.
+ * @returns The URI of the folder of the clone, or undefined.
+ */
+export async function cloneOfReference(context: Context, uri?: unknown, name?: unknown): Promise<vscode.Uri | undefined> {
+  const file = targetOf(context, uri);
+  if (!file) {
+    void vscode.window.showErrorMessage('Open Repository in New Window: open a paper document first.');
+    return undefined;
+  }
+  const references = referencesOf(await textOf(file)).references.sort((a, b) => Number(a.key === 'layout') - Number(b.key === 'layout'));
+  let reference: Reference | undefined;
+  if (typeof name === 'string') {
+    reference = references.find((candidate) => candidate.name === name);
+    if (!reference) {
+      void vscode.window.showErrorMessage(`Open Repository in New Window: the front matter of ${path.basename(file.path)} names no reference "${name}".`);
+      return undefined;
+    }
+  } else if (references.length === 0) {
+    void vscode.window.showInformationMessage(`Open Repository in New Window: the front matter of ${path.basename(file.path)} names no repository on GitHub in "layout" or "repos".`);
+    return undefined;
+  } else if (references.length === 1) {
+    reference = references[0];
+  } else {
+    const items: ReferenceItem[] = references.map((candidate) => ({ label: candidate.name, description: candidate.text, detail: candidate.key === 'layout' ? 'The layout' : 'A repository of the listings', reference: candidate }));
+    reference = (await vscode.window.showQuickPick(items, { title: 'Open Repository in New Window', placeHolder: 'The reference whose clone opens in a new window' }))?.reference;
+  }
+  if (!reference) {
+    return undefined;
+  }
+  const clone = await findClone(searchHost(context.extension, file), file.toString(), reference.name);
+  if (!clone) {
+    // The message does not hold the command back, so a caller gets its answer at once.
+    const missing = reference;
+    void vscode.window.showInformationMessage(`${clonesFolder}/${missing.name}/ is missing: "${terminalCommand} get" clones ${missing.text}.`, `Run ${terminalCommand} get`).then((choice) => {
+      if (choice) {
+        runInTerminal(vscode.Uri.joinPath(file, '..'), `${terminalCommand} get`);
+      }
+    });
+    return undefined;
+  }
+  return vscode.Uri.parse(clone.replace(/\/$/, ''));
+}
+
+/**
+ * openRepositoryCommand opens the clone of a reference of a paper in a new window of VS Code
+ * ([R-CLI-004](../docs/requirements.md#r-cli-004), [decision 55](../docs/requirements.md#decisions)), where Source
+ * Control shows its Git repository.
+ * @param context - The context.
+ * @param uri - The paper, as for cloneOfReference.
+ * @param name - The name of the reference, as for cloneOfReference.
+ * @returns The URI of the opened clone, or undefined.
+ */
+export async function openRepositoryCommand(context: Context, uri?: unknown, name?: unknown): Promise<vscode.Uri | undefined> {
+  const folder = await cloneOfReference(context, uri, name);
+  if (folder) {
+    await vscode.commands.executeCommand('vscode.openFolder', folder, { forceNewWindow: true });
+  }
+  return folder;
 }
 
 /** CopyItem is an entry of the list of the copies of layouts on GitHub of "Update Layout". */

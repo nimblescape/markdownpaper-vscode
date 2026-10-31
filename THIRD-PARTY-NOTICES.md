@@ -12,8 +12,11 @@ that it uses and its plugin for footnotes, the YAML parser of the front
 matter, the hyphenation, the PDF library that finishes the PDF, and
 citeproc-js, which writes the citations and the reference list in a citation
 style. The
-command `markdownpaper` of the npm package `@nimblescape/markdownpaper`,
-`cli/dist/markdownpaper.js`, contains the same packages.
+command `mp` of the npm package `@nimblescape/markdownpaper`,
+`cli/dist/mp.js`, contains the same packages. The extension holds a copy of
+the files of the npm package in its folder `cli/`, for the command `mp` in
+the terminals of VS Code, with the files and the notices that the next
+paragraphs name for the npm package.
 
 The extension and the npm package also hold the file `paged.polyfill.js` of
 Paged.js, which makes the pages in the page preview and in the browser that
@@ -22,6 +25,29 @@ Both packages hold this file. This file names each of these packages, its
 license and the place of its source code. The code of the extension itself is
 under the
 [MIT License](https://github.com/nimblescape/markdownpaper-vscode/blob/main/LICENSE).
+
+The PDF draws the PlantUML diagrams with the npm package
+`@nimblescape/plantuml` of the extension
+[nimblescape PlantUML](https://github.com/nimblescape/nimblescape-plantuml),
+by the same author under the MIT License. The bundles contain its library
+(the first table), and the extension holds the files of its page in the
+folder `media/plantuml/`, the npm package in `dist/plantuml/`: the script
+that draws the diagrams, its style sheet, and in `engine/` the PlantUML
+engine of the npm package `@plantuml/core` with the parts of other projects
+that it holds, among them Smetana, TeaVM, Viz.js with Graphviz, the themes of
+PlantUML, Twemoji, Open Iconic and C4-PlantUML. The file
+`THIRD-PARTY-NOTICES.md` of that folder names each of them, its license and
+the place of its source code, and `engine/LICENSE` holds the license of
+`@plantuml/core`. nimblescape PlantUML is not a product of the PlantUML
+project, and the PlantUML project does not endorse it.
+
+The npm package also holds in `dist/mermaid/` the script that draws the
+diagrams of Mermaid in the PDF of the command line. It contains Mermaid, its
+layouts ELK and tidy tree and the packages that they use, among them elkjs
+under the Eclipse Public License 2.0 and DOMPurify under the Mozilla Public
+License 2.0 or the Apache License 2.0. The file `THIRD-PARTY-NOTICES.md` of
+that folder names each of them, its version, its license and the place of
+its source code, with the text of its license.
 
 The bundles also hold the data files of the Citation Style Language of the
 folder `csl/`: the citation style "APA Style 7th edition" and the CSL locales
@@ -51,6 +77,7 @@ English, Spanish, French and Italian.
 | [pako](#pako) | 1.0.11 | (MIT AND Zlib) |
 | [tslib](#tslib) | 1.14.1 | 0BSD |
 | [citeproc](#citeproc) | 2.4.63 | CPAL-1.0 OR AGPL-1.0 |
+| [@nimblescape/plantuml](#nimblescapeplantuml) | 0.2.1 | MIT |
 
 | Package in `paged.polyfill.js` | Version | License |
 | --- | --- | --- |
@@ -1012,6 +1039,35 @@ Attribution Phrase (not exceeding 10 words): _______________________
 Attribution URL: _______________________
 Graphic Image as provided in the Covered Code, if any.
 Display of Attribution Information is [required/not required] in Larger Works which are defined in the CPAL as a work which combines Covered Code or portions thereof with code not governed by the terms of the CPAL.
+```
+
+## @nimblescape/plantuml
+
+Source code: <https://github.com/nimblescape/nimblescape-plantuml>, the
+folder `cli/`. Its license:
+
+```text
+MIT License
+
+© 2026 Hannes Stauss (scalarion@nimblescape.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 ## CSL style and locales

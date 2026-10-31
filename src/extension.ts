@@ -6,8 +6,8 @@
  * The editor wiring of nimblescape Markdown Paper: the activation starts the checks of the front matter, the context
  * key of paper documents, the format step of the paper in the formatter of Markdown Notes
  * ([formatStep.ts](formatStep.ts)), the parts of the paper in the editor of Markdown Notes
- * ([notesParts.ts](notesParts.ts)), the citations from the editor and from Zotero ([cite.ts](cite.ts)) and the
- * commands, and returns the export of the extension: the markdown-it plugin
+ * ([notesParts.ts](notesParts.ts)), the citations from the editor and from Zotero ([cite.ts](cite.ts)), the command mp
+ * in the terminals of VS Code ([terminal.ts](terminal.ts)) and the commands, and returns the export of the extension: the markdown-it plugin
  * of the pages in the Markdown preview of VS Code ([markdownPreview.ts](markdownPreview.ts)), which VS Code reads, and
  * the functions that the tests in VS Code read.
  */
@@ -15,14 +15,17 @@
 import type MarkdownIt from 'markdown-it';
 import * as vscode from 'vscode';
 import { citeCommand, citeContext, connectZoteroCommand, updateSourcesCommand } from './cite';
-import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, updateLayoutCommand } from './commands';
+import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, openRepositoryCommand, updateLayoutCommand } from './commands';
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
+import { FrontMatterView, frontMatterViewId } from './frontMatterView';
+import { ReferenceLinks, referenceLinkSelector } from './referenceLinks';
 import { PaperPreview } from './markdownPreview';
-import type { SlashCommand } from './notesApi';
+import { fileOf, type SlashCommand } from './notesApi';
 import { registerNotesParts, researchCommand } from './notesParts';
 import { PaperDocuments } from './paperDocuments';
 import { checkedSettings, type Settings, settingsSection } from './settings';
+import { setUpTerminals } from './terminal';
 
 /** extensionId is the ID of the extension. */
 export const extensionId = 'nimblescape.nimblescape-markdownpaper';
@@ -35,6 +38,8 @@ export const commands = {
   newDocument: 'nimblescape.markdownPaper.newDocument',
   newLayout: 'nimblescape.markdownPaper.newLayout',
   updateLayout: 'nimblescape.markdownPaper.updateLayout',
+  openRepository: 'nimblescape.markdownPaper.openRepository',
+  editFrontMatter: 'nimblescape.markdownPaper.editFrontMatter',
   connectZotero: 'nimblescape.markdownPaper.connectZotero',
   updateSources: 'nimblescape.markdownPaper.updateSourcesFromZotero',
 };
@@ -51,6 +56,10 @@ export interface Api {
   research: SlashCommand;
   /** cite is the slash command `/cite`, which Markdown Notes offers in the text editor. */
   cite: SlashCommand;
+  /** terminalFolder is the folder of the script mp, at the end of the PATH of the terminals, or undefined. */
+  terminalFolder?: string;
+  /** frontMatter tells which file the view "Front Matter" shows, and whether its page exists. */
+  frontMatter(): { file?: vscode.Uri; shown: boolean };
 }
 
 /**
@@ -68,6 +77,12 @@ export function readSettings(scope?: vscode.Uri): Settings {
  * @returns The export of the extension.
  */
 export function activate(context: vscode.ExtensionContext): Api {
+  let terminalFolder: string | undefined;
+  try {
+    terminalFolder = setUpTerminals(context);
+  } catch (error) {
+    console.error(`nimblescape Markdown Paper: the command mp in the terminals: ${error instanceof Error ? error.message : String(error)}`);
+  }
   const checks = new FrontMatterChecks(context.extensionUri);
   const papers = new PaperDocuments();
   const formatStep = new PaperFormatStep(context.extensionUri);
@@ -84,6 +99,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     version: (context.extension.packageJSON as { version?: string }).version,
   };
   const citations = citeContext(context, formatStep);
+  const frontMatterView = new FrontMatterView(context.extensionUri);
   const cite = citeCommand(citations);
   context.subscriptions.push(
     checks,
@@ -106,6 +122,19 @@ export function activate(context: vscode.ExtensionContext): Api {
     vscode.commands.registerCommand(commands.newDocument, (uri?: unknown) => newDocumentCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.newLayout, (uri?: unknown) => newLayoutCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.updateLayout, (uri?: unknown) => updateLayoutCommand(commandContext, uri)),
+    vscode.commands.registerCommand(commands.openRepository, (uri?: unknown, name?: unknown) => openRepositoryCommand(commandContext, uri, name)),
+    // The view "Front Matter" follows the active editor; Markdown Notes opens it for a file of its clean editing view.
+    frontMatterView,
+    vscode.window.registerWebviewViewProvider(frontMatterViewId, frontMatterView),
+    vscode.languages.registerDocumentLinkProvider(referenceLinkSelector, new ReferenceLinks(commands.openRepository)),
+    vscode.commands.registerCommand(commands.editFrontMatter, async (uri?: unknown) => {
+      const editor = vscode.window.activeTextEditor;
+      const target = uri instanceof vscode.Uri ? uri : editor?.document.languageId === 'markdown' ? editor.document.uri : undefined;
+      if (target) {
+        frontMatterView.show(fileOf(target));
+      }
+      await vscode.commands.executeCommand(`${frontMatterViewId}.focus`);
+    }),
     vscode.commands.registerCommand(commands.connectZotero, () => connectZoteroCommand(citations)),
     vscode.commands.registerCommand(commands.updateSources, (uri?: unknown) => updateSourcesCommand(citations, uri)),
   );
@@ -115,6 +144,8 @@ export function activate(context: vscode.ExtensionContext): Api {
     formatStep,
     research: researchCommand,
     cite,
+    ...(terminalFolder ? { terminalFolder } : {}),
+    frontMatter: () => ({ ...(frontMatterView.file ? { file: frontMatterView.file } : {}), shown: frontMatterView.shown }),
   };
 }
 

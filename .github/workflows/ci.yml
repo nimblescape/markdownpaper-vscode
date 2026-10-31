@@ -5,13 +5,14 @@
 # Test the extension and build its packages for every push to main and every
 # pull request, on the pinned Node.js 24 release (.node-version); VS Code 1.125
 # (engines.vscode) and later run extensions on Node.js 24 too. The job "test"
-# installs the locked development tools without install scripts, checks the
-# types, runs the unit tests and the tests in a real VS Code (stable),
+# installs the locked development tools without install scripts and the npm
+# package @nimblescape/plantuml from GitHub, checks the types, runs the unit
+# tests and the tests in a real VS Code (stable),
 # packages the VSIX with vsce, which first bundles the extension and the
-# command markdownpaper with esbuild and also validates the manifest and the
+# command mp with esbuild and also validates the manifest and the
 # README, and packs the npm package @nimblescape/markdownpaper of cli/ with
 # npm pack. Both stay workflow artifacts for inspection. The job "command"
-# runs the tests of the built command markdownpaper on Linux and macOS, with
+# runs the tests of the built command mp on Linux and macOS, with
 # the oldest Node.js that the command supports (engines of cli/package.json)
 # and the newest LTS release. The tests of the PDF use the Google Chrome that the
 # runners of GitHub have installed. This workflow publishes nothing: the release
@@ -72,6 +73,11 @@ jobs:
       - name: Install the locked development tools without install scripts
         run: npm ci --ignore-scripts
 
+      # @nimblescape/plantuml is not on npmjs.com before the release of nimblescape PlantUML; the script builds it
+      # from its GitHub repository at a fixed commit (CONTRIBUTING.md, "Diagrams of nimblescape PlantUML").
+      - name: Install @nimblescape/plantuml from GitHub
+        run: node scripts/install-plantuml.mjs
+
       - name: Check the types
         run: npm run typecheck
 
@@ -106,7 +112,7 @@ jobs:
           if-no-files-found: error
 
   command:
-    name: Command markdownpaper on ${{ matrix.os }} with Node.js ${{ matrix.node }}
+    name: Command mp on ${{ matrix.os }} with Node.js ${{ matrix.node }}
     # The workflow "VS Code versions" tests only the parts that depend on VS Code.
     if: ${{ !inputs.vscode-version }}
     strategy:
@@ -131,6 +137,9 @@ jobs:
       - name: Install the locked development tools without install scripts
         run: npm ci --ignore-scripts
 
-      # The tests run the built cli/dist/markdownpaper.js with this Node.js.
-      - name: Run the tests of the command markdownpaper
+      - name: Install @nimblescape/plantuml from GitHub
+        run: node scripts/install-plantuml.mjs
+
+      # The tests run the built cli/dist/mp.js with this Node.js.
+      - name: Run the tests of the command mp
         run: npm run test:cli

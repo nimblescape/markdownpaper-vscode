@@ -90,12 +90,6 @@ export const remoteName = (remote: Pick<RemoteLayout, 'repository' | 'folder'>):
 export const referenceText = (spec: RemoteSpec): string => `${remoteName(spec)}${spec.ref ? `@${spec.ref}` : ''}`;
 
 /**
- * originOf returns the origin of a copy of a layout on GitHub.
- * @param remote - The layout.
- */
-export const originOf = (remote: RemoteLayout): Origin => ({ layout: remoteName(remote), ref: remote.ref, commit: remote.commit });
-
-/**
  * readOrigin reads the field `origin` of the text of a `layout.json`, or returns undefined when it has no valid one: a
  * name of a layout on GitHub, a ref, and a commit of 40 hexadecimal digits.
  * @param text - The text of the `layout.json`.

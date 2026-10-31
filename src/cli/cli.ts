@@ -52,6 +52,7 @@ import { mapLinks, type NewFile, newDocumentText, newLayoutFiles, newProjectFile
 import { planUpdate } from '../paper/update';
 import { defaultPlace, downloadBrowser, downloadSize, type Place } from '../pdf/download';
 import { type Assets, exportPdf, fileReader, folderUrl } from '../pdf/export';
+import { completionScript, shells } from './completion';
 import { type Git, GitError, getClone, gitOf } from './git';
 import { httpFetcher } from './net';
 
@@ -107,6 +108,8 @@ export const usage = [
   '      --offline                 ask no service; keep the metadata of the files',
   '      --dry-run                 print the new lines of the database and write nothing',
   '  source --search <words>       list up to ten works of Crossref whose title matches, with their DOIs',
+  '  completion bash|zsh|fish      print the Tab completion script of the shell, for example for ~/.bashrc:',
+  `                                source <(${command} completion bash)`,
   '',
   'Options:',
   '  --help                        show this help',
@@ -1103,6 +1106,14 @@ export async function run(args: readonly string[], io: Io): Promise<number> {
           throw new UsageError(`Unknown topic: ${rest.join(' ')}. The topics: ${topics.map((candidate) => candidate.name).join(', ')}.`);
         }
         io.out(topic.text.trimEnd());
+        return 0;
+      }
+      case 'completion': {
+        const shell = shells.find((candidate) => candidate === rest[0]);
+        if (!shell || rest.length > 1) {
+          throw new UsageError(`${command} completion takes one shell: ${shells.join(', ')}.`);
+        }
+        io.out(completionScript(shell, command).trimEnd());
         return 0;
       }
       case 'pdf':

@@ -13,7 +13,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { markdownExtensions, plantUmlOptions } from './markdownExtensions';
 import { fileOf, textOf } from './notesApi';
-import { downloadRemote, findRemotes, type Origin, originOf, previewUrl, type RemoteLayout, readOrigin, remoteName } from './paper/gallery';
+import { downloadRemote, findRemotes, previewUrl, type RemoteLayout, type RemoteSpec, readOrigin, remoteName } from './paper/gallery';
 import type { Layout } from './paper/layout';
 import type { Fetcher } from './paper/lookup';
 import { defaultLayout, findLayout, layoutName } from './paper/render';
@@ -22,6 +22,7 @@ import { planUpdate, type Update } from './paper/update';
 import { defaultPlace, downloadBrowser, downloadSize } from './pdf/download';
 import { exportPdf } from './pdf/export';
 import { settingsSection } from './settings';
+import { command as terminalCommand, runInTerminal } from './terminal';
 import { folderUrl, readFolder, searchHost, workspaceReader } from './workspaceHost';
 
 /** Context is what the commands need from the extension. */
@@ -234,7 +235,7 @@ interface LayoutItem extends vscode.QuickPickItem {
  * @param context - The context.
  * @param near - The URI of a file in the folder where the search starts.
  */
-async function pickProjectLayout(context: Context, near: vscode.Uri): Promise<{ layout: Layout; source: Map<string, Uint8Array>; start?: string; origin?: Origin } | undefined> {
+async function pickProjectLayout(context: Context, near: vscode.Uri): Promise<{ layout: Layout; source: Map<string, Uint8Array>; start?: string; reference?: RemoteSpec } | undefined> {
   const found = await vscode.workspace.findFiles('**/layouts/*/layout.json', '**/node_modules/**', 50);
   const names = [...new Set(found.map((uri) => uri.path.split('/').slice(-2, -1)[0]))].filter((name) => layoutName.test(name)).sort();
   const local: LayoutItem[] = [
@@ -286,7 +287,8 @@ async function pickProjectLayout(context: Context, near: vscode.Uri): Promise<{ 
     const remote = choice.remote;
     const source = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `New Project: reading ${remoteName(remote)} from GitHub` }, () => downloadRemote(fetch, remote));
     const start = remote.layout.document ? source.get(remote.layout.document.replace(/^\.\//, '')) : undefined;
-    return { layout: remote.layout, source, origin: originOf(remote), ...(start ? { start: decoder.decode(start) } : {}) };
+    // The document names the layout by its reference, and mp get clones it (R-CLI-004); the project gets no copy.
+    return { layout: remote.layout, source, reference: { repository: remote.repository, folder: remote.folder, ref: remote.ref }, ...(start ? { start: decoder.decode(start) } : {}) };
   }
   const result = await findLayout(searchHost(context.extension, near), near.toString(), choice.name);
   if (!result.layout) {
@@ -361,8 +363,9 @@ export async function newLayoutCommand(context: Context, uri?: unknown): Promise
 }
 
 /**
- * newProjectCommand writes a new project: AGENTS.md, a copy of a layout, the document and the folders of the sources
- * and of the images, and opens the document.
+ * newProjectCommand writes a new project: AGENTS.md, a copy of a layout of the workspace or of a built-in layout, or
+ * the reference of a layout on GitHub, whose clone `mp get` makes in a terminal of VS Code, the document and the
+ * folders of the sources and of the images, and opens the document.
  * @param context - The context.
  * @param uri - The folder of the Explorer, if any.
  */
@@ -399,10 +402,15 @@ export async function newProjectCommand(context: Context, uri?: unknown): Promis
   if (author) {
     values.author = author;
   }
-  const files = newProjectFiles({ layout: picked.layout, source: picked.source, language: language || picked.layout.language, values, ...(picked.origin ? { origin: picked.origin } : {}) }, picked.start);
+  const files = newProjectFiles({ layout: picked.layout, source: picked.source, language: language || picked.layout.language, values, ...(picked.reference ? { reference: picked.reference } : {}) }, picked.start);
   const written = await writeNew(target, files);
   if (!written) {
     return undefined;
+  }
+  // mp get clones the layout on GitHub into .markdownpaper/repos/ in a terminal of VS Code, with the Git and the access
+  // of the author (R-NEW-004).
+  if (picked.reference) {
+    runInTerminal(target, `${terminalCommand} get`);
   }
   const paper = vscode.Uri.joinPath(target, 'paper', 'paper.md');
   const inWorkspace = vscode.workspace.getWorkspaceFolder(target) !== undefined;

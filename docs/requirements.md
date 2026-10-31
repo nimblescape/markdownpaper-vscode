@@ -65,7 +65,7 @@ This document replaces it where the two differ.
 | 33 | The PlantUML diagrams in every PDF, in VS Code and on the command line, with the renderer of nimblescape PlantUML from its npm package `@nimblescape/plantuml`, as inline SVG | [R-REN-015](#r-ren-015), [R-REN-010](#r-ren-010) | done; the package installs from GitHub until the release of nimblescape PlantUML |
 | 34 | The Mermaid diagrams in the PDF of the command line, as the Mermaid extension of VS Code draws them, as inline SVG | [R-REN-016](#r-ren-016), [R-REN-010](#r-ren-010) | done |
 | 36 | The command `mp` in place of `markdownpaper`; the references of a paper: the keys `layout` and `repos` of the front matter with GitHub references, `get` with its clones, `get -u`, `create` that needs a layout and writes its reference, `build` in place of `pdf`, no `update`, the layout read from its clone, and the clones of `repos` for the listings of Markdown Notes | [R-CLI-001](#r-cli-001), [R-CLI-004](#r-cli-004), [R-LAY-007](#r-lay-007), [R-LAY-010](#r-lay-010), [R-NEW-004](#r-new-004) | done ([decision 51](#decisions)); the listings from the clones are step 68 of Markdown Notes |
-| 37 | The command in the terminals of VS Code, as nimblescape TypeScript ships `ts`; "New Project" of VS Code with the reference of a layout on GitHub and `mp get` in a terminal of VS Code; the installation of the command from GitHub before the release | [R-CLI-001](#r-cli-001), [R-NEW-004](#r-new-004) | planned ([decision 51](#decisions)) |
+| 37 | The command in the terminals of VS Code, as nimblescape TypeScript ships `ts`; "New Project" of VS Code with the reference of a layout on GitHub and `mp get` in a terminal of VS Code; the installation of the command from GitHub before the release | [R-CLI-001](#r-cli-001), [R-NEW-004](#r-new-004) | done ([decision 51](#decisions)) |
 | 38 | The links of the PDF: a link for every reference inside the paper, also for each citation, in the color of the text without a mark; the addresses of the links to the outside in footnotes; the link of a listing from a public repository on its cite | [R-PDF-005](#r-pdf-005), [R-REN-011](#r-ren-011) | done ([decision 52](#decisions)); whether a repository is public comes from one request without a sign-in, which is not confirmed yet (open questions) |
 
 ## General
@@ -470,12 +470,10 @@ the look of the PHT templates and the citation style of the PHT.
   it, and the renderer reads the layout from its clone in
   `.markdownpaper/repos/` of the project ([R-CLI-004](#r-cli-004)). A tag or a
   commit keeps the pages as they are; a branch follows the layout.
-- "New Project" in VS Code copies a layout on GitHub into `layouts/<folder>/`
-  until step 37, so its documents name the copy, for example
-  `layout: thesis`; an author who changes a layout copies it there too. The
-  copy stays as it is when the layout changes in its repository, until it
-  changes by hand or by the update from the repository
-  ([R-LAY-010](#r-lay-010)).
+- An author who changes a layout copies it into `layouts/<folder>/`, and the
+  documents name the copy, for example `layout: thesis`. The copy stays as it
+  is when the layout changes in its repository, until it changes by hand or
+  by the update from the repository ([R-LAY-010](#r-lay-010)).
 - There are no layouts in npm packages ([decision 51](#decisions)).
 
 ### R-LAY-008
@@ -534,10 +532,13 @@ function ([decision 40](#decisions)).
 a layout on GitHub from the repository of the layout when the repository has
 a newer version ([decision 46](#decisions)):
 
-- A new project from a layout on GitHub ([R-NEW-004](#r-new-004)) writes into
-  the `layout.json` of its copy the field `origin`: `layout`, the name of the
-  layout on GitHub, `ref`, the branch, tag or commit that the copy follows, and
-  `commit`, the commit of the copied files:
+- A copy of a layout on GitHub in `layouts/` of a project has in its
+  `layout.json` the field `origin`: `layout`, the name of the layout on
+  GitHub, `ref`, the branch, tag or commit that the copy follows, and
+  `commit`, the commit of the copied files. Since
+  [decision 51](#decisions), a new project names a layout on GitHub by its
+  reference and makes no copy ([R-NEW-004](#r-new-004)); the copies of older
+  projects keep their origin:
 
   ```json
   "origin": {
@@ -552,7 +553,7 @@ a newer version ([decision 46](#decisions)):
   by hand, with the commit of its files.
 - The `layout.json` of a copy keeps the form of the file of the layout, for
   example an array on one line: the scaffold and the update change only the
-  fields whose values differ, and add `origin` at the end. So a comparison of
+  fields whose values differ, and a new `origin` stands at the end. So a comparison of
   the copy with the file of the repository shows only real changes.
 - `mp get` ([R-CLI-004](#r-cli-004)) and "Update Layout" in VS Code (in the
   Command Palette, and in the context menu of a folder in `layouts/` of the
@@ -1290,7 +1291,7 @@ as a scaffold of Vite does ([decision 4](#decisions)):
 | Folder or file | Content |
 | --- | --- |
 | `AGENTS.md` | The instructions for AI agents: the folders, the commands of the rules, of the checks and of the PDF, and the work of `inbox/`. |
-| `layouts/<name>/` | The copy of the layout, without its preview PDF; for a layout on GitHub on the command line, its clone in `.markdownpaper/repos/<repository>/` instead, which Git ignores. |
+| `layouts/<name>/` | The copy of a layout of the workspace or a built-in layout, without its preview PDF; for a layout on GitHub, its clone in `.markdownpaper/repos/<repository>/` instead, which Git ignores. |
 | `paper/paper.md` | The document from the empty paper document of the layout ([R-NEW-001](#r-new-001), [R-LAY-009](#r-lay-009)). |
 | `images/`, `code/`, … | The files that the empty paper document links to, at the same paths as in the layout folder. |
 | `inbox/` | The drop folder for sources that no program can load on its own. |
@@ -1308,10 +1309,12 @@ as a scaffold of Vite does ([decision 4](#decisions)):
   options do not give them and a person runs it in a terminal; `--yes` asks
   nothing, for AI agents. `create` needs a layout: without a terminal, or
   with `--yes`, `--layout` must name it ([decision 51](#decisions)).
-- With a layout on GitHub, `mp create` writes no copy into `layouts/`: it
-  clones the layout into `.markdownpaper/repos/` of the project, and the
-  document names its reference ([R-CLI-004](#r-cli-004)). When the project
-  cannot be written, the new clone goes again.
+- With a layout on GitHub, `mp create` and "New Project" write no copy into
+  `layouts/`: `mp create` clones the layout into `.markdownpaper/repos/` of
+  the project, "New Project" runs `mp get` for the clone
+  ([R-NEW-004](#r-new-004)), and the document names its reference
+  ([R-CLI-004](#r-cli-004)). When the project cannot be written, the new
+  clone goes again.
 - No command writes a file over an existing file; then it writes nothing and
   names the files.
 - A project can hold more than one document in `paper/`, for example
@@ -1343,9 +1346,10 @@ all layouts that Markdown Paper can find ([decision 41](#decisions)):
   commit, and the default branch when it is left out.
 - `mp create` clones the chosen layout on GitHub with Git and writes its
   reference with the rev into the field `layout` ([R-CLI-004](#r-cli-004)).
-  "New Project" in VS Code reads the files of the layout at one commit and
-  copies them into `layouts/<folder>/` of the new project, without the preview
-  PDF, until step 37.
+  "New Project" in VS Code writes the same reference, with the empty paper
+  document of the layout as the start of the paper, and runs `mp get` in a
+  new terminal of VS Code in the project folder, which clones the layout with
+  the Git and the access of the author.
 - `mp layouts` prints the list, with the name of each layout for `--layout`,
   a layout on GitHub with the default branch as its rev.
 - GitHub limits the number of requests without a sign-in. The command uses
@@ -1367,15 +1371,19 @@ package ([decision 53](#decisions)).
 Until the release the package is not on npmjs.com, so `npx -y
 @nimblescape/markdownpaper` works only after the release; before it, the
 command comes from the GitHub repository ([decision 36](#decisions)). npm
-cannot install the folder `cli/` of a repository, so the way to install the
-command from GitHub is planned.
+cannot install the folder `cli/` of a repository, so a build of the
+repository at a commit makes the package file: `npm ci`, `node esbuild.mjs
+--production` and `npm pack ./cli`. `npm install --global` installs that
+file, and CI calls `npx -y --package <file.tgz> mp <command>`. In VS Code the
+extension gives the command (below).
 
 - `build` (the PDF), `check`, `format` ([R-CLI-002](#r-cli-002)), `source`
   ([R-CITE-005](#r-cite-005)), `create`, `get` ([R-CLI-004](#r-cli-004)),
   `new document|layout|project`, `layouts` ([R-NEW-004](#r-new-004)),
-  `preview` ([R-LAY-009](#r-lay-009)), `instructions`. `pdf` and `update`
-  were the names of `build` and of the update of the copies before; they now
-  name the new command and stop.
+  `preview` ([R-LAY-009](#r-lay-009)), `instructions`, and `completion
+  bash|zsh|fish`, which prints the Tab completion script of a shell. `pdf`
+  and `update` were the names of `build` and of the update of the copies
+  before; they now name the new command and stop.
 - `--help` prints the use, `--version` the version and the version of the
   layout format.
 - The exit code is 0 for success, 1 for problems of a document, for a file
@@ -1383,16 +1391,19 @@ command from GitHub is planned.
   no source, or for a copy of a layout that `get` leaves as it is because of
   a conflict, and 2 for a wrong call or a failure, also of Git.
 - The command uses the same renderer, checks and scaffold as the extension.
-- Planned in step 37 ([decision 51](#decisions)): the extension ships the
-  command in the terminals of VS Code, as nimblescape TypeScript ships `ts`:
-  the command is in the folder
-  `cli/` of the extension, a small script with the name of the command is in
-  the storage folder of the extension, the `PATH` of the terminals of VS Code
-  ends with that folder, so that a global installation comes first, and the
-  terminals get the Tab completion of the command. An author who writes in VS
-  Code installs nothing; outside VS Code, npm installs the same command
-  globally. The command has no second name and no setting for one; a shell
-  alias gives it one, for example `alias paper=mp`. The package `mp` of
+- The extension ships the command in the terminals of VS Code, as
+  nimblescape TypeScript ships `ts` (step 37, [decision 51](#decisions)): the
+  package of the extension holds a copy of the files of the npm package in
+  its folder `cli/`; a small script `mp` (and `mp.cmd` on Windows) in the
+  storage folder of the extension starts `cli/dist/mp.js` with the Node.js of
+  the `PATH`; the `PATH` of the terminals of VS Code ends with that folder, so
+  that a global installation comes first; and the terminals get the Tab
+  completion of the command in bash and zsh. An author who writes in VS Code
+  and has Node.js 22 or later installs nothing; outside VS Code, npm installs
+  the same command globally. A terminal that was open before the start of
+  the extension gets the command after a restart. The command has no second
+  name and no setting for one; a shell alias gives it one, for example
+  `alias paper=mp`. The package `mp` of
   another author on npmjs.com also has a command `mp`, and npm installs only
   one of the two globally.
 

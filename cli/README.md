@@ -25,6 +25,49 @@ The package `mp` of another author on npmjs.com also installs a command `mp`;
 npm installs only one of the two globally. A shell alias gives `mp` a second
 name, for example `alias paper=mp`.
 
+### Before the release
+
+Until the first release, the package is not on npmjs.com. npm cannot install
+the folder `cli/` of a repository, so a build of the repository at a commit
+makes the package file:
+
+```sh
+git clone https://github.com/nimblescape/markdownpaper-vscode.git
+cd markdownpaper-vscode
+git checkout <commit>
+npm ci
+node esbuild.mjs --production
+npm pack ./cli
+npm install --global ./nimblescape-markdownpaper-0.1.0.tgz
+```
+
+CI and AI agents run the command from the file without an installation:
+`npx -y --package ./nimblescape-markdownpaper-0.1.0.tgz mp build
+paper/paper.md`.
+
+### In VS Code
+
+The extension nimblescape Markdown Paper ships the same command in the
+terminals of VS Code: its package holds a copy of this package, and the
+`PATH` of the terminals ends with a folder of the extension with a script
+`mp`. An author who writes in VS Code with Node.js 22 or newer installs
+nothing. A global installation comes first in the `PATH` and decides the
+version. A terminal that was open before the extension started gets the
+command after a restart. The terminals of VS Code also get the Tab completion
+of `mp` in bash and zsh.
+
+### Tab completion
+
+`mp completion <shell>` prints the Tab completion script of bash, zsh or
+fish. It completes the commands, their options, the words of `new`,
+`instructions` and `completion`, and the Markdown files and the folders.
+
+| Shell | Line in the start file |
+| --- | --- |
+| bash | `source <(mp completion bash)` in `~/.bashrc` |
+| zsh | `source <(mp completion zsh)` in `~/.zshrc`, after `compinit` |
+| fish | `mp completion fish \| source` in `~/.config/fish/config.fish` |
+
 ## Usage
 
 ```sh
@@ -52,6 +95,7 @@ mp instructions document
 | `format <file>...` | Writes into each file the text of the citations and the reference list in the citation style of the layout, and the lists of the special sections: the table of contents, the list of figures, of tables and of listings. `--check` writes nothing and exits with 1 when the format would change a file. |
 | `source <file> <input>...` | Adds sources to the database of the file, with the metadata from doi.org, the catalogs of the libraries (DNB, K10plus, Open Library), PubMed or arXiv. An input is a DOI, an ISBN, a PubMed ID, an arXiv ID, a web address, or a RIS, BibTeX, CSL JSON, HTML or PDF file. `--id <id>`, `--title <words>` (words of the title from the source itself; a record whose title lacks one adds nothing), `--dry-run`, `--offline`. `source --search <words>` lists up to ten works of Crossref with their DOIs. |
 | `instructions [topic]` | Prints the rules of a topic for AI agents: `document`, `layout`, `render`. |
+| `completion <shell>` | Prints the Tab completion script of `bash`, `zsh` or `fish`. |
 | `--help` | Shows the help. |
 | `--version` | Shows the version of the command and of the format of the layouts. |
 

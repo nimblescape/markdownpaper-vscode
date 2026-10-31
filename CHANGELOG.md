@@ -106,7 +106,9 @@ The first version.
   `nimblescape-markdownpaper-layout`), with their preview PDF; `--layout
   <owner>/<repository>/<folder>@<rev>` names a layout on GitHub. `mp create`
   needs a layout, clones a layout on GitHub into `.markdownpaper/repos/` of
-  the project and writes its reference into the field `layout`.
+  the project and writes its reference into the field `layout`. "New
+  Project" writes the same reference and runs `mp get` in a terminal of
+  VS Code.
 - The empty paper document and its preview: each layout names in
   `layout.json` its empty paper document (`document`), which a new document
   starts from, with the values of the cover page and example texts that
@@ -118,8 +120,11 @@ The first version.
   `nimblescape.markdownPaper.openPdf`.
 - The npm package `@nimblescape/markdownpaper` with the command `mp`:
   `build`, `check`, `create`, `get`, `new document|layout|project`, `layouts`,
-  `preview` and `instructions document|layout|render`, the rules for AI
-  agents.
+  `preview`, `instructions document|layout|render`, the rules for AI
+  agents, and `completion bash|zsh|fish`, the Tab completion scripts.
+- The command `mp` in the terminals of VS Code: the extension holds a copy of
+  the npm package, and the terminals of VS Code get a script `mp` at the end
+  of their `PATH` and the Tab completion of `mp` in bash and zsh.
 - The references of a paper: the front matter names its layout on GitHub
   (`layout: <owner>/<repository>/<folder>@<rev>`) and the repositories of the
   code of its listings (`repos`), each with a branch, a tag or a commit. `mp
@@ -157,9 +162,9 @@ The first version.
   GitHub does. A hint at the start of the reference list stays before the
   entries and keeps the form of its box: the hanging indent of the reference
   list is only for the entries, `.references > p`.
-- The update of a copy of a layout on GitHub: a new project writes the field
-  `origin` (the layout, the ref and the commit) into the `layout.json` of its
-  copy. `mp get` and "Update Layout" read the newest commit of
+- The update of a copy of a layout on GitHub: the copy names its origin in
+  the field `origin` (the layout, the ref and the commit) of its
+  `layout.json`. `mp get` and "Update Layout" read the newest commit of
   the ref and update the copy: a file that only the repository changed gets
   its new version, a file that only the project changed stays, and a file that
   both changed stops the update unless `--force` or a confirmation replaces it.

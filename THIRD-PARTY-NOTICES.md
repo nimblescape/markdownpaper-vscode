@@ -12,8 +12,11 @@ that it uses and its plugin for footnotes, the YAML parser of the front
 matter, the hyphenation, the PDF library that finishes the PDF, and
 citeproc-js, which writes the citations and the reference list in a citation
 style. The
-command `markdownpaper` of the npm package `@nimblescape/markdownpaper`,
-`cli/dist/mp.js`, contains the same packages.
+command `mp` of the npm package `@nimblescape/markdownpaper`,
+`cli/dist/mp.js`, contains the same packages. The extension holds a copy of
+the files of the npm package in its folder `cli/`, for the command `mp` in
+the terminals of VS Code, with the files and the notices that the next
+paragraphs name for the npm package.
 
 The extension and the npm package also hold the file `paged.polyfill.js` of
 Paged.js, which makes the pages in the page preview and in the browser that

@@ -6,8 +6,8 @@
  * The editor wiring of nimblescape Markdown Paper: the activation starts the checks of the front matter, the context
  * key of paper documents, the format step of the paper in the formatter of Markdown Notes
  * ([formatStep.ts](formatStep.ts)), the parts of the paper in the editor of Markdown Notes
- * ([notesParts.ts](notesParts.ts)), the citations from the editor and from Zotero ([cite.ts](cite.ts)) and the
- * commands, and returns the export of the extension: the markdown-it plugin
+ * ([notesParts.ts](notesParts.ts)), the citations from the editor and from Zotero ([cite.ts](cite.ts)), the command mp
+ * in the terminals of VS Code ([terminal.ts](terminal.ts)) and the commands, and returns the export of the extension: the markdown-it plugin
  * of the pages in the Markdown preview of VS Code ([markdownPreview.ts](markdownPreview.ts)), which VS Code reads, and
  * the functions that the tests in VS Code read.
  */
@@ -23,6 +23,7 @@ import type { SlashCommand } from './notesApi';
 import { registerNotesParts, researchCommand } from './notesParts';
 import { PaperDocuments } from './paperDocuments';
 import { checkedSettings, type Settings, settingsSection } from './settings';
+import { setUpTerminals } from './terminal';
 
 /** extensionId is the ID of the extension. */
 export const extensionId = 'nimblescape.nimblescape-markdownpaper';
@@ -51,6 +52,8 @@ export interface Api {
   research: SlashCommand;
   /** cite is the slash command `/cite`, which Markdown Notes offers in the text editor. */
   cite: SlashCommand;
+  /** terminalFolder is the folder of the script mp, at the end of the PATH of the terminals, or undefined. */
+  terminalFolder?: string;
 }
 
 /**
@@ -68,6 +71,12 @@ export function readSettings(scope?: vscode.Uri): Settings {
  * @returns The export of the extension.
  */
 export function activate(context: vscode.ExtensionContext): Api {
+  let terminalFolder: string | undefined;
+  try {
+    terminalFolder = setUpTerminals(context);
+  } catch (error) {
+    console.error(`nimblescape Markdown Paper: the command mp in the terminals: ${error instanceof Error ? error.message : String(error)}`);
+  }
   const checks = new FrontMatterChecks(context.extensionUri);
   const papers = new PaperDocuments();
   const formatStep = new PaperFormatStep(context.extensionUri);
@@ -115,6 +124,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     formatStep,
     research: researchCommand,
     cite,
+    ...(terminalFolder ? { terminalFolder } : {}),
   };
 }
 

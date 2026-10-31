@@ -65,15 +65,22 @@ list, also a layout on GitHub, with a branch, a tag or a commit after `@`:
 npx -y @nimblescape/markdownpaper create my-thesis --layout majikmate/markdownpaper-layout-pht/thesis@main
 ```
 
-On the command line, a layout on GitHub stays in its repository: `create`
-clones it with Git into `.markdownpaper/repos/` of the project, a folder that
-Git ignores, and the document names its reference in the field `layout`, for
-example `layout: majikmate/markdownpaper-layout-pht/thesis@main`. A tag or a
-commit after `@` keeps the pages as they are; a branch follows the changes of
-the layout. `npx -y @nimblescape/markdownpaper get` clones what is missing,
-for example after a clone of the project or in CI, and brings the head of each
-branch; `get -u` moves a reference to a tag to the newest tag. "New Project" in
-VS Code still copies a layout on GitHub into `layouts/`.
+A layout on GitHub stays in its repository: the document names its reference
+in the field `layout`, for example
+`layout: majikmate/markdownpaper-layout-pht/thesis@main`, and Git clones it
+into `.markdownpaper/repos/` of the project, a folder that Git ignores.
+`create` clones it at once; "New Project" in VS Code runs `mp get` in a
+terminal of VS Code, which clones it. A tag or a commit after `@` keeps the
+pages as they are; a branch follows the changes of the layout.
+`npx -y @nimblescape/markdownpaper get` clones what is missing, for example
+after a clone of the project or in CI, and brings the head of each branch;
+`get -u` moves a reference to a tag to the newest tag.
+
+The terminals of VS Code have the command `mp` of the extension, with its Tab
+completion in bash and zsh, so `mp get` and `mp build paper/paper.md` work
+there without an installation. A terminal that was open before the extension
+started gets the command after a restart. Outside VS Code, the
+[README of the command](../cli/README.md) shows how to install it.
 
 With a sign-in to GitHub in VS Code, or with a token in `GITHUB_TOKEN` on the
 command line, the list also holds the private repositories that you can read,
@@ -82,7 +89,7 @@ and GitHub allows more requests.
 | Folder or file | Content |
 | --- | --- |
 | `AGENTS.md` | The instructions for AI agents: the commands of the rules, of the checks and of the PDF. |
-| `layouts/<name>/` | The copy of the layout, or for a layout on GitHub on the command line its clone in `.markdownpaper/repos/<name>/`. |
+| `layouts/<name>/` | The copy of a layout of the workspace or of a built-in layout; for a layout on GitHub, its clone in `.markdownpaper/repos/<name>/` instead. |
 | `paper/paper.md` | The document: the empty paper document of the layout, with the values of the cover page in the front matter and chapters that explain how to work with the layout. |
 | `images/` | The figures, first the example figure of the empty paper document, if it has one. |
 | `code/`, … | The other files that the empty paper document links to, such as the code of an example listing. |
@@ -94,7 +101,8 @@ layout of the workspace, and "New Layout" copies a layout into a new folder. Bot
 in the context menu of a folder in the Explorer. No command writes a file over
 an existing file.
 
-A layout from GitHub stays as it is in the project until you update it. Its
+An older project can have a copy of a layout from GitHub in `layouts/`. The
+copy stays as it is until you update it. Its
 `layout.json` names where it comes from in the field `origin`. "Update
 Layout", in the Command Palette and in the context menu of a folder in
 `layouts/`, reads the newest version from the repository of the layout: the

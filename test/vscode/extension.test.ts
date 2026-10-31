@@ -13,9 +13,11 @@
 // The test of the script of the pages, which needs a browser page, is in src/paperPreview.test.ts.
 
 import * as assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { promisify } from 'node:util';
 import * as vscode from 'vscode';
 import type { Api } from '../../src/extension';
 import { markdownExtensions, plantUmlOptions } from '../../src/markdownExtensions';
@@ -87,6 +89,14 @@ describe('nimblescape Markdown Paper', function () {
     for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'connectZotero', 'updateSourcesFromZotero']) {
       assert.ok(commands.includes(`nimblescape.markdownPaper.${name}`), name);
     }
+  });
+
+  it('the terminals of VS Code get the command mp of the extension at the end of their PATH (R-CLI-001)', async () => {
+    const folder = (await api()).terminalFolder;
+    assert.ok(folder, 'the folder of the script mp');
+    const script = path.join(folder, process.platform === 'win32' ? 'mp.cmd' : 'mp');
+    const { stdout } = await promisify(execFile)(script, ['--version'], { shell: process.platform === 'win32' });
+    assert.match(stdout, /^mp \d+\.\d+\.\d+ \(layouts: nimblescape-layout 1\.0\.0\)$/m);
   });
 
   it('a missing required field of the layout is a warning at the field layout, with the description in its hover (R-DOC-002, R-DOC-003)', async () => {

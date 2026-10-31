@@ -15,7 +15,10 @@ The npm package [`@nimblescape/markdownpaper`](https://github.com/nimblescape/ma
 gives the same renderer to people and AI agents on the command line, with the
 command `mp`: `npx -y @nimblescape/markdownpaper build paper/paper.md`. `mp get`
 clones the repositories that a paper names in its front matter, such as its
-layout on GitHub, into `.markdownpaper/repos/` of the project.
+layout on GitHub, into `.markdownpaper/repos/` of the project. The extension
+ships the same command in the terminals of VS Code, with its Tab completion in
+bash and zsh, so an author who writes in VS Code installs nothing more than
+Node.js 22 or newer.
 
 ## What the extension does on your computer
 
@@ -26,6 +29,11 @@ layout on GitHub, into `.markdownpaper/repos/` of the project.
   files of their layouts. It writes files only for "Export PDF" (the PDF
   beside the Markdown file) and for "New Project", "New Document" and "New
   Layout", never over an existing file.
+- **Terminals.** The extension writes a small script `mp` and the Tab
+  completion scripts of `mp` into its storage folder, and adds them to the
+  `PATH`, `XDG_DATA_DIRS` and `FPATH` of the terminals of VS Code. The
+  script starts the command of the extension with the Node.js of the `PATH`.
+  A global `mp` comes first.
 - **Page preview.** The pages are in the Markdown preview of VS Code. The
   extension gives it a markdown-it plugin, a script and a style sheet, as
   other Markdown extensions do. The preview keeps the rules of safety of
@@ -109,10 +117,13 @@ layout on GitHub, into `.markdownpaper/repos/` of the project.
   paper: `AGENTS.md` for AI agents, the chosen layout, `paper/paper.md` from
   the empty paper document of the layout, which explains how to work with the
   layout, the drop folder `inbox/` for sources, the folder `bib/` for the
-  files of the sources, and `images/`. "New Document" and "New Layout" add a
-  document or a layout. "Update Layout" updates the copy of a layout on GitHub
-  from its repository when the repository has a newer version, and keeps the
-  changes of the project.
+  files of the sources, and `images/`. A layout on GitHub stays in its
+  repository: the document names its reference in the field `layout`, and
+  "New Project" runs `mp get` in a terminal of VS Code, which clones it into
+  `.markdownpaper/repos/`. "New Document" and "New Layout" add a document or
+  a layout. "Update Layout" updates a copy of a layout on GitHub in
+  `layouts/` of an older project from its repository when the repository has
+  a newer version, and keeps the changes of the project.
 - **Notes.** The notes of nimblescape Markdown Notes do not show on the pages.
   The page preview and the PDF of a file in its clean editing view show the
   file itself. The clean editing view hides the database of the sources.

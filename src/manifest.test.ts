@@ -162,13 +162,20 @@ test('the README, the guide and the requirements name every setting that the man
   }
 });
 
-test('the package holds the bundle, Paged.js, the page files of @nimblescape/plantuml, the scripts and the style of the pages in the Markdown preview, the built-in layouts, the icon and the documents only', () => {
+test('the package holds the bundle, Paged.js, the page files of @nimblescape/plantuml, the scripts and the style of the pages in the Markdown preview, the built-in layouts, the copy of the npm package in cli/, the icon and the documents only', () => {
   const patterns = read('.vscodeignore')
     .split('\n')
     .filter((line) => line && !line.startsWith('#'));
   expect(patterns).toEqual([
     '**',
     '!dist/extension.js',
+    '!cli/package.json',
+    '!cli/dist/mp.js',
+    '!cli/dist/paged.polyfill.js',
+    '!cli/dist/layouts/**',
+    '!cli/dist/plantuml/**',
+    '!cli/dist/mermaid/*.js',
+    '!cli/dist/mermaid/THIRD-PARTY-NOTICES.md',
     '!media/paged.js',
     '!media/paged.polyfill.js',
     '!media/plantuml/**',
@@ -185,8 +192,9 @@ test('the package holds the bundle, Paged.js, the page files of @nimblescape/pla
     '!LICENSE',
     '!THIRD-PARTY-NOTICES.md',
   ]);
-  // The build writes dist/ and copies Paged.js and the page files of @nimblescape/plantuml into media/ (esbuild.mjs).
-  const built = (pattern: string) => pattern.startsWith('!dist/') || pattern.startsWith('!media/paged.') || pattern.startsWith('!media/plantuml/');
+  // The build writes dist/ and cli/dist/, and copies Paged.js and the page files of @nimblescape/plantuml into media/
+  // (esbuild.mjs).
+  const built = (pattern: string) => pattern.startsWith('!dist/') || pattern.startsWith('!cli/dist/') || pattern.startsWith('!media/paged.') || pattern.startsWith('!media/plantuml/');
   for (const pattern of patterns.filter((pattern) => pattern.startsWith('!') && !built(pattern))) {
     expect(fs.existsSync(path.join(repository, pattern.slice(1).replace('/**', ''))), pattern).toBe(true);
   }

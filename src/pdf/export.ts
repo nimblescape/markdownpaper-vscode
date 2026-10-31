@@ -18,7 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { Problem } from '../paper/layout';
 import type { MarkdownPlugin } from '../paper/markdown';
 import { type Extensions, type Reader, type Rendered, render } from '../paper/render';
-import { findBrowser } from './browser';
+import { findBrowser, NoBrowserError } from './browser';
 import { mermaidParts, mermaidSettingsOf } from './mermaid';
 import { finishPdf, printPdf } from './pdf';
 import { commandLineOptions, type PlantUmlOptions, plantUmlParts } from './plantUml';
@@ -78,6 +78,11 @@ export interface ExportOptions {
   html?: string;
   /** browser is the path of the program of the browser; empty searches an installed browser. */
   browser?: string;
+  /**
+   * download gets a browser when none is installed or downloaded, for example after a question, and returns its
+   * program, or undefined when the person does not want the download ([R-PDF-002](../../docs/requirements.md#r-pdf-002)).
+   */
+  download?: () => Promise<string | undefined>;
   /** top is the path of the top folder of the search for a layout. */
   top?: string;
   /** extensions are the parts of the Markdown extensions of VS Code; the command line has none. */
@@ -148,7 +153,16 @@ export async function renderFile(file: string, options: Pick<ExportOptions, 'ass
  * @param options - The options.
  */
 export async function exportPdf(file: string, options: ExportOptions): Promise<ExportResult> {
-  const browser = findBrowser(options.browser);
+  let browser: string;
+  try {
+    browser = findBrowser(options.browser);
+  } catch (error) {
+    const downloaded = error instanceof NoBrowserError && options.download ? await options.download() : undefined;
+    if (!downloaded) {
+      throw error;
+    }
+    browser = downloaded;
+  }
   const rendered = await renderFile(file, options);
   const errors = rendered.problems.filter((problem) => problem.severity === 'error');
   const output = options.output ?? path.join(path.dirname(file), rendered.pdfName);

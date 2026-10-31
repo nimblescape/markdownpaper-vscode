@@ -47,7 +47,7 @@ This document replaces it where the two differ.
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
 | 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; on the command line PlantUML in step 33 and Mermaid in step 34 |
 | 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | the repositories on GitHub done in step 28; the name of a layout on GitHub in the front matter and the npm packages wait for a decision |
-| 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
+| 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | done |
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` with the cite of the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
 | 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
 | 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `markdownpaper format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | done |
@@ -101,13 +101,17 @@ Marketplace does not accept extensions that use one.
   layouts on GitHub in the list of "New Project" ([R-NEW-004](#r-new-004)) and
   for "Update Layout" ([R-LAY-010](#r-lay-010)), and to the Zotero web API
   (`api.zotero.org`) after the author connected Zotero, for `/cite` and
-  "Update Sources from Zotero" ([R-CITE-006](#r-cite-006)). It starts a
-  program only for "Export PDF": the browser of [R-PDF-002](#r-pdf-002).
+  "Update Sources from Zotero" ([R-CITE-006](#r-cite-006)), and to
+  `storage.googleapis.com` for the download of Chromium after the author
+  agreed ([R-PDF-002](#r-pdf-002)). It starts a program only for "Export
+  PDF": the browser of [R-PDF-002](#r-pdf-002).
 - The command `markdownpaper` connects to GitHub for `create`, `layouts`,
   `new project` with a layout on GitHub, and `update`. `markdownpaper source`
   connects to the services of the metadata of sources in
   [R-CITE-005](#r-cite-005), only for the identifiers and files that its call
-  names. The other subcommands connect to no address.
+  names. `pdf` and `preview` with `--download-browser` connect to
+  `storage.googleapis.com` for the download of Chromium, only when no browser
+  is installed. The other subcommands connect to no address.
 - The pages run only the scripts of the extensions of VS Code
   ([R-PRV-004](#r-prv-004)) and, in the PDF, those of the renderer
   ([R-REN-001](#r-ren-001)); a script in a Markdown file or in a layout does
@@ -1080,8 +1084,20 @@ one or how to name it.
 
 - When no Chrome, Chromium or Edge is installed, the extension and the command
   download Chromium once and use it ([decision 6](#decisions)). The download
-  asks first in VS Code, and needs the option `--download-browser` on the
-  command line. Planned.
+  asks first in VS Code, and needs the option `--download-browser` of `pdf`
+  and `preview` on the command line.
+- The download is the headless shell of Chrome for Testing, the build of
+  Chromium that the Chrome team makes for programs that print and test pages,
+  in one fixed version of the package (156.0.8078.80), from
+  `storage.googleapis.com`. Its size and its SHA-256 hash must be the values
+  of the package for each platform: Windows, macOS on Intel and Apple
+  silicon, Linux on x64. Chrome for Testing has no build for Linux on ARM.
+- The download goes into the cache of the user, which the extension and the
+  command share: `%LOCALAPPDATA%\nimblescape-markdownpaper\Cache` on Windows,
+  `~/Library/Caches/nimblescape-markdownpaper` on macOS, and
+  `$XDG_CACHE_HOME/nimblescape-markdownpaper` or
+  `~/.cache/nimblescape-markdownpaper` on Linux. An installed browser comes
+  before the download.
 
 ### R-PDF-003
 

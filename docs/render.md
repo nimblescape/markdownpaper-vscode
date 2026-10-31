@@ -23,7 +23,9 @@ npx -y @nimblescape/markdownpaper pdf paper/paper.md
 - The command needs Node.js 22 or later and an installed Google Chrome,
   Chromium or Microsoft Edge. It finds them at their usual places;
   `--browser <program>` or the environment variable `MARKDOWNPAPER_BROWSER`
-  names another program.
+  names another program. Without one, `--download-browser` downloads
+  Chromium once (about 120 MB) into the cache folder of the user, and the
+  next runs use it.
 - The exit code is 0 for a PDF without problems, 1 for a PDF with problems of
   the document, which the command prints, and 2 when no PDF was written.
 

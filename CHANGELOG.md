@@ -65,6 +65,10 @@ The first version.
   language in its metadata. In VS Code, the PDF shows what the other Markdown
   extensions add to the Markdown preview, for example the diagrams of Mermaid
   and the math of KaTeX.
+- Without an installed browser, "Export PDF" offers to download Chromium
+  once, the headless shell of Chrome for Testing with a checked SHA-256 hash,
+  into the cache folder of the user; `markdownpaper pdf --download-browser`
+  does the same on the command line.
 - Diagrams in every PDF as vector graphics: the PlantUML diagrams with the
   renderer of nimblescape PlantUML, its settings and its included files, in
   VS Code and on the command line, and on the command line the diagrams of

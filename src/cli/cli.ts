@@ -47,6 +47,7 @@ import { identifierOf, missingFields } from '../paper/metadata';
 import { defaultLayout, documentLayout, findLayout, layoutName } from '../paper/render';
 import { mapLinks, type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, packageName, splitStart, startFiles } from '../paper/scaffold';
 import { planUpdate } from '../paper/update';
+import { defaultPlace, downloadBrowser, downloadSize, type Place } from '../pdf/download';
 import { type Assets, exportPdf, fileReader, folderUrl } from '../pdf/export';
 import { httpFetcher } from './net';
 
@@ -64,6 +65,7 @@ export const usage = [
   '      --output <file.pdf>       write the PDF to this file',
   '      --html <file.html>        also write the HTML page of the renderer, for a look at it in a browser',
   '      --browser <program>       the program of Chrome, Chromium or Edge (else MARKDOWNPAPER_BROWSER or a search)',
+  '      --download-browser        download Chromium once into the cache of the user when no browser is installed',
   '  check <file.md>...            check the front matter against the layout, and the links to figures and tables',
   '  format <file.md>...           write the citations, the reference list and the lists, such as the table of contents',
   '      --check                   write nothing; exit with 1 when the format would change a file',
@@ -120,6 +122,8 @@ export interface Io {
   fetch?: Fetcher;
   /** today is the day of the access of a web page; without it, the day of the run. */
   today?: Date;
+  /** place is the place of the download of Chromium; without it, the cache of the user. */
+  place?: Place;
 }
 
 /** Choice is an entry of a list of `create`: its label, a hint after it, and a detail below the list while it is chosen. */
@@ -339,12 +343,24 @@ async function offersOf(io: Io): Promise<Offer[]> {
 }
 
 /**
+ * downloadChromium downloads Chromium once into the cache of the user for the PDF, when no browser is installed
+ * ([R-PDF-002](../../docs/requirements.md#r-pdf-002)), and says so on the standard error.
+ * @param io - The streams and the network.
+ */
+async function downloadChromium(io: Io): Promise<string> {
+  const place = io.place ?? defaultPlace();
+  const size = downloadSize(place);
+  io.err(`No browser is installed: downloading Chromium ${place.release.version}${size ? ` (about ${size} MB)` : ''} into ${place.cache} …`);
+  return downloadBrowser(fetcherOf(io), place);
+}
+
+/**
  * runPdf runs `pdf`.
  * @param args - The arguments after the command.
  * @param io - The streams and the assets.
  */
 async function runPdf(args: readonly string[], io: Io): Promise<number> {
-  const { positional, options } = parse(args, ['output', 'html', 'browser'], []);
+  const { positional, options } = parse(args, ['output', 'html', 'browser'], ['download-browser']);
   if (positional.length !== 1) {
     throw new UsageError(`${command} pdf needs one Markdown file.`);
   }
@@ -357,6 +373,7 @@ async function runPdf(args: readonly string[], io: Io): Promise<number> {
     ...(options.output ? { output: path.resolve(io.cwd, options.output) } : {}),
     ...(options.html ? { html: path.resolve(io.cwd, options.html) } : {}),
     ...(options.browser ? { browser: options.browser } : {}),
+    ...(options['download-browser'] ? { download: () => downloadChromium(io) } : {}),
   });
   for (const problem of result.problems) {
     io.err(describe(problem, io.cwd));
@@ -692,7 +709,7 @@ async function runLayouts(args: readonly string[], io: Io): Promise<number> {
  * @param io - The streams and the assets.
  */
 async function runPreview(args: readonly string[], io: Io): Promise<number> {
-  const { positional, options } = parse(args, ['browser'], ['write']);
+  const { positional, options } = parse(args, ['browser'], ['write', 'download-browser']);
   if (positional.length !== 1) {
     throw new UsageError(`${command} preview needs the path of one layout folder.`);
   }
@@ -721,7 +738,12 @@ async function runPreview(args: readonly string[], io: Io): Promise<number> {
     const { style } = await citationStyleOf((url) => fileReader.read(url), loaded.layout);
     const formatted = formatPaper(text.split(/\r?\n/), loaded.layout, style).join('\n');
     fs.writeFileSync(paper, formatted);
-    const result = await exportPdf(paper, { assets: io.assets, output: preview, ...(options.browser ? { browser: options.browser } : {}) });
+    const result = await exportPdf(paper, {
+      assets: io.assets,
+      output: preview,
+      ...(options.browser ? { browser: options.browser } : {}),
+      ...(options['download-browser'] ? { download: () => downloadChromium(io) } : {}),
+    });
     for (const problem of result.problems) {
       io.err(describe(problem, temporary));
     }

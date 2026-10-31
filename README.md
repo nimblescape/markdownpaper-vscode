@@ -31,7 +31,8 @@ gives the same renderer to people and AI agents on the command line:
   the pages and Paged.js; a script in a Markdown file or in a layout does not
   run.
 - **Export PDF.** Only "Export PDF" starts a program: the installed Google
-  Chrome, Chromium or Microsoft Edge, without a window, with a profile of its
+  Chrome, Chromium or Microsoft Edge, or the Chromium that it downloaded after
+  your answer, without a window, with a profile of its
   own in a temporary folder, and connected to the extension through a pipe,
   not through a network port. The browser reads the page from a temporary
   file and the images of the document from the disk. For the content of the
@@ -42,7 +43,9 @@ gives the same renderer to people and AI agents on the command line:
 - **Network.** The extension collects no telemetry. Its own code connects
   only to GitHub: "New Project" lists the layouts on GitHub, and "Update
   Layout" reads the newest version of a copied layout, with the GitHub sign-in
-  of VS Code when one exists. A document or a layout that names an image or a
+  of VS Code when one exists; to the Zotero web API after "Connect Zotero";
+  and to `storage.googleapis.com` for the download of Chromium, after you
+  agreed to it. A document or a layout that names an image or a
   font on the web makes the Markdown preview and the browser load it.
 - **Restricted Mode and virtual workspaces.** In Restricted Mode the page
   preview, the checks and the commands work, and only the settings of the
@@ -158,8 +161,9 @@ describes every feature.
 
 ## Limits
 
-- "Export PDF" needs an installed Google Chrome, Chromium or Microsoft Edge;
-  the download of Chromium when none is installed is planned.
+- "Export PDF" needs a Google Chrome, Chromium or Microsoft Edge. Without
+  one, it offers to download Chromium once (about 120 MB), which the command
+  line uses too; Chrome for Testing has no Chromium for Linux on ARM.
 - The pages in the preview and the PDF use the same renderer, but the preview
   runs in the browser of VS Code and the PDF in the installed browser: with a
   font that only one of them has, a line can break at another place. Fonts in

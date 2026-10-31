@@ -382,7 +382,10 @@ context menu of the Explorer, writes the PDF beside the file, with the name
 that `pdfName` of the layout gives, and opens it
 (`nimblescape.markdownPaper.openPdf`). It needs an installed Google Chrome,
 Chromium or Microsoft Edge; `nimblescape.markdownPaper.browserPath` names
-another program. The PDF shows what the Markdown extensions of VS Code add to
+another program. Without one, "Export PDF" asks whether it may download
+Chromium once, the headless shell of Chrome for Testing (about 120 MB), into
+the cache folder of your user account; the command line uses it too, and
+`markdownpaper pdf --download-browser` downloads it on the command line. The PDF shows what the Markdown extensions of VS Code add to
 the Markdown preview, for example the diagrams of Mermaid and the math of
 KaTeX, in the colors of a light theme; a diagram stands in the middle of the
 text. On the command line, which has no extensions of VS Code:

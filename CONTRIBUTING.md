@@ -33,6 +33,7 @@ request.
 | `src/paper/instructions.ts` | The topics of `markdownpaper instructions` ([R-CLI-003](docs/requirements.md#r-cli-003)): the documents `docs/document.md`, `docs/layout.md` and `docs/render.md`, which esbuild bundles as text. |
 | `src/pdf/plantUml.ts` | The PlantUML diagrams of the PDF ([R-REN-015](docs/requirements.md#r-ren-015)): the markdown-it plugin, the style sheet and the script of the page of `@nimblescape/plantuml`, with the settings and the workspace folder of the command line. |
 | `src/pdf/mermaid.ts`, `src/page/mermaid.ts` | The Mermaid diagrams of the PDF of the command line ([R-REN-016](docs/requirements.md#r-ren-016)): the markdown-it plugin and the settings `markdown-mermaid.*`, and the script of the page that draws the diagrams with Mermaid, which esbuild bundles for the browser. |
+| `src/pdf/download.ts` | The download of Chromium when no browser is installed ([R-PDF-002](docs/requirements.md#r-pdf-002)): the headless shell of Chrome for Testing in one version, with the size and the SHA-256 hash of each platform, into the cache of the user, and the unpacking of its ZIP archive. |
 | `src/pdf/workspace.ts` | The workspace folder of a document on the command line, and its settings of `.vscode/settings.json`. |
 | `src/pdf/browser.ts`, `src/pdf/cdp.ts`, `src/pdf/pdf.ts`, `src/pdf/export.ts` | The PDF ([R-PDF-001](docs/requirements.md#r-pdf-001) to [R-PDF-003](docs/requirements.md#r-pdf-003)): the search for an installed browser, its start without a window with the DevTools protocol over a pipe, the print of the page after Paged.js made all pages, and the PDF without the marks of the soft hyphens and with its metadata, by pdf-lib. |
 | `src/cli/cli.ts`, `src/cli/main.ts` | The command `markdownpaper` of the npm package ([R-CLI-001](docs/requirements.md#r-cli-001)), without an API of VS Code in `cli.ts`; `main.ts` runs it with the files, the questions and the standard streams of Node.js. |
@@ -175,6 +176,21 @@ new commit in the script. After the release of nimblescape PlantUML, the
 package becomes a development dependency of `package.json` with its version,
 and the script, its step in the CI and the script `postinstall` go away. The
 release of Markdown Paper waits for the release of the package.
+
+## The download of Chromium
+
+Without an installed Chrome, Chromium or Edge, "Export PDF" asks, and
+`markdownpaper pdf --download-browser` downloads the headless shell of Chrome
+for Testing ([R-PDF-002](docs/requirements.md#r-pdf-002)) once into the cache
+of the user (`src/pdf/download.ts`). `headlessShell` names its version and the
+size and the SHA-256 hash of the ZIP archive of each platform; a download
+with another size or hash does not run. To change the version, take the
+version of the channel "Stable" of
+<https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json>,
+compute the size and the hash of each archive, for example with
+`curl -sS <address> | tee >(wc -c) | sha256sum` for the addresses of
+`downloadAddress`, and run the tests of the command with the new program in
+`MARKDOWNPAPER_BROWSER`.
 
 ## Diagrams of Mermaid on the command line
 

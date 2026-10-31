@@ -4,13 +4,17 @@
 
 /**
  * The browser that prints the PDF ([R-PDF-002](../../docs/requirements.md#r-pdf-002)): an installed Google Chrome,
- * Chromium or Microsoft Edge. The extension and the command line download no browser: Windows has Edge, and the
- * message of a missing browser says where to get Chrome and which setting or option names another program. The
- * module uses no API of VS Code.
+ * Chromium or Microsoft Edge, else the Chromium of an earlier download ([download.ts](download.ts)). Without one, the
+ * error NoBrowserError says where to get Chrome, which setting or option names another program, and how the command
+ * downloads Chromium; the extension asks before its download. The module uses no API of VS Code.
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { downloadedBrowser, type Place } from './download';
+
+/** NoBrowserError is the error of a computer without an installed or downloaded browser. */
+export class NoBrowserError extends Error {}
 
 /** browserVariable is the environment variable that names the program of the browser. */
 export const browserVariable = 'MARKDOWNPAPER_BROWSER';
@@ -53,11 +57,12 @@ function isProgram(file: string): boolean {
 
 /**
  * findBrowser returns the path of the program of the browser: the configured path, else the environment variable
- * MARKDOWNPAPER_BROWSER, else the first installed browser of the search.
+ * MARKDOWNPAPER_BROWSER, else the first installed browser of the search, else the downloaded Chromium.
  * @param configured - The path of the setting or of the option, or empty.
- * @throws When the configured program does not exist, or no browser is installed.
+ * @param place - The place of the download of Chromium.
+ * @throws When the configured program does not exist; a NoBrowserError when no browser is installed or downloaded.
  */
-export function findBrowser(configured = ''): string {
+export function findBrowser(configured = '', place?: Place): string {
   const named = configured.trim() || (process.env[browserVariable] ?? '').trim();
   if (named) {
     if (!isProgram(named)) {
@@ -65,11 +70,12 @@ export function findBrowser(configured = ''): string {
     }
     return named;
   }
-  const found = candidates(process.platform, process.env).find(isProgram);
+  const found = candidates(process.platform, process.env).find(isProgram) ?? downloadedBrowser(place);
   if (!found) {
-    throw new Error(
+    throw new NoBrowserError(
       'No Google Chrome, Chromium or Microsoft Edge was found for the PDF. Install Google Chrome (https://www.google.com/chrome/), ' +
-        `or name the program of the browser in the setting "nimblescape.markdownPaper.browserPath", the option --browser, or the environment variable ${browserVariable}.`,
+        `name the program of the browser in the setting "nimblescape.markdownPaper.browserPath", the option --browser, or the environment variable ${browserVariable}, ` +
+        'or let Markdown Paper download Chromium once: "Export PDF" in VS Code asks, and the command has the option --download-browser.',
     );
   }
   return found;

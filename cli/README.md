@@ -15,8 +15,9 @@ npm install --global @nimblescape/markdownpaper
 ```
 
 `npx` runs the command without an installation. `markdownpaper` needs Node.js
-22 or newer, and an installed Google Chrome, Chromium or Microsoft Edge for
-the PDF. It has no dependencies. Its tests run on Linux and macOS.
+22 or newer, and a Google Chrome, Chromium or Microsoft Edge for the PDF:
+without an installed one, `pdf --download-browser` downloads Chromium once
+into the cache folder of the user. It has no dependencies. Its tests run on Linux and macOS.
 
 ## Usage
 
@@ -38,7 +39,7 @@ markdownpaper instructions document
 | `layouts` | Lists the layouts that `create` offers, with the layouts on GitHub and their previews. |
 | `preview <layout folder>` | Writes the preview PDF of a layout, the PDF of its empty paper document; `--write` also writes the formatted document back. |
 | `update [layout folder]...` | Updates a copy of a layout on GitHub from its repository when its branch has a newer version: the files that only the repository changed get their new versions, and the changes of the project stay. Without a folder, each folder of `layouts/` whose `layout.json` has an `origin`. `--check` writes nothing and exits with 1 for a newer version; `--force` also replaces the files that both changed. |
-| `pdf <file>` | Writes the PDF beside the file, with the name that the layout gives. `--output <file.pdf>`, `--html <file.html>`, `--browser <program>`. |
+| `pdf <file>` | Writes the PDF beside the file, with the name that the layout gives. `--output <file.pdf>`, `--html <file.html>`, `--browser <program>`, `--download-browser` (download Chromium once when no browser is installed). |
 | `check <file>...` | Checks the front matter against the layout and the links to figures and tables. |
 | `format <file>...` | Writes into each file the text of the citations and the reference list in the citation style of the layout, and the lists of the special sections: the table of contents, the list of figures, of tables and of listings. `--check` writes nothing and exits with 1 when the format would change a file. |
 | `source <file> <input>...` | Adds sources to the database of the file, with the metadata from doi.org, the catalogs of the libraries (DNB, K10plus, Open Library), PubMed or arXiv. An input is a DOI, an ISBN, a PubMed ID, an arXiv ID, a web address, or a RIS, BibTeX, CSL JSON, HTML or PDF file. `--id <id>`, `--title <words>` (words of the title from the source itself; a record whose title lacks one adds nothing), `--dry-run`, `--offline`. `source --search <words>` lists up to ten works of Crossref with their DOIs. |

@@ -19,7 +19,9 @@ import type { Fetcher } from './paper/lookup';
 import { defaultLayout, findLayout, layoutName } from './paper/render';
 import { type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, startFiles } from './paper/scaffold';
 import { planUpdate, type Update } from './paper/update';
+import { defaultPlace, downloadBrowser, downloadSize } from './pdf/download';
 import { exportPdf } from './pdf/export';
+import { settingsSection } from './settings';
 import { folderUrl, readFolder, searchHost, workspaceReader } from './workspaceHost';
 
 /** Context is what the commands need from the extension. */
@@ -73,7 +75,7 @@ export async function exportPdfCommand(context: Context, uri?: unknown): Promise
   }
   const folder = vscode.workspace.getWorkspaceFolder(file);
   try {
-    const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Export PDF: ${path.basename(file.fsPath)}` }, async () =>
+    const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Export PDF: ${path.basename(file.fsPath)}` }, async (progress) =>
       exportPdf(file.fsPath, {
         assets: {
           layouts: vscode.Uri.joinPath(context.extension, 'layouts').fsPath,
@@ -82,6 +84,7 @@ export async function exportPdfCommand(context: Context, uri?: unknown): Promise
         },
         text: await textOf(file),
         browser: context.browserPath(),
+        download: () => downloadChromium(context, progress),
         ...(folder?.uri.scheme === 'file' ? { top: folder.uri.fsPath } : {}),
         extensions: await markdownExtensions(context.extension, file),
         plantUml: plantUmlOptions(file),
@@ -101,6 +104,39 @@ export async function exportPdfCommand(context: Context, uri?: unknown): Promise
     void vscode.window.showErrorMessage(`Export PDF: ${error instanceof Error ? error.message : String(error)}`);
     return undefined;
   }
+}
+
+/**
+ * downloadChromium asks whether Markdown Paper may download Chromium for the PDF when no browser is installed, and
+ * downloads it once into the cache of the user, which the command markdownpaper shares
+ * ([R-PDF-002](../docs/requirements.md#r-pdf-002)).
+ * @param context - The context.
+ * @param progress - The progress of "Export PDF", which shows the download.
+ * @returns The program of Chromium, or undefined when the person does not want the download or the system has no build.
+ */
+async function downloadChromium(context: Context, progress: vscode.Progress<{ message?: string }>): Promise<string | undefined> {
+  const place = defaultPlace();
+  const size = downloadSize(place);
+  if (size === undefined) {
+    return undefined;
+  }
+  const choice = await vscode.window.showWarningMessage(
+    'No Google Chrome, Chromium or Microsoft Edge is installed for the PDF.',
+    {
+      modal: true,
+      detail: `Markdown Paper can download Chromium ${place.release.version}, the headless shell of Chrome for Testing, once from storage.googleapis.com (about ${size} MB) into ${place.cache}. The command markdownpaper uses it too.`,
+    },
+    'Download Chromium',
+    'Set Browser Path',
+  );
+  if (choice === 'Set Browser Path') {
+    void vscode.commands.executeCommand('workbench.action.openSettings', `${settingsSection}.browserPath`);
+  }
+  if (choice !== 'Download Chromium') {
+    return undefined;
+  }
+  progress.report({ message: `downloading Chromium (about ${size} MB) …` });
+  return downloadBrowser(fetcher(`nimblescape-markdownpaper/${context.version ?? '0'}`), place);
 }
 
 /**

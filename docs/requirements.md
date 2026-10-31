@@ -802,9 +802,12 @@ Table 1: Noten nach Schulstufe <a id="tab-grades"></a>
   ([R-DOC-002](#r-doc-002)).
 - The formatter of Markdown Notes writes the numbers of the captions and of
   the links in the order of the file ([R-GEN-008](#r-gen-008)); the format
-  step of the paper ([R-CLI-002](#r-cli-002)) will write the numbers of the
+  step of the paper ([R-CLI-002](#r-cli-002)) writes the numbers of the
   headings in the links by the rules of the layout, so the file shows the
-  numbers of the pages.
+  numbers of the pages: `[Kapitel 7](#methoden)` becomes
+  `[Kapitel 2.1](#methoden)`, and a link to an appendix gets its label, such
+  as `[Anhang B](#daten)`. A link in code or in an HTML comment, a link with
+  other words, and a link to a heading without a number keep their text.
 - Markdown Notes defines the form of the anchors and of the links in
   [R-XREF-001](https://github.com/nimblescape/markdownnotes-vscode/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-001),
   [R-XREF-002](https://github.com/nimblescape/markdownnotes-vscode/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-002)

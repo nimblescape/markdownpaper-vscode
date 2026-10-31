@@ -291,7 +291,7 @@ function withoutTrailingSpace(tokens: Token[]): Token[] {
  * referenceText matches the text of a link to a figure, a table or a heading that the renderer writes anew: a word and
  * a number, such as "Abbildung 1", "Tabelle A1", "Kapitel 2.1" or "Anhang B".
  */
-const referenceText = /^(\p{L}+\.?)\s+(?:[A-Z]?\d+(?:\.\d+)*|[A-Z])$/u;
+export const referenceText = /^(\p{L}+\.?)\s+(?:[A-Z]?\d+(?:\.\d+)*|[A-Z])$/u;
 
 /**
  * matches tells whether the text of a heading is one of the terms, without regard to case.
@@ -305,7 +305,7 @@ const matches = (text: string, terms: readonly string[]): boolean => terms.some(
  * ASCII, such as `erkl%C3%A4rung` for `erklärung`; a target with a wrong escape stays as it is.
  * @param href - The target, without "#".
  */
-function decodedTarget(href: string): string {
+export function decodedTarget(href: string): string {
   try {
     return decodeURIComponent(href);
   } catch {

@@ -161,3 +161,6 @@ The first version.
   Open Library gives for the ISBN 978-92-3-100709-5, and notes a source that
   only Open Library knows. `--title <words>` checks the title of the record
   against words of the title of the source in hand.
+- The format step of the paper writes the numbers of the headings into the
+  links to them, by the rules of the layout: `[Kapitel 7](#methoden)` becomes
+  `[Kapitel 2.1](#methoden)` in the file, as on the pages.

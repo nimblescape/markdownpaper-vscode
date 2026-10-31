@@ -37,7 +37,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [A layout from a Word template](#a-layout-from-a-word-template) | AI agent | instructions available | [R-LAY-006](requirements.md#r-lay-006) |
 | [Instructions for AI agents](#instructions-for-ai-agents) | command line | available | [R-CLI-003](requirements.md#r-cli-003) |
 | [Settings](#settings) | VS Code | available | [R-SET-001](requirements.md#r-set-001) |
-| The format step of the paper: the four lists in the file | VS Code (format of Markdown Notes), `markdownpaper format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
+| The format step of the paper: the four lists in the file, the numbers of the headings in the links to them | VS Code (format of Markdown Notes), `markdownpaper format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
 | [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format, `/cite` and `/research` of Markdown Notes, Zotero), `markdownpaper format`, `markdownpaper source` | available; the group libraries of Zotero in `/cite` planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-006](requirements.md#r-cite-006) |
 | [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
 | [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line planned | [R-REN-010](requirements.md#r-ren-010) |
@@ -221,7 +221,9 @@ on GitHub and on the pages: `## Methoden` is `#methoden`, and
 `# Quellen {BIB}` is `#quellen-bib`. A link such as
 `[Kapitel 2.1](#methoden)`, which the slash command `/ref` of Markdown Notes
 writes, shows the number of the heading on the pages, and a link to an
-appendix its label, "Anhang A". A heading needs no anchor.
+appendix its label, "Anhang A". The format step of the paper writes the same
+numbers into the file, so the file on GitHub shows them too. A heading needs
+no anchor.
 
 ## Special sections
 

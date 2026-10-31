@@ -1498,8 +1498,9 @@ repos:
   the paper. "Open Repository in New Window" in the Command Palette opens the
   clone of a reference of the paper of the active editor in a new window of
   VS Code, where Source Control shows its Git repository: the author chooses
-  the reference from `repos` and `layout`, or a command of Markdown Notes
-  passes its name. A missing clone offers `mp get` in a terminal of VS Code.
+  the reference from `repos` and `layout`, or another extension passes its
+  name to the command. Markdown Notes opens the same folder itself with
+  Ctrl+click on the name of the reference of a listing. A missing clone offers `mp get` in a terminal of VS Code.
 - In the clean editing view of Markdown Notes, the whole front matter is
   read-only (R-TEXT-009 of Markdown Notes): a change there goes back, with a
   message in the status bar. The text editor with the markup and the

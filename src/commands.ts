@@ -438,8 +438,8 @@ interface ReferenceItem extends vscode.QuickPickItem {
  * in New Window": the reference with the name, else the one that the author chooses from the references of the front
  * matter, `repos` and `layout`. A missing clone offers `mp get` in a terminal of VS Code.
  * @param context - The context.
- * @param uri - The paper of the Explorer or of Markdown Notes, else the paper of the active editor.
- * @param name - The name of the reference, for example from a listing in Markdown Notes.
+ * @param uri - The paper of the Explorer or of another extension, else the paper of the active editor.
+ * @param name - The name of the reference, when another extension passes it.
  * @returns The URI of the folder of the clone, or undefined.
  */
 export async function cloneOfReference(context: Context, uri?: unknown, name?: unknown): Promise<vscode.Uri | undefined> {

@@ -79,6 +79,12 @@ after a clone of the project or in CI, and brings the head of each branch;
 The repositories of the code of the listings are references too, in the field
 `repos` of the front matter, for example `server: myorg/server@v2.1.0`, and
 `mp get` clones them in the same way. Each clone is a full Git repository.
+The clone of a branch, such as `@main`, is on that branch: you can add
+snippets there, commit them and push them, and `mp get` then brings the new
+commits of the branch with a fast-forward. The clone of a tag or a commit
+pins the version, so its snippets are the ones that are there. A clone with
+changes that are not committed, or with commits that are not pushed, stays
+as it is, and `mp get` says so.
 In the window of the paper, Source Control shows only the repository of the
 paper. "Markdown Paper: Open Repository in New Window" in the Command Palette
 opens the clone of a reference in a new window of VS Code, where Source

@@ -130,7 +130,9 @@ Node.js 22 or newer.
   a newer version, and keeps the changes of the project.
 - **Clones.** "Open Repository in New Window" opens the clone of a reference
   of the paper in `.markdownpaper/repos/` in a new window of VS Code, where
-  Source Control shows its Git repository.
+  Source Control shows its Git repository. The clone of a branch is on that
+  branch, so you can add snippets there and push them; the clone of a tag or
+  a commit pins the version.
 - **Notes.** The notes of nimblescape Markdown Notes do not show on the pages.
   The page preview and the PDF of a file in its clean editing view show the
   file itself. The clean editing view hides the database of the sources.

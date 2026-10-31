@@ -412,7 +412,10 @@ test('get clones the repositories that the papers name, follows the branches, ke
   expect(await run(['get'], project)).toBe(0);
   expect(out).toEqual([`layouts: school/layouts@v1.0.0 at ${v1.slice(0, 7)} (new clone)`, `server: org/server@main at ${server.slice(0, 7)} (new clone)`]);
   expect(read('.markdownpaper/repos/server/src/api.ts')).toBe('export const a = 1;\n');
-  expect(read('.markdownpaper/repos/server/.git/HEAD').trim()).toBe(server);
+  // The clone of a branch has the local branch, which follows the branch of GitHub; a tag is checked out without one.
+  expect(read('.markdownpaper/repos/server/.git/HEAD').trim()).toBe('ref: refs/heads/main');
+  expect((await git(['rev-parse', 'HEAD', '--abbrev-ref', 'main@{upstream}'], path.join(folder, '.markdownpaper/repos/server'))).trim().split('\n')).toEqual([server, 'origin/main']);
+  expect(read('.markdownpaper/repos/layouts/.git/HEAD').trim()).toBe(v1);
   expect(read('.markdownpaper/.gitignore')).toBe('*\n');
   expect(await run(['check', 'paper.md'], project)).toBe(0);
   // get writes whether each repository of repos is public into its clone, for the links of the listings (R-PDF-005).
@@ -457,9 +460,67 @@ test('get clones the repositories that the papers name, follows the branches, ke
   // A clone with changes stays as it is.
   fs.writeFileSync(path.join(folder, '.markdownpaper/repos/helpers/README.md'), '# Changed\n');
   err.length = 0;
-  expect(await run(['get'], project)).toBe(2);
-  expect(err.join('\n')).toContain('helpers: error: The clone ');
+  expect(await run(['get'], project)).toBe(1);
+  expect(err.join('\n')).toContain(`helpers: warning: The clone ${path.join(folder, '.markdownpaper/repos/helpers')} has changes of its files that are not committed, so it stays as it is. Commit and push them in the window of the clone, then run mp get again.`);
   expect(read('.markdownpaper/repos/helpers/README.md')).toBe('# Changed\n');
+});
+
+test('get keeps the work of the author in the clone of a branch and pulls the branch only with a fast-forward (R-CLI-004, decision 57)', async () => {
+  const first = await commitTo('org/server', { 'src/api.ts': 'export const a = 1;\n' }, 'v1');
+  // The repository of the tests takes a push into its checked out branch, as a repository on GitHub does.
+  await git(['config', 'receive.denyCurrentBranch', 'updateInstead'], path.join(remotes, 'org/server.git'));
+  fs.mkdirSync(path.join(folder, '.git'));
+  fs.writeFileSync(path.join(folder, 'paper.md'), '---\nlayout: plain\nrepos:\n  server: org/server@main\n---\n');
+  const project: Io = { ...io(), git, fetch: offline };
+  const clone = path.join(folder, '.markdownpaper/repos/server');
+  const inClone = (args: string[]): Promise<string> => git(['-c', 'user.name=Anna', '-c', 'user.email=anna@example.org', ...args], clone);
+  expect(await run(['get'], project)).toBe(0);
+  // The author adds a snippet in the clone and commits it: get leaves the commit that is not pushed as it is.
+  fs.writeFileSync(path.join(clone, 'src/api.ts'), '// #region read\nexport const a = 1;\n// #endregion\n');
+  await inClone(['commit', '--quiet', '-am', 'snippet read']);
+  const snippet = (await inClone(['rev-parse', 'HEAD'])).trim();
+  const other = await commitTo('org/server', { 'README.md': '# Server\n' });
+  out.length = 0;
+  err.length = 0;
+  expect(await run(['get'], project)).toBe(1);
+  expect(err).toEqual([`server: warning: The clone ${clone} has 1 commit that is not pushed, so it stays as it is. Push them in the window of the clone, then run mp get again.`]);
+  expect((await inClone(['rev-parse', 'HEAD'])).trim()).toBe(snippet);
+  // The author pulls and pushes: get finds the clone up to date, and takes a new commit of GitHub with a fast-forward.
+  await inClone(['pull', '--quiet', '--rebase']);
+  await inClone(['push', '--quiet', 'origin', 'main']);
+  const pushed = (await inClone(['rev-parse', 'HEAD'])).trim();
+  expect(pushed).not.toBe(other);
+  out.length = 0;
+  expect(await run(['get'], project)).toBe(0);
+  expect(out).toEqual([`server: org/server@main at ${pushed.slice(0, 7)} (up to date)`]);
+  const next = await commitTo('org/server', { 'src/other.ts': 'export const b = 2;\n' });
+  out.length = 0;
+  expect(await run(['get'], project)).toBe(0);
+  expect(out).toEqual([`server: org/server@main at ${next.slice(0, 7)} (from ${pushed.slice(0, 7)})`]);
+  expect(read('.markdownpaper/repos/server/src/api.ts')).toBe('// #region read\nexport const a = 1;\n// #endregion\n');
+  // A pin checks out the tag without a branch; the branch again gets the local branch, also in a clone of an older mp
+  // get without a branch.
+  expect(await run(['get', 'org/server@v1'], project)).toBe(0);
+  expect(read('.markdownpaper/repos/server/.git/HEAD').trim()).toBe(first);
+  expect(await run(['get', 'org/server@main'], project)).toBe(0);
+  expect(read('.markdownpaper/repos/server/.git/HEAD').trim()).toBe('ref: refs/heads/main');
+  expect((await inClone(['rev-parse', 'HEAD'])).trim()).toBe(next);
+  // Work on another local branch stays too, and the reference stays as it is.
+  await inClone(['checkout', '--quiet', '-b', 'feature']);
+  fs.writeFileSync(path.join(clone, 'src/other.ts'), 'export const b = 3;\n');
+  await inClone(['commit', '--quiet', '-am', 'feature']);
+  err.length = 0;
+  expect(await run(['get', 'org/server@v1'], project)).toBe(1);
+  expect(err).toEqual([`server: warning: The clone ${clone} has 1 commit that is not pushed, so it stays as it is. Push them in the window of the clone, then run mp get again. paper.md stays as it is too.`]);
+  expect(read('paper.md')).toContain('  server: org/server@main\n');
+  expect(await inClone(['symbolic-ref', '--short', 'HEAD'])).toBe('feature\n');
+  // A pinned clone with changes stays as it is, and the message names the pin.
+  await inClone(['push', '--quiet', 'origin', 'feature']);
+  expect(await run(['get', 'org/server@v1'], project)).toBe(0);
+  fs.writeFileSync(path.join(clone, 'src/api.ts'), 'changed\n');
+  err.length = 0;
+  expect(await run(['get'], project)).toBe(1);
+  expect(err).toEqual([`server: warning: The clone ${clone} has changes of its files that are not committed, so it stays as it is. The reference pins the tag v1: remove the changes; a layout that the project changes belongs in layouts/.`]);
 });
 
 test('get finds two papers that give one clone two revs, and needs the paper for a new reference (R-CLI-004)', async () => {

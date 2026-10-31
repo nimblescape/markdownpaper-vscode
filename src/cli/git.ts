@@ -3,10 +3,12 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 /**
- * The clones of `mp get` ([R-CLI-004](../../docs/requirements.md#r-cli-004)): Git clones each repository that a paper
- * names into `.markdownpaper/repos/<name>/` of the project and checks out the rev of its reference, the head of a
- * branch, a tag or a commit, without a branch of its own. Git runs with the access of the author: its sign-in, or in
- * CI the token of `GITHUB_TOKEN` or `GH_TOKEN`.
+ * The clones of `mp get` ([R-CLI-004](../../docs/requirements.md#r-cli-004),
+ * [decision 57](../../docs/requirements.md#decisions)): Git clones each repository that a paper names into
+ * `.markdownpaper/repos/<name>/` of the project and checks out the rev of its reference. A reference to a branch gets
+ * the local branch that follows the branch of GitHub, so that the author can commit and push in the clone; a reference
+ * to a tag or a commit pins a version and gets it without a branch (a detached HEAD). Git runs with the access of the
+ * author: its sign-in, or in CI the token of `GITHUB_TOKEN` or `GH_TOKEN`.
  */
 
 import { execFile } from 'node:child_process';
@@ -60,6 +62,8 @@ export interface Got {
   kind: 'branch' | 'tag' | 'commit';
   /** before is the commit of the clone before, and undefined for a new clone. */
   before?: string;
+  /** kept is the reason why the clone stays as it is: work of the author that is not committed or not pushed. */
+  kept?: string;
 }
 
 /**
@@ -92,9 +96,40 @@ async function defaultBranch(git: Git, folder: string): Promise<string> {
 }
 
 /**
+ * unpushed counts the commits of local branches of a clone that no branch or tag of GitHub has: the commits that the
+ * author has not pushed.
+ * @param git - The runner of Git.
+ * @param folder - The folder of the clone.
+ * @param branches - The local branches.
+ */
+async function unpushed(git: Git, folder: string, branches: readonly string[]): Promise<number> {
+  if (branches.length === 0) {
+    return 0;
+  }
+  const count = await git(['rev-list', '--count', ...branches.map((branch) => `refs/heads/${branch}`), '--not', '--remotes=origin', '--tags'], folder);
+  return Number.parseInt(count.trim(), 10) || 0;
+}
+
+/**
+ * currentBranch returns the local branch that the clone has checked out, or '' for a detached HEAD.
+ * @param git - The runner of Git.
+ * @param folder - The folder of the clone.
+ */
+async function currentBranch(git: Git, folder: string): Promise<string> {
+  try {
+    return (await git(['symbolic-ref', '--quiet', '--short', 'HEAD'], folder)).trim();
+  } catch {
+    return '';
+  }
+}
+
+/**
  * getClone clones a repository into a folder, or fetches into the clone that is there, and checks out the rev of a
- * reference: the head of a branch, a tag, or a commit. A clone at its tag or commit needs no fetch. A clone with
- * changes of its files stays as it is.
+ * reference ([decision 57](../../docs/requirements.md#decisions)). The head of a branch goes into the local branch of
+ * the same name, which follows the branch of GitHub: a new clone gets it, and a clone that has it takes the new
+ * commits only with a fast-forward. A tag or a commit is checked out without a branch; a clone at its tag or commit
+ * needs no fetch. A clone with changes of its files that are not committed, or with commits of a local branch that
+ * are not pushed, stays as it is, and `kept` says why.
  * @param git - The runner of Git.
  * @param folder - The folder of the clone.
  * @param spec - The reference; without a rev, the default branch.
@@ -103,6 +138,7 @@ async function defaultBranch(git: Git, folder: string): Promise<string> {
 export async function getClone(git: Git, folder: string, spec: RemoteSpec, options: { newest?: boolean } = {}): Promise<Got> {
   const url = repositoryUrl(spec.repository);
   let before: string | undefined;
+  let changed = false;
   const cloned = !fs.existsSync(path.join(folder, '.git'));
   if (!cloned) {
     const origin = (await git(['config', '--get', 'remote.origin.url'], folder)).trim();
@@ -112,16 +148,14 @@ export async function getClone(git: Git, folder: string, spec: RemoteSpec, optio
     // A clone that was never checked out has only its folder .git.
     if (fs.readdirSync(folder).some((entry) => entry !== '.git')) {
       before = await commitOf(git, folder, 'HEAD');
-      if ((await git(['status', '--porcelain', '--untracked-files=no'], folder)).trim() !== '') {
-        throw new GitError(`The clone ${folder} has changes of its files, so it stays as it is. A layout that the project changes belongs in layouts/; remove the clone, and mp get clones it again.`);
-      }
+      changed = (await git(['status', '--porcelain', '--untracked-files=no'], folder)).trim() !== '';
     }
   } else {
     fs.mkdirSync(path.dirname(folder), { recursive: true });
     await git(['clone', '--quiet', '--no-checkout', '--filter=blob:none', url, folder], path.dirname(folder));
   }
   const rev = spec.ref ?? (await defaultBranch(git, folder));
-  if (before && !options.newest) {
+  if (before && !changed && !options.newest) {
     if (/^[0-9a-f]{7,40}$/i.test(rev) && before.startsWith(rev.toLowerCase())) {
       return { commit: before, rev, kind: 'commit', before };
     }
@@ -160,7 +194,31 @@ export async function getClone(git: Git, folder: string, spec: RemoteSpec, optio
       target = `refs/tags/${newer}`;
     }
   }
-  await git(['checkout', '--quiet', '--force', '--detach', `${target}^{commit}`], folder);
+  const current = await currentBranch(git, folder);
+  if (before) {
+    // The work of the author in the clone stays: changes that are not committed, and commits that are not pushed of
+    // the branch that is checked out or of the branch of the reference.
+    const keep = (reason: string, advice: string): Got => ({ commit: before, rev: checkout, kind, before, kept: `The clone ${folder} ${reason}, so it stays as it is. ${advice}` });
+    if (changed) {
+      return keep(
+        'has changes of its files that are not committed',
+        kind === 'branch' ? 'Commit and push them in the window of the clone, then run mp get again.' : `The reference pins ${kind === 'tag' ? 'the tag' : 'the commit'} ${checkout}: remove the changes; a layout that the project changes belongs in layouts/.`,
+      );
+    }
+    const local = kind === 'branch' && (await commitOf(git, folder, `refs/heads/${rev}`)) ? [rev] : [];
+    const count = await unpushed(git, folder, [...new Set([current, ...local].filter(Boolean))]);
+    if (count > 0) {
+      return keep(`has ${count === 1 ? '1 commit' : `${count} commits`} that ${count === 1 ? 'is' : 'are'} not pushed`, 'Push them in the window of the clone, then run mp get again.');
+    }
+  }
+  if (kind === 'branch' && before && current === rev) {
+    await git(['merge', '--quiet', '--ff-only', target], folder);
+  } else if (kind === 'branch') {
+    // A new clone, a clone of another rev, or a clone without a branch from an older mp get.
+    await git(['checkout', '--quiet', ...(before ? [] : ['--force']), '-B', rev, '--track', target], folder);
+  } else {
+    await git(['checkout', '--quiet', '--force', '--detach', `${target}^{commit}`], folder);
+  }
   const commit = (await commitOf(git, folder, 'HEAD')) ?? '';
   return { commit, rev: checkout, kind, ...(before ? { before } : {}) };
 }

@@ -48,7 +48,10 @@ date: "30 October 2026"
   version; a branch, for example `@main`, takes the head of the branch.
   `npx -y @nimblescape/markdownpaper get` clones them into
   `.markdownpaper/repos/<name>/` of the project, which Git ignores; run it
-  before `format`, `check` and `build`, and change nothing in the clones.
+  before `format`, `check` and `build`. The clone of a branch is on that
+  branch: add a snippet there only when the author asks for it, and commit
+  and push it in the clone. Change nothing in the clone of a tag or a commit:
+  it pins the version.
   `get <owner>/<repository>@<rev>` adds a reference to `repos`, and `get -u`
   moves the references to tags to the newest tags.
 - Do not write a cover page into the text: the layout makes it from the

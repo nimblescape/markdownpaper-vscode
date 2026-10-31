@@ -69,6 +69,7 @@ This document replaces it where the two differ.
 | 38 | The links of the PDF: a link for every reference inside the paper, also for each citation, in the color of the text without a mark; the addresses of the links to the outside in footnotes; the link of a listing from a public repository on its cite | [R-PDF-005](#r-pdf-005), [R-REN-011](#r-ren-011) | done ([decision 52](#decisions), [decision 54](#decisions)) |
 | 39 | "Open Repository in New Window" in VS Code for the clone of a reference | [R-CLI-004](#r-cli-004) | done ([decision 55](#decisions)); Markdown Notes opens the same folder with Ctrl+click on the name of the reference of a listing |
 | 40 | The view "Front Matter" in the side bar: the form of the front matter with one row for each field of the layout, and "Edit Front Matter" for the link of Markdown Notes | [R-DOC-005](#r-doc-005) | done ([decision 56](#decisions)); questions 2 and 3 of the discussion document are open, the form follows their proposals |
+| 41 | The clone of a reference to a branch on its local branch, which `mp get` pulls only with a fast-forward; the clone of a tag or a commit without a branch; a clone with work of the author that is not committed or not pushed stays as it is | [R-CLI-004](#r-cli-004) | done ([decision 57](#decisions)); Markdown Notes adds snippets only in the clone of a branch (its decision 60) |
 
 ## General
 
@@ -1522,13 +1523,22 @@ repos:
   of the references that is missing, at its rev, into
   `.markdownpaper/repos/<name>/`, which a file `.gitignore` in
   `.markdownpaper/` hides from Git, and fetches the head of each reference to
-  a branch; a reference to a tag or a commit stays. Each clone has its rev
-  checked out without a branch, so its `.git/HEAD` holds the commit. It
-  changes no reference. Two papers that give one name two repositories or two
-  revs are an error, because one clone has one rev. A clone with changes of
-  its files stays as it is. `get` also updates the copies of layouts in
+  a branch; a reference to a tag or a commit stays. It changes no reference.
+  Two papers that give one name two repositories or two revs are an error,
+  because one clone has one rev. `get` also updates the copies of layouts in
   `layouts/` of the project ([R-LAY-010](#r-lay-010)); there is no subcommand
   `update`.
+- The clone of a reference to a branch has the local branch of the same name,
+  which follows the branch on GitHub, so its `.git/HEAD` names the branch
+  (`ref: refs/heads/main`). The author adds snippets in the clone and commits
+  and pushes them there; `get` takes the new commits of the branch only with a
+  fast-forward. The clone of a reference to a tag or a commit has the version
+  checked out without a branch (a detached HEAD), so its `.git/HEAD` holds the
+  commit; Markdown Notes adds no snippet there (its decision 60). A clone with
+  changes of its files that are not committed, or with commits of a local
+  branch that are not pushed, stays as it is, with a warning that names the
+  work and the next step, and `get` ends with the exit code 1
+  ([decision 57](#decisions)).
 - A clone is a full Git repository with its `.git` folder
   ([decision 55](#decisions)). The Git repository of the paper ignores it, so
   Source Control of VS Code shows only the paper repository in the window of
@@ -1584,7 +1594,8 @@ repos:
   request and the PDF need only the paper repository. Markdown Notes finds the
   clone itself, also on the command line: the first
   `.markdownpaper/repos/<name>/.git` in the folder of the paper or above it,
-  with the commit in its `.git/HEAD`. The link of the caption goes to the file
+  with the commit of its `HEAD`: in `.git/HEAD`, or in the local branch that
+  `.git/HEAD` names. The link of the caption goes to the file
   at the commit of the clone when the formatter wrote the code, for example
   `https://github.com/org/server/blob/<commit>/src/api.ts#L12-L30`; a reader
   without access to a private repository gets an error page of GitHub. The
@@ -2232,6 +2243,15 @@ requirement ([R-GEN-007](#r-gen-007)).
     of Markdown Paper in the side bar, beside the view of Markdown Notes,
     with one row for each field of the layout. The discussion document is
     [Structured editor of the front matter](https://claude.ai/artifact/55T7uG2yTK89DcfKuYHoDJ).
+57. **The clone of a branch on its branch** ([R-CLI-004](#r-cli-004)): the
+    rev of a reference decides what the author may change in its clone. The
+    clone of a branch, for example `@main`, has the local branch, so the
+    author adds snippets there and commits and pushes them; `mp get` pulls
+    the branch only with a fast-forward and leaves work that is not committed
+    or not pushed as it is. The clone of a tag or a commit pins the version
+    without a branch, and its snippets are the ones that are there. The
+    discussion document is
+    [Opening a clone and the read-only front matter](https://claude.ai/artifact/HZ9e48LJkb8KuPCkGao5vt).
 
 ## Open questions
 

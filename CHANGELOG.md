@@ -136,7 +136,10 @@ The first version.
   (`layout: <owner>/<repository>/<folder>@<rev>`) and the repositories of the
   code of its listings (`repos`), each with a branch, a tag or a commit. `mp
   get` clones them with Git into `.markdownpaper/repos/<name>/`, which Git
-  ignores, brings the head of each branch and keeps the pins; `mp get
+  ignores, brings the head of each branch with a fast-forward and keeps the
+  pins. The clone of a branch is on that branch, so the author can add
+  snippets there and push them; the clone of a tag or a commit has no branch.
+  A clone with work that is not committed or not pushed stays as it is. `mp get
   <owner>/<repository>@<rev>` adds a reference, and `mp get -u` moves the
   references to tags to the newest tags. The renderer reads a layout from its
   clone, and the checks name a missing clone. "Open Repository in New Window"

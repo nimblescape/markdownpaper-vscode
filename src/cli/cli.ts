@@ -26,7 +26,8 @@
  *
  * The exit code is 0 for success, 1 when `check` found a problem, `format --check` found a file that the format
  * changes, `build` wrote the PDF with problems of the document, an input of `source` gave no source, or `get` left a
- * copy of a layout as it is because the project and the repository changed the same files, and 2 for a wrong command
+ * copy of a layout as it is because the project and the repository changed the same files, or a clone as it is because
+ * it holds work of the author that is not committed or not pushed, and 2 for a wrong command
  * or option, a missing file, a file that exists already, a failure of Git, or a PDF that could not be made.
  * The module uses no API of VS Code, and main.ts runs it in Node.js.
  */
@@ -294,6 +295,9 @@ async function cloneLayout(io: Io, project: string, spec: RemoteSpec): Promise<C
   const clone = path.join(project, clonesFolder, cloneName(spec));
   io.out(`Cloning ${referenceText(spec)} into ${path.relative(io.cwd, clone) || clone} …`);
   const got = await getClone(io.git ?? gitOf(), clone, spec);
+  if (got.kept) {
+    io.err(`${cloneName(spec)}: warning: ${got.kept}`);
+  }
   const folder = path.join(clone, spec.folder);
   const file = path.join(folder, layoutFile);
   if (!fs.existsSync(file)) {
@@ -1000,6 +1004,10 @@ async function runGet(args: readonly string[], io: Io): Promise<number> {
     ignoreClones(project);
     const folder = path.join(project, clonesFolder, name);
     const got = await getClone(git, folder, spec, { newest });
+    if (got.kept) {
+      io.err(`${name}: warning: ${got.kept} ${relative(paper)} stays as it is too.`);
+      return 1;
+    }
     if (present?.key !== 'layout') {
       await markPublic(io, git, folder, spec.repository);
     }
@@ -1038,6 +1046,11 @@ async function runGet(args: readonly string[], io: Io): Promise<number> {
       const got = await getClone(git, folder, reference.spec, { newest });
       if (reference.key === 'repos') {
         await markPublic(io, git, folder, reference.spec.repository);
+      }
+      if (got.kept) {
+        io.err(`${name}: warning: ${got.kept}`);
+        result = Math.max(result, 1);
+        continue;
       }
       io.out(describeGot(name, reference.spec, got));
       if (reference.spec.ref !== undefined && got.rev !== reference.spec.ref) {

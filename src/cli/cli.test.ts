@@ -30,14 +30,20 @@ afterEach(() => {
   fs.rmSync(folder, { recursive: true, force: true });
 });
 
+/** offline is the network of a test that sends no request: it reaches no host. */
+const offline: Fetcher = async (url) => {
+  throw new Error(`The tests reach no host: ${url}`);
+};
+
 /**
- * io returns the streams of a run in the temporary folder.
+ * io returns the streams of a run in the temporary folder, without a network.
  * @param answers - The answers to the questions, in their order; undefined for a run without a terminal.
  */
 const io = (answers?: string[]): Io => ({
   out: (line) => out.push(line),
   err: (line) => err.push(line),
   ...(answers ? { ask: async () => answers.shift() ?? '' } : {}),
+  fetch: offline,
   cwd: folder,
   assets: {
     layouts: path.join(repository, 'layouts'),
@@ -391,7 +397,13 @@ test('get clones the repositories that the papers name, follows the branches, ke
   const text = '---\nlayout: school/layouts/thesis@v1.0.0\ntitle: "T"\nrepos:\n  server: org/server@main\n---\n\n# Start\n';
   fs.writeFileSync(path.join(folder, 'paper/paper.md'), text);
   fs.writeFileSync(path.join(folder, 'notes.md'), '# Notes without a front matter\n');
-  const project: Io = { ...io(), cwd: path.join(folder, 'paper'), git };
+  // GitHub answers a request without a sign-in for the public repository org/server, and 404 for another one.
+  const asked: string[] = [];
+  const visibility: Fetcher = async (url) => {
+    asked.push(url);
+    return { status: url === 'https://api.github.com/repos/org/server' ? 200 : 404, type: 'application/json', url, body: new Uint8Array() };
+  };
+  const project: Io = { ...io(), cwd: path.join(folder, 'paper'), git, fetch: visibility };
   // Without the clones, the layout and the repository are missing.
   expect(await run(['check', 'paper.md'], project)).toBe(1);
   expect(err.join('\n')).toContain('paper.md:2:1: error: The layout school/layouts/thesis@v1.0.0 is not in .markdownpaper/repos/ of the project yet: run "mp get" in the folder of the project.');
@@ -403,6 +415,10 @@ test('get clones the repositories that the papers name, follows the branches, ke
   expect(read('.markdownpaper/repos/server/.git/HEAD').trim()).toBe(server);
   expect(read('.markdownpaper/.gitignore')).toBe('*\n');
   expect(await run(['check', 'paper.md'], project)).toBe(0);
+  // get writes whether each repository of repos is public into its clone, for the links of the listings (R-PDF-005).
+  expect(asked).toEqual(['https://api.github.com/repos/org/server']);
+  expect(read('.markdownpaper/repos/server/.git/config')).toContain('[markdownpaper]\n\tpublic = true\n');
+  expect(read('.markdownpaper/repos/layouts/.git/config')).not.toContain('markdownpaper');
 
   // A new commit of main and a new tag: get follows the branch and keeps the tag; -u moves the tag.
   const next = await commitTo('org/server', { 'src/api.ts': 'export const a = 2;\n' });
@@ -427,6 +443,10 @@ test('get clones the repositories that the papers name, follows the branches, ke
   expect(await run(['get', 'org/tools', '--name', 'helpers'], project)).toBe(0);
   expect(out).toEqual([`helpers: org/tools@main at ${tools.slice(0, 7)} (new clone)`, 'paper.md: helpers: org/tools@main']);
   expect(read('paper/paper.md')).toContain('repos:\n  server: org/server@main\n  helpers: org/tools@main\n---\n');
+  expect(read('.markdownpaper/repos/helpers/.git/config')).toContain('[markdownpaper]\n\tpublic = false\n');
+  // Without an answer of GitHub, a clone keeps its value.
+  expect(await run(['get'], { ...project, fetch: offline })).toBe(0);
+  expect(read('.markdownpaper/repos/server/.git/config')).toContain('public = true');
   expect(await run(['get', `org/server@${server}`], project)).toBe(0);
   expect(read('paper/paper.md')).toContain(`  server: org/server@${server}\n`);
   expect(read('.markdownpaper/repos/server/src/api.ts')).toBe('export const a = 1;\n');

@@ -65,6 +65,12 @@ The first version.
   language in its metadata. In VS Code, the PDF shows what the other Markdown
   extensions add to the Markdown preview, for example the diagrams of Mermaid
   and the math of KaTeX.
+- The links of the PDF: every reference inside the paper is a link, also
+  each citation to its entry in the reference list and a second reference to
+  a footnote, in the color of the text without a mark. A link to the outside
+  with its own text gets a footnote with its address, so that a printed page
+  shows it. A listing of a public repository has the link to its lines on its
+  cite; `mp get` asks GitHub without a sign-in whether a repository is public.
 - Without an installed browser, "Export PDF" offers to download Chromium
   once, the headless shell of Chrome for Testing with a checked SHA-256 hash,
   into the cache folder of the user; `mp build --download-browser`

@@ -29,7 +29,7 @@ import { hyphenatorOf } from './hyphenate';
 import { parseRemote } from './gallery';
 import { type Layout, layoutFile, layoutName, type Problem, parseLayout, termsFor } from './layout';
 import { type Body, type MarkdownPlugin, renderBody } from './markdown';
-import { cloneName, clonesFolder } from './references';
+import { cloneName, clonesFolder, referencesOf } from './references';
 import { escapeHtml, fill, pdfNameOf } from './template';
 
 /** Reader reads files by their URLs. */
@@ -144,6 +144,29 @@ export async function findClone(host: Pick<Host, 'reader' | 'top'>, document: st
   return undefined;
 }
 
+/** publicKey matches the key `public = true` of the section `[markdownpaper]` of the Git configuration of a clone. */
+const publicKey = /^\[markdownpaper\][^[]*^\s*public\s*=\s*true\s*$/im;
+
+/**
+ * publicRepositoriesOf returns the repositories of the field `repos` of a document that are public, `owner/repository`
+ * in small letters: `mp get` writes `markdownpaper.public` into the Git configuration of each clone, from one request
+ * without a sign-in to GitHub ([R-PDF-005](../../docs/requirements.md#r-pdf-005)). A missing clone or answer is not public.
+ * @param host - The reader of the files and the top folder of the search.
+ * @param document - The URL of the document.
+ * @param text - The text of the document.
+ */
+export async function publicRepositoriesOf(host: Pick<Host, 'reader' | 'top'>, document: string, text: string): Promise<string[]> {
+  const repositories: string[] = [];
+  for (const reference of referencesOf(text).references) {
+    const clone = reference.key === 'repos' ? await findClone(host, document, reference.name, '.git/config') : undefined;
+    const config = clone ? await host.reader.read(`${clone}.git/config`) : undefined;
+    if (config && publicKey.test(decoder.decode(config))) {
+      repositories.push(reference.spec.repository.toLowerCase());
+    }
+  }
+  return repositories;
+}
+
 /**
  * findLayout finds the layout that a document names, and reads it: a folder of `layouts/` of the folder of the
  * document or of a folder above it, a layout on GitHub in its clone ([R-CLI-004](../../docs/requirements.md#r-cli-004)),
@@ -250,6 +273,8 @@ export interface LoadedLayout {
   /** before and after are the templates of the fixed pages before and after the text, with their URLs. */
   before: { url: string; name: string; text: string }[];
   after: { url: string; name: string; text: string }[];
+  /** publicRepositories are the public repositories of the field `repos` of the document, from publicRepositoriesOf. */
+  publicRepositories: string[];
   problems: Problem[];
 }
 
@@ -280,12 +305,14 @@ export async function documentLayout(host: Pick<Host, 'reader' | 'builtinLayouts
 }
 
 /**
- * loadLayout finds the layout of a document and reads its style sheets and its templates.
+ * loadLayout finds the layout of a document and reads its style sheets and its templates, and finds the public
+ * repositories of the document.
  * @param host - The reader of the files and the places of the layouts.
  * @param document - The URL of the document.
  * @param frontMatter - The front matter of the document.
+ * @param text - The text of the document, whose field `repos` names the repositories.
  */
-export async function loadLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 'top'>, document: string, frontMatter: FrontMatter | undefined): Promise<LoadedLayout> {
+export async function loadLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 'top'>, document: string, frontMatter: FrontMatter | undefined, text = ''): Promise<LoadedLayout> {
   const { layout, problems } = await documentLayout(host, document, frontMatter);
   const read = async (file: string): Promise<{ url: string; text: string } | undefined> => {
     const url = `${layout.folder}${file}`;
@@ -312,7 +339,7 @@ export async function loadLayout(host: Pick<Host, 'reader' | 'builtinLayouts' | 
     }
     return parts;
   };
-  return { layout, styles, before: await templates(layout.before), after: await templates(layout.after), problems };
+  return { layout, styles, before: await templates(layout.before), after: await templates(layout.after), publicRepositories: await publicRepositoriesOf(host, document, text), problems };
 }
 
 /** Composed is the part of a page that comes from the layout and the fields of a document. */
@@ -386,12 +413,12 @@ export async function render(
   for (const error of frontMatter?.errors ?? []) {
     problems.push({ severity: 'warning', message: `Front matter: ${error.message}`, file: document, line: error.line });
   }
-  const loaded = await loadLayout(host, document, frontMatter);
+  const loaded = await loadLayout(host, document, frontMatter, text);
   problems.push(...loaded.problems);
   const layout = loaded.layout;
   const values = valuesOf(layout, frontMatter, document);
   const hyphenate = layout.hyphenate ? hyphenatorOf(layout.language) : undefined;
-  const body = renderBody(bodyOf(text, frontMatter), layout, hyphenate, plugins, pluginEnv);
+  const body = renderBody(bodyOf(text, frontMatter), layout, hyphenate, plugins, pluginEnv, loaded.publicRepositories);
   problems.push(...body.problems.map((problem) => ({ ...problem, file: problem.file ?? document })));
   const composed = compose(loaded, values, host.resource);
   const attributes = attributesHtml(composed.attributes);

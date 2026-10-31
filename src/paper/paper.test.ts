@@ -263,6 +263,21 @@ describe('the page (R-REN-001, R-REN-008)', () => {
     expect(rendered.problems).toEqual([]);
   });
 
+  test('a listing of a repository of repos has the link on its cite when the Git configuration of its clone says public (R-PDF-005)', async () => {
+    const files = {
+      'file:///repo/.markdownpaper/repos/server/.git/HEAD': '0123456789abcdef0123456789abcdef01234567\n',
+      'file:///repo/.markdownpaper/repos/server/.git/config': '[core]\n\tbare = false\n[markdownpaper]\n\tpublic = true\n',
+      'file:///repo/.markdownpaper/repos/tools/.git/HEAD': '0123456789abcdef0123456789abcdef01234567\n',
+      'file:///repo/.markdownpaper/repos/tools/.git/config': '[markdownpaper]\n\tpublic = false\n',
+    };
+    const listing = (repository: string): string =>
+      `Listing 1: [Read](https://github.com/${repository}/blob/0123456789abcdef0123456789abcdef01234567/a.ts#L1-L2) (a.ts, L1-L2)\n\n\`\`\`ts\nread();\n\`\`\`\n`;
+    const text = `---\nlayout: plain\nrepos:\n  server: Org/Server@main\n  tools: org/tools@main\n  gone: org/gone@main\n---\n${listing('org/server')}\n${listing('org/tools')}\n${listing('org/gone')}`;
+    const rendered = await render(hostOf(files), 'file:///repo/paper/paper.md', text);
+    expect(rendered.html.match(/<span class="caption-source"> <a href="https:\/\/github.com\/([^/]+\/[^/]+)\//g)).toEqual(['<span class="caption-source"> <a href="https://github.com/org/server/']);
+    expect(rendered.html).toContain('<span class="caption-source"> (a.ts, L1-L2)</span>');
+  });
+
   test('relative addresses only: a style sheet and a template keep the addresses with a scheme, an anchor or a root', () => {
     const resource = (url: string) => `R:${url}`;
     expect(rewriteCss('a{b:url(#x)}c{d:url(/e.png)}f{g:url( h.png )}', 'file:///l/page.css', resource)).toBe('a{b:url(#x)}c{d:url(/e.png)}f{g:url("R:file:///l/h.png")}');

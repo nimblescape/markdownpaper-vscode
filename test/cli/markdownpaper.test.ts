@@ -56,9 +56,19 @@ describe('the command mp', () => {
   it('clones a layout on GitHub for a new project and the repositories of its paper with Git (R-CLI-004)', () => {
     // Git reaches the repositories of a temporary folder in place of those of GitHub.
     const remotes = temporary();
-    const env: NodeJS.ProcessEnv = { ...process.env, GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: `url.${pathToFileURL(remotes).href}/.insteadOf`, GIT_CONFIG_VALUE_0: 'https://github.com/' };
+    // The request to GitHub of get, whether a repository is public, reaches no host: a proxy that refuses each connection.
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      GIT_CONFIG_COUNT: '1',
+      GIT_CONFIG_KEY_0: `url.${pathToFileURL(remotes).href}/.insteadOf`,
+      GIT_CONFIG_VALUE_0: 'https://github.com/',
+      HTTPS_PROXY: 'http://127.0.0.1:9',
+      NO_PROXY: '',
+    };
     delete env.GITHUB_TOKEN;
     delete env.GH_TOKEN;
+    delete env.https_proxy;
+    delete env.no_proxy;
     const git = (cwd: string, ...args: string[]) => spawnSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.org', ...args], { cwd, encoding: 'utf8' });
     for (const [repository, files] of [
       ['school/layouts.git', { 'thesis/layout.json': JSON.stringify({ format: 'nimblescape-layout 1.0.0', name: 'Thesis', stylesheets: [], document: 'document.md', preview: 'document.pdf' }), 'thesis/document.md': '# Start\n' }],
@@ -83,6 +93,7 @@ describe('the command mp', () => {
     expect(got).toMatchObject({ code: 0, stderr: '' });
     expect(got.stdout).toMatch(/^server: org\/server@v1\.0\.0 at [0-9a-f]{7} \(new clone\)\npaper\/paper\.md: server: org\/server@v1\.0\.0\n$/);
     expect(fs.readFileSync(path.join(project, '.markdownpaper', 'repos', 'server', 'src', 'api.ts'), 'utf8')).toBe('export const a = 1;\n');
+    expect(fs.readFileSync(path.join(project, '.markdownpaper', 'repos', 'server', '.git', 'config'), 'utf8')).not.toContain('markdownpaper');
     expect(run(project, ['check', 'paper/paper.md'], 30_000, env)).toEqual({ code: 0, stdout: 'paper/paper.md: no problems\n', stderr: '' });
   });
 
@@ -116,7 +127,7 @@ describe('the command mp', () => {
     expect(document.getPageCount()).toBe(1);
     const html = fs.readFileSync(path.join(folder, 'page.html'), 'utf8').replaceAll('\u00ad', '');
     expect(html).not.toContain('Eine Notiz');
-    expect(html).toContain('<span class="footnote"><span class="footnote-paragraph">Eine Fußnote.</span></span>');
+    expect(html).toContain('<span class="footnote"><span class="footnote-paragraph" id="paper-footnote-1">Eine Fußnote.</span></span>');
   }, 150_000);
 
   it.skipIf(!browser)('draws the PlantUML diagrams with the settings and the included files of the workspace folder (R-REN-015)', async () => {

@@ -923,6 +923,28 @@ function describeGot(name: string, spec: RemoteSpec, got: { commit: string; rev:
 }
 
 /**
+ * markPublic asks GitHub without a sign-in whether a repository of `repos` is public, and writes the answer into the
+ * Git configuration of its clone as `markdownpaper.public`: the renderer gives a listing of a public repository the
+ * link to its lines ([R-PDF-005](../../docs/requirements.md#r-pdf-005)). GitHub answers 404 for a private repository.
+ * Without an answer, for example without a network, the clone keeps the value that it has.
+ * @param io - The network.
+ * @param git - Git.
+ * @param folder - The folder of the clone.
+ * @param repository - The repository, `owner/repository`.
+ */
+async function markPublic(io: Io, git: Git, folder: string, repository: string): Promise<void> {
+  let status: number;
+  try {
+    status = (await fetcherOf(io)(`https://api.github.com/repos/${repository}`, 'application/vnd.github+json')).status;
+  } catch {
+    return;
+  }
+  if (status === 200 || status === 404) {
+    await git(['config', 'markdownpaper.public', String(status === 200)], folder);
+  }
+}
+
+/**
  * runGet runs `get` ([R-CLI-004](../../docs/requirements.md#r-cli-004)): with a reference, it writes the reference
  * into the field `repos` of a paper and clones the repository; without one, it clones each repository that the papers
  * name and is missing, fetches into the others and checks out their revs, moves the references to tags with `-u`, and
@@ -973,7 +995,11 @@ async function runGet(args: readonly string[], io: Io): Promise<number> {
       throw new UsageError(`${relative(paper)} names ${present.text} as "${name}" already; --name gives the new reference another name.`);
     }
     ignoreClones(project);
-    const got = await getClone(git, path.join(project, clonesFolder, name), spec, { newest });
+    const folder = path.join(project, clonesFolder, name);
+    const got = await getClone(git, folder, spec, { newest });
+    if (present?.key !== 'layout') {
+      await markPublic(io, git, folder, spec.repository);
+    }
     fs.writeFileSync(paper, setReference(text, present?.key === 'layout' ? 'layout' : { repos: name }, { ...(present?.key === 'layout' ? present.spec : spec), ref: got.rev }));
     io.out(describeGot(name, spec, got));
     io.out(`${relative(paper)}: ${name}: ${spec.repository}@${got.rev}`);
@@ -1005,7 +1031,11 @@ async function runGet(args: readonly string[], io: Io): Promise<number> {
   }
   for (const [name, { reference, papers: named }] of clones) {
     try {
-      const got = await getClone(git, path.join(project, clonesFolder, name), reference.spec, { newest });
+      const folder = path.join(project, clonesFolder, name);
+      const got = await getClone(git, folder, reference.spec, { newest });
+      if (reference.key === 'repos') {
+        await markPublic(io, git, folder, reference.spec.repository);
+      }
       io.out(describeGot(name, reference.spec, got));
       if (reference.spec.ref !== undefined && got.rev !== reference.spec.ref) {
         for (const { file, reference: own } of named) {

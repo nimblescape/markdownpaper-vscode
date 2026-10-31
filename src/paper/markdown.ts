@@ -174,6 +174,11 @@ function captionPattern(...words: string[]): RegExp {
 export interface PaperEnv {
   layout: Layout;
   found: Found;
+  /**
+   * publicRepositories are the repositories of the field `repos` that are public, `owner/repository` in small
+   * letters, whose listings get their link on their cite ([R-PDF-005](../../docs/requirements.md#r-pdf-005)).
+   */
+  publicRepositories?: readonly string[];
 }
 
 /** paperTokenType is the type of the token that the rule puts first, with the PaperEnv as its meta. */
@@ -379,54 +384,126 @@ function removeNotes(tokens: Token[]): number {
   return labels.size;
 }
 
+/** scheme matches the start of an address with a scheme, such as `https:` or `mailto:`: a link to the outside of the paper. */
+const scheme = /^[a-z][a-z0-9+.-]*:/i;
+
+/**
+ * outsideLink returns the address of a link to the outside whose text is not its address, and the place of the end of
+ * the link, or undefined for another token. A bare address and an autolink `<https://…>` show their address
+ * ([R-PDF-005](../../docs/requirements.md#r-pdf-005)).
+ * @param state - The state of the rule.
+ * @param tokens - The inline tokens.
+ * @param index - The place of the token in the tokens.
+ */
+function outsideLink(state: StateCore, tokens: readonly Token[], index: number): { href: string; address: string; close: number } | undefined {
+  const open = tokens[index];
+  const href = open.type === 'link_open' ? (open.attrGet('href') ?? '') : '';
+  if (!scheme.test(href) || open.markup === 'linkify' || open.markup === 'autolink') {
+    return undefined;
+  }
+  const close = tokens.findIndex((token, at) => at > index && token.type === 'link_close');
+  const text = tokens
+    .slice(index + 1, close < 0 ? undefined : close)
+    .map((token) => token.content)
+    .join('');
+  const address = state.md.normalizeLinkText(href).replace(/^mailto:/i, '');
+  const bare = (value: string): string =>
+    value
+      .trim()
+      .replace(/^[a-z][a-z0-9+.-]*:(?:\/\/)?/i, '')
+      .replace(/\/$/, '')
+      .toLowerCase();
+  return bare(text) === bare(address) ? undefined : { href, address, close: close < 0 ? tokens.length - 1 : close };
+}
+
 /**
  * placeFootnotes moves the text of each footnote to its first reference, as an element `<span class="footnote">`,
- * and gives each later reference the number of the footnote. It removes the block of the footnotes.
+ * and gives each later reference the number of the footnote as a link to it. A link to the outside whose text is not
+ * its address gets a footnote with the address, so that a printed page shows it; a second link to the same address
+ * gets the number of that footnote, and a link inside a footnote gets the address after its text
+ * ([R-PDF-005](../../docs/requirements.md#r-pdf-005)). It removes the block of the footnotes.
  * @param state - The state of the rule.
  * @returns The number of the footnotes.
  */
 function placeFootnotes(state: StateCore): number {
   const tokens = state.tokens;
   const start = tokens.findIndex((token) => token.type === 'footnote_block_open');
-  if (start < 0) {
-    return 0;
-  }
-  const end = tokens.findIndex((token, index) => index > start && token.type === 'footnote_block_close');
   const texts = new Map<number, string>();
-  for (let index = start; index < end; index++) {
-    if (tokens[index].type !== 'footnote_open') {
-      continue;
-    }
-    const close = tokens.findIndex((token, at) => at > index && token.type === 'footnote_close');
-    const body = tokens.slice(index + 1, close).filter((token) => token.type !== 'footnote_anchor');
-    for (const token of body) {
-      if (token.children) {
-        token.children = token.children.filter((child) => child.type !== 'footnote_anchor');
+  if (start >= 0) {
+    const end = tokens.findIndex((token, index) => index > start && token.type === 'footnote_block_close');
+    for (let index = start; index < end; index++) {
+      if (tokens[index].type !== 'footnote_open') {
+        continue;
       }
+      const close = tokens.findIndex((token, at) => at > index && token.type === 'footnote_close');
+      const body = tokens.slice(index + 1, close).filter((token) => token.type !== 'footnote_anchor');
+      for (const token of body) {
+        if (token.children) {
+          const children = token.children.filter((child) => child.type !== 'footnote_anchor');
+          const output: Token[] = [];
+          let link: ReturnType<typeof outsideLink>;
+          for (let at = 0; at < children.length; at++) {
+            output.push(children[at]);
+            link = link ?? outsideLink(state, children, at);
+            if (link && at === link.close) {
+              output.push(html(state, ` (<span class="link-address">${escapeHtml(link.address)}</span>)`));
+              link = undefined;
+            }
+          }
+          token.children = output;
+        }
+      }
+      const rendered = state.md.renderer.render(body, state.md.options, state.env).trim();
+      texts.set(tokens[index].meta.id, rendered.replace(/<p\b[^>]*>/g, '<span class="footnote-paragraph">').replace(/<\/p>/g, '</span>'));
+      index = close;
     }
-    const rendered = state.md.renderer.render(body, state.md.options, state.env).trim();
-    texts.set(tokens[index].meta.id, rendered.replace(/<p\b[^>]*>/g, '<span class="footnote-paragraph">').replace(/<\/p>/g, '</span>'));
-    index = close;
+    tokens.splice(start, end - start + 1);
   }
-  tokens.splice(start, end - start + 1);
+  // A second reference links to its footnote by an ID on the first paragraph of the footnote, as Paged.js gives the
+  // footnote itself an ID of its own.
+  const target = (number: number, text: string): string =>
+    /^<span class="footnote-paragraph">/.test(text) ? text.replace('<span class="footnote-paragraph">', `<span class="footnote-paragraph" id="paper-footnote-${number}">`) : `<span id="paper-footnote-${number}"></span>${text}`;
+  const again = (number: number): Token => html(state, `<sup class="footnote-again"><a href="#paper-footnote-${number}">${number}</a></sup>`);
   const numbers = new Map<number, number>();
+  const addresses = new Map<string, number>();
+  let count = 0;
   for (const token of tokens) {
     if (token.type !== 'inline' || !token.children) {
       continue;
     }
-    token.children = token.children.map((child) => {
-      if (child.type !== 'footnote_ref') {
-        return child;
+    const children = token.children;
+    const output: Token[] = [];
+    let link: { href: string; address: string; close: number } | undefined;
+    for (let index = 0; index < children.length; index++) {
+      const child = children[index];
+      if (child.type === 'footnote_ref') {
+        const id: number = child.meta.id;
+        const number = numbers.get(id);
+        if (number === undefined) {
+          numbers.set(id, ++count);
+          output.push(html(state, `<span class="footnote">${target(count, texts.get(id) ?? '')}</span>`));
+        } else {
+          output.push(again(number));
+        }
+        continue;
       }
-      const id: number = child.meta.id;
-      if (!numbers.has(id)) {
-        numbers.set(id, numbers.size + 1);
-        return html(state, `<span class="footnote">${texts.get(id) ?? ''}</span>`);
+      output.push(child);
+      link = link ?? outsideLink(state, children, index);
+      if (link && index === link.close) {
+        const number = addresses.get(link.address);
+        if (number === undefined) {
+          addresses.set(link.address, ++count);
+          const text = `<span class="footnote-paragraph"><a class="link-address" href="${escapeHtml(link.href)}">${escapeHtml(link.address)}</a></span>`;
+          output.push(html(state, `<span class="footnote link-footnote">${target(count, text)}</span>`));
+        } else {
+          output.push(again(number));
+        }
+        link = undefined;
       }
-      return html(state, `<sup class="footnote-again">${numbers.get(id)}</sup>`);
-    });
+    }
+    token.children = output;
   }
-  return numbers.size;
+  return count;
 }
 
 /** alertMark matches the first line of an alert of GitHub, such as `[!NOTE]`, and gives its kind. */
@@ -486,6 +563,56 @@ interface ListingMeta {
   paperListing?: { lineNumbers: boolean };
 }
 
+/** githubFile matches the address of a file on GitHub and gives its repository, `owner/repository`. */
+const githubFile = /^https:\/\/github\.com\/([A-Za-z0-9-]+\/[A-Za-z0-9._-]+)\//i;
+
+/**
+ * placeListingLinks takes the link off the caption of each listing, the link to its source for VS Code and GitHub,
+ * and gives the cite of the source after the caption an element `<span class="caption-source">`. The cite gets the
+ * link when the source is a file of a public repository on GitHub; a listing of a private repository, or of the
+ * repository of the paper, keeps no link ([R-PDF-005](../../docs/requirements.md#r-pdf-005)).
+ * @param state - The state of the rule.
+ * @param listingCaption - The pattern of the start of a caption of a listing.
+ * @param publicRepositories - The public repositories, `owner/repository` in small letters.
+ */
+function placeListingLinks(state: StateCore, listingCaption: RegExp, publicRepositories: readonly string[]): void {
+  const tokens = state.tokens;
+  for (let index = 0; index + 3 < tokens.length; index++) {
+    if (tokens[index].type !== 'paragraph_open' || tokens[index + 1].type !== 'inline') {
+      continue;
+    }
+    const comment = tokens[index + 3].type === 'html_block' && listingComment.test(tokens[index + 3].content);
+    const all = tokens[index + 1].children ?? [];
+    const anchor = trailingAnchor(all);
+    const kept = anchor ? all.slice(0, anchor.start) : all;
+    if ((comment ? tokens[index + 4] : tokens[index + 3])?.type !== 'fence' || !listingCaption.test(plainText(kept))) {
+      continue;
+    }
+    const open = kept.findIndex((child) => child.type === 'link_open' && !child.attrGet('href')?.startsWith('#'));
+    const close = kept.findIndex((child, position) => open >= 0 && position > open && child.type === 'link_close');
+    if (close < 0) {
+      continue;
+    }
+    const href = kept[open].attrGet('href') ?? '';
+    const after = plainText(kept.slice(close + 1));
+    let cite = kept.slice(close + 1);
+    if (citeText.test(after)) {
+      const text = new state.Token('text', '', 0);
+      text.content = after.trim();
+      const repository = githubFile.exec(href)?.[1].toLowerCase();
+      if (repository && publicRepositories.includes(repository)) {
+        const linkOpen = new state.Token('link_open', 'a', 1);
+        linkOpen.attrSet('href', href);
+        cite = [linkOpen, text, new state.Token('link_close', 'a', -1)];
+      } else {
+        cite = [text];
+      }
+      cite = [html(state, '<span class="caption-source"> '), ...cite, html(state, '</span>')];
+    }
+    tokens[index + 1].children = [...kept.slice(0, open), ...kept.slice(open + 1, close), ...cite, ...(anchor ? all.slice(anchor.start) : [])];
+  }
+}
+
 /**
  * listingCode gives the code block of a listing the class `listing`, and the numbers of its lines when the layout asks
  * for them.
@@ -523,14 +650,17 @@ export function numberLines(html: string): string {
  * paperRule is the rule of the renderer that runs after the rules of markdown-it and of the footnotes.
  * @param layout - The layout of the document.
  * @param found - What the rule finds, which it fills.
+ * @param publicRepositories - The public repositories of the field `repos`, `owner/repository` in small letters.
  */
-function paperRule(layout: Layout, found: Found) {
+function paperRule(layout: Layout, found: Found, publicRepositories: readonly string[] = []) {
   return (state: StateCore): void => {
+    const terms = layout.terms;
+    const listingCaption = captionPattern('Listing', terms.listing);
     found.notes = removeNotes(state.tokens);
+    placeListingLinks(state, listingCaption, publicRepositories);
     found.footnotes = placeFootnotes(state);
     placeAlerts(state);
     const tokens = state.tokens;
-    const terms = layout.terms;
     const ids = new Set<string>();
     const unique = (base: string): string => {
       let id = base;
@@ -582,7 +712,6 @@ function paperRule(layout: Layout, found: Found) {
     };
     const figureCaption = captionPattern('Figure', terms.figure);
     const tableCaption = captionPattern('Table', terms.table);
-    const listingCaption = captionPattern('Listing', terms.listing);
     /** generated is the list section that the rule is in, until the next heading of its level or above. */
     let generated: GeneratedList | undefined;
     let generatedLevel = 0;
@@ -813,21 +942,12 @@ function paperRule(layout: Layout, found: Found) {
             id = unique(`listing-${number.toLowerCase()}`);
           }
           const label = `${terms.listing} ${number}`;
-          // The caption is a link to the source, which a page cannot open: the page shows its text. The cite of the
-          // source after the link, which the formatter of Markdown Notes writes, gets an element of its own.
+          // placeListingLinks took the link to the source off the caption, and put the cite of the source after the
+          // caption, which the formatter of Markdown Notes writes, into an element of its own.
           let kids = withoutTrailingSpace(kept);
-          const link = kids.find((child) => child.type === 'link_open' && !child.attrGet('href')?.startsWith('#'));
-          let cite = '';
-          if (link) {
-            const open = kids.indexOf(link);
-            const close = kids.findIndex((child, position) => position > open && child.type === 'link_close');
-            const after = close >= 0 ? plainText(kids.slice(close + 1)) : '';
-            if (citeText.test(after)) {
-              cite = after.trim();
-              kids = kids.slice(0, close + 1);
-            }
-            kids = kids.filter((_child, position) => position !== open && position !== close);
-          }
+          const source = kids.findIndex((child) => child.type === 'html_inline' && child.content.startsWith('<span class="caption-source">'));
+          const cite = source >= 0 ? kids.slice(source) : [];
+          kids = source >= 0 ? kids.slice(0, source) : kids;
           const first = kids.find((child) => child.type === 'text');
           if (first) {
             first.content = first.content.replace(listingCaption, '');
@@ -837,7 +957,8 @@ function paperRule(layout: Layout, found: Found) {
           inline.children = [
             html(state, `<span class="caption-label">${escapeHtml(label)}</span><span class="caption-separator">: </span><span class="caption-text">`),
             ...kids,
-            html(state, `</span>${cite ? `<span class="caption-source"> ${escapeHtml(cite)}</span>` : ''}`),
+            html(state, '</span>'),
+            ...cite,
           ];
           fence.meta = { ...(fence.meta as object | undefined), paperListing: { lineNumbers: layout.listings.lineNumbers } } satisfies ListingMeta;
           found.listings.push({ id, label, text: plainText(kids), line: token.map?.[0] ?? 0 });
@@ -949,7 +1070,7 @@ export function paperPlugin(md: MarkdownIt): void {
     if (!paper) {
       return;
     }
-    paperRule(paper.layout, paper.found)(state);
+    paperRule(paper.layout, paper.found, paper.publicRepositories)(state);
     const token = new state.Token(paperTokenType, '', 0);
     token.meta = paper;
     token.hidden = true;
@@ -1075,6 +1196,7 @@ export function finishBody(html: string, found: Found, layout: Layout, hyphenate
  * @param plugins - The markdown-it plugins of other extensions, which work before the rule of the renderer.
  * @param pluginEnv - The values that these plugins find in the environment of markdown-it, as in the Markdown preview of
  *   VS Code, for example `currentDocument`, by which nimblescape PlantUML finds its settings and included files.
+ * @param publicRepositories - The public repositories of the field `repos`, `owner/repository` in small letters.
  */
 export function renderBody(
   markdown: string,
@@ -1082,6 +1204,7 @@ export function renderBody(
   hyphenate?: (text: string) => string,
   plugins: readonly MarkdownPlugin[] = [],
   pluginEnv: Readonly<Record<string, unknown>> = {},
+  publicRepositories: readonly string[] = [],
 ): Body {
   const found = emptyFound();
   let md = new MarkdownIt({ html: true, linkify: true, typographer: false });
@@ -1089,7 +1212,7 @@ export function renderBody(
     md = plugin(md) ?? md;
   }
   paperPlugin(md);
-  const env: { nimblescapePaper: PaperEnv } = { ...pluginEnv, nimblescapePaper: { layout, found } };
+  const env: { nimblescapePaper: PaperEnv } = { ...pluginEnv, nimblescapePaper: { layout, found, publicRepositories } };
   const html = finishBody(md.render(markdown, env), found, layout, hyphenate);
   return { html, ...found };
 }

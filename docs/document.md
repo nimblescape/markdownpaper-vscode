@@ -204,7 +204,8 @@ export function readFields(lines: readonly string[]): Map<string, string> {
 ````
 
 The page shows "Listing 1: Reading the fields (fields.ts, L12-L30)" above the
-code, without the link. A link `[Listing 1](#lst-reading-fields)` gets the
+code, without the link. A listing of a public repository of `repos` (section
+1) has the link to its lines on the cite, and its address in a footnote. A link `[Listing 1](#lst-reading-fields)` gets the
 label of the listing. Do not change the code, the link or the cite of a
 listing by hand: the formatter of Markdown Notes writes them from the source.
 
@@ -223,6 +224,19 @@ The renderer numbers the footnotes 1, 2, 3 in the order of their first
 references, whatever their labels are. A second reference shows the number of
 the footnote again. The definition can stand anywhere in the file; lines
 indented by four spaces after it belong to it.
+
+Links in the PDF:
+
+- Write every reference inside the paper as a Markdown link to its target: a
+  heading, a figure, a table, a listing (sections 2 and 4 to 6) or a source
+  (section 9). The PDF links it in the color of the text, without a mark.
+- Write a link to the outside as a Markdown link with its own text, such as
+  `[the report of the agency](https://example.org/report.pdf)`, or as the
+  bare address. The PDF shows the text of the link and gives its address in
+  a footnote, so that a printed page shows it. Do not write a footnote with
+  the address yourself.
+- The reference list writes the full address of a source, a DOI as
+  `https://doi.org/…`; the format writes it (section 9).
 
 ## 8. Reference list and appendix
 

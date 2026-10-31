@@ -46,7 +46,7 @@ This document replaces it where the two differ.
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
 | 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; on the command line PlantUML in step 33 and Mermaid in step 34 |
-| 18 | Layouts of another repository, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | the repositories on GitHub done in step 28; the name of a layout on GitHub in the front matter planned in step 36; no layouts in npm packages ([decision 51](#decisions)) |
+| 18 | Layouts of another repository, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | the repositories on GitHub done in step 28; the reference of a layout on GitHub in the front matter done in step 36; no layouts in npm packages ([decision 51](#decisions)) |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | done |
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` with the cite of the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
 | 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
@@ -66,7 +66,7 @@ This document replaces it where the two differ.
 | 34 | The Mermaid diagrams in the PDF of the command line, as the Mermaid extension of VS Code draws them, as inline SVG | [R-REN-016](#r-ren-016), [R-REN-010](#r-ren-010) | done |
 | 36 | The command `mp` in place of `markdownpaper`; the references of a paper: the keys `layout` and `repos` of the front matter with GitHub references, `get` with its clones, `get -u`, `create` that needs a layout and writes its reference, `build` in place of `pdf`, no `update`, the layout read from its clone, and the clones of `repos` for the listings of Markdown Notes | [R-CLI-001](#r-cli-001), [R-CLI-004](#r-cli-004), [R-LAY-007](#r-lay-007), [R-LAY-010](#r-lay-010), [R-NEW-004](#r-new-004) | done ([decision 51](#decisions)); the listings from the clones are step 68 of Markdown Notes |
 | 37 | The command in the terminals of VS Code, as nimblescape TypeScript ships `ts`; "New Project" of VS Code with the reference of a layout on GitHub and `mp get` in a terminal of VS Code; the installation of the command from GitHub before the release | [R-CLI-001](#r-cli-001), [R-NEW-004](#r-new-004) | planned ([decision 51](#decisions)) |
-| 38 | The links of the PDF: a link for every reference inside the paper, also for each citation, in the color of the text without a mark; the addresses of the links to the outside in footnotes; the link of a listing from a public repository on its cite | [R-PDF-005](#r-pdf-005), [R-REN-011](#r-ren-011) | planned ([decision 52](#decisions)) |
+| 38 | The links of the PDF: a link for every reference inside the paper, also for each citation, in the color of the text without a mark; the addresses of the links to the outside in footnotes; the link of a listing from a public repository on its cite | [R-PDF-005](#r-pdf-005), [R-REN-011](#r-ren-011) | done ([decision 52](#decisions)); whether a repository is public comes from one request without a sign-in, which is not confirmed yet (open questions) |
 
 ## General
 
@@ -771,9 +771,11 @@ Word template with automatic hyphenation does ([decision 38](#decisions)).
 **Footnotes.** A Markdown footnote goes to the foot of the page of its first
 reference. The renderer numbers the footnotes 1, 2, 3 in the order of their
 first references, whatever their labels are; a second reference shows the
-number again. The style sheet of the renderer holds only the rules without
-which this does not work in Paged.js; a layout gives the footnotes their
-look.
+number again, as a link to the footnote. A link to the outside with its own
+text gets a footnote with its address ([R-PDF-005](#r-pdf-005)). The style
+sheet of the renderer holds only the rules without which this does not work
+in Paged.js, and the look of the links of the PDF; a layout gives the
+footnotes their look.
 
 ### R-REN-009
 
@@ -909,7 +911,8 @@ export function readFields(lines: readonly string[]): Map<string, string> {
   page cannot open the source, so the page shows the text of the caption
   without the link, and the cite of the file after it: "Reading the fields
   (fields.ts, L12-L30)". The renderer adds no cite of its own, and the list
-  of listings has the caption without the cite.
+  of listings has the caption without the cite. A listing of a public
+  repository has the link on its cite ([R-PDF-005](#r-pdf-005)).
 - With `"listings": { "lineNumbers": true }` the page shows the number of
   each line before the code of each listing, from 1 in each listing; the
   default is no numbers ([decision 24](#decisions)). Other code blocks get no
@@ -1122,21 +1125,33 @@ metadata, and "nimblescape Markdown Paper" as its creator.
 
 ### R-PDF-005
 
-**The links of the PDF.** Planned in step 38 ([decision 52](#decisions)).
+**The links of the PDF.** Built in step 38 ([decision 52](#decisions)).
 
 - Every reference inside the paper is a link to its target: the links to
   headings, figures, tables and listings, the entries of the lists of the
-  special sections, the footnote marks, and each citation to its entry in the
-  reference list. A link inside the paper has the color of the text, without
-  an underline, a box or another mark.
+  special sections, the footnote marks, a second reference to a footnote, and
+  each citation to its entry in the reference list. A link inside the paper
+  has the color of the text, without an underline, a box or another mark; the
+  style sheet of the renderer gives every layout this look
+  ([R-REN-008](#r-ren-008)).
 - A link to the outside stays a link and looks the same. A bare web address
-  shows itself. The reference list writes the full address, a DOI as
+  and an autolink `<https://…>` show themselves, and so does a link whose
+  text is its address. The reference list writes the full address, a DOI as
   `https://doi.org/…`, as APA 7 asks. A Markdown link with its own text to an
   outside address shows its text, and a footnote gives the address, so that a
-  printed page shows every address. An author writes no footnote for it.
+  printed page shows every address: the footnote is numbered with the other
+  footnotes, a second link to the same address shows the number of that
+  footnote, and a link inside a footnote gets the address in parentheses after
+  its text. An e-mail link shows the address without `mailto:`. An author
+  writes no footnote for an address.
 - The caption of a listing has no link. A listing from a public repository
   has the link to the shown lines on its cite, for example
-  `(api.ts, L12-L30)`; a listing from a private repository has none.
+  `(api.ts, L12-L30)`, and the address in a footnote, as every link to the
+  outside with its own text; a listing from a private repository has none. A
+  repository is public when the Git configuration of its clone says so
+  ([R-CLI-004](#r-cli-004)); a missing clone counts as private. A listing of
+  the repository of the paper itself has a relative link on its caption, and
+  so no link in the PDF.
 
 ## Page preview
 
@@ -1476,6 +1491,12 @@ repos:
   for no password. The paper repository holds no copy of the other
   repositories. The command connects to GitHub only when the author or CI runs
   it, and the extension connects to no other address for it.
+- `get` asks GitHub without a sign-in whether each repository of `repos` is
+  public, with one request to `https://api.github.com/repos/<owner>/<repository>`,
+  and writes the answer into the Git configuration of its clone as
+  `markdownpaper.public`: `true`, or `false` when GitHub answers 404. Without
+  an answer, for example without a network, the clone keeps its value. The
+  renderer reads it for the link of a listing ([R-PDF-005](#r-pdf-005)).
 - `build` makes the PDF, in place of `pdf`. CI runs `get` before `build`, so
   the PDF shows what the references state: the head of a branch at the time of
   the build, or the pinned tag or commit. CI gets every repository that the
@@ -2140,9 +2161,10 @@ requirement ([R-GEN-007](#r-gen-007)).
 - The mark of a paper document ([R-DOC-004](#r-doc-004)): the field `layout`
   of the front matter, and later the citations; not confirmed yet.
 - How `mp get` learns whether a repository of `repos` is public, for the link
-  of a listing in the PDF ([R-PDF-005](#r-pdf-005)): one request without a
-  sign-in to the address of the repository on GitHub, or a key in the front
-  matter.
+  of a listing in the PDF ([R-PDF-005](#r-pdf-005)): built with one request
+  without a sign-in to GitHub ([R-CLI-004](#r-cli-004)), the proposal of the
+  discussion document; a key in the front matter is the other way. Not
+  confirmed yet.
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
 - Values of the front matter in the text (planned in Markdown Notes): `/ref`

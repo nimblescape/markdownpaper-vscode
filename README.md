@@ -114,8 +114,10 @@ gives the same renderer to people and AI agents on the command line:
 - **Citations and Zotero.** With Markdown Notes, type `/cite` in a paper
   document and choose a source: the citation goes in at the place, in the
   citation style of the layout. After "Connect Zotero" (with an API key of
-  zotero.org), the list also shows the items of your Zotero library; a chosen
-  item goes into the database of the document, and its PDF file into `bib/`.
+  zotero.org), the list also shows the items of your Zotero library and of
+  the group libraries that the setting
+  `nimblescape.markdownPaper.zoteroGroups` names; a chosen item goes into the
+  database of the document, and its PDF file into `bib/`.
   "Update Sources from Zotero" takes the changes of Zotero into the sources of
   the document.
 - **Research.** With Markdown Notes, select an argument in a paper document
@@ -152,6 +154,7 @@ describes every feature.
 | `nimblescape.markdownPaper.browserPath` | `""` | The program of Google Chrome, Chromium or Microsoft Edge that prints the PDF. Empty: the extension looks for one at the usual places. Only the settings of the user can set it. |
 | `nimblescape.markdownPaper.previewDelay` | `800` | The pause in typing, in milliseconds, after which the Markdown preview of a paper document makes its pages again, from 100 to 10000. |
 | `nimblescape.markdownPaper.openPdf` | `true` | Opens the PDF with the program of your system for PDF files after "Export PDF". |
+| `nimblescape.markdownPaper.zoteroGroups` | `[]` | The group libraries of Zotero that `/cite` and "Update Sources from Zotero" read besides your personal library: the number of each group, or its address on zotero.org, for example `https://www.zotero.org/groups/1234567/thesis`. A project can name its groups in `.vscode/settings.json`. |
 
 ## Limits
 
@@ -174,9 +177,9 @@ describes every feature.
 - A layout has no scripts. Its templates know fields and parts that show
   only with a field, no other logic.
 - `/cite` and `/research` need nimblescape Markdown Notes. `/cite` reads the
-  personal library of Zotero through the web API of zotero.org, not the
-  group libraries, and copies a PDF only when Zotero stores it on
-  zotero.org. AI agents and the command line do not use Zotero: an agent adds
+  personal library of Zotero and the group libraries of a setting through the
+  web API of zotero.org, not the other group libraries, and copies a PDF only
+  when Zotero stores it on zotero.org. AI agents and the command line do not use Zotero: an agent adds
   sources with `markdownpaper source`.
 
 ---

@@ -38,7 +38,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Instructions for AI agents](#instructions-for-ai-agents) | command line | available | [R-CLI-003](requirements.md#r-cli-003) |
 | [Settings](#settings) | VS Code | available | [R-SET-001](requirements.md#r-set-001) |
 | The format step of the paper: the four lists in the file, the numbers of the headings in the links to them | VS Code (format of Markdown Notes), `markdownpaper format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
-| [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format, `/cite` and `/research` of Markdown Notes, Zotero), `markdownpaper format`, `markdownpaper source` | available; the group libraries of Zotero in `/cite` planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-006](requirements.md#r-cite-006) |
+| [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format, `/cite` and `/research` of Markdown Notes, Zotero), `markdownpaper format`, `markdownpaper source` | available | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-006](requirements.md#r-cite-006) |
 | [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
 | [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line PlantUML and Mermaid available | [R-REN-010](requirements.md#r-ren-010), [R-REN-015](requirements.md#r-ren-015), [R-REN-016](requirements.md#r-ren-016) |
 
@@ -128,6 +128,13 @@ your library; you make the key on the page of the API keys of zotero.org,
 <https://www.zotero.org/settings/keys>. VS Code keeps the key in its secret
 storage. Without words,
 the list shows the items that changed last; type words to search the library.
+The list also shows the items of the group libraries that the setting
+`nimblescape.markdownPaper.zoteroGroups` names, for example a group that you
+share with your supervisor: the number of each group, or its address on
+zotero.org, such as `https://www.zotero.org/groups/1234567/thesis`. The API
+key must be allowed to read these groups. A project names its groups in
+`.vscode/settings.json`, so each author of the project sees them. An item of
+a group with the DOI or the ISBN of an item of your library shows once.
 A chosen item goes into the database of the document:
 
 - The item finds its line by the field `zotero` of the line (the library and
@@ -442,3 +449,4 @@ names the first one in its front matter.
 | `nimblescape.markdownPaper.browserPath` | `""` | The program of Google Chrome, Chromium or Microsoft Edge that prints the PDF. Empty: the extension looks for one at the usual places. Only the settings of the user can set it, not the settings of a workspace. |
 | `nimblescape.markdownPaper.previewDelay` | `800` | The pause in typing, in milliseconds, after which the page preview shows the changed text, from 100 to 10000. |
 | `nimblescape.markdownPaper.openPdf` | `true` | Opens the PDF with the program of your system for PDF files after "Export PDF". |
+| `nimblescape.markdownPaper.zoteroGroups` | `[]` | The group libraries of Zotero that `/cite` and "Update Sources from Zotero" read besides your personal library: the number of each group, or its address on zotero.org. Also in the settings of a workspace or a folder. |

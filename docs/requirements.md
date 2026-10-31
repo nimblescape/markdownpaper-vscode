@@ -57,7 +57,8 @@ This document replaces it where the two differ.
 | 26 | Layouts close to a Word template: numbered special sections (`headings.numberedSections`), a hyphenated reference list (`references.hyphenate`), the natural spaces of the last line of a justified paragraph whose spaces shrink; the PHT concept layout in the look of its Word template | [R-REN-004](#r-ren-004), [R-REN-007](#r-ren-007), [R-REN-012](#r-ren-012), [R-LAY-002](#r-lay-002) | done |
 | 27 | The parts of a document (front part, body, appendix part) as elements for their own pages, and a table of contents without the front part (`contents.front`); the PHT thesis layout in the look of its Word template | [R-REN-013](#r-ren-013), [R-REN-004](#r-ren-004), [R-LAY-002](#r-lay-002) | done |
 | 28 | The empty paper document and its preview PDF in each layout; the list of the layouts of `create` and "New Project" with the layouts on GitHub; `markdownpaper layouts` and `markdownpaper preview` | [R-LAY-009](#r-lay-009), [R-NEW-004](#r-new-004), [R-LAY-007](#r-lay-007) | done; the PHT layouts have their empty paper documents and previews |
-| 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, the merge of a chosen item into the database with its key of Zotero, and "Update Sources from Zotero" | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | done; the items of group libraries in the list of `/cite` are open |
+| 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, the merge of a chosen item into the database with its key of Zotero, and "Update Sources from Zotero" | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | done; the group libraries of the setting `zoteroGroups` (decision 50) done in step 35 |
+| 35 | The group libraries of Zotero that a setting names, in `/cite` and in "Update Sources from Zotero" | [R-CITE-006](#r-cite-006), [R-SET-001](#r-set-001) | done |
 | 30 | `/research` on a selected argument: the start marker and `(RESEARCH)`, the rules for AI agents, the checks, the slash command on selected text, and the start marker and the database hidden in the clean editing view of Markdown Notes | [R-CITE-002](#r-cite-002), [R-GEN-003](#r-gen-003) | done |
 | 31 | The hints of a template as alerts of GitHub, drawn as boxes by the layout; the hints of the PHT concept template in its empty paper document | [R-REN-014](#r-ren-014), [R-CITE-004](#r-cite-004) | done |
 | 32 | The origin of a copy of a layout on GitHub in its `layout.json`, and its update from the repository: `markdownpaper update` and "Update Layout" | [R-LAY-010](#r-lay-010), [R-LAY-007](#r-lay-007) | done |
@@ -1654,14 +1655,21 @@ writes no metadata ([decision 42](#decisions)).
   `groups/<id>/<key>` for a group library, because an item key is unique only
   in one library. A line gets the field only when it has none. The next merge
   finds the line by this field first. The formatter and the citation style
-  ignore it. The list of `/cite` shows the personal library of the API key;
-  "Update Sources from Zotero" reads a line with the key of a group library
-  from that group.
+  ignore it.
+- The list of `/cite` shows the items of the personal library of the API key
+  and of the group libraries of the setting `zoteroGroups`
+  ([R-SET-001](#r-set-001), [decision 50](#decisions)), the personal library
+  first; an item of a group library names its group. An item with the DOI or
+  the ISBN of an item before it in the list does not show. A group that the
+  key may not read shows its message in the list, with the items of the other
+  libraries. "Update Sources from Zotero" reads these libraries, and a line
+  with the key of another group library from that group.
 - The command "Update Sources from Zotero" (in the Command Palette of a paper
   document) merges every line of the database of the open file that matches
   an item of Zotero, by the same rules, and asks once for the changed values
-  of all lines before it writes them. It reads the whole personal library, 100
-  items with each request.
+  of all lines before it writes them. It reads the whole personal library and
+  the whole group libraries of the setting, 100 items with each request; a
+  group that gives no answer is named in a warning.
 - The PDF attachment of a chosen item goes to `bib/<ID>.pdf`
   ([R-NEW-003](#r-new-003)) without a question, when the file does not exist:
   the folder `bib/` nearest above the document, else `bib/` beside the nearest
@@ -1697,6 +1705,7 @@ writes no metadata ([decision 42](#decisions)).
 | `browserPath` | The program of Chrome, Chromium or Edge for the PDF ([R-PDF-002](#r-pdf-002)); empty: the extension finds it. Only in the settings of the user or of the computer, not of a workspace. | `""` |
 | `previewDelay` | The pause in typing in milliseconds before the page preview makes the pages again, 100 to 10000 ([R-PRV-002](#r-prv-002)). | `800` |
 | `openPdf` | Open the PDF after "Export PDF" ([R-PDF-001](#r-pdf-001)). | `true` |
+| `zoteroGroups` | The group libraries of Zotero that `/cite` and "Update Sources from Zotero" read besides the personal library ([R-CITE-006](#r-cite-006)): the number of each group, or its address on zotero.org; a value that names no group counts as none. Also in the settings of a workspace or a folder, so a project names its groups. | `[]` |
 
 A value of a wrong type counts as the default.
 
@@ -1936,6 +1945,10 @@ requirement ([R-GEN-007](#r-gen-007)).
     ZenUML and the icon packs. The npm packages of the nimblescape extensions have one
     form: a folder `cli/` of the repository of the extension, built by
     `esbuild.mjs`, tested by `npm run test:cli` and published by the release.
+50. **The group libraries of Zotero in a setting** ([R-CITE-006](#r-cite-006)):
+    `/cite` and "Update Sources from Zotero" read the personal library of the
+    API key and the group libraries that the setting `zoteroGroups` names, not
+    every group that the key may read.
 
 ## Open questions
 

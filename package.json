@@ -219,6 +219,18 @@
           "default": true,
           "scope": "window",
           "markdownDescription": "Open the PDF with the program of your system for PDF files after \"Export PDF\" wrote it."
+        },
+        "nimblescape.markdownPaper.zoteroGroups": {
+          "type": "array",
+          "items": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "default": [],
+          "scope": "resource",
+          "markdownDescription": "The group libraries of Zotero that `/cite` and \"Update Sources from Zotero\" read besides your personal library: the number of each group, or its address on zotero.org, for example `https://www.zotero.org/groups/1234567/thesis`. The API key of \"Connect Zotero\" must be allowed to read each group."
         }
       }
     },

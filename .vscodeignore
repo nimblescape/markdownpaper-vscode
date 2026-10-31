@@ -4,10 +4,10 @@
 
 # The package holds the bundle, Paged.js, the page files of @nimblescape/plantuml
 # for the PlantUML diagrams of the PDF, the scripts and the style of the pages
-# in the Markdown preview, the built-in layouts, the copy of the npm package
-# @nimblescape/markdownpaper in cli/ for the command mp in the terminals of
-# VS Code, the icon and the documents only: ignore everything, then keep the
-# listed files.
+# in the Markdown preview and of the view "Front Matter", the built-in layouts,
+# the copy of the npm package @nimblescape/markdownpaper in cli/ for the command
+# mp in the terminals of VS Code, the icon and the documents only: ignore
+# everything, then keep the listed files.
 **
 !dist/extension.js
 !cli/package.json
@@ -17,6 +17,8 @@
 !cli/dist/plantuml/**
 !cli/dist/mermaid/*.js
 !cli/dist/mermaid/THIRD-PARTY-NOTICES.md
+!media/frontMatter.css
+!media/frontMatter.js
 !media/paged.js
 !media/paged.polyfill.js
 !media/plantuml/**

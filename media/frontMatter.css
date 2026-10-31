@@ -1,0 +1,117 @@
+/*
+SPDX-License-Identifier: MIT
+© 2026 Hannes Stauss (scalarion@nimblescape.com)
+Licensed under the MIT License. See LICENSE in the repository root for details.
+
+The style of the view "Front Matter" (docs/requirements.md, R-DOC-005), with the colors and the font of the theme of
+VS Code: one row for each field, its name above its description and its input, and the warnings in the color of the
+warnings of the editor.
+*/
+body {
+  padding: 0 12px 12px;
+  color: var(--vscode-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+.head {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--vscode-panel-border, transparent);
+}
+
+.file {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.section {
+  padding-top: 4px;
+}
+
+.section-title {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.row {
+  margin: 10px 0;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+}
+
+.required {
+  color: var(--vscode-editorWarning-foreground);
+}
+
+.description,
+.hint {
+  margin: 2px 0 4px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 3px 6px;
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 2px;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  font-family: inherit;
+  font-size: inherit;
+}
+
+select.input {
+  border-color: var(--vscode-dropdown-border, transparent);
+  background: var(--vscode-dropdown-background);
+  color: var(--vscode-dropdown-foreground);
+}
+
+.input:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.input::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+.input:disabled {
+  opacity: 0.6;
+}
+
+.read-only .value {
+  overflow-wrap: anywhere;
+  font-family: var(--vscode-editor-font-family);
+}
+
+.repo .name {
+  font-weight: 600;
+}
+
+.warning,
+.problem {
+  margin-top: 2px;
+  color: var(--vscode-editorWarning-foreground);
+}
+
+.problem {
+  margin: 6px 0;
+}
+
+.button {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border: none;
+  border-radius: 2px;
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}

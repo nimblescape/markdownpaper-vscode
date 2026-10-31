@@ -68,6 +68,7 @@ This document replaces it where the two differ.
 | 37 | The command in the terminals of VS Code, as nimblescape TypeScript ships `ts`; "New Project" of VS Code with the reference of a layout on GitHub and `mp get` in a terminal of VS Code; the installation of the command from GitHub before the release | [R-CLI-001](#r-cli-001), [R-NEW-004](#r-new-004) | done ([decision 51](#decisions)) |
 | 38 | The links of the PDF: a link for every reference inside the paper, also for each citation, in the color of the text without a mark; the addresses of the links to the outside in footnotes; the link of a listing from a public repository on its cite | [R-PDF-005](#r-pdf-005), [R-REN-011](#r-ren-011) | done ([decision 52](#decisions), [decision 54](#decisions)) |
 | 39 | "Open Repository in New Window" in VS Code for the clone of a reference | [R-CLI-004](#r-cli-004) | done ([decision 55](#decisions)); Markdown Notes opens the same folder with Ctrl+click on the name of the reference of a listing |
+| 40 | The view "Front Matter" in the side bar: the form of the front matter with one row for each field of the layout, and "Edit Front Matter" for the link of Markdown Notes | [R-DOC-005](#r-doc-005) | done ([decision 56](#decisions)); questions 2 and 3 of the discussion document are open, the form follows their proposals |
 
 ## General
 
@@ -315,6 +316,42 @@ only features of Markdown Notes or none ([decision 17](#decisions)).
   uses. "Export PDF" in the Command Palette and in the Explorer, and the
   command line, still make the PDF of any Markdown file, with the built-in
   layout `plain` when the file names no layout.
+
+### R-DOC-005
+
+**The form of the front matter.** The view "Front Matter" in the side bar
+shows the front matter of the Markdown file in the active editor as a form,
+with one row for each field of its layout ([decision 56](#decisions)):
+
+- The view stands in the side bar beside the view of Markdown Notes, in its
+  container; without Markdown Notes, it stands in the Explorer. It follows
+  the active editor, also a file in the clean editing view of Markdown Notes,
+  where the whole front matter is read-only ([R-CLI-004](#r-cli-004)).
+  "Edit Front Matter" (`nimblescape.markdownPaper.editFrontMatter`, with the
+  URI of a file) opens the view for a file; the link "Edit Front Matter" of
+  Markdown Notes above the front matter calls it.
+- The form has one row for each field of `layout.json`, in its order: the
+  name, the description, a mark when the field is required, and the warning
+  of the checks ([R-DOC-002](#r-doc-002)), such as a required field without a
+  value. A field with `values` gets a choice list of its names, any other
+  field a text line. The `default` of a field shows as the placeholder. A
+  value that is no text, such as a list, shows as read-only text; the text
+  editor of the file changes it.
+- `layout` and `repos` are read-only rows, which name the command that
+  writes them: `mp create` and `mp get`. `lang` is a text line with the
+  language of the layout as its placeholder.
+- A key that the layout does not know shows at the end of the form with a
+  warning and a button that removes it; the author cannot add such a key.
+- A file without the field `layout` gets the fields of the built-in layout
+  `plain`; a value for it writes a front matter into the file.
+- The file stays the source; the form keeps no copy. A change of a row is
+  one edit of the file that replaces only the lines of its key, or removes
+  them for an empty value; a new key goes in at its place in the order of the
+  layout. The author undoes it in the text editor of the file. A file without
+  unsaved changes is saved after the edit. A change of the file, for example
+  by `mp get`, shows in the form at once.
+- A front matter with a YAML error, or a layout that cannot be read, shows
+  the problem, and the rows are read-only until the text editor solves it.
 
 ## Layouts
 
@@ -2190,9 +2227,18 @@ requirement ([R-GEN-007](#r-gen-007)).
 55. **Full clones, opened in their own window** ([R-CLI-004](#r-cli-004)):
     a clone of a reference keeps its `.git` folder. "Open Repository in New
     Window" opens it in a new window of VS Code.
+56. **The form of the front matter in the side bar** ([R-DOC-005](#r-doc-005)):
+    the author changes the front matter of a paper in the view "Front Matter"
+    of Markdown Paper in the side bar, beside the view of Markdown Notes,
+    with one row for each field of the layout. The discussion document is
+    [Structured editor of the front matter](https://claude.ai/artifact/55T7uG2yTK89DcfKuYHoDJ).
 
 ## Open questions
 
+- The form of the front matter ([R-DOC-005](#r-doc-005)): whether a key that
+  the layout does not know stays in the file with a warning, as built, or
+  goes at once; and whether the form shows for a file without the field
+  `layout`, with the fields of `plain`, as built, or only for a paper.
 - The mark of a paper document ([R-DOC-004](#r-doc-004)): the field `layout`
   of the front matter, and later the citations; not confirmed yet.
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the

@@ -216,6 +216,22 @@ layout, which its cover page and the name of its PDF use. `lang: de-AT`
 changes the language of the layout for one document. A document without the
 field `layout` gets the built-in layout `plain`.
 
+The view "Front Matter" in the side bar, beside the view of Markdown Notes,
+shows the front matter of the Markdown file in the active editor as a form:
+one row for each field of the layout, in the order of its `layout.json`, with
+the description of the field and a `*` for a required field. A field with a
+list of names, such as `type` of the PHT thesis, has a choice list; the
+default of a field shows in grey. Change a value and press Enter, or leave
+the row: the value goes into the file at once, as one edit, and a file
+without unsaved changes is saved. Ctrl+Z in the text editor of the file
+undoes it. `layout` and `repos` are read-only in the form, because only
+`mp create` and `mp get` write them. A key that the layout does not know
+shows at the end with a warning and a button "Remove". The form also works
+for a file in the clean editing view of Markdown Notes, where the front
+matter in the text is read-only; the link "Edit Front Matter" above the front
+matter opens the view. "Markdown Paper: Edit Front Matter" in the Command
+Palette opens it too.
+
 ## Paper documents and notes documents
 
 A Markdown file whose front matter has the field `layout` is a paper

@@ -5,7 +5,7 @@
 
 // Tests in a real VS Code (npm run test:vscode, .vscode-test.mjs): mocha runs them in the extension host. They write a
 // layout and Markdown files into a temporary folder, and check the commands of the extension, among them "Open
-// Repository in New Window" (R-CLI-004), the checks of the front
+// Repository in New Window" (R-CLI-004) and the view "Front Matter" (R-DOC-005), the checks of the front
 // matter and their hover (R-DOC-002, R-DOC-003), the format step of the paper (R-REN-004, R-CLI-002), the slash
 // commands /research and /cite (R-CITE-002), the plugin of
 // the pages in the Markdown preview of VS Code for a paper document and none for a notes document (R-PRV-001,
@@ -21,6 +21,7 @@ import * as path from 'node:path';
 import { promisify } from 'node:util';
 import * as vscode from 'vscode';
 import { type Context, cloneOfReference } from '../../src/commands';
+import { applyFrontMatterChange, formFor } from '../../src/frontMatterView';
 import type { Api } from '../../src/extension';
 import { markdownExtensions, plantUmlOptions } from '../../src/markdownExtensions';
 import { findBrowser } from '../../src/pdf/browser';
@@ -88,7 +89,7 @@ describe('nimblescape Markdown Paper', function () {
   it('the extension starts and has its commands', async () => {
     await api();
     const commands = await vscode.commands.getCommands(true);
-    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'openRepository', 'connectZotero', 'updateSourcesFromZotero']) {
+    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'openRepository', 'editFrontMatter', 'connectZotero', 'updateSourcesFromZotero']) {
       assert.ok(commands.includes(`nimblescape.markdownPaper.${name}`), name);
     }
   });
@@ -112,6 +113,28 @@ describe('nimblescape Markdown Paper', function () {
     // The clone of client is missing, and the paper names no reference "tools".
     assert.equal(await cloneOfReference(context, file, 'client'), undefined);
     assert.equal(await cloneOfReference(context, file, 'tools'), undefined);
+  });
+
+  it('"Edit Front Matter" opens the view "Front Matter" for a file, and a change of the form is one edit of the file (R-DOC-005)', async () => {
+    const extension = await api();
+    const file = write('paper/form.md', '---\nlayout: thesis\nsigned: yes\n---\n\n# Einleitung\n');
+    await vscode.commands.executeCommand('nimblescape.markdownPaper.editFrontMatter', file);
+    await waitFor(() => (extension.frontMatter().shown ? true : undefined), 'the page of the view');
+    assert.equal(extension.frontMatter().file?.toString(), file.toString());
+    const self = vscode.extensions.getExtension(extensionId)!.extensionUri;
+    const form = await formFor(self, file);
+    assert.deepEqual(
+      form.fields.map((field) => [field.key, field.required, field.warning]),
+      [['title', true, 'The layout needs this field.']],
+    );
+    assert.deepEqual(form.unknown, [{ key: 'signed', value: 'yes' }]);
+    // The value goes into the file, which is saved because it had no unsaved changes; layout and repos stay.
+    assert.equal(await applyFrontMatterChange(self, file, { key: 'title', value: 'Agenten im Team' }), true);
+    assert.equal(await applyFrontMatterChange(self, file, { key: 'layout', value: 'plain' }), false);
+    assert.equal(await applyFrontMatterChange(self, file, { key: 'signed', value: '' }), true);
+    const document = await vscode.workspace.openTextDocument(file);
+    assert.equal(document.isDirty, false);
+    assert.equal(fs.readFileSync(file.fsPath, 'utf8'), '---\nlayout: thesis\ntitle: Agenten im Team\n---\n\n# Einleitung\n');
   });
 
   it('a missing required field of the layout is a warning at the field layout, with the description in its hover (R-DOC-002, R-DOC-003)', async () => {

@@ -133,6 +133,11 @@
         "category": "Markdown Paper"
       },
       {
+        "command": "nimblescape.markdownPaper.editFrontMatter",
+        "title": "Edit Front Matter",
+        "category": "Markdown Paper"
+      },
+      {
         "command": "nimblescape.markdownPaper.connectZotero",
         "title": "Connect Zotero",
         "category": "Markdown Paper"
@@ -173,6 +178,10 @@
         {
           "command": "nimblescape.markdownPaper.openRepository",
           "when": "editorLangId == markdown && nimblescape.markdownPaper.paperDocument"
+        },
+        {
+          "command": "nimblescape.markdownPaper.editFrontMatter",
+          "when": "editorLangId == markdown"
         }
       ],
       "explorer/context": [
@@ -195,6 +204,16 @@
           "command": "nimblescape.markdownPaper.updateLayout",
           "group": "nimblescape@4",
           "when": "explorerResourceIsFolder && resourceDirname =~ /[\\\\/]layouts$/"
+        }
+      ]
+    },
+    "views": {
+      "nimblescape-markdownnotes": [
+        {
+          "type": "webview",
+          "id": "nimblescape.markdownPaper.frontMatter",
+          "name": "Front Matter",
+          "contextualTitle": "Markdown Paper"
         }
       ]
     },

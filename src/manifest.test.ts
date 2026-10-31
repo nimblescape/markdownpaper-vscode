@@ -105,6 +105,11 @@ test('the manifest contributes the commands of the extension, and no other', () 
   }
 });
 
+test('the view "Front Matter" stands in the container of the view of Markdown Notes, and "Edit Front Matter" opens it (R-DOC-005)', () => {
+  expect(manifest.contributes.views).toEqual({ 'nimblescape-markdownnotes': [{ type: 'webview', id: 'nimblescape.markdownPaper.frontMatter', name: 'Front Matter', contextualTitle: 'Markdown Paper' }] });
+  expect(manifest.contributes.menus.commandPalette).toContainEqual({ command: commands.editFrontMatter, when: 'editorLangId == markdown' });
+});
+
 test('"Show Page Preview" is a button of the title of a paper document, and "Export PDF" a button of its menu "Run" and of its Markdown preview (R-PRV-001, R-PDF-001, R-DOC-004)', () => {
   const menus = manifest.contributes.menus;
   expect(menus['editor/title']).toContainEqual({ command: commands.showPagePreview, group: 'navigation', when: `editorLangId == markdown && ${paperDocumentKey}` });
@@ -176,6 +181,8 @@ test('the package holds the bundle, Paged.js, the page files of @nimblescape/pla
     '!cli/dist/plantuml/**',
     '!cli/dist/mermaid/*.js',
     '!cli/dist/mermaid/THIRD-PARTY-NOTICES.md',
+    '!media/frontMatter.css',
+    '!media/frontMatter.js',
     '!media/paged.js',
     '!media/paged.polyfill.js',
     '!media/plantuml/**',

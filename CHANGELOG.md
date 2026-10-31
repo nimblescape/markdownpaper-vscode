@@ -159,5 +159,5 @@ The first version.
 - `markdownpaper source` adds nothing for a catalog record of an ISBN whose
   year comes before ISBNs of its form existed, such as the book of 1968 that
   Open Library gives for the ISBN 978-92-3-100709-5, and notes a source that
-  only Open Library knows. `--title <words>` checks the title of the record against
-  words of the title of the source in hand.
+  only Open Library knows. `--title <words>` checks the title of the record
+  against words of the title of the source in hand.

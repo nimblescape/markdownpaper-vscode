@@ -1516,7 +1516,8 @@ input is an identifier or a file:
 - `--title <words>` names words of the title of the one source of a call,
   which the agent takes from the source itself, such as the title page of a
   PDF. When the title of the record lacks one of the words, the command adds
-  nothing and names the record; case, accents and punctuation do not count.
+  nothing and names the record; case, accents and punctuation do not count
+  ([decision 48](#decisions)).
 - Each new source gets its ID by [decision 22](#decisions); `--id <id>` gives
   the ID of the one new source of a call, for example of a law. A source
   whose DOI, ISBN, or title and year the database has already is not added
@@ -1837,6 +1838,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     a comma between two citations in one pair of parentheses joins a work of
     the same authors to the citation before it, as APA 7 writes
     "(Levitt, 1972, 1976)". Each year stays a link to its own entry.
+48. **A check of the records of the catalogs** ([R-CITE-005](#r-cite-005)):
+    `markdownpaper source` adds no record of an ISBN whose year comes before
+    ISBNs of its form, notes a source that only Open Library knows, and with
+    `--title` adds no record whose title lacks a word of the title of the
+    source in hand.
 
 ## Open questions
 

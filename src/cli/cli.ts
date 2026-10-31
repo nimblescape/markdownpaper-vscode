@@ -42,7 +42,7 @@ import { readFrontMatter } from '../paper/frontMatter';
 import { topicList, topics } from '../paper/instructions';
 import { downloadRemote, findRemote, findRemotes, type Origin, originOf, parseRemote, previewUrl, type RemoteLayout, readOrigin, remoteName } from '../paper/gallery';
 import { formatText, type Layout, layoutFile, parseLayout, type Problem } from '../paper/layout';
-import { type Fetcher, type Lookup, lookUpFile, lookUpIdentifier, searchWorks } from '../paper/lookup';
+import { type Fetcher, type Lookup, lookUpFile, lookUpIdentifier, searchWorks, titleProblem } from '../paper/lookup';
 import { identifierOf, missingFields } from '../paper/metadata';
 import { defaultLayout, documentLayout, findLayout, layoutName } from '../paper/render';
 import { mapLinks, type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, packageName, splitStart, startFiles } from '../paper/scaffold';
@@ -90,6 +90,8 @@ export const usage = [
   '                                catalogs, PubMed or arXiv; an input is a DOI, an ISBN, a PubMed ID, an arXiv ID, a web',
   '                                address, or a RIS, BibTeX, CSL JSON, HTML or PDF file',
   '      --id <id>                 the ID of the one new source, for example of a law',
+  '      --title <words>           words of the title of the one source, from the source itself; a record whose title',
+  '                                lacks one of them adds nothing',
   '      --offline                 ask no service; keep the metadata of the files',
   '      --dry-run                 print the new lines of the database and write nothing',
   '  source --search <words>       list up to ten works of Crossref whose title matches, with their DOIs',
@@ -447,10 +449,10 @@ const userAgent = `${command}/${version} (+https://github.com/nimblescape/markdo
  * @param io - The streams and the network.
  */
 async function runSource(args: readonly string[], io: Io): Promise<number> {
-  const { positional, options } = parse(args, ['id', 'search'], ['offline', 'dry-run']);
+  const { positional, options } = parse(args, ['id', 'search', 'title'], ['offline', 'dry-run']);
   const fetch = options.offline ? undefined : (io.fetch ?? httpFetcher(userAgent));
   if (options.search !== undefined) {
-    if (positional.length > 0 || options.id !== undefined || options['dry-run'] || !fetch) {
+    if (positional.length > 0 || options.id !== undefined || options.title !== undefined || options['dry-run'] || !fetch) {
       throw new UsageError(`${command} source --search takes only the words of the search.`);
     }
     const { works, problem } = await searchWorks(options.search, fetch);
@@ -472,6 +474,9 @@ async function runSource(args: readonly string[], io: Io): Promise<number> {
   }
   if (options.id !== undefined && positional.length > 2) {
     throw new UsageError('--id gives the ID of one new source, so the call can name only one input.');
+  }
+  if (options.title !== undefined && positional.length > 2) {
+    throw new UsageError('--title gives words of the title of one source, so the call can name only one input.');
   }
   const [name, ...inputs] = positional;
   const file = path.resolve(io.cwd, name);
@@ -496,6 +501,13 @@ async function runSource(args: readonly string[], io: Io): Promise<number> {
     }
     if (options.id !== undefined && found.sources.length > 1) {
       throw new UsageError(`--id gives the ID of one new source, but ${input} holds ${found.sources.length} sources.`);
+    }
+    if (options.title !== undefined && found.sources.length > 1) {
+      throw new UsageError(`--title gives words of the title of one source, but ${input} holds ${found.sources.length} sources.`);
+    }
+    const wrongTitle = options.title !== undefined && found.sources.length === 1 ? titleProblem(found.sources[0], found.from, options.title) : undefined;
+    if (wrongTitle) {
+      found = { ...found, sources: [], notes: [], problem: wrongTitle };
     }
     const result = found.sources.length > 0 ? addSources(lines, found.sources, options.id) : undefined;
     const problem = found.problem ?? result?.problem;

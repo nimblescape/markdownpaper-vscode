@@ -191,6 +191,26 @@ test('source gives the exit code 1 for an input without a source, 2 for a wrong 
   expect(out.at(-1)).toBe('Add the right one by its DOI: markdownpaper source <file.md> <DOI>');
 });
 
+test('source adds nothing for a wrong catalog record, and --title checks the title of the record (R-CITE-005)', async () => {
+  fs.writeFileSync(path.join(folder, 'a.md'), 'Words.\n');
+  const network = {
+    ...io(),
+    fetch: services({ 'https://openlibrary.org/': 'openlibrary-wrong-year.json', 'https://doi.org/10.3390/bs9040039': 'doi-journal.json' }),
+    today: new Date(2026, 9, 31),
+  };
+  expect(await run(['source', 'a.md', '9789231007095'], network)).toBe(1);
+  expect(err[0]).toMatch(/^9789231007095: error: No catalog has a right record of the ISBN 9789231007095: .* of 1968, but ISBNs of this form exist only since 1970/);
+  expect(await run(['source', 'a.md', '10.3390/bs9040039', '--title', 'Self-Concepts in Writing'], network)).toBe(1);
+  expect(err[1]).toBe(
+    '10.3390/bs9040039: error: The title of the record from doi.org (Crossref), "Self-Concepts in Reading and Spelling among Mono- and Multilingual Children: Extending the Bilingual Advantage", lacks the words of --title "writing", so the record is of another work and nothing is added. Write its line from the source itself.',
+  );
+  expect(read('a.md')).toBe('Words.\n');
+  expect(await run(['source', 'a.md', '10.3390/bs9040039', '--title', 'self-concepts in reading and spelling'], network)).toBe(0);
+  expect(out).toContain('10.3390/bs9040039: added festman2019 (article-journal) from doi.org (Crossref)');
+  expect(await run(['source', 'a.md', '10.1000/a', '10.1000/b', '--title', 'words'], network)).toBe(2);
+  expect(await run(['source', '--search', 'words', '--title', 'words'], network)).toBe(2);
+});
+
 const commit = 'c'.repeat(40);
 const encoder = new TextEncoder();
 

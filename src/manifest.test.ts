@@ -20,6 +20,8 @@ import { drawingsCss, lightThemeColors } from './paper/extensionStyles';
 import { sectionCodes } from './paper/layout';
 import { paperDocumentKey } from './paperDocuments';
 import { defaults, settingsSection } from './settings';
+// @ts-expect-error The script of the build has no declarations.
+import { packageFolders, thirdPartyNotices } from '../scripts/third-party-notices.mjs';
 
 // The modules of the extension import the editor API; these tests read only their constants.
 vi.mock('vscode', () => ({}));
@@ -240,15 +242,19 @@ const filesOf = (folder: string): string[] =>
         .map((file) => file.split(path.sep).join('/'))
     : [];
 
-test('the npm package holds the bundle, Paged.js, the page files of @nimblescape/plantuml, the built-in layouts, the notices, the README and the license (npm pack --dry-run)', () => {
+test('the npm package holds the bundle, Paged.js, the page files of @nimblescape/plantuml, the script of Mermaid, the built-in layouts, the notices, the README and the license (npm pack --dry-run)', () => {
   const listed = execFileSync('npm', ['pack', './cli', '--dry-run', '--json'], { cwd: repository, encoding: 'utf8' });
   const files = (JSON.parse(listed) as { files: { path: string }[] }[])[0].files.map((file) => file.path);
-  // The build writes dist/ with the layouts, the page files of @nimblescape/plantuml with its notices, LICENSE and
-  // THIRD-PARTY-NOTICES.md (esbuild.mjs).
+  // The build writes dist/ with the layouts, the page files of @nimblescape/plantuml with its notices, the script of
+  // Mermaid in parts with its notices, LICENSE and THIRD-PARTY-NOTICES.md (esbuild.mjs). The source maps of a
+  // development build stay out.
   const built = (file: string) => file === 'LICENSE' || file === 'THIRD-PARTY-NOTICES.md' || file.startsWith('dist/');
   const layouts = filesOf('layouts').map((file) => `dist/layouts/${file}`);
   const plantUml = [...filesOf('node_modules/@nimblescape/plantuml/dist/page'), 'THIRD-PARTY-NOTICES.md'].map((file) => `dist/plantuml/${file}`);
-  const expected = ['LICENSE', 'README.md', 'THIRD-PARTY-NOTICES.md', 'package.json', 'dist/markdownpaper.js', 'dist/paged.polyfill.js', ...layouts, ...plantUml].filter(
+  const mermaid = filesOf('cli/dist/mermaid')
+    .filter((file) => !file.endsWith('.map'))
+    .map((file) => `dist/mermaid/${file}`);
+  const expected = ['LICENSE', 'README.md', 'THIRD-PARTY-NOTICES.md', 'package.json', 'dist/markdownpaper.js', 'dist/paged.polyfill.js', ...layouts, ...plantUml, ...mermaid].filter(
     (file) => !built(file) || fs.existsSync(path.join(repository, 'cli', file)),
   );
   expect(files.sort()).toEqual(expected.sort());
@@ -305,6 +311,35 @@ test('the third-party notices name every package that the build bundles, and the
   const pagedJs = JSON.parse(read('node_modules/pagedjs/package.json')).version;
   expect(fs.readFileSync(path.join(repository, 'node_modules/pagedjs/dist/paged.polyfill.js'), 'utf8').slice(0, 200)).toContain(`Paged.js v${pagedJs}`);
 });
+
+test('the notices of the script of Mermaid name every package that it bundles, with its version, its license and the text of its license (R-REN-016, R-GEN-004)', async () => {
+  const result = await esbuild.build({
+    entryPoints: { mermaid: path.join(repository, 'src/page/mermaid.ts') },
+    bundle: true,
+    splitting: true,
+    format: 'esm',
+    platform: 'browser',
+    write: false,
+    outdir: path.join(repository, 'out/manifest-test'),
+    metafile: true,
+    logLevel: 'silent',
+  });
+  const folders = packageFolders(result.metafile) as string[];
+  expect(folders).toContain('node_modules/mermaid');
+  expect(folders).toContain('node_modules/@mermaid-js/layout-elk');
+  const { text, missing } = thirdPartyNotices(result.metafile, '# Notices') as { text: string; missing: string[] };
+  expect(missing).toEqual([]);
+  const headings = [...text.matchAll(/^## (.+)$/gm)].map((match) => anchorOf(match[1]));
+  const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const folder of folders) {
+    const { name, version } = JSON.parse(fs.readFileSync(path.join(repository, folder, 'package.json'), 'utf8'));
+    const row = new RegExp(String.raw`^\| \[${escape(name)}\]\((#[^)]+)\) \| ${escape(version)} \| [^|]+ \|$`, 'm').exec(text);
+    expect(row, name).not.toBeNull();
+    expect(headings, name).toContain(row![1]);
+  }
+  // The version of Mermaid is the version of the Mermaid extension of VS Code (R-REN-016).
+  expect(manifest.devDependencies.mermaid).toBe(JSON.parse(read('node_modules/mermaid/package.json')).version);
+}, 60_000);
 
 test('the documents of the package use full links, so that each link works in the repository, in the package and on the Marketplace', () => {
   for (const file of ['README.md', 'CHANGELOG.md', 'SUPPORT.md', 'cli/README.md']) {

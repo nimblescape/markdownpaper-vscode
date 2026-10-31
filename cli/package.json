@@ -31,6 +31,8 @@
     "dist/*.js",
     "dist/layouts/**",
     "dist/plantuml/**",
+    "dist/mermaid/*.js",
+    "dist/mermaid/THIRD-PARTY-NOTICES.md",
     "THIRD-PARTY-NOTICES.md"
   ],
   "engines": {

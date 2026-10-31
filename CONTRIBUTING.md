@@ -32,6 +32,8 @@ request.
 | `src/paper/scaffold.ts` | The files of a new document, layout and project ([R-NEW-001](docs/requirements.md#r-new-001) to [R-NEW-003](docs/requirements.md#r-new-003)), with `AGENTS.md`. |
 | `src/paper/instructions.ts` | The topics of `markdownpaper instructions` ([R-CLI-003](docs/requirements.md#r-cli-003)): the documents `docs/document.md`, `docs/layout.md` and `docs/render.md`, which esbuild bundles as text. |
 | `src/pdf/plantUml.ts` | The PlantUML diagrams of the PDF ([R-REN-015](docs/requirements.md#r-ren-015)): the markdown-it plugin, the style sheet and the script of the page of `@nimblescape/plantuml`, with the settings and the workspace folder of the command line. |
+| `src/pdf/mermaid.ts`, `src/page/mermaid.ts` | The Mermaid diagrams of the PDF of the command line ([R-REN-016](docs/requirements.md#r-ren-016)): the markdown-it plugin and the settings `markdown-mermaid.*`, and the script of the page that draws the diagrams with Mermaid, which esbuild bundles for the browser. |
+| `src/pdf/workspace.ts` | The workspace folder of a document on the command line, and its settings of `.vscode/settings.json`. |
 | `src/pdf/browser.ts`, `src/pdf/cdp.ts`, `src/pdf/pdf.ts`, `src/pdf/export.ts` | The PDF ([R-PDF-001](docs/requirements.md#r-pdf-001) to [R-PDF-003](docs/requirements.md#r-pdf-003)): the search for an installed browser, its start without a window with the DevTools protocol over a pipe, the print of the page after Paged.js made all pages, and the PDF without the marks of the soft hyphens and with its metadata, by pdf-lib. |
 | `src/cli/cli.ts`, `src/cli/main.ts` | The command `markdownpaper` of the npm package ([R-CLI-001](docs/requirements.md#r-cli-001)), without an API of VS Code in `cli.ts`; `main.ts` runs it with the files, the questions and the standard streams of Node.js. |
 | `src/types/` | The types of the packages without types of their own, and of the imports of text with `?raw`. |
@@ -45,11 +47,11 @@ request.
 | `test/cli/` | The tests of the built command `markdownpaper` (`cli/dist/markdownpaper.js`) in the temporary folder of the system; the test of the PDF runs when a Chrome, Chromium or Edge is installed. |
 | `test/vscode/` | The tests in a real VS Code: the commands, the warnings and the hover of the front matter, the page preview with its pages, and "Export PDF". |
 | `dist/`, `media/paged.polyfill.js`, `media/plantuml/` | The bundle `dist/extension.js`, the copy of Paged.js and the copy of the page files of `@nimblescape/plantuml`, built by `esbuild.mjs` and kept out of Git. |
-| `cli/package.json`, `cli/package-lock.json`, `cli/README.md` | The npm package `@nimblescape/markdownpaper`: its manifest, its lock file without dependencies and its page on npmjs.com. The build writes `cli/dist/markdownpaper.js`, copies Paged.js, the built-in layouts and the page files of `@nimblescape/plantuml` into `cli/dist/`, and `LICENSE` and `THIRD-PARTY-NOTICES.md` into `cli/`, all kept out of Git. |
+| `cli/package.json`, `cli/package-lock.json`, `cli/README.md` | The npm package `@nimblescape/markdownpaper`: its manifest, its lock file without dependencies and its page on npmjs.com. The build writes `cli/dist/markdownpaper.js` and the script of Mermaid in `cli/dist/mermaid/`, copies Paged.js, the built-in layouts and the page files of `@nimblescape/plantuml` into `cli/dist/`, and `LICENSE` and `THIRD-PARTY-NOTICES.md` into `cli/`, all kept out of Git. |
 | `out/`, `.vscode-test/` | The bundled tests in VS Code (`scripts/build-vscode-tests.mjs`) and the VS Code that `@vscode/test-cli` downloads for them, kept out of Git. |
-| `THIRD-PARTY-NOTICES.md` | The packages that the bundle contains, the packages of the file of Paged.js and the page files of `@nimblescape/plantuml`, their licenses and the places of their source code. |
+| `THIRD-PARTY-NOTICES.md` | The packages that the bundle contains, the packages of the file of Paged.js and the page files of `@nimblescape/plantuml`, their licenses and the places of their source code. The build writes the notices of the script of Mermaid into `cli/dist/mermaid/`. |
 | `SUPPORT.md` | Where to ask questions and report problems, and what a report contains. |
-| `esbuild.mjs` | Bundles `src/extension.ts` into `dist/extension.js` for the Node.js of VS Code, and `src/cli/main.ts` into `cli/dist/markdownpaper.js` for Node.js 22 or later; imports with `?raw` become text. It copies Paged.js into `media/` and `cli/dist/`, the layouts into `cli/dist/layouts/`, the page files of `@nimblescape/plantuml` with its notices into `media/plantuml/` and `cli/dist/plantuml/`, and `LICENSE` and `THIRD-PARTY-NOTICES.md` into `cli/`. The editor API stays outside the bundles. The bundles are readable JavaScript, not minified; a production build (`--production`) has no source map. |
+| `esbuild.mjs` | Bundles `src/extension.ts` into `dist/extension.js` for the Node.js of VS Code, and `src/cli/main.ts` into `cli/dist/markdownpaper.js` for Node.js 22 or later; imports with `?raw` become text. It copies Paged.js into `media/` and `cli/dist/`, the layouts into `cli/dist/layouts/`, the page files of `@nimblescape/plantuml` with its notices into `media/plantuml/` and `cli/dist/plantuml/`, and `LICENSE` and `THIRD-PARTY-NOTICES.md` into `cli/`. It bundles `src/page/mermaid.ts` with Mermaid into `cli/dist/mermaid/` for the browser, in parts, and writes their notices beside them. The editor API stays outside the bundles. The bundles are readable JavaScript, not minified; only the script of Mermaid has no spaces. A production build (`--production`) has no source map. |
 | `tsconfig.json` | The settings of the type check: strict, and no output, because esbuild builds the bundle. It covers `src/` and `test/`. |
 | `vitest.config.mts`, `vitest.cli.config.mts` | The settings of the unit tests, and of the tests of the built command `markdownpaper`. |
 | `.vscode-test.mjs` | The settings of the tests in VS Code: the VS Code version (`VSCODE_TEST_VERSION`, stable by default), the files of `out/test/vscode/`, and mocha. |
@@ -64,6 +66,7 @@ request.
 | `.github/workflows/marketplace-identity.yml` | Prints the Marketplace member ID of the publishing identity, to check the setup of the repository. |
 | `.github/dependabot.yml` | Proposes weekly updates of the development tools and of the pinned actions. |
 | `scripts/build-vscode-tests.mjs` | Bundles each test of `test/vscode/` into `out/test/vscode/` for the tests in VS Code. |
+| `scripts/third-party-notices.mjs` | Writes the notices of the packages of a bundle from the installed packages, for the script of Mermaid (see [Diagrams of Mermaid on the command line](#diagrams-of-mermaid-on-the-command-line)). |
 | `scripts/install-plantuml.mjs` | Installs the npm package `@nimblescape/plantuml` of nimblescape PlantUML from its GitHub repository at a fixed commit, until the package is on npmjs.com (see [Diagrams of nimblescape PlantUML](#diagrams-of-nimblescape-plantuml)). |
 | `scripts/install-local.mjs`, `scripts/uninstall-local.mjs` | Install the built package into every profile of the VS Code of this computer, and remove it again. |
 | `scripts/marketplace-setup.sh` | Sets up the Marketplace publishing of the repository ([Setup of a repository](#setup-of-a-repository)). |
@@ -111,7 +114,9 @@ tag of its version, and compare `extension/dist/` of the VSIX with `dist/`.
 package `pagedjs` of `package-lock.json`, unchanged, and `media/plantuml/` is
 the folder `dist/page/` of `@nimblescape/plantuml` at the commit of
 `scripts/install-plantuml.mjs` with its notices, unchanged. The npm package
-holds the same files in `package/dist/`.
+holds the same files in `package/dist/`, and in `package/dist/mermaid/` the
+script of Mermaid: without spaces, but with the names of the source, so a
+build at the tag gives the same files.
 
 ## Manifest
 
@@ -143,7 +148,7 @@ organization `nimblescape` on npmjs.com, with the command `markdownpaper`
 
 - The name `@nimblescape/markdownpaper` and the command `markdownpaper` (`bin`) ([decision 5](docs/requirements.md#decisions)).
 - The version, which the release sets to the version of the extension. A test checks that both manifests and `cli/package-lock.json` have one version.
-- `files` keeps the bundles of `dist/`, Paged.js, the built-in layouts of `dist/layouts/`, the page files of `@nimblescape/plantuml` in `dist/plantuml/` and `THIRD-PARTY-NOTICES.md`; npm adds `package.json`, `README.md` and `LICENSE`. A test checks the list with `npm pack --dry-run`.
+- `files` keeps the bundles of `dist/`, Paged.js, the built-in layouts of `dist/layouts/`, the page files of `@nimblescape/plantuml` in `dist/plantuml/`, the script of Mermaid in `dist/mermaid/` without its source maps, and `THIRD-PARTY-NOTICES.md`; npm adds `package.json`, `README.md` and `LICENSE`. A test checks the list with `npm pack --dry-run`.
 - `engines.node` is `>=22`, and the package has no dependency: the bundle imports only modules of Node.js, which a test checks.
 - `repository.directory` is `cli`, and `publishConfig.access` is `public`, which a scoped package needs for its first version.
 
@@ -170,6 +175,28 @@ new commit in the script. After the release of nimblescape PlantUML, the
 package becomes a development dependency of `package.json` with its version,
 and the script, its step in the CI and the script `postinstall` go away. The
 release of Markdown Paper waits for the release of the package.
+
+## Diagrams of Mermaid on the command line
+
+"Export PDF" in VS Code draws the Mermaid diagrams with the Mermaid extension
+of VS Code. The command line has no extensions of VS Code, so the npm package
+holds a script of its own ([R-REN-016](docs/requirements.md#r-ren-016)):
+`src/pdf/mermaid.ts` writes the elements of the diagrams as that extension
+writes them, and `src/page/mermaid.ts` draws them with Mermaid and the theme
+of the extension. esbuild bundles the script with Mermaid and its layouts ELK
+and tidy tree into `cli/dist/mermaid/`, in parts that the page loads when a
+diagram needs them. `scripts/third-party-notices.mjs` writes the notices of
+the more than 60 packages of the script from the installed packages; the
+build stops when a package has no text of its license.
+
+The version of `mermaid` in `package.json` is the version of the Mermaid
+extension of the newest VS Code; Dependabot does not change it. With a new
+version of VS Code, find the version of Mermaid in the scripts of the folder
+`resources/app/extensions/mermaid-markdown-features/markdown-preview-out/` of
+that VS Code (the text `version:"<version>"`), and compare it, the elements
+that the extension writes and its theme with this script. ZenUML and the icon packs of the extension are not
+part of the script: ZenUML holds React and other packages without the text of
+their licenses, and the icon packs have more than 10 MB.
 
 ## Renderer
 

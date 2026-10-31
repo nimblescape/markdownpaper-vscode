@@ -96,7 +96,8 @@ gives the same renderer to people and AI agents on the command line:
   KaTeX. The PlantUML diagrams look as in the Markdown preview with the
   extension [nimblescape PlantUML](https://github.com/nimblescape/nimblescape-plantuml),
   whose renderer draws them as vector graphics in every PDF, also on the
-  command line.
+  command line. The command line also draws the diagrams of Mermaid, as
+  VS Code does.
 - **New project, document and layout.** "New Project" lists the layouts of
   the workspace, the built-in layouts and the layouts on GitHub, with a button
   that opens the preview PDF of a layout on GitHub. It writes the folders of a
@@ -165,7 +166,9 @@ describes every feature.
 - The diagrams of Mermaid, PlantUML and the other Markdown extensions of
   VS Code show on the pages of the preview and in the PDF of "Export PDF" in
   VS Code. The command line has no extensions of VS Code: its PDF shows the
-  PlantUML diagrams, and the source text of the other diagrams. The pages of
+  diagrams of PlantUML and Mermaid, without the diagrams of ZenUML and the
+  icons of the icon packs of Mermaid, and the source text of the other
+  diagrams. The pages of
   the preview show the PlantUML diagrams when nimblescape PlantUML is
   installed.
 - A layout has no scripts. Its templates know fields and parts that show

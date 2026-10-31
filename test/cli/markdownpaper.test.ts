@@ -127,6 +127,48 @@ describe('the command markdownpaper', () => {
     }
   }, 150_000);
 
+  it.skipIf(!browser)('draws the Mermaid diagrams as the Mermaid extension of VS Code, with the settings of the workspace folder (R-REN-016)', async () => {
+    const folder = temporary();
+    fs.mkdirSync(path.join(folder, '.vscode'));
+    fs.writeFileSync(path.join(folder, '.vscode', 'settings.json'), '{\n  // The theme of Mermaid\n  "markdown-mermaid.lightModeTheme": "forest",\n}\n');
+    fs.writeFileSync(
+      path.join(folder, 'paper.md'),
+      '---\ntitle: Agenten\n---\n\n# Ablauf\n\n```mermaid\ngraph LR\n  Alpha --> Beta\n```\n\n::: mermaid\nsequenceDiagram\n  Anna->>Bernd: Frage\n:::\n\n```mermaid\ngraph LR\n  Alpha -->\n```\n\nDer Text nach den Diagrammen.\n',
+    );
+    const result = run(folder, ['pdf', 'paper.md', '--html', 'page.html'], 120_000);
+    expect(result.stderr).toBe('');
+    expect(result).toMatchObject({ code: 0, stdout: 'paper.pdf\n' });
+    const html = fs.readFileSync(path.join(folder, 'page.html'), 'utf8');
+    expect(html).toContain('window.paperMermaid = {"lightModeTheme":"forest","maxTextSize":50000};');
+    const page = await Browser.launch(browser!);
+    try {
+      const { targetId } = await page.send('Target.createTarget', { url: 'about:blank' });
+      const { sessionId } = (await page.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
+      await page.send('Page.enable', {}, sessionId);
+      const loaded = page.once('Page.loadEventFired', sessionId);
+      await page.send('Page.navigate', { url: pathToFileURL(path.join(folder, 'page.html')).href }, sessionId);
+      await loaded;
+      const expression = `new Promise((resolve) => {
+        const read = () => resolve([...document.querySelectorAll('.pagedjs_page .mermaid')].map((element) => {
+          const svg = element.querySelector(':scope > .mermaid-wrapper > .mermaid-content > svg');
+          return svg ? 'svg:' + svg.id + ':' + svg.textContent : element.querySelector('pre.mermaid-error') ? 'error' : 'none';
+        }));
+        if (window.paperRendered) { read(); } else { document.addEventListener('paper-rendered', read); }
+      })`;
+      const { result: read } = (await page.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)) as { result: { value: string[] } };
+      // The fenced code block and the container as SVG with the IDs of the extension, and the message of the error.
+      expect(read.value).toHaveLength(3);
+      expect(read.value[0]).toMatch(/^svg:dmermaid-[0-9a-f]{8}:/);
+      expect(read.value[0]).toContain('Alpha');
+      expect(read.value[0]).toContain('Beta');
+      expect(read.value[1]).toMatch(/^svg:dmermaid-[0-9a-f]{8}:/);
+      expect(read.value[1]).toContain('Frage');
+      expect(read.value[2]).toBe('error');
+    } finally {
+      await page.close();
+    }
+  }, 150_000);
+
   it.skipIf(!browser)('gives the last line of a justified paragraph with shrinking spaces its natural spaces (R-REN-012)', async () => {
     const folder = temporary();
     fs.mkdirSync(path.join(folder, 'layouts', 'word'), { recursive: true });

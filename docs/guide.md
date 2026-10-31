@@ -40,7 +40,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | The format step of the paper: the four lists in the file, the numbers of the headings in the links to them | VS Code (format of Markdown Notes), `markdownpaper format` | available; the steps of Markdown Notes on the command line planned | [R-CLI-002](requirements.md#r-cli-002), [R-REN-004](requirements.md#r-ren-004) |
 | [Citations](#citations), the database of the sources, the reference list, the citation style of the layout | the Markdown file, VS Code (format, `/cite` and `/research` of Markdown Notes, Zotero), `markdownpaper format`, `markdownpaper source` | available; the group libraries of Zotero in `/cite` planned | [R-CITE-001](requirements.md#r-cite-001) to [R-CITE-006](requirements.md#r-cite-006) |
 | [Mermaid, PlantUML and the other Markdown plugins](#page-preview) of VS Code on the pages | Markdown preview | available | [R-REN-010](requirements.md#r-ren-010), [R-PRV-006](requirements.md#r-prv-006) |
-| [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line PlantUML available, Mermaid planned | [R-REN-010](requirements.md#r-ren-010), [R-REN-015](requirements.md#r-ren-015) |
+| [Mermaid, PlantUML and the other Markdown plugins of VS Code in the PDF](#export-pdf) | "Export PDF" in VS Code | available; on the command line PlantUML and Mermaid available | [R-REN-010](requirements.md#r-ren-010), [R-REN-015](requirements.md#r-ren-015), [R-REN-016](requirements.md#r-ren-016) |
 
 ## Start a project
 
@@ -393,6 +393,13 @@ the document, on the command line the file `.vscode/settings.json` of the
 nearest folder above the document with a folder `.vscode` or `.git`. A
 diagram includes files (`!include`) relative to the document, from the
 workspace folders, or on the command line from that folder.
+
+The PDF of the command line also shows the diagrams of Mermaid, as the
+Mermaid extension of VS Code draws them: the fenced code blocks with the info
+string `mermaid` and the containers `::: mermaid`, with the same version of
+Mermaid and the same light theme, with the settings `markdown-mermaid.*` of
+the same file `.vscode/settings.json`. The diagrams of ZenUML and the icons
+of the icon packs are missing there.
 
 ## Layouts
 

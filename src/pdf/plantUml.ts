@@ -18,6 +18,7 @@ import { pathToFileURL } from 'node:url';
 import { extendMarkdownIt, readIncludedFiles, readSettings, type Settings } from '@nimblescape/plantuml';
 import type { MarkdownPlugin } from '../paper/markdown';
 import { rewriteCss, type Script } from '../paper/render';
+import { workspaceFolderOf } from './workspace';
 
 /** PlantUmlOptions are the settings of nimblescape PlantUML and the folders of the files that the diagrams include. */
 export interface PlantUmlOptions {
@@ -36,24 +37,6 @@ export interface PlantUmlParts {
   style: string;
   /** script is the script of the page, which renders the diagrams of the blocks. */
   script: Script;
-}
-
-/**
- * workspaceFolderOf returns the folder that stands for the workspace folder of VS Code on the command line: the nearest
- * folder from the folder of the document upward with a folder `.vscode` or a Git repository (`.git`), else the folder
- * of the document.
- * @param file - The path of the Markdown file.
- */
-export function workspaceFolderOf(file: string): string {
-  const start = path.dirname(path.resolve(file));
-  for (let folder = start; ; folder = path.dirname(folder)) {
-    if (fs.existsSync(path.join(folder, '.vscode')) || fs.existsSync(path.join(folder, '.git'))) {
-      return folder;
-    }
-    if (path.dirname(folder) === folder) {
-      return start;
-    }
-  }
 }
 
 /**

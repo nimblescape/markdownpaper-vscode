@@ -5,8 +5,9 @@
 /**
  * The export of a Markdown file to a PDF file on the disk, for the command line and for the command "Export PDF" of
  * the extension ([R-PDF-001](../../docs/requirements.md#r-pdf-001)): the renderer makes the page with the files of
- * the disk, the PlantUML diagrams of nimblescape PlantUML ([R-REN-015](../../docs/requirements.md#r-ren-015)) and
- * Paged.js in the page, the browser prints it, and the PDF gets its metadata. The module uses no API of VS Code.
+ * the disk, the PlantUML diagrams of nimblescape PlantUML ([R-REN-015](../../docs/requirements.md#r-ren-015)), on the
+ * command line the diagrams of Mermaid ([R-REN-016](../../docs/requirements.md#r-ren-016)), and Paged.js in the page,
+ * the browser prints it, and the PDF gets its metadata. The module uses no API of VS Code.
  */
 
 import { randomBytes } from 'node:crypto';
@@ -18,8 +19,10 @@ import type { Problem } from '../paper/layout';
 import type { MarkdownPlugin } from '../paper/markdown';
 import { type Extensions, type Reader, type Rendered, render } from '../paper/render';
 import { findBrowser } from './browser';
+import { mermaidParts, mermaidSettingsOf } from './mermaid';
 import { finishPdf, printPdf } from './pdf';
 import { commandLineOptions, type PlantUmlOptions, plantUmlParts } from './plantUml';
+import { workspaceFolderOf, workspaceSettings } from './workspace';
 
 /** fileReader reads the files of the disk by their file URLs. */
 export const fileReader: Reader = {
@@ -43,6 +46,11 @@ export interface Assets {
   pagedJs: string;
   /** plantUml is the path of the folder with the files of the page of the npm package @nimblescape/plantuml. */
   plantUml: string;
+  /**
+   * mermaid is the path of the folder with the script of the page that draws the diagrams of Mermaid, for a PDF
+   * without the Markdown extensions of VS Code; the command line has it, the extension not.
+   */
+  mermaid?: string;
 }
 
 /**
@@ -101,7 +109,9 @@ export const folderUrl = (folder: string): string => {
 
 /**
  * renderFile renders a Markdown file of the disk for the PDF: the page loads the files of the disk, and Paged.js is a
- * part of the page. The PlantUML diagrams come after the parts of the other Markdown extensions.
+ * part of the page. The PlantUML diagrams come after the parts of the other Markdown extensions. Without these
+ * extensions, as on the command line, the page draws the diagrams of Mermaid itself, with the settings of the
+ * workspace folder of the document.
  * @param file - The path of the Markdown file.
  * @param options - The options.
  */
@@ -109,6 +119,7 @@ export async function renderFile(file: string, options: Pick<ExportOptions, 'ass
   const text = options.text ?? (await fs.promises.readFile(file, 'utf8'));
   const pagedJs = await fs.promises.readFile(options.assets.pagedJs, 'utf8');
   const plantUml = await plantUmlParts(file, options.assets.plantUml, options.plantUml ?? commandLineOptions(file));
+  const mermaid = !options.extensions && options.assets.mermaid ? mermaidParts(options.assets.mermaid, mermaidSettingsOf(workspaceSettings(workspaceFolderOf(file)))) : undefined;
   return render(
     {
       reader: fileReader,
@@ -118,12 +129,15 @@ export async function renderFile(file: string, options: Pick<ExportOptions, 'ass
       sources: 'file:',
       // A script element ends at the first "</script", which the code of Paged.js does not hold; the check keeps it so.
       scripts: [{ text: pagedJs.replace(/<\/script/gi, '<\\/script') }],
-      extensions: { styles: [...(options.extensions?.styles ?? []), plantUml.style], scripts: [...(options.extensions?.scripts ?? []), plantUml.script] },
+      extensions: {
+        styles: [...(options.extensions?.styles ?? []), plantUml.style],
+        scripts: [...(options.extensions?.scripts ?? []), ...(mermaid?.scripts ?? []), plantUml.script],
+      },
       nonce: randomBytes(16).toString('base64'),
     },
     pathToFileURL(file).href,
     text,
-    [...(options.extensions?.plugins ?? []), plantUml.plugin],
+    [...(options.extensions?.plugins ?? []), ...(mermaid ? [mermaid.plugin] : []), plantUml.plugin],
     options.extensions?.env,
   );
 }

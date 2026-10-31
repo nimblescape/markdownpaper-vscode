@@ -38,6 +38,14 @@ the place of its source code, and `engine/LICENSE` holds the license of
 `@plantuml/core`. nimblescape PlantUML is not a product of the PlantUML
 project, and the PlantUML project does not endorse it.
 
+The npm package also holds in `dist/mermaid/` the script that draws the
+diagrams of Mermaid in the PDF of the command line. It contains Mermaid, its
+layouts ELK and tidy tree and the packages that they use, among them elkjs
+under the Eclipse Public License 2.0 and DOMPurify under the Mozilla Public
+License 2.0 or the Apache License 2.0. The file `THIRD-PARTY-NOTICES.md` of
+that folder names each of them, its version, its license and the place of
+its source code, with the text of its license.
+
 The bundles also hold the data files of the Citation Style Language of the
 folder `csl/`: the citation style "APA Style 7th edition" and the CSL locales
 `de-AT`, `de-DE`, `en-US` and `en-GB` (see

@@ -45,7 +45,7 @@ This document replaces it where the two differ.
 | 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006), [R-LAY-007](#r-lay-007) | done: the instructions, and the PHT layouts `thesis/` and `concept/` |
 | 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
 | 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
-| 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; PlantUML also on the command line in step 33; Mermaid on the command line planned |
+| 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; on the command line PlantUML in step 33 and Mermaid in step 34 |
 | 18 | Layouts of another repository or of an npm package, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | the repositories on GitHub done in step 28; the name of a layout on GitHub in the front matter and the npm packages wait for a decision |
 | 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | planned |
 | 20 | Listings of Markdown Notes: numbered captions `Listing:` with the cite of the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
@@ -62,6 +62,7 @@ This document replaces it where the two differ.
 | 31 | The hints of a template as alerts of GitHub, drawn as boxes by the layout; the hints of the PHT concept template in its empty paper document | [R-REN-014](#r-ren-014), [R-CITE-004](#r-cite-004) | done |
 | 32 | The origin of a copy of a layout on GitHub in its `layout.json`, and its update from the repository: `markdownpaper update` and "Update Layout" | [R-LAY-010](#r-lay-010), [R-LAY-007](#r-lay-007) | done |
 | 33 | The PlantUML diagrams in every PDF, in VS Code and on the command line, with the renderer of nimblescape PlantUML from its npm package `@nimblescape/plantuml`, as inline SVG | [R-REN-015](#r-ren-015), [R-REN-010](#r-ren-010) | done; the package installs from GitHub until the release of nimblescape PlantUML |
+| 34 | The Mermaid diagrams in the PDF of the command line, as the Mermaid extension of VS Code draws them, as inline SVG | [R-REN-016](#r-ren-016), [R-REN-010](#r-ren-010) | done |
 
 ## General
 
@@ -854,8 +855,9 @@ Mermaid and PlantUML ([decision 17](#decisions)).
 - The renderer itself stays without an API of VS Code
   ([R-REN-001](#r-ren-001)): it takes the plugins, the scripts and the style
   sheets as input. On the command line there are no extensions of VS Code;
-  its PDF has the PlantUML diagrams ([R-REN-015](#r-ren-015)), and Mermaid
-  is planned.
+  its PDF has the PlantUML diagrams ([R-REN-015](#r-ren-015)) and the
+  Mermaid diagrams ([R-REN-016](#r-ren-016)), no other drawings of
+  extensions.
 
 ### R-REN-011
 
@@ -1021,6 +1023,32 @@ included files and the same layout engine ([decision 49](#decisions)).
   npmjs.com: the development tools install it from the GitHub repository at
   a fixed commit (`scripts/install-plantuml.mjs`). The release of
   Markdown Paper comes after the release of the package.
+
+### R-REN-016
+
+**Mermaid diagrams on the command line.** The PDF of `markdownpaper pdf`
+shows the diagrams of Mermaid as the Markdown preview of VS Code shows them
+with its built-in Mermaid extension in a light theme
+([decision 49](#decisions)). "Export PDF" in VS Code uses that extension
+itself ([R-REN-010](#r-ren-010)).
+
+- A fenced code block whose info string names a language of the setting
+  `markdown-mermaid.languages`, by default `mermaid`, and a container
+  `::: mermaid` up to its line `:::` are diagrams, as in the extension.
+- The npm package `@nimblescape/markdownpaper` holds the script of the page
+  that draws them, in a folder `mermaid/`: the version of Mermaid of the
+  Mermaid extension of VS Code 1.144 (11.17.2) with the layouts ELK and tidy
+  tree. The script writes the elements, the IDs and the message of an error
+  as the extension does. The diagrams of ZenUML and the icon packs `logos`
+  and `mdi` of the extension are not part of it.
+- The settings `markdown-mermaid.lightModeTheme`, by default `vscode`, which
+  takes the colors of the light theme of the page, `markdown-mermaid.languages`
+  and `markdown-mermaid.maxTextSize` come from the file `.vscode/settings.json`
+  of the workspace folder of the document, as in [R-REN-015](#r-ren-015).
+- Each diagram is SVG in the PDF, in the middle of the text and at most as
+  wide as the text ([R-REN-010](#r-ren-010)).
+- A new version of VS Code with another version of Mermaid makes a new version
+  of the script.
 
 ## PDF
 
@@ -1895,14 +1923,17 @@ requirement ([R-GEN-007](#r-gen-007)).
     ISBNs of its form, notes a source that only Open Library knows, and with
     `--title` adds no record whose title lacks a word of the title of the
     source in hand.
-49. **PlantUML with the renderer of nimblescape PlantUML**
-    ([R-REN-015](#r-ren-015)): every PDF, in VS Code and on the command line,
-    draws the PlantUML diagrams with the npm package `@nimblescape/plantuml`
-    of nimblescape PlantUML, so that they look as in the Markdown preview of
-    VS Code with the extension, with its settings and its included files.
-    The diagrams are inline SVG. nimblescape PlantUML publishes the package
-    to npmjs.com with its release; until then the package installs from its
-    GitHub repository. The npm packages of the nimblescape extensions have one
+49. **All diagrams in every PDF** ([R-REN-015](#r-ren-015),
+    [R-REN-016](#r-ren-016)): every PDF, in VS Code and on the command line,
+    draws the diagrams of PlantUML and Mermaid as inline SVG, so that they
+    look as in the Markdown preview of VS Code. PlantUML: the npm package
+    `@nimblescape/plantuml` of nimblescape PlantUML draws them, with the
+    settings and the included files of the extension. nimblescape PlantUML
+    publishes the package to npmjs.com with its release; until then the
+    package installs from its GitHub repository. Mermaid: "Export PDF" in
+    VS Code uses the Mermaid extension of VS Code; the command line has a
+    script with the same version of Mermaid and the same theme, without
+    ZenUML and the icon packs. The npm packages of the nimblescape extensions have one
     form: a folder `cli/` of the repository of the extension, built by
     `esbuild.mjs`, tested by `npm run test:cli` and published by the release.
 

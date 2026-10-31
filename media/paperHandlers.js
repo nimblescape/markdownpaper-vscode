@@ -142,9 +142,12 @@
     return shadow ? (shadow.querySelector('[part~="pending"]') ? 'pending' : 'drawn') : null;
   }
 
-  /** Whether a diagram of a node waits to be drawn: of Mermaid without its SVG element, or a PlantUML block. */
+  /**
+   * Whether a diagram of a node waits to be drawn: of Mermaid without its SVG element or the message of its error, or a
+   * PlantUML block.
+   */
   function drawingsPending(root) {
-    return Boolean(root.querySelector('.mermaid:not(:has(svg))')) || Array.from(root.querySelectorAll(plantUmlBlock)).some((block) => plantUmlState(block) !== 'drawn');
+    return Boolean(root.querySelector('.mermaid:not(:has(svg, .mermaid-error))')) || Array.from(root.querySelectorAll(plantUmlBlock)).some((block) => plantUmlState(block) !== 'drawn');
   }
 
   /** The number of the PlantUML blocks of a node whose diagrams are drawn, and whether the extension renders others. */

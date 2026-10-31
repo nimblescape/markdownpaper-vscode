@@ -65,6 +65,10 @@ The first version.
   language in its metadata. In VS Code, the PDF shows what the other Markdown
   extensions add to the Markdown preview, for example the diagrams of Mermaid
   and the math of KaTeX.
+- Diagrams in every PDF as vector graphics: the PlantUML diagrams with the
+  renderer of nimblescape PlantUML, its settings and its included files, in
+  VS Code and on the command line, and on the command line the diagrams of
+  Mermaid, as the Mermaid extension of VS Code draws them.
 - Checks of the front matter: a layout that does not exist, a missing required
   field, a value that is not one of the names of a parameter, and a link to a
   figure, a table or a listing that does not exist are warnings in the text

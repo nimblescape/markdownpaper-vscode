@@ -26,6 +26,9 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: '@types/markdown-it'
         update-types: ['version-update:semver-major']
+      # mermaid stays at the version of the Mermaid extension of VS Code (CONTRIBUTING.md, "Diagrams of Mermaid on the
+      # command line").
+      - dependency-name: 'mermaid'
   - package-ecosystem: github-actions
     directory: /
     schedule:

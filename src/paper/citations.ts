@@ -33,16 +33,13 @@ import { type CitationStyle, cite, type Form, type Source } from './csl';
 import { bodyOf, readFrontMatter } from './frontMatter';
 import type { Layout, Problem } from './layout';
 import { type Heading, renderBody } from './markdown';
+import { idPattern, researchMark, researchText, sourcesName } from './marks';
 import { sameSource, sourceId } from './metadata';
 
-/** sourcesName is the name of the comment of the database in its first line. */
-export const sourcesName = 'nimblescape-sources';
+export { idPattern, researchMark, researchText, sourcesName };
 
 /** sourcesStart matches the first line of the comment of the database. */
 const sourcesStart = new RegExp(`^<!--\\s*${sourcesName}\\s*$`);
-
-/** idPattern matches the identifier of a source: a letter or a digit, then letters, digits, `_`, `-`, `.` and `:`. */
-export const idPattern = /^[\p{L}\p{N}][\p{L}\p{N}_.:-]*$/u;
 
 /** fence matches the line that opens or closes a fenced code block, with its fence. */
 const fence = /^ {0,3}(`{3,}|~{3,})/;
@@ -336,13 +333,6 @@ const hintStart = /^ {0,3}>[ \t]?\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t
 
 /** commentStart matches the first line of an HTML comment, which the pages do not show. */
 const commentStart = /^ {0,3}<!--/;
-
-/**
- * researchText asks an AI agent for the evidence of the argument from the start marker `researchMark` to it, or of the
- * sentence before it without a start marker ([R-CITE-002](../../docs/requirements.md#r-cite-002)).
- */
-export const researchText = '(RESEARCH)';
-export const researchMark = '<!--[research-->';
 
 /** researchSearch matches a start marker of an argument to research, with the `<wbr>` before it. */
 const researchSearch = /(?:<wbr>)?<!--\[research-->/g;

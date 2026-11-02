@@ -2,7 +2,8 @@
 # © 2026 Hannes Stauss (scalarion@nimblescape.com)
 # Licensed under the MIT License. See LICENSE in the repository root for details.
 
-# The package holds the bundle, Paged.js, the page files of @nimblescape/plantuml
+# The package holds the bundle, the plugins of the editor of nimblescape
+# Markdown (dist/editorPlugins.js), Paged.js, the page files of @nimblescape/plantuml
 # for the PlantUML diagrams of the PDF, the scripts and the style of the pages
 # in the Markdown preview and of the view "Front Matter", the built-in layouts,
 # the copy of the npm package @nimblescape/markdownpaper in cli/ for the command
@@ -10,6 +11,7 @@
 # everything, then keep the listed files.
 **
 !dist/extension.js
+!dist/editorPlugins.js
 !cli/package.json
 !cli/dist/mp.js
 !cli/dist/paged.polyfill.js

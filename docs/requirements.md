@@ -72,6 +72,7 @@ This document replaces it where the two differ.
 | 41 | The clone of a reference to a branch on its local branch, which `mp get` pulls only with a fast-forward; the clone of a tag or a commit without a branch; a clone with work of the author that is not committed or not pushed stays as it is | [R-CLI-004](#r-cli-004) | done ([decision 57](#decisions)); Markdown Notes adds snippets only in the clone of a branch (its decision 60) |
 | 42 | Ctrl+click on the value of a reference in the front matter opens its clone in a new window, also in the clean editing view of Markdown Notes | [R-CLI-004](#r-cli-004) | done ([decision 58](#decisions)) |
 | 43 | `mp get <owner>/<repository>` without `@<rev>`: the list of the default branch, the branches and the tags in a terminal, and the default branch without one or with `--yes` | [R-CLI-004](#r-cli-004) | done ([decision 59](#decisions)) |
+| 44 | The plugin `paper` for the editor of rendered Markdown of nimblescape Markdown, in the bundle `dist/editorPlugins.js` that the package.json contributes, for example for the editor of a whole file of Markdown Notes: the database of the sources, the markers of the lists, the anchors of the entries and the markers of the arguments to research hidden; the citations, the entries of the reference list and the lists of the special sections read-only, with Ctrl+click to their targets | [R-EDIT-001](#r-edit-001), [R-GEN-003](#r-gen-003) | done |
 
 ## General
 
@@ -164,6 +165,11 @@ without it.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
+- *(proposal)* For its editor of a whole file, Markdown Notes loads the
+  plugins that other extensions contribute in their package.json, and its
+  version 1 has `registerEditorPlugin(name, connect)`, which connects the
+  part of such a plugin in the other extension. Markdown Paper contributes
+  its plugin of the editor ([R-EDIT-001](#r-edit-001)).
 - The ID of Markdown Notes is `nimblescape.nimblescape-markdownnotes`.
 
 ### R-GEN-004
@@ -1949,6 +1955,43 @@ writes no metadata ([decision 42](#decisions)).
   syncs it with zotero.org.
 - AI agents and the command `mp` do not use Zotero; agents add
   sources with `mp source` ([R-CITE-005](#r-cite-005)).
+
+## Editor
+
+### R-EDIT-001
+
+*(proposal)* **The plugin of the editor of nimblescape Markdown.** Markdown
+Paper adds its parts to the editor of rendered Markdown of nimblescape
+Markdown, for example in the editor of a whole file of Markdown Notes
+([R-GEN-003](#r-gen-003)). The bundle `dist/editorPlugins.js` holds the
+plugin `paper`. The package.json names it in
+`contributes["nimblescape.markdown.extensions"].editorScripts`, and the page
+of the editor loads it before the editor starts (the plugins of other
+extensions of the specification of nimblescape Markdown,
+[R-PLUGIN-002](https://github.com/nimblescape/markdown/blob/main/docs/plugins.md#r-plugin-002)
+and
+[R-VSC-008](https://github.com/nimblescape/markdown/blob/main/docs/platforms.md#r-vsc-008)).
+The bundle uses the modules of the page and holds only the code of this
+extension. Before the release of nimblescape Markdown,
+`scripts/install-markdown.mjs` installs its packages for the build from a
+fixed commit of its repository, as Markdown Notes does.
+
+- The database of the sources ([R-CITE-001](#r-cite-001)) and the markers
+  of the lists of the special sections ([R-REN-004](#r-ren-004)) are hidden
+  blocks. The anchor at the start of an entry of the reference list and the
+  start marker of an argument to research ([R-CITE-002](#r-cite-002)) are
+  hidden in the line. Each keeps its text byte for byte.
+- The parts that the format step writes ([R-GEN-008](#r-gen-008)) are
+  read-only: the text of a citation, each entry of the reference list, and
+  each list of a special section. Ctrl+click (Cmd+click on macOS) on a
+  citation goes to the entry of its source, and on a link of a list to its
+  heading or its caption. The user changes these parts through what they
+  come from, and the format step writes them again when the file is saved.
+- Backspace and Delete jump over the hidden anchors and markers in the line.
+  A database of the sources that an edit of the user deletes goes back to
+  the end of the document.
+- In the pages of the editor, the anchors of the entries stay, so that the
+  citations go to their entries, and the other markup has no output.
 
 ## Settings
 

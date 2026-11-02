@@ -20,5 +20,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  // The plugins of the editor run in a page: src/editor/tsconfig.json checks them with the types of the browser.
+  "exclude": ["src/editor/**"]
 }

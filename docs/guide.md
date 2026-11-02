@@ -30,6 +30,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Footnotes](#footnotes) | pages | available | [R-REN-008](requirements.md#r-ren-008) |
 | [Hyphenation](#hyphenation) | pages | available | [R-REN-007](requirements.md#r-ren-007) |
 | [Notes of Markdown Notes](#notes-of-markdown-notes) | pages | available | [R-REN-002](requirements.md#r-ren-002), [R-GEN-003](requirements.md#r-gen-003) |
+| [The rendered editor of Markdown Notes](#the-rendered-editor-of-markdown-notes) | the editor of a whole file of Markdown Notes | built *(proposal)*; needs the version of Markdown Notes that loads the plugins of other extensions | [R-EDIT-001](requirements.md#r-edit-001), [R-GEN-003](requirements.md#r-gen-003) |
 | [Paper documents and notes documents](#paper-documents-and-notes-documents) | the Markdown file | available | [R-DOC-004](requirements.md#r-doc-004) |
 | [Page preview](#page-preview), the pages in the Markdown preview of VS Code | Markdown preview, Ctrl+Shift+V, Ctrl+K V | available | [R-PRV-001](requirements.md#r-prv-001) to [R-PRV-006](requirements.md#r-prv-006) |
 | [Export PDF](#export-pdf) | title of the editor, Explorer, command line | available | [R-PDF-001](requirements.md#r-pdf-001) to [R-PDF-003](requirements.md#r-pdf-003) |
@@ -425,6 +426,26 @@ The notes of nimblescape Markdown Notes, footnotes with the label `note-` and
 four letters or digits, do not show on the pages. When Markdown Notes shows a
 file in its clean editing view, the pages in the preview and "Export PDF" use
 the file itself.
+
+## The rendered editor of Markdown Notes
+
+Markdown Notes has an editor of a whole file that
+shows the rendered text, as the editor of rendered Markdown of nimblescape
+Markdown. Markdown Paper adds the parts of a paper to it:
+
+- The database of the sources, the markers of the lists of the special
+  sections, the anchors at the start of the entries of the reference list and
+  the start markers of the arguments to research do not show. The file keeps
+  each of them byte for byte.
+- The text of a citation, each entry of the reference list and each list of a
+  special section are read-only, because the format step writes them. Change
+  the source in the database, the heading or the caption instead; the format
+  step writes the parts again when you save the file.
+- Ctrl+click (Cmd+click on macOS) on a citation goes to the entry of its
+  source, and on a link of a list to its heading or its caption.
+- Backspace and Delete jump over a hidden anchor or marker in a line. When an
+  edit deletes the database of the sources, the database goes back to the end
+  of the file, and Undo brings back the deleted text.
 
 ## Page preview
 

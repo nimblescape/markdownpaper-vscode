@@ -18,7 +18,8 @@ request.
 | `src/notesApi.ts` | The interface of nimblescape Markdown Notes ([R-GEN-003](docs/requirements.md#r-gen-003)): `getAPI(1).fileOf(uri)`, the file behind a document of its clean editing view, and the open document with the same path without the interface; `registerWithNotes`, which registers parts once Markdown Notes started. |
 | `src/notesParts.ts` | The parts of the paper in the editor of Markdown Notes: the database of the sources and the start markers of `/research` hidden in the clean editing view, and the slash command `/research` ([R-CITE-002](docs/requirements.md#r-cite-002)). |
 | `src/editor/paperPlugin.ts`, `src/editor/editorPlugins.ts`, `src/editor/tsconfig.json` | The plugin `paper` of the editor of rendered Markdown of nimblescape Markdown ([R-EDIT-001](docs/requirements.md#r-edit-001)): the hidden database of the sources, markers of the lists, anchors of the entries and markers of the arguments to research, the read-only citations, entries and lists with Ctrl+click to their targets, and the guard of the database; `editorPlugins.ts` registers it in the bundle `dist/editorPlugins.js`. Its type check has the types of the browser. |
-| `src/paper/marks.ts` | The marks of a paper that the format step, the checks and the plugin of the editor share: the name of the database of the sources, the form of an ID, the marker of an argument to research and the codes of the lists. |
+| `src/editorParts.ts`, `src/paper/editorMessages.ts`, `src/paper/frontMatterSchema.ts` | The part in the extension of the plugin `paper` of the editor ([R-EDIT-001](docs/requirements.md#r-edit-001)), which connects through `registerEditorPlugin` of Markdown Notes: the schema of the front matter of the layout, the clones of the references and the list of `/cite`; the messages of its channel; and the JSON schema of the front matter of a layout. |
+| `src/paper/marks.ts` | The marks of a paper that the format step, the checks and the plugin of the editor share: the name of the database of the sources, the form of an ID, the marker of an argument to research with its places in a selected argument, and the codes of the lists. |
 | `src/workspaceHost.ts` | The host of the renderer in VS Code: it reads the files through VS Code, the open documents first, and finds the layouts in the workspace and in the extension. |
 | `src/pagePreview.ts`, `media/pagePreview.js`, `media/pagePreview.css` | The page preview ([R-PRV-001](docs/requirements.md#r-prv-001) to [R-PRV-004](docs/requirements.md#r-prv-004)): the webview panel of each file, its first page and its updates after a pause, the restore after a restart, and the script of the webview that makes the new pages with Paged.js beside the old ones, keeps the place on the page and passes a click to the extension. |
 | `src/frontMatterChecks.ts` | The warnings of the checks in the text editor and the hover of the fields of the front matter ([R-DOC-002](docs/requirements.md#r-doc-002), [R-DOC-003](docs/requirements.md#r-doc-003)). |
@@ -201,7 +202,10 @@ Markdown: the plugin `sharedModulesPlugin` of
 `@nimblescape/markdowneditor/bundle` makes each of their imports read the
 module of the page, so the plugin works with the same classes as the editor.
 The bundle registers the plugin with `registerPlugin` of the same entry
-point.
+point. Its part in the extension, `src/editorParts.ts`, connects through
+`registerEditorPlugin` of the API of Markdown Notes, and both parts exchange
+the messages of `src/paper/editorMessages.ts` through the channel of the
+plugin.
 
 The packages of nimblescape Markdown are not on npmjs.com before its release,
 and npm cannot install a folder of a repository. So

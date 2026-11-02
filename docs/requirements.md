@@ -73,6 +73,7 @@ This document replaces it where the two differ.
 | 42 | Ctrl+click on the value of a reference in the front matter opens its clone in a new window, also in the clean editing view of Markdown Notes | [R-CLI-004](#r-cli-004) | done ([decision 58](#decisions)) |
 | 43 | `mp get <owner>/<repository>` without `@<rev>`: the list of the default branch, the branches and the tags in a terminal, and the default branch without one or with `--yes` | [R-CLI-004](#r-cli-004) | done ([decision 59](#decisions)) |
 | 44 | The plugin `paper` for the editor of rendered Markdown of nimblescape Markdown, in the bundle `dist/editorPlugins.js` that the package.json contributes, for example for the editor of a whole file of Markdown Notes: the database of the sources, the markers of the lists, the anchors of the entries and the markers of the arguments to research hidden; the citations, the entries of the reference list and the lists of the special sections read-only, with Ctrl+click to their targets | [R-EDIT-001](#r-edit-001), [R-GEN-003](#r-gen-003) | done |
+| 45 | The part of the plugin `paper` in the extension, through `registerEditorPlugin` of Markdown Notes: the JSON schema of the front matter of the layout in the form of the editor, `layout` and `repos` read-only with Ctrl+click to the clone, `/cite` and "Cite" with the list of the sources in VS Code, and "Research" in the format bar | [R-EDIT-001](#r-edit-001), [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006), [R-CLI-004](#r-cli-004) | done |
 
 ## General
 
@@ -1992,6 +1993,27 @@ fixed commit of its repository, as Markdown Notes does.
   the end of the document.
 - In the pages of the editor, the anchors of the entries stay, so that the
   citations go to their entries, and the other markup has no output.
+- *(proposal)* The part of the plugin in the extension connects through
+  `registerEditorPlugin` of Markdown Notes ([R-GEN-003](#r-gen-003)) and the
+  channel of the plugin. It gives the form of the front matter of the editor
+  the JSON schema of the layout of the document: `layout`, the fields of the
+  layout with their descriptions, defaults, values and the required ones, and
+  `lang` with the language of the layout as its default, in the order of the
+  view "Front Matter" ([R-DOC-005](#r-doc-005)). It sends the schema again
+  after a change of `layout` or of a file of a layout. A document that is no
+  paper gets no schema.
+- *(proposal)* `layout` and `repos` are read-only in the form, because only
+  the command `mp` writes them. Ctrl+click (Cmd+click on macOS) on a
+  reference to GitHub runs "Open Repository in New Window" for it
+  ([R-CLI-004](#r-cli-004)).
+- *(proposal)* In a paper, `/cite` in the slash commands and in the insert
+  menu, and "Cite" in the format bar, show the list of `/cite` in VS Code
+  ([R-CITE-006](#r-cite-006)); the editor inserts the citation of the chosen
+  source at the cursor or after the selected text, with a space before it
+  after a word. An item of Zotero goes into the database first.
+- *(proposal)* "Research" in the format bar marks the selected argument as
+  `/research` does in the text editor ([R-CITE-002](#r-cite-002)). It shows
+  only in a paper and only on a selection that is an argument.
 
 ## Settings
 

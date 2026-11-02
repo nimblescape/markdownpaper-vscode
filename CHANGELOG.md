@@ -212,4 +212,8 @@ The first version.
   Markdown. The database of the sources, the markers of the lists, the
   anchors of the entries and the markers of the arguments to research do not
   show; the citations, the entries of the reference list and the generated
-  lists are read-only, and Ctrl+click goes from them to their targets.
+  lists are read-only, and Ctrl+click goes from them to their targets. The
+  form of the front matter has the fields of the layout, `layout` and `repos`
+  are read-only with Ctrl+click to the clone, `/cite` and "Cite" insert a
+  citation of a source of the list of VS Code, and "Research" in the format
+  bar marks a selected argument.

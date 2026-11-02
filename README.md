@@ -142,7 +142,9 @@ Node.js 22 or newer.
   do not show, and the citations, the entries of the reference list and the
   generated lists are read-only. Ctrl+click on a citation goes to its entry,
   and on a link of a list to its heading or caption. The format step writes
-  these parts again when you save the file.
+  these parts again when you save the file. The form of the front matter shows
+  the fields of the layout, `/cite` and "Cite" insert a citation, and
+  "Research" marks a selected argument.
 - **Citations and Zotero.** With Markdown Notes, type `/cite` in a paper
   document and choose a source: the citation goes in at the place, in the
   citation style of the layout. After "Connect Zotero" (with an API key of

@@ -446,6 +446,17 @@ Markdown. Markdown Paper adds the parts of a paper to it:
 - Backspace and Delete jump over a hidden anchor or marker in a line. When an
   edit deletes the database of the sources, the database goes back to the end
   of the file, and Undo brings back the deleted text.
+- The form of the front matter shows the fields of the layout with their
+  descriptions, the required ones with a star, and `lang` with the language
+  of the layout as its placeholder. `layout` and `repos` are read-only; Ctrl+click
+  on a reference to GitHub opens its clone in a new window, as in the text
+  editor.
+- Type `/cite`, or select text and choose "Cite" in the format bar, and choose
+  a source in the list of VS Code: the citation goes in at the cursor or after
+  the selected text, in the citation style of the layout.
+- Select an argument and choose "Research" in the format bar: the argument
+  gets the hidden start marker and `(RESEARCH)` at its end, as with
+  `/research` in the text editor.
 
 ## Page preview
 

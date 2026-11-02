@@ -20,6 +20,12 @@
  * - Backspace and Delete jump over the hidden anchors and markers in the line. A database of the sources that an edit of
  *   the user deleted goes back to the end of the document. Changes from outside, Undo and Redo pass.
  *
+ * - *(proposal)* With its part on the platform, for example in the extension of VS Code (src/editorParts.ts), the plugin
+ *   gives the form of the front matter the JSON schema of the layout of the paper, and shows `layout` and `repos`
+ *   read-only: Ctrl+click on a reference opens its clone. `/cite` in the slash commands and in the insert menu, and
+ *   "Cite" in the format bar, insert the citation of the source that the user chooses on the platform. "Research" in the
+ *   format bar marks the selected argument for an AI agent, as `/research` does in the text editor.
+ *
  * In the renderer, for example in the pages, the anchors stay, so that the citations go to their entries, and the other
  * markup has no output. The bundle of the plugins (src/editor/editorPlugins.ts) uses the modules of the page of the
  * editor; this module uses no API of VS Code, so that the editor on a web page can use it too.
@@ -32,11 +38,23 @@ import { type EditorState, Plugin, PluginKey, TextSelection, type Transaction } 
 import type { EditorView } from '@tiptap/pm/view';
 import type MarkdownIt from 'markdown-it';
 import type { StateCore, Token } from 'markdown-it';
-import { type GeneratedPart, type MarkdownPlugin, outsideChange, type PluginEditor } from '@nimblescape/markdowneditor';
-import { idPattern, listCodes, researchMark, sourcesName } from '../paper/marks';
+import {
+  type FormatButton,
+  type FrontMatterInput,
+  type GeneratedPart,
+  type MarkdownPlugin,
+  type MenuItem,
+  outsideChange,
+  type PluginChannel,
+  type PluginEditor,
+  type PluginHost,
+} from '@nimblescape/markdowneditor';
+import type { JsonSchema } from '@nimblescape/markdowntext';
+import { editorPluginName, extensionMessage, type PageMessage } from '../paper/editorMessages';
+import { idPattern, listCodes, researchEdit, researchMark, researchText, sourcesName } from '../paper/marks';
 
 /** pluginName is the name of the plugin. */
-export const pluginName = 'paper';
+export const pluginName = editorPluginName;
 
 /** The types of the tokens of the plugin. */
 export const tokenTypes = { anchor: 'paper_anchor', research: 'paper_research', sources: 'paper_sources', list: 'paper_list' } as const;
@@ -512,18 +530,222 @@ const Guard = Extension.create({
   ],
 });
 
-/** styles are the styles of the plugin: the database of the sources and the markers of the lists are hidden. */
-export const styles = '.nsmd-paper-sources, .nsmd-paper-list-marker { display: none; }';
+/**
+ * styles are the styles of the plugin: the database of the sources and the markers of the lists are hidden, and a
+ * reference of the front matter with a clone is a link.
+ */
+export const styles = [
+  '.nsmd-paper-sources, .nsmd-paper-list-marker { display: none; }',
+  '.nsmd-paper-reference { display: inline-block; padding-top: 4px; overflow-wrap: anywhere; }',
+  '.nsmd-paper-reference-link { color: var(--nsmd-link); text-decoration: underline; cursor: pointer; }',
+  '.nsmd-paper-repos { display: grid; gap: 2px; }',
+].join('\n');
+
+/** Page is the state of the plugin in one editor: the channel to its part on the platform, the schema and the requests. */
+interface Page {
+  readonly editor: PluginEditor;
+  readonly channel: PluginChannel | undefined;
+  /** schema is the JSON schema of the front matter that the platform sent, or undefined. */
+  schema: JsonSchema | undefined;
+  /** requests counts the requests of citations; the platform answers each one with its number. */
+  requests: number;
+}
+
+/** pages are the states of the plugin, by the Tiptap editor. */
+const pages = new WeakMap<Editor, Page>();
 
 /**
- * activate adds an editor to the editors whose links go to their targets.
+ * isPaper returns true for the document of a paper: a front matter of YAML with the field `layout`.
+ * @param doc - The document.
+ */
+export function isPaper(doc: PmNode): boolean {
+  const first = doc.firstChild;
+  return first?.type.name === 'frontMatter' && first.attrs.format === 'yaml' && /^layout[ \t]*:/m.test(first.attrs.text as string);
+}
+
+/**
+ * researchPlaces returns the positions of the start marker and of `(RESEARCH)` for the selected argument of an editor,
+ * as `/research` puts them in the text editor (src/paper/marks.ts), or undefined when the selection is no argument.
+ * @param state - The state of the editor.
+ */
+export function researchPlaces(state: EditorState): { start: number; end: number } | undefined {
+  const { from, to, $from, $to } = state.selection;
+  if (from === to || !$from.sameParent($to) || !$from.parent.inlineContent) {
+    return undefined;
+  }
+  // Each inline node that is no text is one character, so that the places in the text are the positions; a marker of
+  // an argument to research is its mark, which the selection must not hold.
+  const selected = state.doc.textBetween(from, to, '\n', (node) => (node.type.name === nodeNames.research ? researchMark : '\ufffc'));
+  const edit = researchEdit(selected);
+  return typeof edit === 'string' ? undefined : { start: from + edit.start, end: from + edit.end };
+}
+
+/**
+ * markResearch marks the selected argument of an editor for an AI agent: the hidden start marker before it, and
+ * `(RESEARCH)` at its end, before a punctuation mark at its end.
+ * @param tiptap - The Tiptap editor.
+ * @returns Whether the argument got its marks.
+ */
+export function markResearch(tiptap: Editor): boolean {
+  const { state, view } = tiptap;
+  const places = tiptap.isEditable && isPaper(state.doc) ? researchPlaces(state) : undefined;
+  const marker = state.schema.nodes[nodeNames.research];
+  if (!places || !marker) {
+    return false;
+  }
+  const tr = state.tr.insertText(` ${researchText}`, places.end).insert(places.start, marker.create({ text: `<wbr>${researchMark}` }));
+  const after = tr.mapping.map(places.end);
+  view.dispatch(tr.setSelection(TextSelection.create(tr.doc, after)).scrollIntoView());
+  view.focus();
+  return true;
+}
+
+/**
+ * insertCitation inserts a citation at the end of the selection of an editor: `([Hong et al., 2024](#hong2024))`, with a
+ * space before it after a word, as `/cite` does in the text editor.
+ * @param tiptap - The Tiptap editor.
+ * @param id - The identifier of the source.
+ * @param text - The text of the citation.
+ * @returns Whether the citation was inserted.
+ */
+export function insertCitation(tiptap: Editor, id: string, text: string): boolean {
+  const { state, view } = tiptap;
+  const link = state.schema.marks.link;
+  const { to, $to } = state.selection;
+  if (!link || !tiptap.isEditable || !$to.parent.inlineContent || !idPattern.test(id) || text === '') {
+    return false;
+  }
+  const before = $to.parentOffset > 0 ? state.doc.textBetween(to - 1, to, '', '\ufffc') : '';
+  const citation = [state.schema.text(`${/^[^\s([]$/.test(before) ? ' ' : ''}(`), state.schema.text(text, [link.create({ href: `#${id}` })]), state.schema.text(')')];
+  const tr = state.tr.insert(to, citation);
+  const size = citation.reduce((sum, node) => sum + node.nodeSize, 0);
+  view.dispatch(tr.setSelection(TextSelection.create(tr.doc, to + size)).scrollIntoView());
+  view.focus();
+  return true;
+}
+
+/**
+ * askCitation asks the platform for a citation, which the user chooses there; the answer inserts it.
+ * @param tiptap - The Tiptap editor.
+ */
+function askCitation(tiptap: Editor): void {
+  const page = pages.get(tiptap);
+  if (page?.channel) {
+    page.requests++;
+    page.channel.post({ type: 'cite', request: page.requests } satisfies PageMessage);
+  }
+}
+
+/** canCite returns true when an editor shows a paper and its platform lets the user choose a source. */
+const canCite = (tiptap: Editor): boolean => pages.get(tiptap)?.channel !== undefined && tiptap.isEditable && isPaper(tiptap.state.doc);
+
+/** insertItems are the items of the plugin in the insert menu and in the slash commands: `/cite` in a paper. */
+const insertItems = (tiptap: Editor): MenuItem[] =>
+  canCite(tiptap) ? [{ id: 'cite', label: 'Cite a source', keywords: ['cite', 'citation', 'source', 'zotero'], hint: '/cite', run: () => askCitation(tiptap) }] : [];
+
+/** formatButtons are the buttons of the plugin in the format bar: "Cite" and "Research" in a paper. */
+const formatButtons: FormatButton[] = [
+  { id: 'paper-cite', label: 'Cite a source after the selected text', text: 'Cite', isShown: canCite, run: askCitation },
+  {
+    id: 'paper-research',
+    label: 'Research the evidence for the selected argument',
+    text: 'Research',
+    isShown: (tiptap) => isPaper(tiptap.state.doc) && researchPlaces(tiptap.state) !== undefined,
+    run: (tiptap) => void markResearch(tiptap),
+  },
+];
+
+/**
+ * referenceView returns the read-only view of a reference of the front matter: a link that opens its clone on
+ * Ctrl+click (Cmd+click on macOS) when the platform can open it, else its text.
+ * @param tiptap - The Tiptap editor, or undefined.
+ * @param text - The text of the reference.
+ * @param message - The message that opens the clone, or undefined for a value without a clone.
+ */
+function referenceView(tiptap: Editor | undefined, text: string, message: PageMessage | undefined): HTMLElement {
+  const view = document.createElement('span');
+  view.className = 'nsmd-paper-reference';
+  view.textContent = text;
+  const channel = tiptap ? pages.get(tiptap)?.channel : undefined;
+  if (message && channel) {
+    view.classList.add('nsmd-paper-reference-link');
+    view.tabIndex = 0;
+    view.setAttribute('role', 'link');
+    view.title = 'Ctrl+click (Cmd+click on macOS) opens the clone in a new window';
+    const open = (event: MouseEvent | KeyboardEvent): void => {
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        channel.post(message);
+      }
+    };
+    view.addEventListener('click', open);
+    view.addEventListener('keydown', (event) => event.key === 'Enter' && open(event));
+  }
+  return view;
+}
+
+/**
+ * frontMatterInputs are the inputs of `layout` and `repos`, which only the command mp writes: read-only, and
+ * Ctrl+click on a reference to GitHub opens its clone.
+ */
+const frontMatterInputs: FrontMatterInput[] = [
+  {
+    key: 'layout',
+    render: (value, context) => {
+      const text = typeof value === 'string' ? value : String(value ?? '');
+      return referenceView(context.editor, text, text.includes('/') ? { type: 'openReference', key: 'layout' } : undefined);
+    },
+  },
+  {
+    key: 'repos',
+    render: (value, context) => {
+      if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        return referenceView(context.editor, String(value ?? ''), undefined);
+      }
+      const list = document.createElement('div');
+      list.className = 'nsmd-paper-repos';
+      for (const [name, reference] of Object.entries(value as Record<string, unknown>)) {
+        const row = document.createElement('div');
+        row.append(`${name}: `, referenceView(context.editor, String(reference ?? ''), { type: 'openReference', key: 'repos', name }));
+        list.append(row);
+      }
+      return list;
+    },
+  },
+];
+
+/**
+ * activate starts the plugin in an editor: its links go to their targets, and with a channel to its part on the
+ * platform it asks for the schema of the front matter and takes the answers of its requests.
  * @param editor - The editor.
+ * @param host - The API of the platform.
  * @returns What to dispose.
  */
-function activate(editor: PluginEditor): () => void {
+function activate(editor: PluginEditor, host?: PluginHost): () => void {
   const tiptap = editor.tiptap;
+  const channel = host?.channel?.(pluginName);
+  const page: Page = { editor, channel, schema: undefined, requests: 0 };
   editors.add(tiptap);
-  return () => editors.delete(tiptap);
+  pages.set(tiptap, page);
+  const stop = channel?.onMessage((value) => {
+    const message = extensionMessage(value);
+    if (message?.type === 'schema') {
+      page.schema = (message.schema ?? undefined) as JsonSchema | undefined;
+      editor.refreshPlugins();
+    } else if (message?.type === 'citation' && message.id !== undefined && message.text !== undefined && !tiptap.isDestroyed) {
+      insertCitation(tiptap, message.id, message.text);
+    }
+  });
+  channel?.post({ type: 'hello' } satisfies PageMessage);
+  // The form showed the front matter before the plugin started: it shows the links of the references now.
+  if (channel) {
+    editor.refreshPlugins();
+  }
+  return () => {
+    stop?.();
+    editors.delete(tiptap);
+    pages.delete(tiptap);
+  };
 }
 
 /** writeText writes the text of a hidden node as the file has it. */
@@ -563,5 +785,8 @@ export const paperPlugin: MarkdownPlugin = {
     },
   },
   generated: (doc) => analysisOf(doc).parts,
+  frontMatterSchema: (tiptap) => pages.get(tiptap)?.schema,
+  frontMatterInputs,
+  menus: { insert: insertItems, format: formatButtons },
   activate,
 };

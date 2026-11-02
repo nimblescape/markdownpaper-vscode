@@ -358,25 +358,37 @@ function citationText(context: CiteContext, lines: readonly string[], file: vsco
   return [authorsOf(source), yearOf(source)].filter((part) => part !== '').join(', ') || source.id;
 }
 
+/** Choice is the source that the user chose for a citation, with the database of the file after its merge. */
+interface Choice {
+  /** document is the document of the file; lines are its lines before the merge, next after it. */
+  document: vscode.TextDocument;
+  lines: string[];
+  next: string[];
+  eol: string;
+  source: Source;
+  /** text is the text of the citation, without its link. */
+  text: string;
+  /** copyPdf copies the PDF of an item of Zotero into `bib/`, after the edit. */
+  copyPdf(): void;
+}
+
 /**
- * citeAt inserts a citation of a chosen source at a place of a paper document: `([Hong et al., 2024](#hong2024))`. An
- * item of Zotero is merged into the database first, and its PDF file goes to `bib/`.
+ * chooseCitation shows the list of `/cite` for a paper document and returns the chosen source, merged into the database
+ * when it is an item of Zotero. It changes no file.
  * @param context - The context of the citations.
- * @param editor - The text editor, also of the clean editing view of Markdown Notes.
- * @param range - The place of the citation.
- * @returns Whether the citation was inserted.
+ * @param file - The file of the paper.
+ * @returns The choice, or undefined when the file is no paper or the user chose nothing.
  */
-export async function citeAt(context: CiteContext, editor: vscode.TextEditor, range: vscode.Range): Promise<boolean> {
-  const file = fileOf(editor.document.uri);
+async function chooseCitation(context: CiteContext, file: vscode.Uri): Promise<Choice | undefined> {
   const document = await vscode.workspace.openTextDocument(file);
   if (!isPaperDocument(document.getText())) {
     void vscode.window.showInformationMessage('/cite works in a paper document: a Markdown file with the field "layout" in its front matter.');
-    return false;
+    return undefined;
   }
   const zotero = await connection(context.secrets);
   const chosen = await pickSource(context, findDatabase(document.getText().split(/\r?\n/))?.sources ?? [], zotero, zotero ? librariesOf(zotero, file) : []);
   if (!chosen) {
-    return false;
+    return undefined;
   }
   // The text of the file now, after the time of the list.
   const text = document.getText();
@@ -391,20 +403,44 @@ export async function citeAt(context: CiteContext, editor: vscode.TextEditor, ra
     const updated = merge ? updateSources(lines, new Map([[source.id, source]]), []) : updateSources(lines, new Map(), [source]);
     if (updated.problem) {
       void vscode.window.showErrorMessage(`/cite: ${updated.problem}`);
-      return false;
+      return undefined;
     }
     next = updated.lines;
   }
   if (!source) {
+    return undefined;
+  }
+  const found = source;
+  const copy = (): void => {
+    if (zotero && chosen.item) {
+      void copyPdf(context, zotero, chosen.item, found.id, file).catch((error: unknown) => {
+        void vscode.window.showWarningMessage(`/cite: the PDF of "${found.id}" did not come from Zotero: ${error instanceof Error ? error.message : String(error)}`);
+      });
+    }
+  };
+  return { document, lines, next, eol: text.includes('\r\n') ? '\r\n' : '\n', source, text: citationText(context, next, file, source), copyPdf: copy };
+}
+
+/**
+ * citeAt inserts a citation of a chosen source at a place of a paper document: `([Hong et al., 2024](#hong2024))`. An
+ * item of Zotero is merged into the database first, and its PDF file goes to `bib/`.
+ * @param context - The context of the citations.
+ * @param editor - The text editor, also of the clean editing view of Markdown Notes.
+ * @param range - The place of the citation.
+ * @returns Whether the citation was inserted.
+ */
+export async function citeAt(context: CiteContext, editor: vscode.TextEditor, range: vscode.Range): Promise<boolean> {
+  const file = fileOf(editor.document.uri);
+  const choice = await chooseCitation(context, file);
+  if (!choice) {
     return false;
   }
   // A citation after a word gets a space before it: "teams ([Hong et al., 2024](#hong2024))".
   const before = range.start.character > 0 ? editor.document.getText(new vscode.Range(range.start.translate(0, -1), range.start)) : '';
-  const citation = `${/^[^\s([]$/.test(before) ? ' ' : ''}([${citationText(context, next, file, source)}](#${source.id}))`;
-  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  const citation = `${/^[^\s([]$/.test(before) ? ' ' : ''}([${choice.text}](#${choice.source.id}))`;
   const edit = new vscode.WorkspaceEdit();
-  if (next !== lines) {
-    replaceText(edit, document, next.join(eol));
+  if (choice.next !== choice.lines) {
+    replaceText(edit, choice.document, choice.next.join(choice.eol));
   }
   const same = editor.document.uri.toString() === file.toString();
   if (same) {
@@ -417,12 +453,32 @@ export async function citeAt(context: CiteContext, editor: vscode.TextEditor, ra
   if (!same && !(await editor.edit((builder) => builder.insert(range.start, citation)))) {
     return false;
   }
-  if (zotero && chosen.item) {
-    void copyPdf(context, zotero, chosen.item, source.id, file).catch((error: unknown) => {
-      void vscode.window.showWarningMessage(`/cite: the PDF of "${source.id}" did not come from Zotero: ${error instanceof Error ? error.message : String(error)}`);
-    });
-  }
+  choice.copyPdf();
   return true;
+}
+
+/**
+ * citationFor lets the user choose a source for a citation in the editor of rendered Markdown, which inserts the
+ * citation itself ([R-EDIT-001](../docs/requirements.md#r-edit-001)): an item of Zotero is merged into the database of
+ * the file first, and its PDF file goes to `bib/`.
+ * @param context - The context of the citations.
+ * @param file - The file of the paper.
+ * @returns The identifier of the source and the text of its citation, or undefined when the user chose nothing.
+ */
+export async function citationFor(context: CiteContext, file: vscode.Uri): Promise<{ id: string; text: string } | undefined> {
+  const choice = await chooseCitation(context, file);
+  if (!choice) {
+    return undefined;
+  }
+  if (choice.next !== choice.lines) {
+    const edit = new vscode.WorkspaceEdit();
+    replaceText(edit, choice.document, choice.next.join(choice.eol));
+    if (!(await vscode.workspace.applyEdit(edit))) {
+      return undefined;
+    }
+  }
+  choice.copyPdf();
+  return { id: choice.source.id, text: choice.text };
 }
 
 /**

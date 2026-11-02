@@ -5,13 +5,16 @@
 
 // The tests of the plugin of the paper for the editor of nimblescape Markdown (src/editor/paperPlugin.ts, R-EDIT-001):
 // the markup keeps its text byte for byte and is hidden, the parts that the format step writes are read-only, the
-// links go to their targets, the guard keeps the database of the sources, and the renderer keeps only the anchors.
+// links go to their targets, the guard keeps the database of the sources, the renderer keeps only the anchors, and with
+// a channel to its part on the platform the plugin takes the schema of the layout, opens the clones of the references
+// of the front matter and inserts the citations that the user chooses there; "Research" marks a selected argument.
 
 import { undo } from '@tiptap/pm/history';
 import { TextSelection } from '@tiptap/pm/state';
-import { createMarkdownIt, MarkdownEditor } from '@nimblescape/markdowneditor';
+import { createMarkdownIt, MarkdownEditor, type PluginChannel } from '@nimblescape/markdowneditor';
 import { afterEach, describe, expect, it } from 'vitest';
-import { analysisOf, extendMarkdownIt, nodeNames, paperPlugin, sourceIds } from './paperPlugin';
+import { frontMatterSchemaOf } from '../paper/frontMatterSchema';
+import { analysisOf, extendMarkdownIt, insertCitation, isPaper, markResearch, nodeNames, paperPlugin, researchPlaces, sourceIds } from './paperPlugin';
 
 let editors: MarkdownEditor[] = [];
 afterEach(() => {
@@ -21,14 +24,45 @@ afterEach(() => {
   document.head.querySelectorAll('style[data-nsmd-plugin]').forEach((style) => style.remove());
 });
 
-/** open returns an editor with a text and the plugin of the paper. */
-function open(markdown: string): MarkdownEditor {
+/** Platform is a fake part of the plugin on the platform: the messages of the page, and a function that answers. */
+interface Platform {
+  readonly sent: unknown[];
+  send(message: unknown): void;
+}
+
+/**
+ * open returns an editor with a text and the plugin of the paper, with a channel to a fake platform when one is given.
+ * @param markdown - The text.
+ * @param platform - The fake platform, which this function fills.
+ */
+function open(markdown: string, platform?: { sent: unknown[]; send?: (message: unknown) => void }): MarkdownEditor {
   const element = document.createElement('div');
   document.body.append(element);
-  const editor = new MarkdownEditor(element, { markdown, plugins: [paperPlugin] });
+  const listeners = new Set<(message: unknown) => void>();
+  const channel: PluginChannel = {
+    post: (message) => platform?.sent.push(message),
+    onMessage: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+  if (platform) {
+    platform.send = (message) => listeners.forEach((listener) => listener(message));
+  }
+  const host = platform ? { platform: 'vscode', channel: (name: string) => (name === 'paper' ? channel : undefined) } : undefined;
+  const editor = new MarkdownEditor(element, { markdown, plugins: [paperPlugin], ...(host ? { host } : {}) });
   editors.push(editor);
   return editor;
 }
+
+/** platformOf returns a fake platform for open. */
+const platformOf = (): Platform & { send: (message: unknown) => void } => {
+  const platform = { sent: [] as unknown[], send: (_message: unknown) => undefined as void };
+  return platform;
+};
+
+/** field returns the row of a key of the form of the front matter. */
+const field = (key: string): HTMLElement | null => document.querySelector(`.nsmd-fm [data-path='${JSON.stringify([key])}']`);
 
 /** positionOf returns the position of the document before a text, or after it with `after`. */
 function positionOf(editor: MarkdownEditor, text: string, after = false): number {
@@ -194,6 +228,126 @@ describe('the guard', () => {
     key(editor, 'Backspace');
     // The key moves the cursor before the marker, and the browser deletes the character before it.
     expect(view.state.selection.head).toBe(positionOf(editor, 'Teams plan') - 1);
+  });
+});
+
+/** paper is a short paper with a reference of its layout to GitHub, a reference in `repos` and a source. */
+const paper = [
+  '---',
+  'layout: org/layouts@v1/thesis',
+  'repos:',
+  '  server: org/server@main',
+  'title: Teams',
+  '---',
+  '',
+  'Teams change. Teams plan less, and they talk more.',
+  '',
+  '<!-- nimblescape-sources',
+  '{"id":"doe2020","type":"book","title":"An example"}',
+  '-->',
+  '',
+].join('\n');
+
+describe('the part on the platform', () => {
+  it('asks for the schema of the layout, and the form of the front matter takes it', () => {
+    const platform = platformOf();
+    open(paper, platform);
+    expect(platform.sent).toEqual([{ type: 'hello' }]);
+    expect(field('author')).toBeNull();
+    const schema = frontMatterSchemaOf({ name: 'Thesis', language: 'de-AT', fields: { title: { description: 'Der Titel.', required: true }, author: { description: 'Die Person.', required: false } } });
+    platform.send({ type: 'schema', schema });
+    expect(field('author')).not.toBeNull();
+    expect(field('lang')?.querySelector<HTMLInputElement>('input')?.placeholder).toBe('de-AT');
+    platform.send({ type: 'schema', schema: null });
+    expect(field('author')).toBeNull();
+  });
+
+  it('shows layout and repos read-only, and Ctrl+click on a reference opens its clone', () => {
+    const platform = platformOf();
+    open(paper, platform);
+    const layout = field('layout')?.querySelector<HTMLElement>('.nsmd-paper-reference-link');
+    expect(layout?.textContent).toBe('org/layouts@v1/thesis');
+    expect(field('layout')?.querySelector('[data-focus^="value"]')).toBeNull();
+    layout!.click();
+    expect(platform.sent).toEqual([{ type: 'hello' }]);
+    layout!.dispatchEvent(new MouseEvent('click', { ctrlKey: true }));
+    const server = field('repos')?.querySelector<HTMLElement>('.nsmd-paper-reference-link');
+    expect(server?.textContent).toBe('org/server@main');
+    server!.dispatchEvent(new MouseEvent('click', { metaKey: true }));
+    expect(platform.sent.slice(1)).toEqual([
+      { type: 'openReference', key: 'layout' },
+      { type: 'openReference', key: 'repos', name: 'server' },
+    ]);
+  });
+
+  it('shows a reference without a clone as its text, and without a platform no link', () => {
+    open(paper.replace('org/layouts@v1/thesis', 'thesis'), platformOf());
+    expect(field('layout')?.querySelector('.nsmd-paper-reference')?.textContent).toBe('thesis');
+    expect(field('layout')?.querySelector('.nsmd-paper-reference-link')).toBeNull();
+    editors.pop()!.destroy();
+    document.body.replaceChildren();
+    open(paper);
+    expect(field('repos')?.querySelector('.nsmd-paper-reference-link')).toBeNull();
+  });
+
+  it('offers /cite in a paper, and inserts the citation that the platform answers after a word', () => {
+    const platform = platformOf();
+    const editor = open(paper, platform);
+    const items = paperPlugin.menus!.insert!(editor.tiptap);
+    expect(items.map((item) => item.hint)).toEqual(['/cite']);
+    select(editor, positionOf(editor, 'Teams change', true));
+    items[0].run();
+    expect(platform.sent[1]).toEqual({ type: 'cite', request: 1 });
+    platform.send({ type: 'citation', request: 1 });
+    expect(editor.getMarkdown()).toBe(paper);
+    platform.send({ type: 'citation', request: 1, id: 'doe2020', text: 'Doe, 2020' });
+    expect(editor.getMarkdown()).toBe(paper.replace('Teams change.', 'Teams change ([Doe, 2020](#doe2020)).'));
+    // The new citation is a generated part.
+    expect(generatedTexts(editor)).toEqual(['Doe, 2020']);
+    expect(paperPlugin.menus!.insert!(open('# A note\n', platformOf()).tiptap)).toEqual([]);
+    expect(paperPlugin.menus!.insert!(open(paper).tiptap)).toEqual([]);
+  });
+
+  it('inserts a citation after a space or a parenthesis without a space before it', () => {
+    const editor = open(paper);
+    select(editor, positionOf(editor, 'Teams plan'));
+    expect(insertCitation(editor.tiptap, 'doe2020', 'Doe, 2020')).toBe(true);
+    expect(insertCitation(editor.tiptap, '-bad', 'Bad')).toBe(false);
+    expect(editor.getMarkdown()).toContain('Teams change. ([Doe, 2020](#doe2020))Teams plan');
+  });
+});
+
+describe('Research', () => {
+  it('marks the selected argument, before the punctuation mark at its end', () => {
+    const editor = open(paper);
+    const { view } = editor.tiptap;
+    const start = positionOf(editor, 'Teams plan');
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, start, positionOf(editor, 'talk more.', true))));
+    expect(researchPlaces(view.state)).toEqual({ start, end: positionOf(editor, 'talk more', true) });
+    expect(markResearch(editor.tiptap)).toBe(true);
+    expect(editor.getMarkdown()).toBe(paper.replace('Teams plan less, and they talk more.', '<wbr><!--[research-->Teams plan less, and they talk more (RESEARCH).'));
+    // The marked argument holds a mark now.
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, start - 1, positionOf(editor, '(RESEARCH)', true))));
+    expect(researchPlaces(view.state)).toBeUndefined();
+    expect(markResearch(editor.tiptap)).toBe(false);
+  });
+
+  it('shows its button and Cite only in a paper, Cite only with a platform', () => {
+    const shown = (editor: MarkdownEditor) => paperPlugin.menus!.format!.filter((button) => button.isShown?.(editor.tiptap)).map((button) => button.text);
+    const selectText = (editor: MarkdownEditor, text: string) => {
+      const { view } = editor.tiptap;
+      view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, positionOf(editor, text), positionOf(editor, text, true))));
+    };
+    const withPlatform = open(paper, platformOf());
+    selectText(withPlatform, 'Teams plan less');
+    expect(shown(withPlatform)).toEqual(['Cite', 'Research']);
+    const alone = open(paper);
+    selectText(alone, 'Teams plan less');
+    expect(shown(alone)).toEqual(['Research']);
+    const note = open('A note on teams.\n', platformOf());
+    selectText(note, 'note on');
+    expect(isPaper(note.tiptap.state.doc)).toBe(false);
+    expect(shown(note)).toEqual([]);
   });
 });
 

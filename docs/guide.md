@@ -99,6 +99,28 @@ below it are the other branches and the tags. The front matter gets the
 choice with its `@`, for example `server: myorg/server@main`. Without a
 terminal, or with `--yes`, `mp get` takes the default branch.
 
+In a GitHub Codespace, `mp get` clones with the token of the Codespace. By
+default, this token reads only the repository of the Codespace. Public
+repositories need nothing more. Each private repository of `repos` needs an
+entry in `.devcontainer/devcontainer.json` of the paper repository, with the
+permission `contents` set to `read`, or to `write` when you push snippets
+from its clone:
+
+```json
+{
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "myorg/server": { "permissions": { "contents": "write" } }
+      }
+    }
+  }
+}
+```
+
+GitHub asks for these permissions when the Codespace is created. Opening a
+clone in a new window has not been tested in a Codespace yet.
+
 The terminals of VS Code have the command `mp` of the extension, with its Tab
 completion in bash and zsh, so `mp get` and `mp build paper/paper.md` work
 there without an installation. A terminal that was open before the extension

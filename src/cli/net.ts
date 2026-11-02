@@ -3,7 +3,7 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 /**
- * The network of the command `markdownpaper source` ([R-CITE-005](../../docs/requirements.md#r-cite-005)): GET requests
+ * The network of the command `mp source` ([R-CITE-005](../../docs/requirements.md#r-cite-005)): GET requests
  * over HTTPS that follow redirects, also through the proxy of the environment variables HTTPS_PROXY and NO_PROXY, as
  * the cloud environment of an AI agent has one. The fetch of Node.js 22 does not use these variables, so the requests
  * open the tunnel of the proxy with CONNECT themselves. Node.js reads the certificates of NODE_EXTRA_CA_CERTS.

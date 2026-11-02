@@ -12,6 +12,9 @@
  * - The diagrams of Mermaid without the parts for the screen: Mermaid puts a diagram into an area that the mouse moves
  *   and zooms, moved to the middle of the width at the time of the drawing, with buttons. On a page the diagram stands
  *   in the middle of the text, as wide as the text at most, without the buttons.
+ * - The diagrams of nimblescape PlantUML, whose copies the pages get (media/paperHandlers.js): the rules of the style
+ *   sheet of the extension for the parts of its shadow roots, for the copies; a diagram stands in the middle of the
+ *   text, as a diagram of Mermaid does.
  *
  * The page of the PDF gets this style sheet; the Markdown preview gets the same rules from media/paperPreview.css,
  * which a test compares with this module.
@@ -26,6 +29,7 @@ export const lightThemeColors: Readonly<Record<string, string>> = {
   '--vscode-editorWidget-border': '#c8c8c8',
   '--vscode-focusBorder': '#005fb8',
   '--vscode-editorError-foreground': '#e51400',
+  '--vscode-errorForeground': '#f85149',
   '--vscode-editorError-background': 'transparent',
   '--vscode-input-background': '#ffffff',
   '--vscode-input-border': '#cecece',
@@ -44,7 +48,7 @@ export const lightThemeColors: Readonly<Record<string, string>> = {
   '--vscode-charts-purple': '#652d90',
 };
 
-/** drawingsCss are the rules for the diagrams of Mermaid on a page. */
+/** drawingsCss are the rules for the diagrams of Mermaid and of nimblescape PlantUML on a page. */
 export const drawingsCss = `.mermaid-wrapper {
   height: auto !important;
   overflow: visible !important;
@@ -56,6 +60,23 @@ export const drawingsCss = `.mermaid-wrapper {
 .mermaid-zoom-controls,
 .mermaid-resize-handle {
   display: none !important;
+}
+.nimblescape-paper-plantuml {
+  margin: 1em 0;
+}
+.nimblescape-paper-plantuml > [part~="diagram"] {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+.nimblescape-paper-plantuml > [part~="error"] {
+  margin: 0 0 0.5em;
+  color: var(--vscode-errorForeground);
+  white-space: pre-wrap;
+}
+.nimblescape-paper-plantuml > [part~="following"] {
+  margin-top: 1em;
 }`;
 
 /** extensionCss is the style sheet of the drawings of the extensions for the page of the PDF. */

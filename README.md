@@ -12,8 +12,13 @@ Edge. The notes of [nimblescape Markdown Notes](https://github.com/nimblescape/m
 in the same file stay out of the pages.
 
 The npm package [`@nimblescape/markdownpaper`](https://github.com/nimblescape/markdownpaper-vscode/blob/main/cli/README.md)
-gives the same renderer to people and AI agents on the command line:
-`npx -y @nimblescape/markdownpaper pdf paper/paper.md`.
+gives the same renderer to people and AI agents on the command line, with the
+command `mp`: `npx -y @nimblescape/markdownpaper build paper/paper.md`. `mp get`
+clones the repositories that a paper names in its front matter, such as its
+layout on GitHub, into `.markdownpaper/repos/` of the project. The extension
+ships the same command in the terminals of VS Code, with its Tab completion in
+bash and zsh, so an author who writes in VS Code installs nothing more than
+Node.js 22 or newer.
 
 ## What the extension does on your computer
 
@@ -24,6 +29,11 @@ gives the same renderer to people and AI agents on the command line:
   files of their layouts. It writes files only for "Export PDF" (the PDF
   beside the Markdown file) and for "New Project", "New Document" and "New
   Layout", never over an existing file.
+- **Terminals.** The extension writes a small script `mp` and the Tab
+  completion scripts of `mp` into its storage folder, and adds them to the
+  `PATH`, `XDG_DATA_DIRS` and `FPATH` of the terminals of VS Code. The
+  script starts the command of the extension with the Node.js of the `PATH`.
+  A global `mp` comes first.
 - **Page preview.** The pages are in the Markdown preview of VS Code. The
   extension gives it a markdown-it plugin, a script and a style sheet, as
   other Markdown extensions do. The preview keeps the rules of safety of
@@ -31,7 +41,8 @@ gives the same renderer to people and AI agents on the command line:
   the pages and Paged.js; a script in a Markdown file or in a layout does not
   run.
 - **Export PDF.** Only "Export PDF" starts a program: the installed Google
-  Chrome, Chromium or Microsoft Edge, without a window, with a profile of its
+  Chrome, Chromium or Microsoft Edge, or the Chromium that it downloaded after
+  your answer, without a window, with a profile of its
   own in a temporary folder, and connected to the extension through a pipe,
   not through a network port. The browser reads the page from a temporary
   file and the images of the document from the disk. For the content of the
@@ -42,7 +53,9 @@ gives the same renderer to people and AI agents on the command line:
 - **Network.** The extension collects no telemetry. Its own code connects
   only to GitHub: "New Project" lists the layouts on GitHub, and "Update
   Layout" reads the newest version of a copied layout, with the GitHub sign-in
-  of VS Code when one exists. A document or a layout that names an image or a
+  of VS Code when one exists; to the Zotero web API after "Connect Zotero";
+  and to `storage.googleapis.com` for the download of Chromium, after you
+  agreed to it. A document or a layout that names an image or a
   font on the web makes the Markdown preview and the browser load it.
 - **Restricted Mode and virtual workspaces.** In Restricted Mode the page
   preview, the checks and the commands work, and only the settings of the
@@ -89,29 +102,48 @@ gives the same renderer to people and AI agents on the command line:
   exist and a link to a figure or a table that does not exist show as
   warnings in the text editor. The pointer on a field of the front matter
   shows its description.
+- **Front matter form.** The view "Front Matter" in the side bar shows the
+  front matter of the active Markdown file as a form, with one row for each
+  field of its layout, a choice list for a field with names, and read-only
+  rows for `layout` and `repos`. Each change is one edit of the file.
 - **Export PDF.** "Export PDF" in the menu "Run" of the title of a Markdown
   file writes the PDF beside the file, with the name that the layout gives,
   for example `{{matrikelnummer}}_{{author}}`. The PDF shows what the other
   Markdown extensions add, such as the diagrams of Mermaid and the math of
-  KaTeX.
+  KaTeX. The PlantUML diagrams look as in the Markdown preview with the
+  extension [nimblescape PlantUML](https://github.com/nimblescape/nimblescape-plantuml),
+  whose renderer draws them as vector graphics in every PDF, also on the
+  command line. The command line also draws the diagrams of Mermaid, as
+  VS Code does.
 - **New project, document and layout.** "New Project" lists the layouts of
   the workspace, the built-in layouts and the layouts on GitHub, with a button
   that opens the preview PDF of a layout on GitHub. It writes the folders of a
   paper: `AGENTS.md` for AI agents, the chosen layout, `paper/paper.md` from
   the empty paper document of the layout, which explains how to work with the
   layout, the drop folder `inbox/` for sources, the folder `bib/` for the
-  files of the sources, and `images/`. "New Document" and "New Layout" add a
-  document or a layout. "Update Layout" updates the copy of a layout on GitHub
-  from its repository when the repository has a newer version, and keeps the
-  changes of the project.
+  files of the sources, and `images/`. A layout on GitHub stays in its
+  repository: the document names its reference in the field `layout`, and
+  "New Project" runs `mp get` in a terminal of VS Code, which clones it into
+  `.markdownpaper/repos/`. "New Document" and "New Layout" add a document or
+  a layout. "Update Layout" updates a copy of a layout on GitHub in
+  `layouts/` of an older project from its repository when the repository has
+  a newer version, and keeps the changes of the project.
+- **Clones.** "Open Repository in New Window" opens the clone of a reference
+  of the paper in `.markdownpaper/repos/` in a new window of VS Code, where
+  Source Control shows its Git repository; Ctrl+click on a reference in the
+  front matter does the same. The clone of a branch is on that
+  branch, so you can add snippets there and push them; the clone of a tag or
+  a commit pins the version.
 - **Notes.** The notes of nimblescape Markdown Notes do not show on the pages.
   The page preview and the PDF of a file in its clean editing view show the
   file itself. The clean editing view hides the database of the sources.
 - **Citations and Zotero.** With Markdown Notes, type `/cite` in a paper
   document and choose a source: the citation goes in at the place, in the
   citation style of the layout. After "Connect Zotero" (with an API key of
-  zotero.org), the list also shows the items of your Zotero library; a chosen
-  item goes into the database of the document, and its PDF file into `bib/`.
+  zotero.org), the list also shows the items of your Zotero library and of
+  the group libraries that the setting
+  `nimblescape.markdownPaper.zoteroGroups` names; a chosen item goes into the
+  database of the document, and its PDF file into `bib/`.
   "Update Sources from Zotero" takes the changes of Zotero into the sources of
   the document.
 - **Research.** With Markdown Notes, select an argument in a paper document
@@ -123,8 +155,8 @@ gives the same renderer to people and AI agents on the command line:
 
 1. Open a folder and run "Markdown Paper: New Project" in the Command Palette
    (Ctrl+Shift+P), or open a Markdown file with a front matter.
-2. Write the fields of the layout in the front matter. The warnings name the
-   missing ones.
+2. Write the fields of the layout in the front matter, in the text or in the
+   view "Front Matter" of the side bar. The warnings name the missing ones.
 3. Press Ctrl+Shift+V or Ctrl+K V (on macOS Cmd) for the Markdown preview,
    or choose "Show Page Preview" in the title of the editor.
 4. Choose "Export PDF" in the menu "Run" of the title of the editor.
@@ -148,11 +180,13 @@ describes every feature.
 | `nimblescape.markdownPaper.browserPath` | `""` | The program of Google Chrome, Chromium or Microsoft Edge that prints the PDF. Empty: the extension looks for one at the usual places. Only the settings of the user can set it. |
 | `nimblescape.markdownPaper.previewDelay` | `800` | The pause in typing, in milliseconds, after which the Markdown preview of a paper document makes its pages again, from 100 to 10000. |
 | `nimblescape.markdownPaper.openPdf` | `true` | Opens the PDF with the program of your system for PDF files after "Export PDF". |
+| `nimblescape.markdownPaper.zoteroGroups` | `[]` | The group libraries of Zotero that `/cite` and "Update Sources from Zotero" read besides your personal library: the number of each group, or its address on zotero.org, for example `https://www.zotero.org/groups/1234567/thesis`. A project can name its groups in `.vscode/settings.json`. |
 
 ## Limits
 
-- "Export PDF" needs an installed Google Chrome, Chromium or Microsoft Edge;
-  the download of Chromium when none is installed is planned.
+- "Export PDF" needs a Google Chrome, Chromium or Microsoft Edge. Without
+  one, it offers to download Chromium once (about 120 MB), which the command
+  line uses too; Chrome for Testing has no Chromium for Linux on ARM.
 - The pages in the preview and the PDF use the same renderer, but the preview
   runs in the browser of VS Code and the PDF in the installed browser: with a
   font that only one of them has, a line can break at another place. Fonts in
@@ -162,14 +196,18 @@ describes every feature.
 - The diagrams of Mermaid, PlantUML and the other Markdown extensions of
   VS Code show on the pages of the preview and in the PDF of "Export PDF" in
   VS Code. The command line has no extensions of VS Code: its PDF shows the
-  source text of a diagram.
+  diagrams of PlantUML and Mermaid, without the diagrams of ZenUML and the
+  icons of the icon packs of Mermaid, and the source text of the other
+  diagrams. The pages of
+  the preview show the PlantUML diagrams when nimblescape PlantUML is
+  installed.
 - A layout has no scripts. Its templates know fields and parts that show
   only with a field, no other logic.
 - `/cite` and `/research` need nimblescape Markdown Notes. `/cite` reads the
-  personal library of Zotero through the web API of zotero.org, not the
-  group libraries, and copies a PDF only when Zotero stores it on
-  zotero.org. AI agents and the command line do not use Zotero: an agent adds
-  sources with `markdownpaper source`.
+  personal library of Zotero and the group libraries of a setting through the
+  web API of zotero.org, not the other group libraries, and copies a PDF only
+  when Zotero stores it on zotero.org. AI agents and the command line do not use Zotero: an agent adds
+  sources with `mp source`.
 
 ---
 

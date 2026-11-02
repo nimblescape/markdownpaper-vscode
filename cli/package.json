@@ -1,7 +1,7 @@
 {
   "name": "@nimblescape/markdownpaper",
   "version": "0.1.0",
-  "description": "The command markdownpaper: pages and PDF files from Markdown in a layout that the repository of the document defines, a scaffold of paper projects, layouts and documents, and the rules for AI agents, as the VS Code extension nimblescape Markdown Paper does.",
+  "description": "The command mp: pages and PDF files from Markdown in a layout that the repository of the document defines, a scaffold of paper projects, layouts and documents, and the rules for AI agents, as the VS Code extension nimblescape Markdown Paper does.",
   "license": "MIT",
   "author": {
     "name": "nimblescape e.U.",
@@ -25,11 +25,14 @@
     "ai-agents"
   ],
   "bin": {
-    "markdownpaper": "dist/markdownpaper.js"
+    "mp": "dist/mp.js"
   },
   "files": [
     "dist/*.js",
     "dist/layouts/**",
+    "dist/plantuml/**",
+    "dist/mermaid/*.js",
+    "dist/mermaid/THIRD-PARTY-NOTICES.md",
     "THIRD-PARTY-NOTICES.md"
   ],
   "engines": {

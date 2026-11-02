@@ -4,8 +4,8 @@
 
 /**
  * The sources of Zotero ([R-CITE-006](../../docs/requirements.md#r-cite-006)): this module reads the library of the
- * author through the Zotero web API, finds the line of an item in the database of a document, and merges the item into
- * it. An item finds its line by the field `zotero` of the line (its library and its item key), then by the DOI, then
+ * author and the group libraries of a setting through the Zotero web API, finds the line of an item in the database of
+ * a document, and merges the item into it. An item finds its line by the field `zotero` of the line (its library and its item key), then by the DOI, then
  * by the ISBN; else it becomes a new line with an ID by decision 22. A merge adds the fields that the line does not
  * have, changes a field with another value only when the author confirms it, removes nothing, and keeps the ID. The
  * module gets the network as a Fetcher and uses no API of VS Code.
@@ -29,6 +29,8 @@ const pageSize = 100;
 export interface ZoteroItem {
   /** ref is the library and the item key, for example `users/1234567/ABCD1234`, the value of the field `zotero`. */
   ref: string;
+  /** group is the name of the group library of the item, or undefined for an item of a personal library. */
+  group?: string;
   /** source is the metadata of the item in CSL JSON, with only the fields that describe it and an empty ID. */
   source: Source;
   /** creators and year are the names and the year that Zotero shows for the item. */
@@ -85,7 +87,7 @@ export function readItems(text: string): ZoteroItem[] {
   const items: ZoteroItem[] = [];
   for (const entry of list) {
     const data = (entry.data ?? {}) as { itemType?: unknown };
-    const library = (entry.library ?? {}) as { type?: unknown; id?: unknown };
+    const library = (entry.library ?? {}) as { type?: unknown; id?: unknown; name?: unknown };
     const meta = (entry.meta ?? {}) as { creatorSummary?: unknown; parsedDate?: unknown; numChildren?: unknown };
     const csl = entry.csljson;
     if (data.itemType === 'note' || data.itemType === 'attachment' || typeof entry.key !== 'string' || typeof csl !== 'object' || csl === null) {
@@ -94,6 +96,7 @@ export function readItems(text: string): ZoteroItem[] {
     const kind = library.type === 'group' ? 'groups' : 'users';
     items.push({
       ref: `${kind}/${String(library.id)}/${entry.key}`,
+      ...(kind === 'groups' ? { group: typeof library.name === 'string' && library.name ? library.name : `group ${String(library.id)}` } : {}),
       source: keepFields({ ...(csl as Record<string, unknown>), id: '' }),
       creators: typeof meta.creatorSummary === 'string' ? meta.creatorSummary : '',
       year: typeof meta.parsedDate === 'string' ? meta.parsedDate.slice(0, 4) : '',
@@ -118,6 +121,48 @@ export async function searchItems(fetch: Fetcher, key: string, library: string, 
 }
 
 /**
+ * groupLibraries returns the group libraries of the setting `zoteroGroups`, for example `groups/1234567`.
+ * @param groups - The numbers of the groups.
+ */
+export const groupLibraries = (groups: readonly string[]): string[] => groups.map((group) => `groups/${group}`);
+
+/**
+ * libraryName returns the name of a library for a message: "your library", or "the group 1234567".
+ * @param library - The library, for example `groups/1234567`.
+ */
+const libraryName = (library: string): string => (library.startsWith('groups/') ? `the group ${library.slice('groups/'.length)}` : 'your library');
+
+/** Found is the result of a search of several libraries: the items, and why a library gave none. */
+export interface Found {
+  items: ZoteroItem[];
+  /** problems are the messages of the libraries that gave no answer, each with the name of its library. */
+  problems: string[];
+}
+
+/**
+ * searchLibraries searches several libraries at once, the personal library first, and returns their items in the
+ * order of the libraries. A library that gives no answer, for example a group that the API key may not read, adds a
+ * problem and leaves the items of the other libraries.
+ * @param fetch - The fetcher.
+ * @param key - The API key.
+ * @param libraries - The libraries, for example `users/1234567` and `groups/7654321`.
+ * @param words - The words of the search.
+ * @param limit - The most items of each library.
+ */
+export async function searchLibraries(fetch: Fetcher, key: string, libraries: readonly string[], words: string, limit = 25): Promise<Found> {
+  const answers = await Promise.allSettled(libraries.map((library) => searchItems(fetch, key, library, words, limit)));
+  const found: Found = { items: [], problems: [] };
+  answers.forEach((answer, index) => {
+    if (answer.status === 'fulfilled') {
+      found.items.push(...answer.value);
+    } else {
+      found.problems.push(`${libraryName(libraries[index])}: ${answer.reason instanceof Error ? answer.reason.message : String(answer.reason)}`);
+    }
+  });
+  return found;
+}
+
+/**
  * allItems returns all top items of a library, a page of 100 items with each request.
  * @param fetch - The fetcher.
  * @param key - The API key.
@@ -135,6 +180,29 @@ export async function allItems(fetch: Fetcher, key: string, library: string, mos
     }
   }
   return items;
+}
+
+/**
+ * allLibraryItems returns all top items of several libraries. The personal library, the first, must answer; a group
+ * library that gives no answer adds a problem and leaves the items of the other libraries.
+ * @param fetch - The fetcher.
+ * @param key - The API key.
+ * @param libraries - The libraries, the personal library first.
+ * @throws The Error of the personal library.
+ */
+export async function allLibraryItems(fetch: Fetcher, key: string, libraries: readonly string[]): Promise<Found> {
+  const found: Found = { items: [], problems: [] };
+  for (const [index, library] of libraries.entries()) {
+    try {
+      found.items.push(...(await allItems(fetch, key, library)));
+    } catch (error) {
+      if (index === 0) {
+        throw error;
+      }
+      found.problems.push(`${libraryName(library)}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  return found;
 }
 
 /**

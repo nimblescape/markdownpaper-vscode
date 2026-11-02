@@ -5,8 +5,9 @@
 /**
  * The export of a Markdown file to a PDF file on the disk, for the command line and for the command "Export PDF" of
  * the extension ([R-PDF-001](../../docs/requirements.md#r-pdf-001)): the renderer makes the page with the files of
- * the disk and Paged.js in the page, the browser prints it, and the PDF gets its metadata. The module uses no API of
- * VS Code.
+ * the disk, the PlantUML diagrams of nimblescape PlantUML ([R-REN-015](../../docs/requirements.md#r-ren-015)), on the
+ * command line the diagrams of Mermaid ([R-REN-016](../../docs/requirements.md#r-ren-016)), and Paged.js in the page,
+ * the browser prints it, and the PDF gets its metadata. The module uses no API of VS Code.
  */
 
 import { randomBytes } from 'node:crypto';
@@ -17,8 +18,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { Problem } from '../paper/layout';
 import type { MarkdownPlugin } from '../paper/markdown';
 import { type Extensions, type Reader, type Rendered, render } from '../paper/render';
-import { findBrowser } from './browser';
+import { findBrowser, NoBrowserError } from './browser';
+import { mermaidParts, mermaidSettingsOf } from './mermaid';
 import { finishPdf, printPdf } from './pdf';
+import { commandLineOptions, type PlantUmlOptions, plantUmlParts } from './plantUml';
+import { workspaceFolderOf, workspaceSettings } from './workspace';
 
 /** fileReader reads the files of the disk by their file URLs. */
 export const fileReader: Reader = {
@@ -40,6 +44,13 @@ export interface Assets {
   layouts: string;
   /** pagedJs is the path of the file paged.polyfill.js of Paged.js. */
   pagedJs: string;
+  /** plantUml is the path of the folder with the files of the page of the npm package @nimblescape/plantuml. */
+  plantUml: string;
+  /**
+   * mermaid is the path of the folder with the script of the page that draws the diagrams of Mermaid, for a PDF
+   * without the Markdown extensions of VS Code; the command line has it, the extension not.
+   */
+  mermaid?: string;
 }
 
 /**
@@ -48,6 +59,12 @@ export interface Assets {
  */
 export interface MarkdownExtensions extends Extensions {
   plugins: readonly MarkdownPlugin[];
+  /**
+   * env holds the values that the plugins find in the environment of markdown-it, as in the Markdown preview of
+   * VS Code: `currentDocument`, the URI of the document, by which nimblescape PlantUML finds its settings and the files
+   * that its diagrams include.
+   */
+  env?: Readonly<Record<string, unknown>>;
 }
 
 /** ExportOptions are the options of an export. */
@@ -61,10 +78,20 @@ export interface ExportOptions {
   html?: string;
   /** browser is the path of the program of the browser; empty searches an installed browser. */
   browser?: string;
+  /**
+   * download gets a browser when none is installed or downloaded, for example after a question, and returns its
+   * program, or undefined when the person does not want the download ([R-PDF-002](../../docs/requirements.md#r-pdf-002)).
+   */
+  download?: () => Promise<string | undefined>;
   /** top is the path of the top folder of the search for a layout. */
   top?: string;
   /** extensions are the parts of the Markdown extensions of VS Code; the command line has none. */
   extensions?: MarkdownExtensions;
+  /**
+   * plantUml are the settings of nimblescape PlantUML and the folders of the files that its diagrams include, in
+   * VS Code those of the workspace; undefined reads them as the command line does (`commandLineOptions`).
+   */
+  plantUml?: PlantUmlOptions;
 }
 
 /** ExportResult is the result of an export. */
@@ -87,13 +114,17 @@ export const folderUrl = (folder: string): string => {
 
 /**
  * renderFile renders a Markdown file of the disk for the PDF: the page loads the files of the disk, and Paged.js is a
- * part of the page.
+ * part of the page. The PlantUML diagrams come after the parts of the other Markdown extensions. Without these
+ * extensions, as on the command line, the page draws the diagrams of Mermaid itself, with the settings of the
+ * workspace folder of the document.
  * @param file - The path of the Markdown file.
  * @param options - The options.
  */
-export async function renderFile(file: string, options: Pick<ExportOptions, 'assets' | 'text' | 'top' | 'extensions'>): Promise<Rendered> {
+export async function renderFile(file: string, options: Pick<ExportOptions, 'assets' | 'text' | 'top' | 'extensions' | 'plantUml'>): Promise<Rendered> {
   const text = options.text ?? (await fs.promises.readFile(file, 'utf8'));
   const pagedJs = await fs.promises.readFile(options.assets.pagedJs, 'utf8');
+  const plantUml = await plantUmlParts(file, options.assets.plantUml, options.plantUml ?? commandLineOptions(file));
+  const mermaid = !options.extensions && options.assets.mermaid ? mermaidParts(options.assets.mermaid, mermaidSettingsOf(workspaceSettings(workspaceFolderOf(file)))) : undefined;
   return render(
     {
       reader: fileReader,
@@ -103,12 +134,16 @@ export async function renderFile(file: string, options: Pick<ExportOptions, 'ass
       sources: 'file:',
       // A script element ends at the first "</script", which the code of Paged.js does not hold; the check keeps it so.
       scripts: [{ text: pagedJs.replace(/<\/script/gi, '<\\/script') }],
-      ...(options.extensions ? { extensions: { styles: options.extensions.styles, scripts: options.extensions.scripts } } : {}),
+      extensions: {
+        styles: [...(options.extensions?.styles ?? []), plantUml.style],
+        scripts: [...(options.extensions?.scripts ?? []), ...(mermaid?.scripts ?? []), plantUml.script],
+      },
       nonce: randomBytes(16).toString('base64'),
     },
     pathToFileURL(file).href,
     text,
-    options.extensions?.plugins,
+    [...(options.extensions?.plugins ?? []), ...(mermaid ? [mermaid.plugin] : []), plantUml.plugin],
+    options.extensions?.env,
   );
 }
 
@@ -118,7 +153,16 @@ export async function renderFile(file: string, options: Pick<ExportOptions, 'ass
  * @param options - The options.
  */
 export async function exportPdf(file: string, options: ExportOptions): Promise<ExportResult> {
-  const browser = findBrowser(options.browser);
+  let browser: string;
+  try {
+    browser = findBrowser(options.browser);
+  } catch (error) {
+    const downloaded = error instanceof NoBrowserError && options.download ? await options.download() : undefined;
+    if (!downloaded) {
+      throw error;
+    }
+    browser = downloaded;
+  }
   const rendered = await renderFile(file, options);
   const errors = rendered.problems.filter((problem) => problem.severity === 'error');
   const output = options.output ?? path.join(path.dirname(file), rendered.pdfName);

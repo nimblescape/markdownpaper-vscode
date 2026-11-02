@@ -46,12 +46,15 @@
     "test": "vitest run",
     "test:cli": "node esbuild.mjs && vitest run --config vitest.cli.config.mts",
     "test:vscode": "node esbuild.mjs && node scripts/build-vscode-tests.mjs && vscode-test --label vscode",
+    "postinstall": "node scripts/install-plantuml.mjs",
     "vscode:prepublish": "node esbuild.mjs --production",
     "package": "vsce package --no-dependencies",
     "install-local": "node scripts/install-local.mjs",
     "uninstall-local": "node scripts/uninstall-local.mjs"
   },
   "devDependencies": {
+    "@mermaid-js/layout-elk": "^0.2.3",
+    "@mermaid-js/layout-tidy-tree": "^1.0.1",
     "@types/markdown-it": "^14.2.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.19.2",
@@ -64,6 +67,7 @@
     "hyphen": "^1.14.1",
     "markdown-it": "^14.3.3",
     "markdown-it-footnote": "^4.0.0",
+    "mermaid": "11.17.2",
     "pagedjs": "^0.4.3",
     "pdf-lib": "^1.17.1",
     "typescript": "^7.0.2",
@@ -124,6 +128,16 @@
         "category": "Markdown Paper"
       },
       {
+        "command": "nimblescape.markdownPaper.openRepository",
+        "title": "Open Repository in New Window",
+        "category": "Markdown Paper"
+      },
+      {
+        "command": "nimblescape.markdownPaper.editFrontMatter",
+        "title": "Edit Front Matter",
+        "category": "Markdown Paper"
+      },
+      {
         "command": "nimblescape.markdownPaper.connectZotero",
         "title": "Connect Zotero",
         "category": "Markdown Paper"
@@ -160,6 +174,14 @@
         {
           "command": "nimblescape.markdownPaper.updateSourcesFromZotero",
           "when": "editorLangId == markdown && nimblescape.markdownPaper.paperDocument"
+        },
+        {
+          "command": "nimblescape.markdownPaper.openRepository",
+          "when": "editorLangId == markdown && nimblescape.markdownPaper.paperDocument"
+        },
+        {
+          "command": "nimblescape.markdownPaper.editFrontMatter",
+          "when": "editorLangId == markdown"
         }
       ],
       "explorer/context": [
@@ -182,6 +204,16 @@
           "command": "nimblescape.markdownPaper.updateLayout",
           "group": "nimblescape@4",
           "when": "explorerResourceIsFolder && resourceDirname =~ /[\\\\/]layouts$/"
+        }
+      ]
+    },
+    "views": {
+      "nimblescape-markdownnotes": [
+        {
+          "type": "webview",
+          "id": "nimblescape.markdownPaper.frontMatter",
+          "name": "Front Matter",
+          "contextualTitle": "Markdown Paper"
         }
       ]
     },
@@ -215,6 +247,18 @@
           "default": true,
           "scope": "window",
           "markdownDescription": "Open the PDF with the program of your system for PDF files after \"Export PDF\" wrote it."
+        },
+        "nimblescape.markdownPaper.zoteroGroups": {
+          "type": "array",
+          "items": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "default": [],
+          "scope": "resource",
+          "markdownDescription": "The group libraries of Zotero that `/cite` and \"Update Sources from Zotero\" read besides your personal library: the number of each group, or its address on zotero.org, for example `https://www.zotero.org/groups/1234567/thesis`. The API key of \"Connect Zotero\" must be allowed to read each group."
         }
       }
     },

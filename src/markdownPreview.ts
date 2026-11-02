@@ -32,6 +32,7 @@ import { hyphenatorOf } from './paper/hyphenate';
 import type { Problem } from './paper/layout';
 import { emptyFound, finishBody, type PaperEnv, paperPlugin, paperTokenType } from './paper/markdown';
 import { compose, type LoadedLayout, loadLayout, valuesOf } from './paper/render';
+import { referencesOf } from './paper/references';
 import { escapeHtml } from './paper/template';
 import { searchHost } from './workspaceHost';
 
@@ -49,9 +50,11 @@ interface Pending {
 
 /** Entry is the layout of a file in the cache. */
 interface Entry {
-  /** key names the layout and the language that the front matter of the file names. */
+  /** key names the layout, the language and the repositories that the front matter of the file names. */
   key: string;
   frontMatter: FrontMatter | undefined;
+  /** text is the text of the file when the cache read its layout. */
+  text: string;
   loaded?: LoadedLayout;
   loading?: Promise<void>;
   failed?: boolean;
@@ -88,10 +91,17 @@ const previewViewType = 'markdown.preview';
 const previewEditorType = 'vscode.markdown.preview.editor';
 
 /**
- * keyOf returns the key of the layout of a front matter: the layout and the language that it names.
+ * keyOf returns the key of the layout of a front matter: the layout and the language that it names, and the
+ * references of its field `repos`, whose clones say which repositories are public.
  * @param frontMatter - The front matter.
+ * @param text - The text of the file.
  */
-const keyOf = (frontMatter: FrontMatter | undefined): string => `${frontMatter?.values.layout?.trim() ?? ''}\n${frontMatter?.values.lang?.trim() ?? ''}`;
+const keyOf = (frontMatter: FrontMatter | undefined, text: string): string =>
+  [
+    frontMatter?.values.layout?.trim() ?? '',
+    frontMatter?.values.lang?.trim() ?? '',
+    ...referencesOf(text).references.flatMap((reference) => (reference.key === 'repos' ? [`${reference.name}: ${reference.text}`] : [])),
+  ].join('\n');
 
 /** PaperPreview is the markdown-it plugin of the pages, with the cache of the layouts. */
 export class PaperPreview implements vscode.Disposable {
@@ -245,16 +255,23 @@ export class PaperPreview implements vscode.Disposable {
     }
     const file = fileOf(document.uri);
     const frontMatter = readFrontMatter(text);
-    const key = keyOf(frontMatter);
+    const key = keyOf(frontMatter, text);
     const entry = this.entries.get(file.toString());
     if (entry?.key === key && entry.loaded) {
-      return { layout: entry.loaded.layout, found: emptyFound(), file, loaded: entry.loaded, values: valuesOf(entry.loaded.layout, frontMatter, file.toString()) };
+      return {
+        layout: entry.loaded.layout,
+        found: emptyFound(),
+        publicRepositories: entry.loaded.publicRepositories,
+        file,
+        loaded: entry.loaded,
+        values: valuesOf(entry.loaded.layout, frontMatter, file.toString()),
+      };
     }
     if (entry?.key === key && entry.failed) {
       return undefined;
     }
     if (!(entry?.key === key && entry.loading)) {
-      this.load(file, frontMatter);
+      this.load(file, frontMatter, text);
     }
     return { pending: true };
   }
@@ -264,13 +281,14 @@ export class PaperPreview implements vscode.Disposable {
    * stays in the cache until then.
    * @param file - The URI of the file.
    * @param frontMatter - Its front matter.
+   * @param text - Its text.
    */
-  private load(file: vscode.Uri, frontMatter: FrontMatter | undefined): void {
+  private load(file: vscode.Uri, frontMatter: FrontMatter | undefined, text: string): void {
     const name = file.toString();
-    const key = keyOf(frontMatter);
+    const key = keyOf(frontMatter, text);
     const old = this.entries.get(name);
-    const entry: Entry = { key, frontMatter, ...(old?.key === key && old.loaded ? { loaded: old.loaded } : {}) };
-    entry.loading = loadLayout(searchHost(this.extension, file), name, frontMatter).then(
+    const entry: Entry = { key, frontMatter, text, ...(old?.key === key && old.loaded ? { loaded: old.loaded } : {}) };
+    entry.loading = loadLayout(searchHost(this.extension, file), name, frontMatter, text).then(
       (loaded) => {
         entry.loaded = loaded;
         entry.loading = undefined;
@@ -310,7 +328,7 @@ export class PaperPreview implements vscode.Disposable {
       for (const name of this.changed) {
         const entry = this.entries.get(name);
         if (entry) {
-          this.load(vscode.Uri.parse(name, true), entry.frontMatter);
+          this.load(vscode.Uri.parse(name, true), entry.frontMatter, entry.text);
         }
       }
       this.changed.clear();

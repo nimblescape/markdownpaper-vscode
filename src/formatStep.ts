@@ -141,7 +141,7 @@ export class PaperFormatStep implements FormatStep, vscode.Disposable {
 
 /**
  * registerFormatStep adds the step to the formatter of Markdown Notes, when Markdown Notes is installed and has the
- * function. Without it, the step does nothing; the command line has `markdownpaper format`.
+ * function. Without it, the step does nothing; the command line has `mp format`.
  * @param step - The step.
  * @returns The registration, which removes the step when it is disposed.
  */

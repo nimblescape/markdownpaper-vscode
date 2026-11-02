@@ -8,7 +8,7 @@
  * to a figure or a table must find it ([R-REN-009](../../docs/requirements.md#r-ren-009)). The citation style of the
  * layout must be readable, and the sources and the citations must be readable
  * ([R-CITE-001](../../docs/requirements.md#r-cite-001) to [R-CITE-004](../../docs/requirements.md#r-cite-004)). The text editor shows the
- * problems as warnings, and `markdownpaper check` prints them. A file without the field `layout`
+ * problems as warnings, and `mp check` prints them. The references of `repos` must be readable and have their clones. A file without the field `layout`
  * is no document of a layout and gets no check. The module uses no API of VS Code.
  */
 
@@ -17,7 +17,8 @@ import { citationStyleOf } from './csl';
 import { bodyOf, type FrontMatter, readFrontMatter } from './frontMatter';
 import type { Layout, Problem } from './layout';
 import { renderBody } from './markdown';
-import { findLayout, type Host } from './render';
+import { clonesFolder, referencesOf } from './references';
+import { findClone, findLayout, type Host } from './render';
 
 /** Checked is the result of the checks of a document. */
 export interface Checked {
@@ -43,6 +44,14 @@ export async function checkDocument(host: Pick<Host, 'reader' | 'builtinLayouts'
   const found = await findLayout(host, document, field.value.trim());
   // The problems of layout.json show at the field `layout` of the document, and name the file of the layout.
   problems.push(...found.problems.map((problem) => ({ ...problem, ...at, message: problem.file && problem.file !== document ? `${problem.message} (${problem.file})` : problem.message })));
+  // The repositories of the listings must have their clones ([R-CLI-004](../../docs/requirements.md#r-cli-004)).
+  const references = referencesOf(text);
+  problems.push(...references.problems.map((problem) => ({ severity: 'warning' as const, ...problem, file: document })));
+  for (const reference of references.references.filter((candidate) => candidate.key === 'repos')) {
+    if (!(await findClone(host, document, reference.name))) {
+      problems.push({ severity: 'warning', message: `The repository ${reference.text} of "${reference.name}" is not in ${clonesFolder}/ of the project yet: run "mp get" in the folder of the project.`, file: document, line: reference.line, column: reference.column, length: reference.text.length });
+    }
+  }
   const layout = found.layout;
   if (layout) {
     for (const [key, spec] of Object.entries(layout.fields)) {

@@ -53,7 +53,7 @@
     "uninstall-local": "node scripts/uninstall-local.mjs"
   },
   "devDependencies": {
-    "@mermaid-js/layout-elk": "^0.2.3",
+    "@mermaid-js/layout-elk": "^1.0.1",
     "@mermaid-js/layout-tidy-tree": "^1.0.1",
     "@types/markdown-it": "^14.2.0",
     "@types/mocha": "^10.0.10",
@@ -61,7 +61,7 @@
     "@types/vscode": "~1.125.0",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.1.0",
-    "@vscode/vsce": "^4.0.0",
+    "@vscode/vsce": "^4.1.0",
     "citeproc": "^2.4.63",
     "esbuild": "^0.28.2",
     "hyphen": "^1.14.1",

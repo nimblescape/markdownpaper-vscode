@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 /** The repository and the commit of nimblescape PlantUML whose package the extension and the command use. */
 const repository = 'https://github.com/nimblescape/nimblescape-plantuml.git';
-const commit = '5e339cdbc0ac82c93e47244cb2f900f317088a51';
+const commit = '421248d3a1068d36ea2dc637748524f5a1544e23';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const target = path.join(root, 'node_modules', '@nimblescape', 'plantuml');

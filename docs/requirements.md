@@ -75,6 +75,7 @@ This document replaces it where the two differ.
 | 44 | The plugin `paper` for the editor of rendered Markdown of nimblescape Markdown, in the bundle `dist/editorPlugins.js` that the package.json contributes, for example for the editor of a whole file of Markdown Notes: the database of the sources, the markers of the lists, the anchors of the entries and the markers of the arguments to research hidden; the citations, the entries of the reference list and the lists of the special sections read-only, with Ctrl+click to their targets | [R-EDIT-001](#r-edit-001), [R-GEN-003](#r-gen-003) | done |
 | 45 | The part of the plugin `paper` in the extension, through `registerEditorPlugin` of Markdown Notes: the JSON schema of the front matter of the layout in the form of the editor, `layout` and `repos` read-only with Ctrl+click to the clone, `/cite` and "Cite" with the list of the sources in VS Code, and "Research" in the format bar | [R-EDIT-001](#r-edit-001), [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006), [R-CLI-004](#r-cli-004) | done |
 | 46 | CI installs the packages of nimblescape Markdown, whose repository is public, after `npm ci --ignore-scripts` ([decision 61](#decisions)) | [R-EDIT-001](#r-edit-001) | done |
+| 47 | The renderer, the pages and the PDF from the packages of nimblescape Markdown: `mp build`, "Export PDF" and the page preview with `@nimblescape/markdownrender` and `@nimblescape/markdownlayout`, the functions of the paper as their plugins, and the copy of their code in `src/paper/` and `src/pdf/` removed | [R-GEN-010](#r-gen-010), [R-REN-001](#r-ren-001), [R-PDF-001](#r-pdf-001), [R-PRV-001](#r-prv-001) | planned ([decision 64](#decisions)) |
 | 47 | TypeScript 6.0.3 and the shared ESLint setup of the nimblescape extensions, run by CI; Dependabot proposes no other TypeScript ([decision 63](#decisions)) | [R-GEN-009](#r-gen-009) | done |
 
 ## General
@@ -262,6 +263,26 @@ setup as the other nimblescape extensions ([decision 63](#decisions)):
   files. CI runs it after the type check.
 - `tsconfig.json` has the shared settings of the type check of the
   nimblescape extensions.
+
+### R-GEN-010
+
+**Built on nimblescape Markdown.** The renderer, the pages and the PDF of
+Markdown Paper come from the packages of nimblescape Markdown
+([decision 64](#decisions)):
+[`@nimblescape/markdownrender`](https://github.com/nimblescape/markdown/tree/main/packages/markdownrender)
+turns the text into HTML, and
+[`@nimblescape/markdownlayout`](https://github.com/nimblescape/markdown/tree/main/packages/markdownlayout)
+makes the pages of a layout with Paged.js and the PDF in Node.js
+([R-ARCH-002](https://github.com/nimblescape/markdown/blob/main/docs/specification.md#r-arch-002)
+of nimblescape Markdown). `mp build`, "Export PDF" and the page preview use
+these packages, and the code of the extension holds no copy of them.
+
+*(proposal)* The functions of the paper are plugins of the renderer and the
+layout: the citations and the reference list in CSL, the lists of the special
+sections, the captions and their numbers, the listings, the diagrams of
+Mermaid and PlantUML, and the hints of a template. A function that the
+packages lack, and that is not a function of the paper, goes into the packages
+first, in the repository of nimblescape Markdown.
 
 ## Documents
 
@@ -652,6 +673,8 @@ a newer version ([decision 46](#decisions)):
 of a document in its layout; Paged.js turns it into pages in the page preview
 and in the browser that prints the PDF ([decision 2](#decisions),
 [decision 3](#decisions)).
+The renderer and the pages are the ones of the packages of nimblescape
+Markdown ([R-GEN-010](#r-gen-010)).
 
 1. It reads the front matter and finds the layout ([R-LAY-001](#r-lay-001)).
 2. It reads the style sheets and fills the templates with the fields.
@@ -2389,6 +2412,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     because typescript-eslint supports TypeScript only up to 6.0, and
     Dependabot proposes no other version of TypeScript. The sources are
     checked with the shared ESLint setup of the nimblescape extensions.
+64. **The renderer, the pages and the PDF from nimblescape Markdown**
+    ([R-GEN-010](#r-gen-010)): `mp build`, "Export PDF" and the page preview
+    use the packages `@nimblescape/markdownrender` and
+    `@nimblescape/markdownlayout` of nimblescape Markdown, and the code of the
+    extension holds no copy of them.
 
 ## Open questions
 

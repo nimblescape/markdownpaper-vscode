@@ -305,10 +305,10 @@ a new document lists the names of a parameter too.
 when it uses a feature of Markdown Paper, and a notes document when it uses
 only features of Markdown Notes or none ([decision 17](#decisions)).
 
-- The feature of Markdown Paper that makes a file a paper document is the
-  field `layout` of the front matter ([R-DOC-001](#r-doc-001)). Whether the
-  citations ([R-CITE-002](#r-cite-002)) also make a file a paper document is
-  an [open question](#open-questions).
+- The only feature of Markdown Paper that makes a file a paper document is
+  the field `layout` of the front matter ([R-DOC-001](#r-doc-001),
+  [decision 61](#decisions)). Citations ([R-CITE-002](#r-cite-002)) and a
+  database of sources do not make a file a paper document.
 - The features of Markdown Notes, such as notes, footnotes, figures and
   tables with their anchors, and links of `/ref`, do not make a file a paper
   document.
@@ -2021,10 +2021,10 @@ requirement ([R-GEN-007](#r-gen-007)).
     The anchors `sec-…` still work.
 17. **The page preview is the Markdown preview of a paper**
     ([R-DOC-004](#r-doc-004), [R-PRV-005](#r-prv-005),
-    [R-REN-010](#r-ren-010)): a file with features of the paper is a paper
-    document, and its Markdown preview shows its pages, with all Markdown
-    plugins of VS Code; a file with only features of Markdown Notes is a
-    notes document with the Markdown preview of VS Code.
+    [R-REN-010](#r-ren-010)): a file with the field `layout` is a paper
+    document ([decision 61](#decisions)), and its Markdown preview shows its
+    pages, with all Markdown plugins of VS Code; every other file is a notes
+    document with the Markdown preview of VS Code.
 18. **Layouts from other places** ([R-LAY-007](#r-lay-007)): a layout can also
     come from another repository; `layouts/` of the repository counts first.
     [Decision 51](#decisions) names such a layout with a GitHub reference and
@@ -2289,11 +2289,14 @@ requirement ([R-GEN-007](#r-gen-007)).
     the file; the form shows it with a warning and a button that removes it.
     The form also shows for a Markdown file without the field `layout`, with
     the fields of the built-in layout `plain`.
+61. **Only the field `layout` makes a paper document**
+    ([R-DOC-004](#r-doc-004)): a file is a paper document only when its front
+    matter has the field `layout`. Citations and a database of sources do not
+    make a file a paper document, so the pages, the checks and `/cite` need
+    that field, and every other file keeps the Markdown preview of VS Code.
 
 ## Open questions
 
-- The mark of a paper document ([R-DOC-004](#r-doc-004)): the field `layout`
-  of the front matter, and later the citations; not confirmed yet.
 - One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
   library of `@nimblescape/markdownnotes`.
 - Values of the front matter in the text (planned in Markdown Notes): `/ref`

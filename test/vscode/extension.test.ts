@@ -229,7 +229,7 @@ describe('nimblescape Markdown Paper', function () {
     const document = await vscode.workspace.openTextDocument(paper);
     await vscode.window.showTextDocument(document);
     // The first rendering can come before the extension read the layout; then the preview renders again.
-    let rendered = '';
+    let rendered: string;
     const end = Date.now() + 30_000;
     do {
       rendered = await vscode.commands.executeCommand<string>('markdown.api.render', document);

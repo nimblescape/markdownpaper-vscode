@@ -357,7 +357,8 @@ export function parseLayout(text: string, id: string, folder: string): { layout?
   }
   layout.unnumbered = layout.unnumbered.filter((pattern) => {
     try {
-      return new RegExp(pattern, 'iu') !== undefined;
+      new RegExp(pattern, 'iu');
+      return true;
     } catch {
       return false;
     }

@@ -88,7 +88,7 @@
       const first = glyphs[low];
       range.setStart(first.node, first.offset);
       range.setEnd(end.node, end.offset + 1);
-      const spaces = (range.toString().match(/[  ]/g) || []).length;
+      const spaces = (range.toString().match(/[ \u00a0]/g) || []).length;
       if (spaces === 0) {
         continue;
       }

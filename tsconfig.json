@@ -2,6 +2,9 @@
 // © 2026 Hannes Stauss (scalarion@nimblescape.com)
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
+// The type check (npm run typecheck) with TypeScript 6.0, the same in every nimblescape extension: strict, and no
+// output, because esbuild builds the bundles. ESLint (npm run lint) reads the types of the same files. The plugins of
+// the editor have their own settings with the types of the browser (src/editor/).
 {
   "compilerOptions": {
     "target": "ES2022",
@@ -11,14 +14,12 @@
     "types": ["node"],
     "strict": true,
     "noEmit": true,
-    "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
     "noImplicitOverride": true,
     "noUnusedLocals": true,
-    "noFallthroughCasesInSwitch": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src/**/*.ts", "test/**/*.ts"],
   // The plugins of the editor run in a page: src/editor/tsconfig.json checks them with the types of the browser.

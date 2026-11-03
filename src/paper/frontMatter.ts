@@ -93,9 +93,9 @@ export function readFrontMatter(text: string): FrontMatter | undefined {
 }
 
 /**
- * isPaperDocument tells whether a Markdown text is a paper document, a file with a feature of Markdown Paper: today the
- * field `layout` of its front matter ([R-DOC-004](../../docs/requirements.md#r-doc-004)). Another Markdown file is a
- * notes document, which keeps the Markdown preview of VS Code.
+ * isPaperDocument tells whether a Markdown text is a paper document: a file whose front matter has the field `layout`
+ * ([R-DOC-004](../../docs/requirements.md#r-doc-004), decision 62). Another Markdown file is a notes document, which
+ * keeps the Markdown preview of VS Code.
  * @param text - The Markdown text.
  */
 export function isPaperDocument(text: string): boolean {

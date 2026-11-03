@@ -27,56 +27,15 @@ This document replaces it where the two differ.
 
 ## Plan
 
-| Step | Content | Requirements | State |
-| --- | --- | --- | --- |
-| 1 | Setup: manifest, build, tests, CI, release workflows, license notices, the same structure as the other nimblescape extensions, this specification | [R-GEN-001](#r-gen-001) to [R-GEN-007](#r-gen-007) | done |
-| 2 | The front matter and its checks, the hover of the fields | [R-DOC-001](#r-doc-001) to [R-DOC-003](#r-doc-003) | done |
-| 3 | The layout folder, `layout.json`, the style sheets, the templates, the words of the language, the built-in layout `plain`, no logic in a layout | [R-LAY-001](#r-lay-001) to [R-LAY-005](#r-lay-005), [R-LAY-008](#r-lay-008) | done |
-| 4 | The renderer: HTML and Paged.js, the notes left out, numbered headings, footnotes at the foot of the page, hyphenation | [R-REN-001](#r-ren-001) to [R-REN-003](#r-ren-003), [R-REN-007](#r-ren-007), [R-REN-008](#r-ren-008) | done |
-| 5 | The special sections without numbers, the table of contents, the list of figures, the list of tables, the captions, the appendix | [R-REN-004](#r-ren-004) to [R-REN-006](#r-ren-006) | done |
-| 6 | The PDF with an installed Chrome, Chromium or Edge, only PDF | [R-PDF-001](#r-pdf-001) to [R-PDF-004](#r-pdf-004) | done |
-| 7 | The page preview, first as a view of its own | [R-PRV-001](#r-prv-001) to [R-PRV-004](#r-prv-004) | done; replaced by the pages in the Markdown preview of VS Code in step 16 |
-| 8 | The scaffold: new document, new layout, new project with `inbox/` and `bib/` | [R-NEW-001](#r-new-001) to [R-NEW-003](#r-new-003) | done |
-| 9 | The command `markdownpaper` with `pdf`, `check`, `create`, `new` and `instructions` | [R-CLI-001](#r-cli-001), [R-CLI-003](#r-cli-003) | done |
-| 10 | The anchors of figures and tables, the links to them and to headings, from the slash commands `/figure`, `/table` and `/ref` of Markdown Notes | [R-REN-003](#r-ren-003), [R-REN-009](#r-ren-009) | done |
-| 11 | The interface of Markdown Notes: the file behind the clean editing view | [R-GEN-003](#r-gen-003) | done |
-| 12 | One formatter command: `mp format` with the formatter of Markdown Notes, and the format step of the paper in VS Code | [R-CLI-002](#r-cli-002), [R-GEN-003](#r-gen-003) | the steps of the paper done (step 22); the steps of Markdown Notes on the command line need the library of `@nimblescape/markdownnotes` |
-| 13 | The citations, the database of the sources, the citation style APA 7 of the PHT, the reference list written by the formatter, the slash commands `/cite` and `/research` | [R-CITE-001](#r-cite-001) to [R-CITE-004](#r-cite-004) | the database, the citations, the reference list and their checks done, in the format step and in `mp format`; the database hidden in the clean editing view of Markdown Notes and `/research` done in step 30; `/cite` done in step 29 |
-| 14 | A layout from a Word template by an AI agent, tried with the template of the PHT | [R-LAY-006](#r-lay-006), [R-LAY-007](#r-lay-007) | done: the instructions, and the PHT layouts `thesis/` and `concept/` |
-| 15 | The first release on the Visual Studio Marketplace and on npmjs.com | [R-GEN-005](#r-gen-005) | planned; only when the owner asks |
-| 16 | Paper documents and notes documents: the Markdown preview of VS Code shows the pages of a paper document, with the functions of all plugins; a notes document keeps the Markdown preview as it is | [R-DOC-004](#r-doc-004), [R-PRV-001](#r-prv-001) to [R-PRV-006](#r-prv-006) | done |
-| 17 | The Markdown plugins of VS Code, such as Mermaid and PlantUML, in the PDF | [R-REN-010](#r-ren-010) | done in VS Code; on the command line PlantUML in step 33 and Mermaid in step 34 |
-| 18 | Layouts of another repository, found on GitHub by their mark | [R-LAY-007](#r-lay-007) | the repositories on GitHub done in step 28; the reference of a layout on GitHub in the front matter done in step 36; no layouts in npm packages ([decision 51](#decisions)) |
-| 19 | The download of Chromium when no browser is installed | [R-PDF-002](#r-pdf-002) | done |
-| 20 | Listings of Markdown Notes: numbered captions `Listing:` with the cite of the source after them, links `lst-…`, and the numbers of the lines as an option of the layout | [R-REN-011](#r-ren-011), [R-LAY-002](#r-lay-002) | done |
-| 21 | Document driven pages: the numbers of the captions from the file, the caption line of a figure, the lists of the special sections from the file, the list of listings | [R-GEN-008](#r-gen-008), [R-REN-004](#r-ren-004), [R-REN-005](#r-ren-005) | done |
-| 22 | The format step of the paper that writes the table of contents, the list of figures, the list of tables and the list of listings, in VS Code and in `mp format` | [R-REN-004](#r-ren-004), [R-CLI-002](#r-cli-002) | done |
-| 23 | Citation styles in CSL with citeproc-js: the built-in style `apa7`, a CSL file of the layout, the CSL locales; `pht-apa7.csl` in the PHT layouts | [R-CITE-003](#r-cite-003), [R-GEN-004](#r-gen-004) | done |
-| 24 | The metadata of new sources: `mp source` with DOI, ISBN, PubMed ID, arXiv ID, web address, RIS, BibTeX, CSL JSON, HTML and PDF files, and the title search of Crossref | [R-CITE-005](#r-cite-005) | done |
-| 25 | Parameters of a layout (fields with `values`), their check and hover, and the JSON schema of `layout.json` | [R-LAY-002](#r-lay-002), [R-DOC-002](#r-doc-002), [R-DOC-003](#r-doc-003) | done |
-| 26 | Layouts close to a Word template: numbered special sections (`headings.numberedSections`), a hyphenated reference list (`references.hyphenate`), the natural spaces of the last line of a justified paragraph whose spaces shrink; the PHT concept layout in the look of its Word template | [R-REN-004](#r-ren-004), [R-REN-007](#r-ren-007), [R-REN-012](#r-ren-012), [R-LAY-002](#r-lay-002) | done |
-| 27 | The parts of a document (front part, body, appendix part) as elements for their own pages, and a table of contents without the front part (`contents.front`); the PHT thesis layout in the look of its Word template | [R-REN-013](#r-ren-013), [R-REN-004](#r-ren-004), [R-LAY-002](#r-lay-002) | done |
-| 28 | The empty paper document and its preview PDF in each layout; the list of the layouts of `create` and "New Project" with the layouts on GitHub; `mp layouts` and `mp preview` | [R-LAY-009](#r-lay-009), [R-NEW-004](#r-new-004), [R-LAY-007](#r-lay-007) | done; the PHT layouts have their empty paper documents and previews |
-| 29 | `/cite` with the sources of Zotero: one list with the database of the document and the items of the Zotero library of the author through the Zotero web API, the merge of a chosen item into the database with its key of Zotero, and "Update Sources from Zotero" | [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006) | done; the group libraries of the setting `zoteroGroups` (decision 50) done in step 35 |
-| 35 | The group libraries of Zotero that a setting names, in `/cite` and in "Update Sources from Zotero" | [R-CITE-006](#r-cite-006), [R-SET-001](#r-set-001) | done |
-| 30 | `/research` on a selected argument: the start marker and `(RESEARCH)`, the rules for AI agents, the checks, the slash command on selected text, and the start marker and the database hidden in the clean editing view of Markdown Notes | [R-CITE-002](#r-cite-002), [R-GEN-003](#r-gen-003) | done |
-| 31 | The hints of a template as alerts of GitHub, drawn as boxes by the layout; the hints of the PHT concept template in its empty paper document | [R-REN-014](#r-ren-014), [R-CITE-004](#r-cite-004) | done |
-| 32 | The origin of a copy of a layout on GitHub in its `layout.json`, and its update from the repository: `markdownpaper update` and "Update Layout" | [R-LAY-010](#r-lay-010), [R-LAY-007](#r-lay-007) | done; `mp get` updates the copies since step 36 |
-| 33 | The PlantUML diagrams in every PDF, in VS Code and on the command line, with the renderer of nimblescape PlantUML from its npm package `@nimblescape/plantuml`, as inline SVG | [R-REN-015](#r-ren-015), [R-REN-010](#r-ren-010) | done; the package installs from GitHub until the release of nimblescape PlantUML |
-| 34 | The Mermaid diagrams in the PDF of the command line, as the Mermaid extension of VS Code draws them, as inline SVG | [R-REN-016](#r-ren-016), [R-REN-010](#r-ren-010) | done |
-| 36 | The command `mp` in place of `markdownpaper`; the references of a paper: the keys `layout` and `repos` of the front matter with GitHub references, `get` with its clones, `get -u`, `create` that needs a layout and writes its reference, `build` in place of `pdf`, no `update`, the layout read from its clone, and the clones of `repos` for the listings of Markdown Notes | [R-CLI-001](#r-cli-001), [R-CLI-004](#r-cli-004), [R-LAY-007](#r-lay-007), [R-LAY-010](#r-lay-010), [R-NEW-004](#r-new-004) | done ([decision 51](#decisions)); the listings from the clones are step 68 of Markdown Notes |
-| 37 | The command in the terminals of VS Code, as nimblescape TypeScript ships `ts`; "New Project" of VS Code with the reference of a layout on GitHub and `mp get` in a terminal of VS Code; the installation of the command from GitHub before the release | [R-CLI-001](#r-cli-001), [R-NEW-004](#r-new-004) | done ([decision 51](#decisions)) |
-| 38 | The links of the PDF: a link for every reference inside the paper, also for each citation, in the color of the text without a mark; the addresses of the links to the outside in footnotes; the link of a listing from a public repository on its cite | [R-PDF-005](#r-pdf-005), [R-REN-011](#r-ren-011) | done ([decision 52](#decisions), [decision 54](#decisions)) |
-| 39 | "Open Repository in New Window" in VS Code for the clone of a reference | [R-CLI-004](#r-cli-004) | done ([decision 55](#decisions)); Markdown Notes opens the same folder with Ctrl+click on the name of the reference of a listing |
-| 40 | The view "Front Matter" in the side bar: the form of the front matter with one row for each field of the layout, and "Edit Front Matter" for the link of Markdown Notes | [R-DOC-005](#r-doc-005) | done ([decision 56](#decisions), [decision 60](#decisions)) |
-| 41 | The clone of a reference to a branch on its local branch, which `mp get` pulls only with a fast-forward; the clone of a tag or a commit without a branch; a clone with work of the author that is not committed or not pushed stays as it is | [R-CLI-004](#r-cli-004) | done ([decision 57](#decisions)); Markdown Notes adds snippets only in the clone of a branch (its decision 60) |
-| 42 | Ctrl+click on the value of a reference in the front matter opens its clone in a new window, also in the clean editing view of Markdown Notes | [R-CLI-004](#r-cli-004) | done ([decision 58](#decisions)) |
-| 43 | `mp get <owner>/<repository>` without `@<rev>`: the list of the default branch, the branches and the tags in a terminal, and the default branch without one or with `--yes` | [R-CLI-004](#r-cli-004) | done ([decision 59](#decisions)) |
-| 44 | The plugin `paper` for the editor of rendered Markdown of nimblescape Markdown, in the bundle `dist/editorPlugins.js` that the package.json contributes, for example for the editor of a whole file of Markdown Notes: the database of the sources, the markers of the lists, the anchors of the entries and the markers of the arguments to research hidden; the citations, the entries of the reference list and the lists of the special sections read-only, with Ctrl+click to their targets | [R-EDIT-001](#r-edit-001), [R-GEN-003](#r-gen-003) | done |
-| 45 | The part of the plugin `paper` in the extension, through `registerEditorPlugin` of Markdown Notes: the JSON schema of the front matter of the layout in the form of the editor, `layout` and `repos` read-only with Ctrl+click to the clone, `/cite` and "Cite" with the list of the sources in VS Code, and "Research" in the format bar | [R-EDIT-001](#r-edit-001), [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006), [R-CLI-004](#r-cli-004) | done |
-| 46 | CI installs the packages of nimblescape Markdown, whose repository is public, after `npm ci --ignore-scripts` ([decision 61](#decisions)) | [R-EDIT-001](#r-edit-001) | done |
-| 47 | The renderer, the pages and the PDF from the packages of nimblescape Markdown: `mp build`, "Export PDF" and the page preview with `@nimblescape/markdownrender` and `@nimblescape/markdownlayout`, the functions of the paper as their plugins, and the copy of their code in `src/paper/` and `src/pdf/` removed | [R-GEN-010](#r-gen-010), [R-REN-001](#r-ren-001), [R-PDF-001](#r-pdf-001), [R-PRV-001](#r-prv-001) | planned ([decision 64](#decisions)) |
-| 47 | TypeScript 6.0.3 and the shared ESLint setup of the nimblescape extensions, run by CI; Dependabot proposes no other TypeScript ([decision 63](#decisions)) | [R-GEN-009](#r-gen-009) | done |
+The plan of Markdown Paper is a part of the
+[one plan of all products](https://github.com/nimblescape/markdown/blob/main/docs/plan.md) of nimblescape Markdown
+([decision 65](#decisions)). It holds the open steps of Markdown Paper in the
+order of all work, in its [section 3](https://github.com/nimblescape/markdown/blob/main/docs/plan.md#3-open-steps), among them step 48,
+the renderer, the pages and the PDF from the packages of nimblescape Markdown
+([decision 64](#decisions)), and the rest of step 12, one formatter command
+([R-CLI-002](#r-cli-002)). It holds the built steps 1 to 47 with the numbers
+that the code, the tests and the documents name, in its
+[section 7.3](https://github.com/nimblescape/markdown/blob/main/docs/plan.md#73-nimblescape-markdown-paper).
 
 ## General
 
@@ -213,7 +172,9 @@ the language of the layout ([R-LAY-005](#r-lay-005)).
 ### R-GEN-007
 
 **This specification.** This document holds all requirements of Markdown
-Paper, the plan and the decisions ([decision 12](#decisions)). Everything that
+Paper and the decisions ([decision 12](#decisions)). The steps of the work are
+in the [one plan of all products](https://github.com/nimblescape/markdown/blob/main/docs/plan.md) of nimblescape Markdown, and the
+section [Plan](#plan) links to it ([decision 65](#decisions)). Everything that
 is built or decided is in it: each decision is also a requirement, each
 function of the extension and of the command is described, and a change of
 the code changes this document in the same commit
@@ -2417,12 +2378,14 @@ requirement ([R-GEN-007](#r-gen-007)).
     use the packages `@nimblescape/markdownrender` and
     `@nimblescape/markdownlayout` of nimblescape Markdown, and the code of the
     extension holds no copy of them.
+65. **One plan for all products** ([R-GEN-007](#r-gen-007)): the open steps
+    and the built steps of Markdown Paper are in
+    [docs/plan.md](https://github.com/nimblescape/markdown/blob/main/docs/plan.md) of nimblescape Markdown, the one plan of the
+    libraries and of all products that build on them, and the section
+    [Plan](#plan) of this document links to it.
 
 ## Open questions
 
-- One formatter command ([R-CLI-002](#r-cli-002)): the plan waits for the
-  library of `@nimblescape/markdownnotes`.
-- Values of the front matter in the text (planned in Markdown Notes): `/ref`
-  inserts a field between hidden markers, `<!--{title}-->value<!--{/title}-->`,
-  and the formatter writes the value anew from the front matter. The pages
-  show the value.
+The open questions of all products, among them those of Markdown Paper, are
+in [section 4](https://github.com/nimblescape/markdown/blob/main/docs/plan.md#4-decisions-that-wait-for-the-owner) of the one plan
+of all products ([decision 65](#decisions)).

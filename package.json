@@ -43,6 +43,7 @@
   "scripts": {
     "build": "node esbuild.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/editor",
+    "lint": "eslint",
     "test": "vitest run",
     "test:cli": "node esbuild.mjs && vitest run --config vitest.cli.config.mts",
     "test:vscode": "node esbuild.mjs && node scripts/build-vscode-tests.mjs && vscode-test --label vscode",
@@ -53,6 +54,7 @@
     "uninstall-local": "node scripts/uninstall-local.mjs"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@mermaid-js/layout-elk": "^0.2.3",
     "@mermaid-js/layout-tidy-tree": "^1.0.1",
     "@types/markdown-it": "^14.2.0",
@@ -64,6 +66,8 @@
     "@vscode/vsce": "^4.1.0",
     "citeproc": "^2.4.63",
     "esbuild": "^0.28.2",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
     "happy-dom": "^21.0.4",
     "hyphen": "^1.14.1",
     "markdown-it": "^14.3.3",
@@ -71,7 +75,8 @@
     "mermaid": "11.17.2",
     "pagedjs": "^0.4.3",
     "pdf-lib": "^1.17.1",
-    "typescript": "^7.0.2",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.72.1",
     "vitest": "^5.0.5",
     "yaml": "^2.9.1"
   },

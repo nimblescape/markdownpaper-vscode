@@ -75,6 +75,7 @@ This document replaces it where the two differ.
 | 44 | The plugin `paper` for the editor of rendered Markdown of nimblescape Markdown, in the bundle `dist/editorPlugins.js` that the package.json contributes, for example for the editor of a whole file of Markdown Notes: the database of the sources, the markers of the lists, the anchors of the entries and the markers of the arguments to research hidden; the citations, the entries of the reference list and the lists of the special sections read-only, with Ctrl+click to their targets | [R-EDIT-001](#r-edit-001), [R-GEN-003](#r-gen-003) | done |
 | 45 | The part of the plugin `paper` in the extension, through `registerEditorPlugin` of Markdown Notes: the JSON schema of the front matter of the layout in the form of the editor, `layout` and `repos` read-only with Ctrl+click to the clone, `/cite` and "Cite" with the list of the sources in VS Code, and "Research" in the format bar | [R-EDIT-001](#r-edit-001), [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006), [R-CLI-004](#r-cli-004) | done |
 | 46 | CI installs the packages of nimblescape Markdown, whose repository is public, after `npm ci --ignore-scripts` ([decision 61](#decisions)) | [R-EDIT-001](#r-edit-001) | done |
+| 47 | TypeScript 6.0.3 and the shared ESLint setup of the nimblescape extensions, run by CI; Dependabot proposes no other TypeScript ([decision 63](#decisions)) | [R-GEN-009](#r-gen-009) | done |
 
 ## General
 
@@ -245,6 +246,22 @@ renderer ([decision 26](#decisions)):
 - The renderer adds only the look: the layout, the numbers of the headings,
   the page numbers, the numbers of the lines of a listing and the source
   after the caption of a listing. It does not number a caption again.
+
+### R-GEN-009
+
+**Development tools.** The extension uses the same TypeScript and ESLint
+setup as the other nimblescape extensions ([decision 63](#decisions)):
+
+- TypeScript is exactly version 6.0.3. typescript-eslint supports TypeScript
+  only up to version 6.0, so Dependabot proposes no other version of
+  TypeScript. A move to another version is one decision for all nimblescape
+  extensions together.
+- `npm run lint` checks the sources with ESLint and typescript-eslint, with
+  the shared `eslint.config.mjs`: the recommended rules, and the rules that
+  find promises that nobody waits for, with the types of the `tsconfig.json`
+  files. CI runs it after the type check.
+- `tsconfig.json` has the shared settings of the type check of the
+  nimblescape extensions.
 
 ## Documents
 
@@ -2367,6 +2384,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     matter has the field `layout`. Citations and a database of sources do not
     make a file a paper document, so the pages, the checks and `/cite` need
     that field, and every other file keeps the Markdown preview of VS Code.
+63. **TypeScript 6.0.3 and ESLint as in the other extensions**
+    ([R-GEN-009](#r-gen-009)): the extension stays on TypeScript 6.0.3,
+    because typescript-eslint supports TypeScript only up to 6.0, and
+    Dependabot proposes no other version of TypeScript. The sources are
+    checked with the shared ESLint setup of the nimblescape extensions.
 
 ## Open questions
 

@@ -441,8 +441,8 @@ const risTypes: Record<string, string> = {
 export function readRis(text: string): Source[] {
   const sources: Source[] = [];
   let fields: [string, string][] = [];
-  for (const line of text.replace(/^﻿/, '').split(/\r?\n/)) {
-    const match = /^([A-Z][A-Z0-9])  -(?: (.*))?$/.exec(line);
+  for (const line of text.replace(/^\uFEFF/, '').split(/\r?\n/)) {
+    const match = /^([A-Z][A-Z0-9]) {2}-(?: (.*))?$/.exec(line);
     if (!match) {
       continue;
     }

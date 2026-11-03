@@ -84,7 +84,8 @@ function choose(question: string, choices: readonly Choice[], initial: number): 
   });
 }
 
-run(process.argv.slice(2), {
+// run catches its errors and returns the exit code, so the promise never rejects.
+void run(process.argv.slice(2), {
   out: (line) => process.stdout.write(`${line}\n`),
   err: (line) => process.stderr.write(`${line}\n`),
   ...(interactive

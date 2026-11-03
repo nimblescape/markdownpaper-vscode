@@ -13,7 +13,9 @@
 // the notices of the package into media/plantuml/ and cli/dist/plantuml/. The command line has no Mermaid extension of
 // VS Code: the build bundles the script src/page/mermaid.ts, which draws the diagrams of Mermaid in the page of its PDF,
 // with Mermaid into cli/dist/mermaid/, as an ECMAScript module with parts that it loads when a diagram needs them, and
-// writes their notices beside them. npm puts the license of the folder of a package into the package, so the build
+// writes their notices beside them. The plugins of this extension for the editor of rendered Markdown of nimblescape
+// Markdown go into dist/editorPlugins.js, a script that uses the modules of the page of the editor
+// (scripts/install-markdown.mjs installs the packages of nimblescape Markdown for its build). npm puts the license of the folder of a package into the package, so the build
 // copies LICENSE and THIRD-PARTY-NOTICES.md into cli/. VS Code provides the module `vscode` at run time, so the bundle
 // leaves it out. The bundles are readable JavaScript: not minified, so that they keep the names of the source and anyone
 // can read the code of the packages and compare it with the source (CONTRIBUTING.md, "Reviewing the package"). Only
@@ -23,6 +25,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as esbuild from 'esbuild';
+import { sharedModulesPlugin } from '@nimblescape/markdowneditor/bundle';
 import { thirdPartyNotices } from './scripts/third-party-notices.mjs';
 
 // An import with the suffix ?raw is the text of its file, as in vitest: the instructions print the documents of docs/.
@@ -95,6 +98,26 @@ if (notices.missing.length > 0) {
   throw new Error(`The packages ${notices.missing.join(', ')} of the script of Mermaid hold no text of their license.`);
 }
 fs.writeFileSync('cli/dist/mermaid/THIRD-PARTY-NOTICES.md', notices.text);
+
+// The bundle of the plugins of the editor of rendered Markdown of nimblescape Markdown (src/editor/editorPlugins.ts), a
+// script for the page of the editor, for example of the editor of a whole file of nimblescape Markdown Notes. It holds
+// no copy of Tiptap, ProseMirror or the libraries of nimblescape Markdown: each import of them reads the module of the
+// page (sharedModulesPlugin), so it holds only the code of this extension.
+if (production) {
+  fs.rmSync('dist/editorPlugins.js.map', { force: true });
+}
+await esbuild.build({
+  entryPoints: ['src/editor/editorPlugins.ts'],
+  outfile: 'dist/editorPlugins.js',
+  bundle: true,
+  format: 'iife',
+  platform: 'browser',
+  target: 'es2022',
+  sourcemap: !production,
+  minify: false,
+  plugins: [sharedModulesPlugin()],
+  logLevel: 'info',
+});
 
 for (const bundle of bundles) {
   // A production build writes no source map: remove the map of an earlier development build, so that no map that does

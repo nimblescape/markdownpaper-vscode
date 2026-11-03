@@ -17,6 +17,9 @@ request.
 | `src/settings.ts` | The settings of the extension, their defaults, and the check of their values ([R-SET-001](docs/requirements.md#r-set-001)). It uses no API of VS Code. |
 | `src/notesApi.ts` | The interface of nimblescape Markdown Notes ([R-GEN-003](docs/requirements.md#r-gen-003)): `getAPI(1).fileOf(uri)`, the file behind a document of its clean editing view, and the open document with the same path without the interface; `registerWithNotes`, which registers parts once Markdown Notes started. |
 | `src/notesParts.ts` | The parts of the paper in the editor of Markdown Notes: the database of the sources and the start markers of `/research` hidden in the clean editing view, and the slash command `/research` ([R-CITE-002](docs/requirements.md#r-cite-002)). |
+| `src/editor/paperPlugin.ts`, `src/editor/editorPlugins.ts`, `src/editor/tsconfig.json` | The plugin `paper` of the editor of rendered Markdown of nimblescape Markdown ([R-EDIT-001](docs/requirements.md#r-edit-001)): the hidden database of the sources, markers of the lists, anchors of the entries and markers of the arguments to research, the read-only citations, entries and lists with Ctrl+click to their targets, and the guard of the database; `editorPlugins.ts` registers it in the bundle `dist/editorPlugins.js`. Its type check has the types of the browser. |
+| `src/editorParts.ts`, `src/paper/editorMessages.ts`, `src/paper/frontMatterSchema.ts` | The part in the extension of the plugin `paper` of the editor ([R-EDIT-001](docs/requirements.md#r-edit-001)), which connects through `registerEditorPlugin` of Markdown Notes: the schema of the front matter of the layout, the clones of the references and the list of `/cite`; the messages of its channel; and the JSON schema of the front matter of a layout. |
+| `src/paper/marks.ts` | The marks of a paper that the format step, the checks and the plugin of the editor share: the name of the database of the sources, the form of an ID, the marker of an argument to research with its places in a selected argument, and the codes of the lists. |
 | `src/workspaceHost.ts` | The host of the renderer in VS Code: it reads the files through VS Code, the open documents first, and finds the layouts in the workspace and in the extension. |
 | `src/pagePreview.ts`, `media/pagePreview.js`, `media/pagePreview.css` | The page preview ([R-PRV-001](docs/requirements.md#r-prv-001) to [R-PRV-004](docs/requirements.md#r-prv-004)): the webview panel of each file, its first page and its updates after a pause, the restore after a restart, and the script of the webview that makes the new pages with Paged.js beside the old ones, keeps the place on the page and passes a click to the extension. |
 | `src/frontMatterChecks.ts` | The warnings of the checks in the text editor and the hover of the fields of the front matter ([R-DOC-002](docs/requirements.md#r-doc-002), [R-DOC-003](docs/requirements.md#r-doc-003)). |
@@ -52,20 +55,20 @@ request.
 | `src/**/*.test.ts` | The unit tests, with vitest: the manifest, the package contents, the third-party notices and the documents (`src/manifest.test.ts`), the text of the pages (`src/paper/markdown.test.ts`), the front matter, the layouts, the templates, the hyphenation, the page, the checks, the scaffold and the instructions (`src/paper/paper.test.ts`), the PDF (`src/pdf/pdf.test.ts`), the command (`src/cli/cli.test.ts`) and the settings. |
 | `test/cli/` | The tests of the built command `mp` (`cli/dist/mp.js`) in the temporary folder of the system; the test of the PDF runs when a Chrome, Chromium or Edge is installed. |
 | `test/vscode/` | The tests in a real VS Code: the commands, the warnings and the hover of the front matter, the page preview with its pages, and "Export PDF". |
-| `dist/`, `media/paged.polyfill.js`, `media/plantuml/` | The bundle `dist/extension.js`, the copy of Paged.js and the copy of the page files of `@nimblescape/plantuml`, built by `esbuild.mjs` and kept out of Git. |
+| `dist/`, `media/paged.polyfill.js`, `media/plantuml/` | The bundle `dist/extension.js`, the bundle of the plugins of the editor `dist/editorPlugins.js`, the copy of Paged.js and the copy of the page files of `@nimblescape/plantuml`, built by `esbuild.mjs` and kept out of Git. |
 | `cli/package.json`, `cli/package-lock.json`, `cli/README.md` | The npm package `@nimblescape/markdownpaper`: its manifest, its lock file without dependencies and its page on npmjs.com. The build writes `cli/dist/mp.js` and the script of Mermaid in `cli/dist/mermaid/`, copies Paged.js, the built-in layouts and the page files of `@nimblescape/plantuml` into `cli/dist/`, and `LICENSE` and `THIRD-PARTY-NOTICES.md` into `cli/`, all kept out of Git. |
 | `out/`, `.vscode-test/` | The bundled tests in VS Code (`scripts/build-vscode-tests.mjs`) and the VS Code that `@vscode/test-cli` downloads for them, kept out of Git. |
-| `THIRD-PARTY-NOTICES.md` | The packages that the bundle contains, the packages of the file of Paged.js and the page files of `@nimblescape/plantuml`, their licenses and the places of their source code. The build writes the notices of the script of Mermaid into `cli/dist/mermaid/`. |
+| `THIRD-PARTY-NOTICES.md` | The packages that the bundle contains, the packages of the file of Paged.js, the package of nimblescape Markdown in `dist/editorPlugins.js` and the page files of `@nimblescape/plantuml`, their licenses and the places of their source code. The build writes the notices of the script of Mermaid into `cli/dist/mermaid/`. |
 | `SUPPORT.md` | Where to ask questions and report problems, and what a report contains. |
-| `esbuild.mjs` | Bundles `src/extension.ts` into `dist/extension.js` for the Node.js of VS Code, and `src/cli/main.ts` into `cli/dist/mp.js` for Node.js 22 or later; imports with `?raw` become text. It copies Paged.js into `media/` and `cli/dist/`, the layouts into `cli/dist/layouts/`, the page files of `@nimblescape/plantuml` with its notices into `media/plantuml/` and `cli/dist/plantuml/`, and `LICENSE` and `THIRD-PARTY-NOTICES.md` into `cli/`. It bundles `src/page/mermaid.ts` with Mermaid into `cli/dist/mermaid/` for the browser, in parts, and writes their notices beside them. The editor API stays outside the bundles. The bundles are readable JavaScript, not minified; only the script of Mermaid has no spaces. A production build (`--production`) has no source map. |
-| `tsconfig.json` | The settings of the type check: strict, and no output, because esbuild builds the bundle. It covers `src/` and `test/`. |
+| `esbuild.mjs` | Bundles `src/extension.ts` into `dist/extension.js` for the Node.js of VS Code, and `src/cli/main.ts` into `cli/dist/mp.js` for Node.js 22 or later; imports with `?raw` become text. It copies Paged.js into `media/` and `cli/dist/`, the layouts into `cli/dist/layouts/`, the page files of `@nimblescape/plantuml` with its notices into `media/plantuml/` and `cli/dist/plantuml/`, and `LICENSE` and `THIRD-PARTY-NOTICES.md` into `cli/`. It bundles `src/page/mermaid.ts` with Mermaid into `cli/dist/mermaid/` for the browser, in parts, and writes their notices beside them. It bundles `src/editor/editorPlugins.ts` into `dist/editorPlugins.js` for the page of the editor, with the plugin `sharedModulesPlugin` of `@nimblescape/markdowneditor/bundle`, so that the bundle reads Tiptap, ProseMirror and the libraries of nimblescape Markdown from the page. The editor API stays outside the bundles. The bundles are readable JavaScript, not minified; only the script of Mermaid has no spaces. A production build (`--production`) has no source map. |
+| `tsconfig.json` | The settings of the type check: strict, and no output, because esbuild builds the bundle. It covers `src/` and `test/` without `src/editor/`, which `src/editor/tsconfig.json` checks with the types of the browser. |
 | `vitest.config.mts`, `vitest.cli.config.mts` | The settings of the unit tests, and of the tests of the built command `mp`. |
 | `.vscode-test.mjs` | The settings of the tests in VS Code: the VS Code version (`VSCODE_TEST_VERSION`, stable by default), the files of `out/test/vscode/`, and mocha. |
 | `package.json` | The extension manifest. The section [Manifest](#manifest) explains it. |
 | `package-lock.json` | The locked development tools. npm writes this file, and nobody edits it by hand. |
 | `.node-version` | The Node release of the development tools. `actions/setup-node` in the workflows and local Node version managers read it. |
-| `.vscodeignore` | Lists the files of the package: `dist/extension.js`, the copy of the npm package in `cli/` (`cli/package.json`, `cli/dist/mp.js`, Paged.js, the layouts, the page files of `@nimblescape/plantuml` and the script of Mermaid with its notices, without source maps), the files of `media/` for the pages, `layouts/**`, `schemas/layout.schema.json`, `resources/icon.png`, `package.json`, `README.md`, `CHANGELOG.md`, `SUPPORT.md`, `LICENSE` and `THIRD-PARTY-NOTICES.md`. `src/manifest.test.ts` checks the list. |
-| `.github/workflows/ci.yml` | Checks the types, runs all tests, packages the VSIX and the npm package for every push to `main`, every pull request and the commit of every release, and runs the tests of `mp` on Ubuntu and macOS with Node.js 22 and 26. The tests of the PDF use the Google Chrome of the runners. The release publishes the packages of this workflow, so a change of it needs a dry run (rule 4 of the [release rules](#release-rules)). |
+| `.vscodeignore` | Lists the files of the package: `dist/extension.js`, `dist/editorPlugins.js`, the copy of the npm package in `cli/` (`cli/package.json`, `cli/dist/mp.js`, Paged.js, the layouts, the page files of `@nimblescape/plantuml` and the script of Mermaid with its notices, without source maps), the files of `media/` for the pages, `layouts/**`, `schemas/layout.schema.json`, `resources/icon.png`, `package.json`, `README.md`, `CHANGELOG.md`, `SUPPORT.md`, `LICENSE` and `THIRD-PARTY-NOTICES.md`. `src/manifest.test.ts` checks the list. |
+| `.github/workflows/ci.yml` | Installs the packages of nimblescape Markdown and of nimblescape PlantUML after `npm ci --ignore-scripts`, checks the types, runs all tests, packages the VSIX and the npm package for every push to `main`, every pull request and the commit of every release, and runs the tests of `mp` on Ubuntu and macOS with Node.js 22 and 26. The tests of the PDF use the Google Chrome of the runners. The release publishes the packages of this workflow, so a change of it needs a dry run (rule 4 of the [release rules](#release-rules)). |
 | `.github/workflows/vscode-versions.yml` | Runs `ci.yml` once per week with VS Code Insiders and with the lowest supported VS Code version. |
 | `.github/workflows/release.yml` | Releases a version on a manual start. The section [Release](#release) explains it. |
 | `.github/workflows/release-dry-run.yml` | Fails on a pull request that changes the release process (`release.yml`, `ci.yml` or `scripts/release-checks.mjs`) until a dry run on its branch tested the change (rule 4 of the [release rules](#release-rules)). |
@@ -73,6 +76,7 @@ request.
 | `.github/dependabot.yml` | Proposes weekly updates of the development tools and of the pinned actions. |
 | `scripts/build-vscode-tests.mjs` | Bundles each test of `test/vscode/` into `out/test/vscode/` for the tests in VS Code. |
 | `scripts/third-party-notices.mjs` | Writes the notices of the packages of a bundle from the installed packages, for the script of Mermaid (see [Diagrams of Mermaid on the command line](#diagrams-of-mermaid-on-the-command-line)). |
+| `scripts/install-markdown.mjs` | Installs the npm packages `@nimblescape/markdowntext`, `@nimblescape/markdownrender` and `@nimblescape/markdowneditor` of nimblescape Markdown from its GitHub repository at a fixed commit, for the build and the tests of the plugin of the editor, until the packages are on npmjs.com (see [The editor of nimblescape Markdown](#the-editor-of-nimblescape-markdown)). |
 | `scripts/install-plantuml.mjs` | Installs the npm package `@nimblescape/plantuml` of nimblescape PlantUML from its GitHub repository at a fixed commit, until the package is on npmjs.com (see [Diagrams of nimblescape PlantUML](#diagrams-of-nimblescape-plantuml)). |
 | `scripts/install-local.mjs`, `scripts/uninstall-local.mjs` | Install the built package into every profile of the VS Code of this computer, and remove it again. |
 | `scripts/marketplace-setup.sh` | Sets up the Marketplace publishing of the repository ([Setup of a repository](#setup-of-a-repository)). |
@@ -94,8 +98,9 @@ Node.js 22 or later (`engines` of `cli/package.json`).
 | Command | Effect |
 | --- | --- |
 | `npm ci --ignore-scripts` | Installs the locked development tools and runs no install script of a dependency. |
-| `node scripts/install-plantuml.mjs` | Installs `@nimblescape/plantuml` from GitHub after `npm ci --ignore-scripts`, which skips it; `npm ci` and `npm install` run it as the script `postinstall`. It does nothing when the package of its commit is installed. |
-| `npm run typecheck` | Checks the types with `tsc`. esbuild does not check them. |
+| `node scripts/install-markdown.mjs` | Installs the packages of nimblescape Markdown from GitHub after `npm ci --ignore-scripts`, which skips it; `npm ci` and `npm install` run it as a part of the script `postinstall`. It does nothing when the packages of its commit are installed. Where git cannot read the private repository, `NIMBLESCAPE_MARKDOWN_TOKEN` gives a token that may read it. |
+| `node scripts/install-plantuml.mjs` | Installs `@nimblescape/plantuml` from GitHub after `npm ci --ignore-scripts`, which skips it; `npm ci` and `npm install` run it as a part of the script `postinstall`. It does nothing when the package of its commit is installed. |
+| `npm run typecheck` | Checks the types with `tsc`, of `src/editor/` with its own settings. esbuild does not check them. |
 | `npm test` | Runs the unit tests with vitest. The tests touch no installed editor and start no browser. |
 | `npm run test:cli` | Builds the bundles and runs the tests of the built `mp` in the temporary folder of the system. The test of the PDF needs an installed Chrome, Chromium or Edge, or `MARKDOWNPAPER_BROWSER`. |
 | `npm run test:vscode` | Builds the bundle and the tests in VS Code, downloads VS Code to `.vscode-test/` and runs the tests in it. On Linux without a display, run it as `xvfb-run -a npm run test:vscode`. `VSCODE_TEST_VERSION=insiders` or a version such as `1.125.0` selects another VS Code. |
@@ -111,9 +116,9 @@ change can be tried without a package.
 
 ## Reviewing the package
 
-The VSIX holds the bundle `dist/extension.js` as readable JavaScript: not
-minified, with the names of the source, and with a comment that names each
-source file. To compare a VSIX with the sources, unpack it (a VSIX is a ZIP
+The VSIX holds the bundles `dist/extension.js` and `dist/editorPlugins.js` as
+readable JavaScript: not minified, with the names of the source, and with a
+comment that names each source file. To compare a VSIX with the sources, unpack it (a VSIX is a ZIP
 file), run `npm ci --ignore-scripts` and `npm run vscode:prepublish` at the
 tag of its version, and compare `extension/dist/` of the VSIX with `dist/`.
 `media/paged.polyfill.js` is the file `dist/paged.polyfill.js` of the npm
@@ -138,6 +143,7 @@ build at the tag gives the same files.
 - The activation event `onLanguage:markdown` starts the extension when a Markdown file opens, and `onWebviewPanel:nimblescape.markdownPaper.pagePreview` when VS Code restores a page preview.
 - The commands are in the category "Markdown Paper". "Show Page Preview" is a button in the title of a Markdown file (`editor/title`), "Export PDF" an entry of its menu "Run" (`editor/title/run`), also in the title of the page preview, and "Export PDF", "New Document" and "New Layout" are entries of the context menu of the Explorer. A test checks the commands against `src/extension.ts`.
 - The configuration contribution declares the settings of `src/settings.ts` in the section `nimblescape.markdownPaper`. `browserPath` has the scope `machine`, so that only the settings of the user name a program, and the capability `untrustedWorkspaces` lists it as restricted. A test keeps the defaults equal to `src/settings.ts`, and a test checks that the README, the guide and the requirements name every setting.
+- `contributes["nimblescape.markdown.extensions"].editorScripts` names the bundle `dist/editorPlugins.js` of the plugin of the editor of nimblescape Markdown ([R-EDIT-001](docs/requirements.md#r-edit-001)); VS Code does not read this entry, the editor of Markdown Notes reads it.
 - The package has no runtime dependency: the bundle contains every package, and the package holds Paged.js as a file. `allowScripts` lists the install scripts of dependencies that npm may run: those of esbuild and `@vscode/vsce-sign`, and not the one of fsevents.
 
 `README.md` is the page of the Marketplace and `CHANGELOG.md` its tab
@@ -179,8 +185,39 @@ package and copies its files into `node_modules/@nimblescape/plantuml`. The
 CI runs it after `npm ci --ignore-scripts`. A new version of the renderer is a
 new commit in the script. After the release of nimblescape PlantUML, the
 package becomes a development dependency of `package.json` with its version,
-and the script, its step in the CI and the script `postinstall` go away. The
+and the script, its step in the CI and its part of the script `postinstall` go away. The
 release of Markdown Paper waits for the release of the package.
+
+## The editor of nimblescape Markdown
+
+The plugin `paper` ([R-EDIT-001](docs/requirements.md#r-edit-001)) adds the
+parts of a paper to the editor of rendered Markdown of
+[nimblescape Markdown](https://github.com/nimblescape/markdown), for example
+in the editor of a whole file of Markdown Notes. `esbuild.mjs` bundles it into
+`dist/editorPlugins.js`, and `package.json` names that file in
+`contributes["nimblescape.markdown.extensions"].editorScripts`. The page of
+the editor loads the contributed scripts before the editor starts. The bundle
+holds no copy of Tiptap, ProseMirror or the libraries of nimblescape
+Markdown: the plugin `sharedModulesPlugin` of
+`@nimblescape/markdowneditor/bundle` makes each of their imports read the
+module of the page, so the plugin works with the same classes as the editor.
+The bundle registers the plugin with `registerPlugin` of the same entry
+point. Its part in the extension, `src/editorParts.ts`, connects through
+`registerEditorPlugin` of the API of Markdown Notes, and both parts exchange
+the messages of `src/paper/editorMessages.ts` through the channel of the
+plugin.
+
+The packages of nimblescape Markdown are not on npmjs.com before its release,
+and npm cannot install a folder of a repository. So
+`scripts/install-markdown.mjs` fetches the commit that it names, builds the
+packages, packs them and installs the packed packages into `node_modules/`
+without a change of `package.json` and `package-lock.json`, as Markdown Notes
+does. The repository of nimblescape Markdown is public, so git reads it
+without a token, also in CI, which runs the script after
+`npm ci --ignore-scripts`. A new version of the libraries is a new
+commit in the script. After the release of nimblescape Markdown, the packages
+become development dependencies of `package.json` with their versions, and
+the script and its part of the script `postinstall` go away.
 
 ## The download of Chromium
 

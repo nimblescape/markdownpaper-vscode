@@ -45,6 +45,25 @@ export interface NotesApiV1 {
    * Markdown Notes ignores `selection` and gives the empty range at the place of the command.
    */
   registerSlashCommand?(command: SlashCommand): vscode.Disposable;
+  /**
+   * registerEditorPlugin connects the part in this extension of a plugin of the editor of a whole file of Markdown
+   * Notes, whose part on the page the script of `contributes["nimblescape.markdown.extensions"].editorScripts` of the
+   * package.json holds: `connect` runs for each open panel of the editor and for each panel that opens later. An older
+   * version of Markdown Notes does not have it.
+   */
+  registerEditorPlugin?(name: string, connect: (channel: EditorPanelChannel) => void | vscode.Disposable): vscode.Disposable;
+}
+
+/** EditorPanelChannel is the channel of a plugin of the editor of Markdown Notes in one panel of the editor. */
+export interface EditorPanelChannel {
+  /** document is the document of the panel: the file. */
+  readonly document: vscode.TextDocument;
+  /** panel is the webview panel. */
+  readonly panel: vscode.WebviewPanel;
+  /** post sends a message to the part of the plugin on the page. */
+  post(message: unknown): Thenable<boolean>;
+  /** onMessage calls a listener with each message of the part of the plugin on the page. */
+  onMessage(listener: (message: unknown) => void): vscode.Disposable;
 }
 
 /** SlashCommand is a slash command of the text editor that Markdown Notes offers for this extension. */

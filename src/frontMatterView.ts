@@ -35,7 +35,7 @@ const readOnlyKeys = new Set(['layout', 'repos']);
  * @param file - The file.
  * @param text - The text of the file.
  */
-async function layoutOf(extension: vscode.Uri, file: vscode.Uri, text: string): Promise<{ layout?: Layout; problem: string }> {
+export async function layoutOf(extension: vscode.Uri, file: vscode.Uri, text: string): Promise<{ layout?: Layout; problem: string }> {
   const name = readFrontMatter(text)?.values.layout?.trim() || 'plain';
   const found = await findLayout(searchHost(extension, file), file.toString(), name);
   const errors = found.problems.filter((problem) => problem.severity === 'error').map((problem) => problem.message);

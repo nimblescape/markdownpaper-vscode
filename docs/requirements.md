@@ -72,6 +72,9 @@ This document replaces it where the two differ.
 | 41 | The clone of a reference to a branch on its local branch, which `mp get` pulls only with a fast-forward; the clone of a tag or a commit without a branch; a clone with work of the author that is not committed or not pushed stays as it is | [R-CLI-004](#r-cli-004) | done ([decision 57](#decisions)); Markdown Notes adds snippets only in the clone of a branch (its decision 60) |
 | 42 | Ctrl+click on the value of a reference in the front matter opens its clone in a new window, also in the clean editing view of Markdown Notes | [R-CLI-004](#r-cli-004) | done ([decision 58](#decisions)) |
 | 43 | `mp get <owner>/<repository>` without `@<rev>`: the list of the default branch, the branches and the tags in a terminal, and the default branch without one or with `--yes` | [R-CLI-004](#r-cli-004) | done ([decision 59](#decisions)) |
+| 44 | The plugin `paper` for the editor of rendered Markdown of nimblescape Markdown, in the bundle `dist/editorPlugins.js` that the package.json contributes, for example for the editor of a whole file of Markdown Notes: the database of the sources, the markers of the lists, the anchors of the entries and the markers of the arguments to research hidden; the citations, the entries of the reference list and the lists of the special sections read-only, with Ctrl+click to their targets | [R-EDIT-001](#r-edit-001), [R-GEN-003](#r-gen-003) | done |
+| 45 | The part of the plugin `paper` in the extension, through `registerEditorPlugin` of Markdown Notes: the JSON schema of the front matter of the layout in the form of the editor, `layout` and `repos` read-only with Ctrl+click to the clone, `/cite` and "Cite" with the list of the sources in VS Code, and "Research" in the format bar | [R-EDIT-001](#r-edit-001), [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006), [R-CLI-004](#r-cli-004) | done |
+| 46 | CI installs the packages of nimblescape Markdown, whose repository is public, after `npm ci --ignore-scripts` ([decision 61](#decisions)) | [R-EDIT-001](#r-edit-001) | done |
 
 ## General
 
@@ -164,6 +167,11 @@ without it.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
+- *(proposal)* For its editor of a whole file, Markdown Notes loads the
+  plugins that other extensions contribute in their package.json, and its
+  version 1 has `registerEditorPlugin(name, connect)`, which connects the
+  part of such a plugin in the other extension. Markdown Paper contributes
+  its plugin of the editor ([R-EDIT-001](#r-edit-001)).
 - The ID of Markdown Notes is `nimblescape.nimblescape-markdownnotes`.
 
 ### R-GEN-004
@@ -1950,6 +1958,66 @@ writes no metadata ([decision 42](#decisions)).
 - AI agents and the command `mp` do not use Zotero; agents add
   sources with `mp source` ([R-CITE-005](#r-cite-005)).
 
+## Editor
+
+### R-EDIT-001
+
+*(proposal)* **The plugin of the editor of nimblescape Markdown.** Markdown
+Paper adds its parts to the editor of rendered Markdown of nimblescape
+Markdown, for example in the editor of a whole file of Markdown Notes
+([R-GEN-003](#r-gen-003)). The bundle `dist/editorPlugins.js` holds the
+plugin `paper`. The package.json names it in
+`contributes["nimblescape.markdown.extensions"].editorScripts`, and the page
+of the editor loads it before the editor starts (the plugins of other
+extensions of the specification of nimblescape Markdown,
+[R-PLUGIN-002](https://github.com/nimblescape/markdown/blob/main/docs/plugins.md#r-plugin-002)
+and
+[R-VSC-008](https://github.com/nimblescape/markdown/blob/main/docs/platforms.md#r-vsc-008)).
+The bundle uses the modules of the page and holds only the code of this
+extension. Before the release of nimblescape Markdown,
+`scripts/install-markdown.mjs` installs its packages for the build from a
+fixed commit of its repository, as Markdown Notes does. The repository of
+nimblescape Markdown is public, so CI reads it without a token
+([decision 61](#decisions)).
+
+- The database of the sources ([R-CITE-001](#r-cite-001)) and the markers
+  of the lists of the special sections ([R-REN-004](#r-ren-004)) are hidden
+  blocks. The anchor at the start of an entry of the reference list and the
+  start marker of an argument to research ([R-CITE-002](#r-cite-002)) are
+  hidden in the line. Each keeps its text byte for byte.
+- The parts that the format step writes ([R-GEN-008](#r-gen-008)) are
+  read-only: the text of a citation, each entry of the reference list, and
+  each list of a special section. Ctrl+click (Cmd+click on macOS) on a
+  citation goes to the entry of its source, and on a link of a list to its
+  heading or its caption. The user changes these parts through what they
+  come from, and the format step writes them again when the file is saved.
+- Backspace and Delete jump over the hidden anchors and markers in the line.
+  A database of the sources that an edit of the user deletes goes back to
+  the end of the document.
+- In the pages of the editor, the anchors of the entries stay, so that the
+  citations go to their entries, and the other markup has no output.
+- *(proposal)* The part of the plugin in the extension connects through
+  `registerEditorPlugin` of Markdown Notes ([R-GEN-003](#r-gen-003)) and the
+  channel of the plugin. It gives the form of the front matter of the editor
+  the JSON schema of the layout of the document: `layout`, the fields of the
+  layout with their descriptions, defaults, values and the required ones, and
+  `lang` with the language of the layout as its default, in the order of the
+  view "Front Matter" ([R-DOC-005](#r-doc-005)). It sends the schema again
+  after a change of `layout` or of a file of a layout. A document that is no
+  paper gets no schema.
+- *(proposal)* `layout` and `repos` are read-only in the form, because only
+  the command `mp` writes them. Ctrl+click (Cmd+click on macOS) on a
+  reference to GitHub runs "Open Repository in New Window" for it
+  ([R-CLI-004](#r-cli-004)).
+- *(proposal)* In a paper, `/cite` in the slash commands and in the insert
+  menu, and "Cite" in the format bar, show the list of `/cite` in VS Code
+  ([R-CITE-006](#r-cite-006)); the editor inserts the citation of the chosen
+  source at the cursor or after the selected text, with a space before it
+  after a word. An item of Zotero goes into the database first.
+- *(proposal)* "Research" in the format bar marks the selected argument as
+  `/research` does in the text editor ([R-CITE-002](#r-cite-002)). It shows
+  only in a paper and only on a selection that is an argument.
+
 ## Settings
 
 ### R-SET-001
@@ -2289,6 +2357,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     the file; the form shows it with a warning and a button that removes it.
     The form also shows for a Markdown file without the field `layout`, with
     the fields of the built-in layout `plain`.
+61. **nimblescape Markdown is public** ([R-EDIT-001](#r-edit-001)): the
+    repository of nimblescape Markdown is public before its release, so that
+    CI reads it without a token. CI installs the packages of nimblescape
+    Markdown with `node scripts/install-markdown.mjs` after
+    `npm ci --ignore-scripts`, as Markdown Notes does.
 
 ## Open questions
 

@@ -25,10 +25,8 @@
 
 import { bodyOf, readFrontMatter } from './frontMatter';
 import type { Layout } from './layout';
+import { listCodes } from './marks';
 import { type Body, inContents, renderBody } from './markdown';
-
-/** listCodes are the codes of the sections with a list, and the names of their markers. */
-const listCodes = { TOC: 'toc', LOF: 'lof', LOT: 'lot', LOL: 'lol' } as const;
 
 type ListCode = keyof typeof listCodes;
 

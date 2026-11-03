@@ -14,6 +14,7 @@ import * as fs from 'node:fs';
 import { builtinModules, createRequire } from 'node:module';
 import * as path from 'node:path';
 import * as esbuild from 'esbuild';
+import { sharedModulesPlugin } from '@nimblescape/markdowneditor/bundle';
 import { expect, test, vi } from 'vitest';
 import { commands, extensionId } from './extension';
 import { drawingsCss, lightThemeColors } from './paper/extensionStyles';
@@ -167,13 +168,14 @@ test('the README, the guide and the requirements name every setting that the man
   }
 });
 
-test('the package holds the bundle, Paged.js, the page files of @nimblescape/plantuml, the scripts and the style of the pages in the Markdown preview, the built-in layouts, the copy of the npm package in cli/, the icon and the documents only', () => {
+test('the package holds the bundle, the plugins of the editor, Paged.js, the page files of @nimblescape/plantuml, the scripts and the style of the pages in the Markdown preview, the built-in layouts, the copy of the npm package in cli/, the icon and the documents only', () => {
   const patterns = read('.vscodeignore')
     .split('\n')
     .filter((line) => line && !line.startsWith('#'));
   expect(patterns).toEqual([
     '**',
     '!dist/extension.js',
+    '!dist/editorPlugins.js',
     '!cli/package.json',
     '!cli/dist/mp.js',
     '!cli/dist/paged.polyfill.js',
@@ -305,9 +307,21 @@ test('the third-party notices name every package that the build bundles, and the
     logLevel: 'silent',
     plugins: [raw],
   });
+  // The bundle of the plugins of the editor reads the shared modules from the page; it holds the rest (esbuild.mjs).
+  const editor = await esbuild.build({
+    entryPoints: [path.join(repository, 'src/editor/editorPlugins.ts')],
+    bundle: true,
+    format: 'iife',
+    platform: 'browser',
+    write: false,
+    outdir: path.join(repository, 'out/manifest-test'),
+    metafile: true,
+    logLevel: 'silent',
+    plugins: [sharedModulesPlugin()],
+  });
   // The folder of a package is the part of the path up to the name after the last node_modules.
   const packages = new Set<string>(['node_modules/pagedjs']);
-  for (const input of Object.keys(result.metafile.inputs)) {
+  for (const input of [...Object.keys(result.metafile.inputs), ...Object.keys(editor.metafile.inputs)]) {
     const folder = /^(.*node_modules\/(?:@[^/]+\/)?[^/]+)\//.exec(input)?.[1];
     if (folder) {
       packages.add(folder);

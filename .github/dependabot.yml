@@ -29,6 +29,12 @@ updates:
       # mermaid stays at the version of the Mermaid extension of VS Code (CONTRIBUTING.md, "Diagrams of Mermaid on the
       # command line").
       - dependency-name: 'mermaid'
+      # The layouts of Mermaid keep their major version, because a new major version can need a newer mermaid
+      # (@mermaid-js/layout-elk 1 needs mermaid 12).
+      - dependency-name: '@mermaid-js/layout-elk'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@mermaid-js/layout-tidy-tree'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
     schedule:

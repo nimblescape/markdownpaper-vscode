@@ -211,11 +211,15 @@ the more than 60 packages of the script from the installed packages; the
 build stops when a package has no text of its license.
 
 The version of `mermaid` in `package.json` is the version of the Mermaid
-extension of the newest VS Code; Dependabot does not change it. With a new
+extension of the newest VS Code; Dependabot does not change it. Dependabot
+also keeps the major versions of the layouts `@mermaid-js/layout-elk` and
+`@mermaid-js/layout-tidy-tree`, because a new major version of a layout can
+need a newer Mermaid (`@mermaid-js/layout-elk` 1 needs Mermaid 12). With a new
 version of VS Code, find the version of Mermaid in the scripts of the folder
 `resources/app/extensions/mermaid-markdown-features/markdown-preview-out/` of
 that VS Code (the text `version:"<version>"`), and compare it, the elements
-that the extension writes and its theme with this script. ZenUML and the icon packs of the extension are not
+that the extension writes and its theme with this script. When the version of
+Mermaid changes, update the two layouts to the versions that work with it. ZenUML and the icon packs of the extension are not
 part of the script: ZenUML holds React and other packages without the text of
 their licenses, and the icon packs have more than 10 MB.
 

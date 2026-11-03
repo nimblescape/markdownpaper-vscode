@@ -42,11 +42,11 @@
   "main": "./dist/extension.js",
   "scripts": {
     "build": "node esbuild.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/editor",
     "test": "vitest run",
     "test:cli": "node esbuild.mjs && vitest run --config vitest.cli.config.mts",
     "test:vscode": "node esbuild.mjs && node scripts/build-vscode-tests.mjs && vscode-test --label vscode",
-    "postinstall": "node scripts/install-plantuml.mjs",
+    "postinstall": "node scripts/install-markdown.mjs && node scripts/install-plantuml.mjs",
     "vscode:prepublish": "node esbuild.mjs --production",
     "package": "vsce package --no-dependencies",
     "install-local": "node scripts/install-local.mjs",
@@ -64,6 +64,7 @@
     "@vscode/vsce": "^4.1.0",
     "citeproc": "^2.4.63",
     "esbuild": "^0.28.2",
+    "happy-dom": "^21.0.4",
     "hyphen": "^1.14.1",
     "markdown-it": "^14.3.3",
     "markdown-it-footnote": "^4.0.0",
@@ -261,6 +262,11 @@
           "markdownDescription": "The group libraries of Zotero that `/cite` and \"Update Sources from Zotero\" read besides your personal library: the number of each group, or its address on zotero.org, for example `https://www.zotero.org/groups/1234567/thesis`. The API key of \"Connect Zotero\" must be allowed to read each group."
         }
       }
+    },
+    "nimblescape.markdown.extensions": {
+      "editorScripts": [
+        "dist/editorPlugins.js"
+      ]
     },
     "markdown.markdownItPlugins": true,
     "markdown.previewScripts": [

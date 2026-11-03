@@ -6,7 +6,8 @@
  * The editor wiring of nimblescape Markdown Paper: the activation starts the checks of the front matter, the context
  * key of paper documents, the format step of the paper in the formatter of Markdown Notes
  * ([formatStep.ts](formatStep.ts)), the parts of the paper in the editor of Markdown Notes
- * ([notesParts.ts](notesParts.ts)), the citations from the editor and from Zotero ([cite.ts](cite.ts)), the command mp
+ * ([notesParts.ts](notesParts.ts)) and in its editor of a whole file ([editorParts.ts](editorParts.ts)), the citations from
+ * the editor and from Zotero ([cite.ts](cite.ts)), the command mp
  * in the terminals of VS Code ([terminal.ts](terminal.ts)) and the commands, and returns the export of the extension: the markdown-it plugin
  * of the pages in the Markdown preview of VS Code ([markdownPreview.ts](markdownPreview.ts)), which VS Code reads, and
  * the functions that the tests in VS Code read.
@@ -16,6 +17,7 @@ import type MarkdownIt from 'markdown-it';
 import * as vscode from 'vscode';
 import { citeCommand, citeContext, connectZoteroCommand, updateSourcesCommand } from './cite';
 import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, openRepositoryCommand, updateLayoutCommand } from './commands';
+import { registerEditorParts } from './editorParts';
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
 import { FrontMatterView, frontMatterViewId } from './frontMatterView';
@@ -108,6 +110,8 @@ export function activate(context: vscode.ExtensionContext): Api {
     formatStep,
     registerFormatStep(formatStep),
     registerNotesParts([cite]),
+    // The part in this extension of the plugin of the paper in the editor of a whole file of Markdown Notes.
+    registerEditorParts({ extension: context.extensionUri, citations, openRepository: commands.openRepository }),
     // "Show Page Preview": the Markdown preview of VS Code beside the text editor, which shows the pages of a paper.
     vscode.commands.registerCommand(commands.showPagePreview, async (uri?: unknown) => {
       const target = uri instanceof vscode.Uri ? uri : vscode.window.activeTextEditor?.document.uri;

@@ -49,6 +49,13 @@ License 2.0 or the Apache License 2.0. The file `THIRD-PARTY-NOTICES.md` of
 that folder names each of them, its version, its license and the place of
 its source code, with the text of its license.
 
+The bundle of the plugin of the editor of rendered Markdown,
+`dist/editorPlugins.js`, contains the function `registerPlugin` of the
+package `@nimblescape/markdowneditor` of nimblescape Markdown, by the same
+author under the MIT License (the third table). It uses the editor, Tiptap
+and ProseMirror of the page of the editor that loads it, and holds no copy of
+them.
+
 The bundles also hold the data files of the Citation Style Language of the
 folder `csl/`: the citation style "APA Style 7th edition" and the CSL locales
 `de-AT`, `de-DE`, `en-US` and `en-GB` (see
@@ -91,6 +98,10 @@ English, Spanish, French and Italian.
 | [mdn-data](#mdn-data) | 2.0.14 | CC0-1.0 |
 | [source-map](#source-map) | 0.6.1 | BSD-3-Clause |
 | [clear-cut](#clear-cut) | 2.0.2 | MIT |
+
+| Package in `dist/editorPlugins.js` | Version | License |
+| --- | --- | --- |
+| [@nimblescape/markdowneditor](#nimblescapemarkdowneditor) | 0.1.0 | MIT |
 
 ## markdown-it
 
@@ -1045,6 +1056,35 @@ Display of Attribution Information is [required/not required] in Larger Works wh
 
 Source code: <https://github.com/nimblescape/nimblescape-plantuml>, the
 folder `cli/`. Its license:
+
+```text
+MIT License
+
+© 2026 Hannes Stauss (scalarion@nimblescape.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## @nimblescape/markdowneditor
+
+Source code: <https://github.com/nimblescape/markdown>, the folder
+`packages/markdowneditor/`. Its license:
 
 ```text
 MIT License

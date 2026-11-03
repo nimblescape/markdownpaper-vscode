@@ -11,10 +11,8 @@
 // commit below of the GitHub repository into a temporary folder, installs its locked development tools without install
 // scripts, builds its packages and packs them, and installs the packed packages with their libraries, without a change
 // of package.json and package-lock.json. The file .commit in the folder of each package names the commit; when it
-// names the commit below, the script does nothing. The repository is private before the release: where the git of the
-// computer cannot read it, for example in CI, the environment variable NIMBLESCAPE_MARKDOWN_TOKEN gives a token that
-// may read it. The script gives git the token through the environment, never as an argument, so that no message shows
-// it. After the release of nimblescape Markdown, the packages become development dependencies of package.json, and this
+// names the commit below, the script does nothing. The repository is public, so git, also in CI, fetches it without a
+// token; CI runs this script after `npm ci --ignore-scripts`. After the release of nimblescape Markdown, the packages become development dependencies of package.json, and this
 // script goes away (CONTRIBUTING.md).
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
@@ -32,19 +30,6 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const folderOf = (name) => path.join(root, 'node_modules', '@nimblescape', name);
 // npm is a .cmd file on Windows, which needs a shell.
 const shell = process.platform === 'win32';
-
-/**
- * gitEnvironment is the environment of git: with a token, the header of each request to GitHub carries it.
- * @returns The environment.
- */
-function gitEnvironment() {
-  const token = process.env.NIMBLESCAPE_MARKDOWN_TOKEN?.trim();
-  if (!token) {
-    return process.env;
-  }
-  const basic = Buffer.from(`x-access-token:${token}`).toString('base64');
-  return { ...process.env, GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'http.https://github.com/.extraheader', GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${basic}` };
-}
 
 /**
  * run runs a program in a folder and stops the script when the program fails.
@@ -78,7 +63,7 @@ try {
   fs.mkdirSync(clone);
   fs.mkdirSync(packs);
   run('git', ['init', '--quiet'], clone);
-  run('git', ['fetch', '--quiet', '--depth', '1', repository, commit], clone, gitEnvironment());
+  run('git', ['fetch', '--quiet', '--depth', '1', repository, commit], clone);
   run('git', ['checkout', '--quiet', 'FETCH_HEAD'], clone);
   run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund', '--loglevel', 'error'], clone);
   run('npm', ['run', 'build', '--silent'], clone);

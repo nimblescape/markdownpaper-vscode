@@ -74,6 +74,7 @@ This document replaces it where the two differ.
 | 43 | `mp get <owner>/<repository>` without `@<rev>`: the list of the default branch, the branches and the tags in a terminal, and the default branch without one or with `--yes` | [R-CLI-004](#r-cli-004) | done ([decision 59](#decisions)) |
 | 44 | The plugin `paper` for the editor of rendered Markdown of nimblescape Markdown, in the bundle `dist/editorPlugins.js` that the package.json contributes, for example for the editor of a whole file of Markdown Notes: the database of the sources, the markers of the lists, the anchors of the entries and the markers of the arguments to research hidden; the citations, the entries of the reference list and the lists of the special sections read-only, with Ctrl+click to their targets | [R-EDIT-001](#r-edit-001), [R-GEN-003](#r-gen-003) | done |
 | 45 | The part of the plugin `paper` in the extension, through `registerEditorPlugin` of Markdown Notes: the JSON schema of the front matter of the layout in the form of the editor, `layout` and `repos` read-only with Ctrl+click to the clone, `/cite` and "Cite" with the list of the sources in VS Code, and "Research" in the format bar | [R-EDIT-001](#r-edit-001), [R-CITE-002](#r-cite-002), [R-CITE-006](#r-cite-006), [R-CLI-004](#r-cli-004) | done |
+| 46 | CI installs the packages of nimblescape Markdown, whose repository is public, after `npm ci --ignore-scripts` ([decision 61](#decisions)) | [R-EDIT-001](#r-edit-001) | done |
 
 ## General
 
@@ -1975,7 +1976,9 @@ and
 The bundle uses the modules of the page and holds only the code of this
 extension. Before the release of nimblescape Markdown,
 `scripts/install-markdown.mjs` installs its packages for the build from a
-fixed commit of its repository, as Markdown Notes does.
+fixed commit of its repository, as Markdown Notes does. The repository of
+nimblescape Markdown is public, so CI reads it without a token
+([decision 61](#decisions)).
 
 - The database of the sources ([R-CITE-001](#r-cite-001)) and the markers
   of the lists of the special sections ([R-REN-004](#r-ren-004)) are hidden
@@ -2354,6 +2357,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     the file; the form shows it with a warning and a button that removes it.
     The form also shows for a Markdown file without the field `layout`, with
     the fields of the built-in layout `plain`.
+61. **nimblescape Markdown is public** ([R-EDIT-001](#r-edit-001)): the
+    repository of nimblescape Markdown is public before its release, so that
+    CI reads it without a token. CI installs the packages of nimblescape
+    Markdown with `node scripts/install-markdown.mjs` after
+    `npm ci --ignore-scripts`, as Markdown Notes does.
 
 ## Open questions
 

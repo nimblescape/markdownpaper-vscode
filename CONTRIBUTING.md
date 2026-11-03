@@ -68,7 +68,7 @@ request.
 | `package-lock.json` | The locked development tools. npm writes this file, and nobody edits it by hand. |
 | `.node-version` | The Node release of the development tools. `actions/setup-node` in the workflows and local Node version managers read it. |
 | `.vscodeignore` | Lists the files of the package: `dist/extension.js`, `dist/editorPlugins.js`, the copy of the npm package in `cli/` (`cli/package.json`, `cli/dist/mp.js`, Paged.js, the layouts, the page files of `@nimblescape/plantuml` and the script of Mermaid with its notices, without source maps), the files of `media/` for the pages, `layouts/**`, `schemas/layout.schema.json`, `resources/icon.png`, `package.json`, `README.md`, `CHANGELOG.md`, `SUPPORT.md`, `LICENSE` and `THIRD-PARTY-NOTICES.md`. `src/manifest.test.ts` checks the list. |
-| `.github/workflows/ci.yml` | Checks the types, runs all tests, packages the VSIX and the npm package for every push to `main`, every pull request and the commit of every release, and runs the tests of `mp` on Ubuntu and macOS with Node.js 22 and 26. The tests of the PDF use the Google Chrome of the runners. The release publishes the packages of this workflow, so a change of it needs a dry run (rule 4 of the [release rules](#release-rules)). |
+| `.github/workflows/ci.yml` | Installs the packages of nimblescape Markdown and of nimblescape PlantUML after `npm ci --ignore-scripts`, checks the types, runs all tests, packages the VSIX and the npm package for every push to `main`, every pull request and the commit of every release, and runs the tests of `mp` on Ubuntu and macOS with Node.js 22 and 26. The tests of the PDF use the Google Chrome of the runners. The release publishes the packages of this workflow, so a change of it needs a dry run (rule 4 of the [release rules](#release-rules)). |
 | `.github/workflows/vscode-versions.yml` | Runs `ci.yml` once per week with VS Code Insiders and with the lowest supported VS Code version. |
 | `.github/workflows/release.yml` | Releases a version on a manual start. The section [Release](#release) explains it. |
 | `.github/workflows/release-dry-run.yml` | Fails on a pull request that changes the release process (`release.yml`, `ci.yml` or `scripts/release-checks.mjs`) until a dry run on its branch tested the change (rule 4 of the [release rules](#release-rules)). |
@@ -212,10 +212,9 @@ and npm cannot install a folder of a repository. So
 `scripts/install-markdown.mjs` fetches the commit that it names, builds the
 packages, packs them and installs the packed packages into `node_modules/`
 without a change of `package.json` and `package-lock.json`, as Markdown Notes
-does. The repository is private before the release: where git cannot read it,
-for example in CI, the environment variable `NIMBLESCAPE_MARKDOWN_TOKEN`
-gives a token that may read it, which the script gives git through the
-environment and never as an argument. A new version of the libraries is a new
+does. The repository of nimblescape Markdown is public, so git reads it
+without a token, also in CI, which runs the script after
+`npm ci --ignore-scripts`. A new version of the libraries is a new
 commit in the script. After the release of nimblescape Markdown, the packages
 become development dependencies of `package.json` with their versions, and
 the script and its part of the script `postinstall` go away.

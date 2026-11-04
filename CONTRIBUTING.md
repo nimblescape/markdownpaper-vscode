@@ -4,8 +4,8 @@ This guide explains the files, the development, the tests and the release of
 the extension and of its npm package. The [README](README.md) describes the use
 in short, the [user guide](docs/guide.md) describes every feature, and
 [docs/requirements.md](docs/requirements.md) lists what the extension must do,
-each requirement with an ID, with the decisions. The steps are in the
-Claude document [One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy). A
+each requirement with an ID, with the decisions. The decisions that wait
+for Hannes are in the Claude document [One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy). A
 requirement is the clean summary of a decision, without the texts of the
 discussion. A change of a feature updates its requirement in the same pull
 request.
@@ -44,7 +44,7 @@ request.
 | `src/terminal.ts` | The command `mp` in the terminals of VS Code ([R-CLI-001](docs/requirements.md#r-cli-001)): the scripts `mp` and `mp.cmd` in the storage folder of the extension that start `cli/dist/mp.js` of the extension, the `PATH`, `XDG_DATA_DIRS` and `FPATH` of the terminals, and the terminal of `mp get` after "New Project". |
 | `src/types/` | The types of the packages without types of their own, and of the imports of text with `?raw`. |
 | `layouts/plain/` | The built-in layout `plain`: `layout.json`, `page.css`, the title page `title.html` and the start text `document.md` of a new document. |
-| `docs/requirements.md` | The specification: the requirements, each with an ID as its heading, and the decisions. The steps and the open questions are in the Claude document [One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy). |
+| `docs/requirements.md` | The specification: the requirements, each with an ID as its heading, and the decisions. The decisions that wait for Hannes, among them the open questions, are in the Claude document [One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy). |
 | `docs/guide.md` | The user guide: every feature, how to use it, and its state. |
 | `docs/document.md`, `docs/layout.md`, `docs/render.md` | The rules for people and AI agents, which `mp instructions document`, `layout` and `render` print. A new document names the first command in its front matter, and `layout.json` the second. |
 | `resources/icon.png`, `resources/icon.svg` | The Marketplace icon (256 × 256 PNG, because the Marketplace takes no SVG icon) and its source. |

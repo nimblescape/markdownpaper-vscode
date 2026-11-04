@@ -28,9 +28,9 @@ This document replaces it where the two differ.
 ## Plan
 
 The plan of Markdown Paper is a part of the Claude document
-[One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy) ([decision 65](#decisions)). It shows
-only the open points of Markdown Paper, in the order of all work, among them
-the release (step 15), each with the text of its requirements. The built
+[One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy) ([decision 65](#decisions)). It lists
+the decisions on Markdown Paper that wait for Hannes, among them the release
+(step 15), each with a short description and a recommendation. The built
 steps 1 to 49 keep the numbers that the code, the tests and the documents
 name; their list is in the
 [last version of the plan file](https://github.com/nimblescape/markdown/blob/23c2c0a/docs/plan.md#73-nimblescape-markdown-paper) in the
@@ -171,8 +171,8 @@ the language of the layout ([R-LAY-005](#r-lay-005)).
 ### R-GEN-007
 
 **This specification.** This document holds all requirements of Markdown
-Paper and the decisions ([decision 12](#decisions)). The steps of the work are
-in the Claude document [One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy), and the
+Paper and the decisions ([decision 12](#decisions)). The decisions that wait
+for Hannes are in the Claude document [One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy), and the
 section [Plan](#plan) links to it ([decision 65](#decisions)). Everything that
 is built or decided is in it: each decision is also a requirement, each
 function of the extension and of the command is described, and a change of
@@ -2405,14 +2405,15 @@ requirement ([R-GEN-007](#r-gen-007)).
     use the packages `@nimblescape/markdownrender` and
     `@nimblescape/markdownlayout` of nimblescape Markdown, and the code of the
     extension holds no copy of them.
-65. **One plan for all products** ([R-GEN-007](#r-gen-007)): the open steps
-    of Markdown Paper are in the Claude document
+65. **One plan for all products** ([R-GEN-007](#r-gen-007)): the decisions
+    on Markdown Paper that wait for Hannes are in the Claude document
     [One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy), the one plan of the libraries and of
     all products that build on them, and the section [Plan](#plan) of this
-    document links to it. No repository holds a plan. The plan shows only
-    the open points, each with the text of the requirements that it names,
-    copied from the repositories with links to them; the requirements stay
-    the normative text. A step that is built leaves the plan.
+    document links to it. No repository holds a plan. The plan lists only
+    the decisions that wait for Hannes, each with a short description, a
+    recommendation and links to the requirements, and names in short the
+    open work that needs no decision; the requirements stay the normative
+    text. A decision goes into the requirements and leaves the plan.
 66. **The same functions in both editors** ([R-EDIT-001](#r-edit-001)):
     the paper has the same functions in the editor of nimblescape Markdown,
     which shows the text rendered, and in the clean editing view of
@@ -2424,5 +2425,5 @@ requirement ([R-GEN-007](#r-gen-007)).
 ## Open questions
 
 The open questions of all products, among them those of Markdown Paper, are
-in the section "Decisions that wait for you" of the
-[one plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy) ([decision 65](#decisions)).
+decisions in the [one plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy), each with a
+recommendation ([decision 65](#decisions)).

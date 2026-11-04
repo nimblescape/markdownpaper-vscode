@@ -32,7 +32,7 @@ under the
 
 The PDF draws the PlantUML diagrams with the npm package
 `@nimblescape/plantuml` of the extension
-[nimblescape PlantUML](https://github.com/nimblescape/nimblescape-plantuml),
+[nimblescape PlantUML](https://github.com/nimblescape/plantuml-vscode),
 by the same author under the MIT License. The bundles contain its library
 (the first table), and the extension holds the files of its page in the
 folder `media/plantuml/`, the npm package in `dist/plantuml/`: the script
@@ -96,7 +96,7 @@ English, Spanish, French and Italian.
 | [pako](#pako) | 1.0.11 | (MIT AND Zlib) |
 | [tslib](#tslib) | 1.14.1 | 0BSD |
 | [citeproc](#citeproc) | 2.4.63 | CPAL-1.0 OR AGPL-1.0 |
-| [@nimblescape/plantuml](#nimblescapeplantuml) | 0.2.1 | MIT |
+| [@nimblescape/plantuml](#nimblescapeplantuml) | 0.2.2 | MIT |
 
 | Package in `paged.polyfill.js` | Version | License |
 | --- | --- | --- |
@@ -1201,7 +1201,7 @@ Display of Attribution Information is [required/not required] in Larger Works wh
 
 ## @nimblescape/plantuml
 
-Source code: <https://github.com/nimblescape/nimblescape-plantuml>, the
+Source code: <https://github.com/nimblescape/plantuml-vscode>, the
 folder `cli/`. Its license:
 
 ```text

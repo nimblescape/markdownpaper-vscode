@@ -65,7 +65,7 @@ request.
 | `package-lock.json` | The locked development tools. npm writes this file, and nobody edits it by hand. |
 | `.node-version` | The Node release of the development tools. `actions/setup-node` in the workflows and local Node version managers read it. |
 | `.vscodeignore` | Lists the files of the package: `dist/extension.js`, `dist/editorPlugins.js`, the copy of the npm package in `cli/` (`cli/package.json`, `cli/dist/mp.js`, Paged.js, the layouts, the page files of `@nimblescape/plantuml` and the script of Mermaid with its notices, without source maps), the files of `media/` for the pages, `layouts/**`, `schemas/layout.schema.json`, `resources/icon.png`, `package.json`, `README.md`, `CHANGELOG.md`, `SUPPORT.md`, `LICENSE` and `THIRD-PARTY-NOTICES.md`. `src/manifest.test.ts` checks the list. |
-| `.github/workflows/ci.yml` | Installs the packages of nimblescape Markdown and of nimblescape PlantUML after `npm ci --ignore-scripts`, checks the types and the sources (ESLint), runs all tests, packages the VSIX and the npm package for every push to `main`, every pull request and the commit of every release, and runs the tests of `mp` on Ubuntu and macOS with Node.js 22 and 26. The tests of the PDF use the Google Chrome of the runners. The release publishes the packages of this workflow, so a change of it needs a dry run (rule 4 of the [release rules](#release-rules)). |
+| `.github/workflows/ci.yml` | Installs the locked development tools, among them `@nimblescape/plantuml`, with `npm ci --ignore-scripts` and then the packages of nimblescape Markdown, checks the types and the sources (ESLint), runs all tests, packages the VSIX and the npm package for every push to `main`, every pull request and the commit of every release, and runs the tests of `mp` on Ubuntu and macOS with Node.js 22 and 26. The tests of the PDF use the Google Chrome of the runners. The release publishes the packages of this workflow, so a change of it needs a dry run (rule 4 of the [release rules](#release-rules)). |
 | `.github/workflows/vscode-versions.yml` | Runs `ci.yml` once per week with VS Code Insiders and with the lowest supported VS Code version. |
 | `.github/workflows/release.yml` | Releases a version on a manual start. The section [Release](#release) explains it. |
 | `.github/workflows/release-dry-run.yml` | Fails on a pull request that changes the release process (`release.yml`, `ci.yml` or `scripts/release-checks.mjs`) until a dry run on its branch tested the change (rule 4 of the [release rules](#release-rules)). |
@@ -74,7 +74,6 @@ request.
 | `scripts/build-vscode-tests.mjs` | Bundles each test of `test/vscode/` into `out/test/vscode/` for the tests in VS Code. |
 | `scripts/third-party-notices.mjs` | Writes the notices of the packages of a bundle from the installed packages, for the script of Mermaid (see [Diagrams of Mermaid on the command line](#diagrams-of-mermaid-on-the-command-line)). |
 | `scripts/install-markdown.mjs` | Installs the npm packages `@nimblescape/markdowntext`, `@nimblescape/markdownrender` and `@nimblescape/markdowneditor` of nimblescape Markdown from its GitHub repository at a fixed commit, for the build and the tests of the plugin of the editor, until the packages are on npmjs.com (see [The editor of nimblescape Markdown](#the-editor-of-nimblescape-markdown)). |
-| `scripts/install-plantuml.mjs` | Installs the npm package `@nimblescape/plantuml` of nimblescape PlantUML from its GitHub repository at a fixed commit, until the package is on npmjs.com (see [Diagrams of nimblescape PlantUML](#diagrams-of-nimblescape-plantuml)). |
 | `scripts/install-local.mjs`, `scripts/uninstall-local.mjs` | Install the built package into every profile of the VS Code of this computer, and remove it again. |
 | `scripts/marketplace-setup.sh` | Sets up the Marketplace publishing of the repository ([Setup of a repository](#setup-of-a-repository)). |
 | `scripts/npm-setup.sh` | Sets up the npm publishing of the package ([npmjs.com setup](#npmjscom-setup)). |
@@ -97,7 +96,6 @@ Node.js 22 or later (`engines` of `cli/package.json`).
 | --- | --- |
 | `npm ci --ignore-scripts` | Installs the locked development tools and runs no install script of a dependency. |
 | `node scripts/install-markdown.mjs` | Installs the packages of nimblescape Markdown from GitHub after `npm ci --ignore-scripts`, which skips it; `npm ci` and `npm install` run it as a part of the script `postinstall`. It does nothing when the packages of its commit are installed. Where git cannot read the private repository, `NIMBLESCAPE_MARKDOWN_TOKEN` gives a token that may read it. |
-| `node scripts/install-plantuml.mjs` | Installs `@nimblescape/plantuml` from GitHub after `npm ci --ignore-scripts`, which skips it; `npm ci` and `npm install` run it as a part of the script `postinstall`. It does nothing when the package of its commit is installed. |
 | `npm run typecheck` | Checks the types with `tsc`, of `src/editor/` with its own settings. esbuild does not check them. |
 | `npm run lint` | Checks the sources with ESLint (`eslint.config.mjs`). `npm run lint -- --fix` corrects what ESLint can correct itself. TypeScript stays at version 6.0.3, because typescript-eslint supports TypeScript only up to 6.0. A rule that a line breaks on purpose is switched off for that line only, with `// eslint-disable-next-line <rule>` and the reason. |
 | `npm test` | Runs the unit tests with vitest. The tests touch no installed editor and start no browser. |
@@ -122,8 +120,8 @@ file), run `npm ci --ignore-scripts` and `npm run vscode:prepublish` at the
 tag of its version, and compare `extension/dist/` of the VSIX with `dist/`.
 `media/paged.polyfill.js` is the file `dist/paged.polyfill.js` of the npm
 package `pagedjs` of `package-lock.json`, unchanged, and `media/plantuml/` is
-the folder `dist/page/` of `@nimblescape/plantuml` at the commit of
-`scripts/install-plantuml.mjs` with its notices, unchanged. The npm package
+the folder `dist/page/` of `@nimblescape/plantuml` of `package-lock.json`
+with its notices, unchanged. The npm package
 holds the same files in `package/dist/`, and in `package/dist/mermaid/` the
 script of Mermaid: without spaces, but with the names of the source, so a
 build at the tag gives the same files.
@@ -167,7 +165,7 @@ organization `nimblescape` on npmjs.com, with the command `mp`
 
 Every PDF draws the PlantUML diagrams with the npm package
 `@nimblescape/plantuml` of the extension
-[nimblescape PlantUML](https://github.com/nimblescape/nimblescape-plantuml)
+[nimblescape PlantUML](https://github.com/nimblescape/plantuml-vscode)
 ([R-REN-015](docs/requirements.md#r-ren-015)): the bundles hold its
 markdown-it plugin, and the page of the PDF loads the script, the style sheet
 and the engine of the folder `plantuml/` (`src/pdf/plantUml.ts`). The page
@@ -177,15 +175,11 @@ preview do with the diagrams of the installed extension. "Export PDF" leaves
 out the parts of the installed extension, so that each PDF has the renderer
 of the package.
 
-The package is not on npmjs.com before the release of nimblescape PlantUML,
-and npm cannot install a folder of a repository. So
-`scripts/install-plantuml.mjs` fetches the commit that it names, builds the
-package and copies its files into `node_modules/@nimblescape/plantuml`. The
-CI runs it after `npm ci --ignore-scripts`. A new version of the renderer is a
-new commit in the script. After the release of nimblescape PlantUML, the
-package becomes a development dependency of `package.json` with its version,
-and the script, its step in the CI and its part of the script `postinstall` go away. The
-release of Markdown Paper waits for the release of the package.
+The package is a development dependency of `package.json` at a fixed
+version from npmjs.com, so `npm ci --ignore-scripts` installs it. A new
+version of the renderer is a new version in `package.json` and
+`package-lock.json`; the version in the table of `THIRD-PARTY-NOTICES.md`
+changes with it, which a test checks.
 
 ## The editor of nimblescape Markdown
 

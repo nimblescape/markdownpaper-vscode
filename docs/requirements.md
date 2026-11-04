@@ -1119,7 +1119,7 @@ included files and the same layout engine ([decision 49](#decisions)).
 
 - The renderer of nimblescape PlantUML draws the diagrams, from its npm
   package `@nimblescape/plantuml`
-  ([R-NPM-001](https://github.com/nimblescape/nimblescape-plantuml/blob/claude/project-thread-y64560/docs/requirements.md#r-npm-001)),
+  ([R-NPM-001](https://github.com/nimblescape/plantuml-vscode/blob/main/docs/requirements.md#r-npm-001)),
   in VS Code also when the extension is not installed. The bundles hold its
   markdown-it plugin; the extension and the npm package
   `@nimblescape/markdownpaper` hold the script of its page, its style sheet
@@ -1145,10 +1145,9 @@ included files and the same layout engine ([decision 49](#decisions)).
   the installed extension draws, and copies them onto the pages
   ([R-PRV-005](#r-prv-005)); without the extension the pages show the text of
   the block.
-- Before the release of nimblescape PlantUML, the package is not on
-  npmjs.com: the development tools install it from the GitHub repository at
-  a fixed commit (`scripts/install-plantuml.mjs`). The release of
-  Markdown Paper comes after the release of the package.
+- The development tools install the package from npmjs.com at a fixed
+  version of `package.json`, and `THIRD-PARTY-NOTICES.md` names that
+  version ([R-GEN-004](#r-gen-004)).
 
 ### R-REN-016
 

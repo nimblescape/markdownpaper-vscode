@@ -21,10 +21,6 @@ makes the page preview in VS Code and the PDF, so the preview shows the pages
 of the PDF. The extension nimblescape Markdown Notes keeps the notes of the
 authors in the same Markdown files; the pages leave them out.
 
-The first design is the outline
-[Markdown Paper: layouts and renderer](https://claude.ai/artifact/JmuuLpVRp9zo2yYBPzaMNk).
-This document replaces it where the two differ.
-
 ## Plan
 
 The plan of Markdown Paper is a part of the Claude document
@@ -182,8 +178,9 @@ the code changes this document in the same commit
 - A requirement is the clean summary of a decision: what the extension or
   the command does. It holds no texts of the discussion, such as quotes of
   messages, their dates and times, or the choices that were not taken
-  ([decision 23](#decisions)). The discussion stays in discussion documents
-  outside the repository.
+  ([decision 23](#decisions)). It states what holds now, not how the
+  decision came about, and links no discussion document and no earlier
+  design ([decision 68](#decisions)).
 - The same holds for every file of the repository: the other documents, the
   lists of features, the code comments and the titles of the tests state a
   request as a short summary, without quotes, names, dates or times.
@@ -2140,8 +2137,7 @@ requirement ([R-GEN-007](#r-gen-007)).
     source is the ID, a hyphen and an addition.
 23. **Clean requirements** ([R-GEN-007](#r-gen-007)): the requirements and
     every other file of the repository hold only the clean summary of the
-    decisions, without the texts of the discussion; the details stay in
-    discussion documents.
+    decisions, without the texts of the discussion.
 24. **Numbers of the lines of a listing** ([R-REN-011](#r-ren-011)): an option
     of the layout, `listings.lineNumbers`, off by default; the numbers start
     at 1 in each listing.
@@ -2252,8 +2248,7 @@ requirement ([R-GEN-007](#r-gen-007)).
     Zotero (`"zotero":"users/1234567/ABCD1234"`), and the command "Update
     Sources from Zotero" merges all matching lines at once, after one
     confirmation. An item finds its line by its key of Zotero, then by the
-    DOI, then by the ISBN; else it becomes a new line. The discussion document is
-    [Zotero integration of Markdown Paper](https://claude.ai/artifact/2Q4BZy6wJzcqRn9SjTDFa3).
+    DOI, then by the ISBN; else it becomes a new line.
 43. **`/research` on a selected argument** ([R-CITE-002](#r-cite-002),
     [R-GEN-003](#r-gen-003)): `/research` works only with selected text. The
     selection is the argument for which an AI agent researches the evidence;
@@ -2328,9 +2323,7 @@ requirement ([R-GEN-007](#r-gen-007)).
     author, only when the author or CI runs it. The extension ships `mp` in
     the terminals of VS Code, as nimblescape TypeScript ships `ts`; outside
     VS Code, npm installs it. A layout comes from `layouts/`, from the
-    built-in layouts or from a GitHub reference, not from an npm package. The
-    discussion document is
-    [Listings from other repositories in a paper](https://claude.ai/artifact/Sh8Hztwr6AB8bAP55Q6grt).
+    built-in layouts or from a GitHub reference, not from an npm package.
 52. **The links of the PDF** ([R-PDF-005](#r-pdf-005)): the PDF links every
     reference inside the paper to its target, also each citation to its entry
     in the reference list, in the color of the text without a mark. A link to
@@ -2360,17 +2353,14 @@ requirement ([R-GEN-007](#r-gen-007)).
 56. **The form of the front matter in the side bar** ([R-DOC-005](#r-doc-005)):
     the author changes the front matter of a paper in the view "Front Matter"
     of Markdown Paper in the side bar, beside the view of Markdown Notes,
-    with one row for each field of the layout. The discussion document is
-    [Structured editor of the front matter](https://claude.ai/artifact/55T7uG2yTK89DcfKuYHoDJ).
+    with one row for each field of the layout.
 57. **The clone of a branch on its branch** ([R-CLI-004](#r-cli-004)): the
     rev of a reference decides what the author may change in its clone. The
     clone of a branch, for example `@main`, has the local branch, so the
     author adds snippets there and commits and pushes them; `mp get` pulls
     the branch only with a fast-forward and leaves work that is not committed
     or not pushed as it is. The clone of a tag or a commit pins the version
-    without a branch, and its snippets are the ones that are there. The
-    discussion document is
-    [Opening a clone and the read-only front matter](https://claude.ai/artifact/HZ9e48LJkb8KuPCkGao5vt).
+    without a branch, and its snippets are the ones that are there.
 58. **Ctrl+click on a reference opens its clone** ([R-CLI-004](#r-cli-004)):
     the value of each reference of the front matter, in `layout` and in
     `repos`, is a link in the text editor and in the clean editing view of
@@ -2426,6 +2416,9 @@ requirement ([R-GEN-007](#r-gen-007)).
     which the field `frontMatterSchema` of `layout.json` names (format
     1.1.0); the layout gets its fields from the schema when `layout.json`
     gives none.
+68. **Only what holds now** ([R-GEN-007](#r-gen-007)): the requirements
+    state each decision as it holds now, not how it came about. They link
+    no discussion document and no outline of an earlier design.
 
 ## Open questions
 

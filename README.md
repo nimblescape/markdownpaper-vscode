@@ -113,7 +113,7 @@ Node.js 22 or newer.
   for example `{{matrikelnummer}}_{{author}}`. The PDF shows what the other
   Markdown extensions add, such as the diagrams of Mermaid and the math of
   KaTeX. The PlantUML diagrams look as in the Markdown preview with the
-  extension [nimblescape PlantUML](https://github.com/nimblescape/nimblescape-plantuml),
+  extension [nimblescape PlantUML](https://github.com/nimblescape/plantuml-vscode),
   whose renderer draws them as vector graphics in every PDF, also on the
   command line. The command line also draws the diagrams of Mermaid, as
   VS Code does.

@@ -398,8 +398,9 @@ npx -y @nimblescape/markdownpaper build paper/paper.md
 `get` clones the repositories that the front matter names, or brings the head
 of each branch (section 1).
 
-`format` writes the citations and the reference list (section 9) and the lists
-of the special sections (section 3) into the file. `check` names a layout that
+`format` formats the Markdown and the notes as Markdown Notes does, and
+writes the citations and the reference list (section 9) and the lists of the
+special sections (section 3) into the file. `check` names a layout that
 does not exist, each missing required field, and the problems of the sources
 and the citations.
 `build` writes the PDF beside the file; see `instructions render`.

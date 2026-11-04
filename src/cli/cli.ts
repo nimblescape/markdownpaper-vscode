@@ -8,8 +8,8 @@
  *
  * - `build <file>` writes the PDF of a Markdown file in its layout, with an installed Chrome, Chromium or Edge.
  * - `check <file>...` checks the front matter of each file against its layout.
- * - `format <file>...` runs the format steps of the paper on each file: the citations and the reference list, and the
- *   lists of the special sections.
+ * - `format <file>...` formats each file as Markdown Notes does, with its library, and runs the format steps of the
+ *   paper: the citations and the reference list, and the lists of the special sections.
  * - `create [folder]` scaffolds a new project, as `npm create vite` does: it asks for the name, the layout from a list
  *   of the layouts of the folder, the built-in layouts and the layouts on GitHub, the language, the title and the
  *   author, or takes them from its options. A layout on GitHub stays in its clone, and the document names its
@@ -41,7 +41,6 @@ import { version } from '../../package.json';
 import { checkDocument } from '../paper/checks';
 import { addSources, sourceLine } from '../paper/citations';
 import { citationStyleOf } from '../paper/csl';
-import { formatPaper } from '../paper/format';
 import { readFrontMatter } from '../paper/frontMatter';
 import { topicList, topics } from '../paper/instructions';
 import { findRemotes, parseRemote, previewUrl, type RemoteSpec, readOrigin, referenceText, remoteName } from '../paper/gallery';
@@ -54,6 +53,7 @@ import { planUpdate } from '../paper/update';
 import { defaultPlace, downloadBrowser, downloadSize, type Place } from '../pdf/download';
 import { type Assets, exportPdf, fileReader, folderUrl } from '../pdf/export';
 import { completionScript, shells } from './completion';
+import { formatDocument } from './format';
 import { type Git, GitError, getClone, gitOf, revsOf } from './git';
 import { httpFetcher } from './net';
 
@@ -73,7 +73,7 @@ export const usage = [
   '      --browser <program>       the program of Chrome, Chromium or Edge (else MARKDOWNPAPER_BROWSER or a search)',
   '      --download-browser        download Chromium once into the cache of the user when no browser is installed',
   '  check <file.md>...            check the front matter against the layout, and the links to figures and tables',
-  '  format <file.md>...           write the citations, the reference list and the lists, such as the table of contents',
+  '  format <file.md>...           format the Markdown and the notes, and write the citations, the reference list and the lists, such as the table of contents',
   '      --check                   write nothing; exit with 1 when the format would change a file',
   '  create [folder]               scaffold a new project; asks for what its options do not give',
   '      --layout <name>           the layout of the project: a layout on GitHub, <owner>/<repository>/<folder>@<rev>',
@@ -456,8 +456,9 @@ async function runCheck(args: readonly string[], io: Io): Promise<number> {
 }
 
 /**
- * runFormat runs `format`: the format steps of the paper, which write the lists of the special sections into each file
- * ([R-CLI-002](../../docs/requirements.md#r-cli-002)). The steps of Markdown Notes join when its library is published.
+ * runFormat runs `format`: the formatter of Markdown Notes and the format steps of the paper, which write the citations,
+ * the reference list and the lists of the special sections into each file
+ * ([R-CLI-002](../../docs/requirements.md#r-cli-002)).
  * @param args - The arguments after the command.
  * @param io - The streams and the assets.
  */
@@ -475,7 +476,7 @@ async function runFormat(args: readonly string[], io: Io): Promise<number> {
     const text = fs.readFileSync(file, 'utf8');
     const { layout } = await documentLayout({ reader: fileReader, builtinLayouts: folderUrl(io.assets.layouts) }, pathToFileURL(file).href, readFrontMatter(text));
     const { style } = await citationStyleOf((url) => fileReader.read(url), layout);
-    const formatted = formatPaper(text.split(/\r?\n/), layout, style).join(text.includes('\r\n') ? '\r\n' : '\n');
+    const formatted = formatDocument(text, file, layout, style);
     if (formatted === text) {
       continue;
     }
@@ -794,7 +795,7 @@ async function runPreview(args: readonly string[], io: Io): Promise<number> {
     const host = { reader: fileReader, builtinLayouts: folderUrl(io.assets.layouts) };
     const loaded = await documentLayout(host, pathToFileURL(paper).href, readFrontMatter(text));
     const { style } = await citationStyleOf((url) => fileReader.read(url), loaded.layout);
-    const formatted = formatPaper(text.split(/\r?\n/), loaded.layout, style).join('\n');
+    const formatted = formatDocument(text, paper, loaded.layout, style);
     fs.writeFileSync(paper, formatted);
     const result = await exportPdf(paper, {
       assets: io.assets,

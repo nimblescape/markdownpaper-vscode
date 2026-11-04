@@ -19,13 +19,13 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
+import { Browser } from '@nimblescape/markdownlayout/pdf';
 import * as vscode from 'vscode';
 import { type Context, cloneOfReference } from '../../src/commands';
 import { applyFrontMatterChange, formFor } from '../../src/frontMatterView';
 import type { Api } from '../../src/extension';
 import { markdownExtensions, plantUmlOptions } from '../../src/markdownExtensions';
 import { findBrowser } from '../../src/pdf/browser';
-import { Browser } from '../../src/pdf/cdp';
 import { exportPdf } from '../../src/pdf/export';
 
 /** extensionId is the identifier of the extension. */
@@ -99,7 +99,7 @@ describe('nimblescape Markdown Paper', function () {
     assert.ok(folder, 'the folder of the script mp');
     const script = path.join(folder, process.platform === 'win32' ? 'mp.cmd' : 'mp');
     const { stdout } = await promisify(execFile)(script, ['--version'], { shell: process.platform === 'win32' });
-    assert.match(stdout, /^mp \d+\.\d+\.\d+ \(layouts: nimblescape-layout 1\.0\.0\)$/m);
+    assert.match(stdout, /^mp \d+\.\d+\.\d+ \(layouts: nimblescape-layout 1\.1\.0\)$/m);
   });
 
   it('"Open Repository in New Window" finds the clone of a reference of the paper, and nothing for a missing clone (R-CLI-004)', async () => {

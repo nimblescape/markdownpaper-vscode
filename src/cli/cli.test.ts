@@ -58,7 +58,7 @@ test('the help, the version and a wrong command (R-CLI-001)', async () => {
   expect(await run(['--help'], io())).toBe(0);
   expect(out.join('\n')).toContain('Usage: mp <command> [options]');
   expect(await run(['--version'], io())).toBe(0);
-  expect(out.at(-1)).toBe(`mp ${version} (layouts: nimblescape-layout 1.0.0)`);
+  expect(out.at(-1)).toBe(`mp ${version} (layouts: nimblescape-layout 1.1.0)`);
   expect(await run([], io())).toBe(2);
   expect(await run(['print'], io())).toBe(2);
   expect(err).toContain('mp: Unknown command: print');

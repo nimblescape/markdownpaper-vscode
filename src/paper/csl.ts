@@ -17,13 +17,13 @@
  * which the build puts into the bundle. The module uses no API of VS Code.
  */
 
+import { type Layout, layoutFile, type Problem, relativeFile } from '@nimblescape/markdownlayout';
 import * as CSL from 'citeproc';
 import apa from '../../csl/apa.csl?raw';
 import deAT from '../../csl/locales-de-AT.xml?raw';
 import deDE from '../../csl/locales-de-DE.xml?raw';
 import enGB from '../../csl/locales-en-GB.xml?raw';
 import enUS from '../../csl/locales-en-US.xml?raw';
-import { type Layout, layoutFile, type Problem, relativeFile } from './layout';
 
 /** Name is a name of a person or a group in CSL JSON. */
 export interface Name {

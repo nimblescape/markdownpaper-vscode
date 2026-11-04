@@ -16,12 +16,12 @@
  * its citations and lists.
  */
 
+import type { Layout } from '@nimblescape/markdownlayout';
 import * as vscode from 'vscode';
 import { registerWithNotes } from './notesApi';
 import { type CitationStyle, citationStyleOf } from './paper/csl';
 import { formatPaper } from './paper/format';
 import { type FrontMatter, isPaperDocument, readFrontMatter } from './paper/frontMatter';
-import type { Layout } from './paper/layout';
 import { documentLayout } from './paper/render';
 import { searchHost } from './workspaceHost';
 

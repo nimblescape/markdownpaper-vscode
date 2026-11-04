@@ -9,8 +9,8 @@
  * uses no API of VS Code.
  */
 
+import type { Layout } from '@nimblescape/markdownlayout';
 import { isMap, isScalar, LineCounter, type Node, parseDocument, stringify } from 'yaml';
-import type { Layout } from './layout';
 
 /** FieldRow is the row of a field of the layout. */
 export interface FieldRow {

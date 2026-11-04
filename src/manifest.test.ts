@@ -15,10 +15,10 @@ import { builtinModules, createRequire } from 'node:module';
 import * as path from 'node:path';
 import * as esbuild from 'esbuild';
 import { sharedModulesPlugin } from '@nimblescape/markdowneditor/bundle';
+import { sectionCodes } from '@nimblescape/markdownlayout';
 import { expect, test, vi } from 'vitest';
 import { commands, extensionId } from './extension';
 import { drawingsCss, lightThemeColors } from './paper/extensionStyles';
-import { sectionCodes } from './paper/layout';
 import { paperDocumentKey } from './paperDocuments';
 import { defaults, settingsSection } from './settings';
 // @ts-expect-error The script of the build has no declarations.
@@ -188,7 +188,8 @@ test('the package holds the bundle, the plugins of the editor, Paged.js, the pag
     '!media/paged.js',
     '!media/paged.polyfill.js',
     '!media/plantuml/**',
-    '!media/paperHandlers.js',
+    '!media/paperDrawings.js',
+    '!media/paperLayout.js',
     '!media/paperPreview.css',
     '!media/paperPreview.js',
     '!layouts/**',
@@ -282,6 +283,7 @@ test('the bundle of the command markdownpaper imports only modules of Node.js (R
     entryPoints: [path.join(repository, 'src/cli/main.ts')],
     bundle: true,
     platform: 'node',
+    mainFields: ['module', 'main'],
     write: false,
     outdir: path.join(repository, 'out/manifest-test'),
     metafile: true,
@@ -300,6 +302,7 @@ test('the third-party notices name every package that the build bundles, and the
     entryPoints: [path.join(repository, 'src/extension.ts'), path.join(repository, 'src/cli/main.ts')],
     bundle: true,
     platform: 'node',
+    mainFields: ['module', 'main'],
     external: ['vscode'],
     write: false,
     outdir: path.join(repository, 'out/manifest-test'),

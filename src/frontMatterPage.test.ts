@@ -12,11 +12,11 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import type { Layout } from '@nimblescape/markdownlayout';
+import { Browser } from '@nimblescape/markdownlayout/pdf';
 import { afterAll, describe, expect, it } from 'vitest';
 import { formOf } from './paper/frontMatterForm';
-import type { Layout } from './paper/layout';
 import { findBrowser } from './pdf/browser';
-import { Browser } from './pdf/cdp';
 
 /** repository is the root folder of this repository. */
 const repository = path.resolve(__dirname, '..');

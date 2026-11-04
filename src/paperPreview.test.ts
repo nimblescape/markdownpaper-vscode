@@ -17,17 +17,15 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { baseCss, compose, escapeHtml, layoutScript, valuesOf } from '@nimblescape/markdownlayout';
+import { Browser, fileReader, folderUrl } from '@nimblescape/markdownlayout/pdf';
 import { extendMarkdownIt } from '@nimblescape/plantuml';
 import type MarkdownIt from 'markdown-it';
 import { afterAll, describe, expect, it } from 'vitest';
-import { baseCss } from './paper/baseCss';
-import { renderBody } from './paper/markdown';
-import { compose, loadLayout, valuesOf } from './paper/render';
 import { readFrontMatter } from './paper/frontMatter';
-import { escapeHtml } from './paper/template';
+import { renderBody } from './paper/markdown';
+import { loadLayout } from './paper/render';
 import { findBrowser } from './pdf/browser';
-import { Browser } from './pdf/cdp';
-import { fileReader, folderUrl } from './pdf/export';
 
 /** repository is the root folder of this repository. */
 const repository = path.resolve(__dirname, '..');
@@ -57,7 +55,7 @@ async function paperContent(text: string): Promise<string> {
   const document = pathToFileURL(path.join(folder, 'paper.md')).href;
   const frontMatter = readFrontMatter(text);
   const loaded = await loadLayout({ reader: fileReader, builtinLayouts: folderUrl(path.join(repository, 'layouts')) }, document, frontMatter);
-  const composed = compose(loaded, valuesOf(loaded.layout, frontMatter, document), (url) => url);
+  const composed = compose(loaded, valuesOf(loaded.layout, frontMatter?.values ?? {}, document), (url) => url);
   // The Markdown preview of VS Code gives every block its line, also a fenced code block, which the renderer does not.
   const lines = (md: MarkdownIt) => {
     md.core.ruler.push('lines', (state) => {
@@ -79,7 +77,8 @@ function writePage(): string {
   fs.writeFileSync(path.join(folder, 'markdown-language-features', 'markdown.css'), 'body { padding: 0 26px; font-size: 14px; }\n');
   fs.copyFileSync(path.join(repository, 'media', 'paperPreview.js'), path.join(folder, 'paperPreview.js'));
   fs.copyFileSync(path.join(repository, 'media', 'paperPreview.css'), path.join(folder, 'paperPreview.css'));
-  fs.copyFileSync(path.join(repository, 'media', 'paperHandlers.js'), path.join(folder, 'paperHandlers.js'));
+  fs.writeFileSync(path.join(folder, 'paperLayout.js'), layoutScript);
+  fs.copyFileSync(path.join(repository, 'media', 'paperDrawings.js'), path.join(folder, 'paperDrawings.js'));
   fs.copyFileSync(path.join(repository, 'node_modules', 'pagedjs', 'dist', 'paged.js'), path.join(folder, 'paged.js'));
   const file = path.join(folder, 'preview.html');
   fs.writeFileSync(

@@ -13,9 +13,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { type Layout, termsFor } from '@nimblescape/markdownlayout';
 import { describe, expect, test } from 'vitest';
 import { builtinStyles, type Cite, cite, type CitationStyle, citationStyleOf, localeOf, type Source } from './csl';
-import { type Layout, termsFor } from './layout';
 
 const apa7: CitationStyle = { name: 'apa7', xml: builtinStyles.apa7 };
 const pht: CitationStyle = { name: 'pht-apa7.csl', xml: fs.readFileSync(path.join(__dirname, '../../test/fixtures/pht-apa7.csl'), 'utf8') };

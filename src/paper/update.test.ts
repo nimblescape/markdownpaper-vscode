@@ -7,9 +7,9 @@
  * of addresses stands for GitHub, with two commits of one layout folder.
  */
 
+import { formatText, termsFor } from '@nimblescape/markdownlayout';
 import { describe, expect, test } from 'vitest';
 import { readOrigin } from './gallery';
-import { formatText, termsFor } from './layout';
 import type { Fetcher } from './lookup';
 import { newLayoutFiles, newProjectFiles } from './scaffold';
 import { blobId, mergeLayoutJson, planUpdate } from './update';

@@ -12,7 +12,7 @@
  * - The diagrams of Mermaid without the parts for the screen: Mermaid puts a diagram into an area that the mouse moves
  *   and zooms, moved to the middle of the width at the time of the drawing, with buttons. On a page the diagram stands
  *   in the middle of the text, as wide as the text at most, without the buttons.
- * - The diagrams of nimblescape PlantUML, whose copies the pages get (media/paperHandlers.js): the rules of the style
+ * - The diagrams of nimblescape PlantUML, whose copies the pages get (media/paperDrawings.js): the rules of the style
  *   sheet of the extension for the parts of its shadow roots, for the copies; a diagram stands in the middle of the
  *   text, as a diagram of Mermaid does.
  *

@@ -11,7 +11,7 @@
       "type": "string"
     },
     "format": {
-      "description": "The format and its version, for example \"nimblescape-layout 1.0.0\".",
+      "description": "The format and its version, for example \"nimblescape-layout 1.1.0\".",
       "type": "string",
       "pattern": "^nimblescape-layout \\d+\\.\\d+\\.\\d+$"
     },
@@ -50,6 +50,10 @@
     },
     "preview": {
       "description": "The PDF of the empty paper document, which shows the pages of the layout before a person chooses it.",
+      "type": "string"
+    },
+    "frontMatterSchema": {
+      "description": "The JSON schema of the front matter of the documents, a file of the layout folder (format 1.1.0, proposal). The layout gets its fields from the schema when it has no fields.",
       "type": "string"
     },
     "origin": {

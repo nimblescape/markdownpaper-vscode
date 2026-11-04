@@ -10,9 +10,9 @@
  * module reads and writes the references in the text of a paper, and uses no API of VS Code.
  */
 
+import { layoutName } from '@nimblescape/markdownlayout';
 import { isMap, isScalar, LineCounter, parseDocument, type Scalar } from 'yaml';
 import { parseRemote, type RemoteSpec, referenceText } from './gallery';
-import { layoutName } from './layout';
 
 /** clonesFolder is the folder of the clones of a project, beside the paper repository's own files; Git ignores it. */
 export const clonesFolder = '.markdownpaper/repos';

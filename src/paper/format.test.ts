@@ -7,10 +7,10 @@
  * the lists, so that one format gives a stable file whose table of contents lists the new reference list.
  */
 
+import { type Layout, termsFor } from '@nimblescape/markdownlayout';
 import { expect, test } from 'vitest';
 import { builtinStyles } from './csl';
 import { formatPaper } from './format';
-import { type Layout, termsFor } from './layout';
 
 const layout: Layout = {
   id: 'test',

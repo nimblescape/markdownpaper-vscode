@@ -277,12 +277,16 @@ makes the pages of a layout with Paged.js and the PDF in Node.js
 of nimblescape Markdown). `mp build`, "Export PDF" and the page preview use
 these packages, and the code of the extension holds no copy of them.
 
-*(proposal)* The functions of the paper are plugins of the renderer and the
-layout: the citations and the reference list in CSL, the lists of the special
-sections, the captions and their numbers, the listings, the diagrams of
-Mermaid and PlantUML, and the hints of a template. A function that the
-packages lack, and that is not a function of the paper, goes into the packages
-first, in the repository of nimblescape Markdown.
+*(proposal)* The functions that only a paper needs are plugins of the
+renderer and the layout: the plugin `paper` leaves out the notes of Markdown
+Notes and the markers of the arguments to research, and gives the cites of the
+listings their place and their links; the citations and the reference list in
+CSL, the diagrams of Mermaid and PlantUML, and the hints of a template follow.
+The functions that other documents need too, such as the lists of the special
+sections, the captions and their numbers, the footnotes and the listings, are
+parts of the packages. A function that the packages lack, and that is not a
+function of the paper, goes into the packages first, in the repository of
+nimblescape Markdown.
 
 ## Documents
 
@@ -426,10 +430,12 @@ repository of the document ([decision 3](#decisions)).
 
 **`layout.json`.** The file describes the layout:
 
-- `format`: `"nimblescape-layout 1.0.0"`, the name and the semantic version
-  of the format. A higher minor version adds fields that an older renderer
-  leaves out; a higher major version is a format that an older renderer does
-  not read, and the checks say so.
+- `format`: `"nimblescape-layout 1.1.0"`, the name and the semantic version
+  of the format, which the layout part of nimblescape Markdown reads
+  ([R-GEN-010](#r-gen-010)). A higher minor version adds fields that an older
+  renderer leaves out; a higher major version is a format that an older
+  renderer does not read, and the checks say so. A layout of the format 1.0.0
+  works without a change.
 - `instructions`: the command that prints the rules of the format for AI
   agents, `npx -y @nimblescape/markdownpaper instructions layout`.
 - `name`, `language` (a language tag such as `de-AT`), `citationStyle` (a
@@ -438,6 +444,9 @@ repository of the document ([decision 3](#decisions)).
 - `stylesheets`, `before` and `after` (the templates of the fixed pages before
   and after the text), `document` and `preview` (the empty paper document and
   its PDF, [R-LAY-009](#r-lay-009)).
+- *(proposal)* `frontMatterSchema` (format 1.1.0): the file of the JSON
+  schema of the front matter of the documents in the layout folder, from
+  which the layout gets its fields when it has no `fields`.
 - `fields`: the fields of the front matter, each with a description, and with
   `required` and `default` when needed. A field with `values`, a list of
   names, is a parameter of the layout: the author chooses one name in the

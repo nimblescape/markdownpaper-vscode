@@ -3,8 +3,9 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 // `node scripts/install-markdown.mjs`, also a part of the script "postinstall" of `npm install` and `npm ci`: installs
-// the npm packages of nimblescape Markdown, for which the plugins of this extension for the editor of rendered Markdown
-// are built (docs/requirements.md, R-GEN-003): the types of the editor and the entry point
+// the npm packages of nimblescape Markdown: the renderer and the layout, with which the extension and the command make
+// the pages and the PDF (docs/requirements.md, R-GEN-010), and the editor, for which the plugins of this extension for
+// the editor of rendered Markdown are built (R-GEN-003): the types of the editor and the entry point
 // `@nimblescape/markdowneditor/bundle`, whose plugin of esbuild makes the bundle of the plugins use the modules of the
 // page of the editor. This is the same mechanism as in nimblescape Markdown Notes. Before the release of nimblescape
 // Markdown the packages are not on npmjs.com, and npm cannot install a folder of a repository. So the script fetches the
@@ -20,11 +21,11 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** The repository and the commit of nimblescape Markdown whose packages the plugins of the editor use. */
+/** The repository and the commit of nimblescape Markdown whose packages the extension and the command use. */
 const repository = 'https://github.com/nimblescape/markdown.git';
-const commit = 'ec5429096e1292b0c19f89b46e695eee9a62c4bd';
-/** The packages that the plugins of the editor use, each with the packages of nimblescape Markdown that it depends on. */
-const packages = ['markdowntext', 'markdownrender', 'markdowneditor'];
+const commit = '7f99e98f5ee2abbbbfac64f832ea01d493e64e27';
+/** The packages that the extension and the command use, each with the packages of nimblescape Markdown that it depends on. */
+const packages = ['markdowntext', 'markdownrender', 'markdownlayout', 'markdowneditor'];
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const folderOf = (name) => path.join(root, 'node_modules', '@nimblescape', name);

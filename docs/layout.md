@@ -41,7 +41,7 @@ a script element or an event attribute of a template is removed.
 
 ```json
 {
-  "format": "nimblescape-layout 1.0.0",
+  "format": "nimblescape-layout 1.1.0",
   "instructions": "npx -y @nimblescape/markdownpaper instructions layout",
   "name": "PHT Abschlussarbeit",
   "language": "de-AT",
@@ -68,7 +68,7 @@ a script element or an event attribute of a template is removed.
 
 | Field | Value | Default |
 | --- | --- | --- |
-| `format` | `"nimblescape-layout 1.0.0"`, the format and its version. Required. | |
+| `format` | `"nimblescape-layout 1.1.0"`, the format and its version, the version of the layout part of nimblescape Markdown ([R-LAYOUT-001](https://github.com/nimblescape/markdown/blob/main/docs/rendering.md#r-layout-001)). Required. A layout of the format 1.0.0 works without a change. | |
 | `$schema` | The JSON schema of `layout.json`, for the editor: `https://raw.githubusercontent.com/nimblescape/markdownpaper-vscode/main/schemas/layout.schema.json`. VS Code uses it for `layouts/<name>/layout.json` without this field. | |
 | `instructions` | The command that prints this document, for agents. Informative. | |
 | `name` | The name of the layout for people. | the name of the folder |
@@ -78,6 +78,7 @@ a script element or an event attribute of a template is removed.
 | `before`, `after` | The templates of the fixed pages before and after the text, in their order. | `[]` |
 | `document` | The empty paper document, the Markdown file that starts a new document (section 7). The JSON schema requires it. | |
 | `preview` | The PDF of the empty paper document, which shows the pages of the layout before a person chooses it (section 7). The JSON schema requires it. | |
+| `frontMatterSchema` | *(proposal)* The JSON schema of the front matter of the documents, a file of the layout folder, for example `frontmatter.schema.json` (format 1.1.0). The layout gets its fields from the schema when it has no `fields`. | |
 | `fields` | The fields of the front matter: each a description, or an object with `description`, `required` (`true` or `false`), `default`, and `values`, the list of names that the author chooses from (see "Parameters" below). | `{}` |
 | `headings.numbered` | `false`: the renderer numbers no heading. | `true` |
 | `headings.depth` | The deepest level of a numbered heading, 1 to 6. | `3` |

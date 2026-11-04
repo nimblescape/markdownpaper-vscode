@@ -10,10 +10,10 @@
  * Markdown Notes gets the checks of its file: the warnings show on the file, and the hover in the view.
  */
 
+import type { Problem } from '@nimblescape/markdownlayout';
 import * as vscode from 'vscode';
 import { cleanScheme, fileOf } from './notesApi';
 import { checkDocument } from './paper/checks';
-import type { Problem } from './paper/layout';
 import { searchHost } from './workspaceHost';
 
 /** checkDelay is the pause in milliseconds after a change before the checks run. */

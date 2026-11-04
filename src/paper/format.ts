@@ -10,10 +10,10 @@
  * the special sections ([R-REN-004](../../docs/requirements.md#r-ren-004)). The module uses no API of VS Code.
  */
 
+import type { Layout } from '@nimblescape/markdownlayout';
 import { writeCitations } from './citations';
 import type { CitationStyle } from './csl';
 import { writeHeadingLinks } from './headingLinks';
-import type { Layout } from './layout';
 import { writeLists } from './lists';
 
 /**

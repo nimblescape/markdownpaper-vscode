@@ -10,34 +10,42 @@
  * document and the addresses of the webview in the environment.
  *
  * - The parsing of a paper document ([R-DOC-004](../docs/requirements.md#r-doc-004)) finds its open document by its
- *   text, and its layout in a cache. The plugin of the renderer ([markdown.ts](paper/markdown.ts)) adds its steps and a
- *   first token with the layout and what it found. The front matter, which VS Code shows as a table, leaves the text:
- *   its fields fill the templates of the layout. The headings keep the IDs of the renderer.
+ *   text, and its layout in a cache. The plugin `paper` of the renderer ([markdown.ts](paper/markdown.ts)) and the
+ *   plugin of the layout of `@nimblescape/markdownlayout` add their rules, as in the page of the PDF
+ *   ([R-GEN-010](../docs/requirements.md#r-gen-010)): the footnotes of the pages, which only a paper document gets
+ *   here, the numbers, the captions and the lists. Then the tokens get the form of the output of
+ *   `@nimblescape/markdownrender`, such as the alerts and the widths of the columns of the tables, and a first token
+ *   with the layout and what it found. The front matter, which VS Code shows as a table, leaves the text: its fields
+ *   fill the templates of the layout. The headings keep the IDs of the renderer.
  * - The rendering of these tokens puts a hidden element `.nimblescape-paper` first, with the style sheets, the filled
- *   templates and the fields of the layout, whose addresses the webview loads. The script of the pages
- *   ([media/paperPreview.js](../media/paperPreview.js)) makes the pages from it.
+ *   templates and the fields of the layout, whose addresses the webview loads, then the text with its lists and its
+ *   soft hyphens. The script of the pages ([media/paperPreview.js](../media/paperPreview.js)) makes the pages from it.
  * - A layout that is not in the cache yet: the extension reads it, and the preview shows "Making the pages …" until
  *   then. After a change of a file of a layout, the extension reads the layout again. Then it lets VS Code render
  *   the previews again (`markdown.preview.refresh`).
  * - A notes document keeps the preview of VS Code: the plugin changes nothing.
  */
 
+import { baseCss, compose, emptyFound, escapeHtml, hyphenateHtml, hyphenatorOf, type LayoutEnv, layoutEnvKey, layoutPlugin, type Problem, valuesOf } from '@nimblescape/markdownlayout';
+import { addOutputRules, prepareOutput } from '@nimblescape/markdownrender';
 import type MarkdownIt from 'markdown-it';
+import footnote from 'markdown-it-footnote';
 import type Token from 'markdown-it/lib/token.mjs';
 import * as vscode from 'vscode';
 import { fileOf } from './notesApi';
-import { baseCss } from './paper/baseCss';
 import { type FrontMatter, isPaperDocument, readFrontMatter } from './paper/frontMatter';
-import { hyphenatorOf } from './paper/hyphenate';
-import type { Problem } from './paper/layout';
-import { emptyFound, finishBody, type PaperEnv, paperPlugin, paperTokenType } from './paper/markdown';
-import { compose, type LoadedLayout, loadLayout, valuesOf } from './paper/render';
+import { paperEnvKey, type PaperEnv, paperTextPlugin } from './paper/markdown';
+import { type LoadedLayout, loadLayout } from './paper/render';
 import { referencesOf } from './paper/references';
-import { escapeHtml } from './paper/template';
 import { searchHost } from './workspaceHost';
 
-/** PreviewPaper is what the rendering of a paper document needs: the PaperEnv, its file, its layout and its fields. */
-interface PreviewPaper extends PaperEnv {
+/**
+ * PreviewPaper is what the rendering of a paper document needs: the environment of the layout and of the plugin
+ * `paper`, its file, its layout and its fields.
+ */
+interface PreviewPaper {
+  layout: LayoutEnv;
+  paper: PaperEnv;
   file: vscode.Uri;
   loaded: LoadedLayout;
   values: Record<string, string>;
@@ -83,6 +91,31 @@ export const paperClass = 'nimblescape-paper';
 
 /** frontMatterType is the type of the token of the front matter in the Markdown preview of VS Code. */
 const frontMatterType = 'front_matter';
+
+/** paperTokenType is the type of the hidden token that the plugin puts first, with the PreviewPaper as its meta. */
+const paperTokenType = 'nimblescape_paper';
+
+/** Ruler is the part of a ruler of markdown-it that onlyForPapers needs. */
+interface Ruler {
+  __rules__: { name: string; fn: (...args: never[]) => unknown; alt: string[] }[];
+  at(name: string, fn: (...args: never[]) => unknown, options?: { alt: string[] }): void;
+}
+
+/**
+ * onlyForPapers makes the rules of a ruler work only in a parsing of a paper document, whose environment has the
+ * environment of the layout.
+ * @param ruler - The ruler of markdown-it.
+ * @param names - The names of the rules.
+ */
+function onlyForPapers(ruler: Ruler, names: readonly string[]): void {
+  for (const name of names) {
+    const rule = ruler.__rules__.find((candidate) => candidate.name === name);
+    if (rule) {
+      const fn = rule.fn as (state: { env?: Record<string, unknown> }, ...rest: unknown[]) => unknown;
+      ruler.at(name, ((state: { env?: Record<string, unknown> }, ...rest: unknown[]) => (state.env?.[layoutEnvKey] ? fn(state, ...rest) : false)) as never, { alt: rule.alt });
+    }
+  }
+}
 
 /** previewViewType is the end of the view type of the tabs of the Markdown preview of VS Code. */
 const previewViewType = 'markdown.preview';
@@ -151,7 +184,20 @@ export class PaperPreview implements vscode.Disposable {
    * @returns The same instance.
    */
   extendMarkdownIt(md: MarkdownIt): MarkdownIt {
-    paperPlugin(md);
+    // The footnotes of the pages, as the renderer of the PDF reads them, without the inline footnotes `^[text]`. Another
+    // plugin, such as the footnotes of an extension of VS Code, may have the footnotes already.
+    if (!(md.block.ruler as unknown as Ruler).__rules__.some((rule) => rule.name === 'footnote_def')) {
+      md.use(footnote);
+      md.disable('footnote_inline');
+      onlyForPapers(md.block.ruler as unknown as Ruler, ['footnote_def']);
+      onlyForPapers(md.inline.ruler as unknown as Ruler, ['footnote_ref']);
+      onlyForPapers(md.core.ruler as unknown as Ruler, ['footnote_tail']);
+    }
+    // The rules of the paper and of the layout work only when the environment has the environment of the layout.
+    void paperTextPlugin.extendMarkdownIt?.(md);
+    void layoutPlugin.extendMarkdownIt?.(md);
+    addOutputRules(md);
+    md.renderer.rules[paperTokenType] = () => '';
     // VS Code gives each heading the ID of its text before this rule renders it; a paper keeps the ID of the renderer,
     // which its table of contents and its links name.
     const heading = md.renderer.rules.heading_open;
@@ -162,39 +208,60 @@ export class PaperPreview implements vscode.Disposable {
       }
       return heading ? heading(tokens, index, options, env, self) : self.renderToken(tokens, index, options);
     };
-    md.core.ruler.push('nimblescape_paper_ids', (state) => {
-      if (state.tokens[0]?.type !== paperTokenType) {
-        return;
-      }
-      // The front matter fills the templates of the layout; VS Code would show it as a table above the text.
-      state.tokens = state.tokens.filter((token) => token.type !== frontMatterType);
-      for (const token of state.tokens) {
-        const id = token.type === 'heading_open' ? token.attrGet('id') : null;
-        if (id) {
-          token.meta = { ...((token.meta as object | null) ?? {}), paperId: id };
-        }
-      }
-    });
     const parse = md.parse.bind(md);
     md.parse = (src: string, env: unknown) => {
       const paper = typeof env === 'object' && env !== null ? this.paperOf(src) : undefined;
-      if (paper && 'pending' in paper) {
-        const tokens = parse(src, env);
-        const token: Token = new (new md.core.State('', md, {}).Token)(paperTokenType, '', 0);
-        token.meta = paper;
-        token.hidden = true;
-        return [token, ...tokens];
+      if (!paper) {
+        return parse(src, env);
       }
-      if (paper) {
-        (env as { nimblescapePaper?: PaperEnv }).nimblescapePaper = paper;
+      const values = env as Record<string, unknown>;
+      if (!('pending' in paper)) {
+        values[layoutEnvKey] = paper.layout;
+        values[paperEnvKey] = paper.paper;
       }
-      return parse(src, env);
+      let tokens: Token[];
+      try {
+        tokens = parse(src, env);
+      } finally {
+        delete values[layoutEnvKey];
+        delete values[paperEnvKey];
+      }
+      if (!('pending' in paper)) {
+        // The front matter fills the templates of the layout; VS Code would show it as a table above the text. The
+        // tokens get the form of the output of the renderer of the PDF, with the IDs of the headings of GitHub and
+        // without the lines, which VS Code gives the blocks itself.
+        tokens = tokens.filter((token) => token.type !== frontMatterType);
+        prepareOutput(tokens, { lines: false });
+        for (const token of tokens) {
+          const id = token.type === 'heading_open' ? token.attrGet('id') : null;
+          if (id) {
+            token.meta = { ...((token.meta as object | null) ?? {}), paperId: id };
+          }
+        }
+      }
+      const token: Token = new (new md.core.State('', md, {}).Token)(paperTokenType, '', 0);
+      token.meta = paper;
+      token.hidden = true;
+      return [token, ...tokens];
     };
     const render = md.renderer.render.bind(md.renderer);
     md.renderer.render = (tokens, options, env) => {
-      const html = render(tokens, options, env);
       const first = tokens[0];
-      return first?.type === paperTokenType ? this.finish(html, first.meta as PreviewPaper | Pending, (env ?? {}) as RenderEnv) : html;
+      if (first?.type !== paperTokenType) {
+        return render(tokens, options, env);
+      }
+      const paper = first.meta as PreviewPaper | Pending;
+      const values = (env ?? {}) as Record<string, unknown>;
+      // The rules of the lists of the layout read the environment of the layout, which VS Code does not keep from the
+      // parsing to the rendering.
+      if (!('pending' in paper)) {
+        values[layoutEnvKey] = paper.layout;
+      }
+      try {
+        return this.finish(render(tokens, options, env), paper, values as RenderEnv);
+      } finally {
+        delete values[layoutEnvKey];
+      }
     };
     return md;
   }
@@ -210,13 +277,14 @@ export class PaperPreview implements vscode.Disposable {
     if ('pending' in paper) {
       return `${this.element({ pending: true })}${html}`;
     }
-    const { layout, found, loaded, values, file } = paper;
+    const { loaded, values, file } = paper;
+    const { layout, found } = paper.layout;
     const resource = (url: string): string => {
       const uri = vscode.Uri.parse(url, true);
       return env.resourceProvider ? env.resourceProvider.asWebviewUri(uri).toString() : uri.toString();
     };
     const composed = compose(loaded, values, resource);
-    this.report(file, [...loaded.problems, ...found.problems.map((problem) => ({ ...problem, file: problem.file ?? file.toString() }))]);
+    this.report(file, [...loaded.problems, ...found.problems.map((problem: Problem) => ({ ...problem, file: problem.file ?? file.toString() }))]);
     const key = file.toString();
     this.rendered.delete(key);
     this.rendered.add(key);
@@ -229,7 +297,8 @@ export class PaperPreview implements vscode.Disposable {
       attributes: composed.attributes,
       delay: this.delay(),
     };
-    return `${this.element(data)}${finishBody(html, found, layout, layout.hyphenate ? hyphenatorOf(layout.language) : undefined)}`;
+    const hyphenate = layout.hyphenate ? hyphenatorOf(layout.language) : undefined;
+    return `${this.element(data)}${hyphenate ? hyphenateHtml(html, hyphenate) : html}`;
   }
 
   /**
@@ -259,12 +328,11 @@ export class PaperPreview implements vscode.Disposable {
     const entry = this.entries.get(file.toString());
     if (entry?.key === key && entry.loaded) {
       return {
-        layout: entry.loaded.layout,
-        found: emptyFound(),
-        publicRepositories: entry.loaded.publicRepositories,
+        layout: { layout: entry.loaded.layout, found: emptyFound() },
+        paper: { publicRepositories: entry.loaded.publicRepositories },
         file,
         loaded: entry.loaded,
-        values: valuesOf(entry.loaded.layout, frontMatter, file.toString()),
+        values: valuesOf(entry.loaded.layout, frontMatter?.values ?? {}, file.toString()),
       };
     }
     if (entry?.key === key && entry.failed) {

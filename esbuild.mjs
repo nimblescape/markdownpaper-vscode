@@ -4,10 +4,11 @@
 
 // Bundle the extension into dist/extension.js, and the command markdownpaper (docs/requirements.md, R-CLI-001) into
 // cli/dist/mp.js, the file of the npm package @nimblescape/markdownpaper of cli/, for Node.js 22 or later
-// (engines of cli/package.json). Both bundles hold markdown-it, its footnotes, yaml, the hyphenation patterns and
-// pdf-lib. The build copies the files that the renderer reads at run time: Paged.js (paged.polyfill.js) into media/
-// for the extension and into cli/dist/ for the npm package, and paged.js, which does not start on its own, into media/
-// for the script of the pages in the Markdown preview, and the built-in layouts of layouts/ into cli/dist/layouts/;
+// (engines of cli/package.json). Both bundles hold the renderer and the layout of nimblescape Markdown with
+// markdown-it, its footnotes, yaml, the hyphenation patterns and pdf-lib. The build copies the files that the renderer
+// reads at run time: Paged.js (paged.polyfill.js) into media/ for the extension and into cli/dist/ for the npm package,
+// and paged.js, which does not start on its own, and the script of the layout of nimblescape Markdown (paperLayout.js)
+// into media/ for the script of the pages in the Markdown preview, and the built-in layouts of layouts/ into cli/dist/layouts/;
 // the extension reads layouts/ of its own folder. The page of the PDF draws the PlantUML diagrams with the files of the
 // page of the npm package @nimblescape/plantuml (scripts/install-plantuml.mjs installs it): the build copies them with
 // the notices of the package into media/plantuml/ and cli/dist/plantuml/. The command line has no Mermaid extension of
@@ -50,6 +51,10 @@ fs.copyFileSync('THIRD-PARTY-NOTICES.md', 'cli/THIRD-PARTY-NOTICES.md');
 fs.copyFileSync('node_modules/pagedjs/dist/paged.polyfill.js', 'media/paged.polyfill.js');
 fs.copyFileSync('node_modules/pagedjs/dist/paged.js', 'media/paged.js');
 fs.copyFileSync('node_modules/pagedjs/dist/paged.polyfill.js', 'cli/dist/paged.polyfill.js');
+// The script of the layout of nimblescape Markdown for the pages in the Markdown preview: the start of Paged.js, the
+// page numbers and the last lines of the justified paragraphs, as in the page of the PDF.
+const { layoutScript } = await import('@nimblescape/markdownlayout');
+fs.writeFileSync('media/paperLayout.js', layoutScript);
 fs.rmSync('cli/dist/layouts', { recursive: true, force: true });
 fs.cpSync('layouts', 'cli/dist/layouts', { recursive: true });
 const plantUml = 'node_modules/@nimblescape/plantuml';
@@ -130,6 +135,9 @@ for (const bundle of bundles) {
     bundle: true,
     platform: 'node',
     format: 'cjs',
+    // The ES module of a package before its CommonJS file: the UMD file of jsonc-parser, which the front matter of
+    // nimblescape Markdown brings in, loads its parts with a require that the bundle cannot resolve.
+    mainFields: ['module', 'main'],
     external: ['vscode'],
     sourcemap: !production,
     minify: false,

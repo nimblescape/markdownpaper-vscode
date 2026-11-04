@@ -2,9 +2,9 @@
 // © 2026 Hannes Stauss (scalarion@nimblescape.com)
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
+import { type Layout, termsFor } from '@nimblescape/markdownlayout';
 import { describe, expect, test } from 'vitest';
 import { writeHeadingLinks } from './headingLinks';
-import { type Layout, termsFor } from './layout';
 
 /** layout is a German layout that numbers the headings to the depth 3. */
 const layout: Layout = {

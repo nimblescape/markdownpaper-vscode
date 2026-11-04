@@ -2,8 +2,8 @@
 // © 2026 Hannes Stauss (scalarion@nimblescape.com)
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
+import { type Layout, termsFor } from '@nimblescape/markdownlayout';
 import { describe, expect, test } from 'vitest';
-import { type Layout, termsFor } from './layout';
 import { writeLists } from './lists';
 import { renderBody } from './markdown';
 

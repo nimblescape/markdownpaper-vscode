@@ -7,11 +7,15 @@ Licensed under the MIT License. See LICENSE in the repository root for details.
 # Third-party notices
 
 The script of nimblescape Markdown Paper, `dist/extension.js`, contains the
-packages of the first table: the Markdown parser markdown-it with the packages
-that it uses and its plugin for footnotes, the YAML parser of the front
-matter, the hyphenation, the PDF library that finishes the PDF, and
-citeproc-js, which writes the citations and the reference list in a citation
-style. The
+packages of the first table: the packages `@nimblescape/markdowntext`,
+`@nimblescape/markdownrender` and `@nimblescape/markdownlayout` of
+nimblescape Markdown, by the same author under the MIT License, which make
+the pages and the PDF; the Markdown parser markdown-it with the packages that
+it uses and its plugins for footnotes and task lists; the parsers of the front
+matter in YAML, TOML and JSON, and the check of the front matter against its
+JSON schema; the comparison of texts; the hyphenation; the PDF library that
+finishes the PDF; and citeproc-js, which writes the citations and the
+reference list in a citation style. The
 command `mp` of the npm package `@nimblescape/markdownpaper`,
 `cli/dist/mp.js`, contains the same packages. The extension holds a copy of
 the files of the npm package in its folder `cli/`, for the command `mp` in
@@ -76,6 +80,14 @@ English, Spanish, French and Italian.
 | [punycode.js](#punycodejs) | 2.3.1 | MIT |
 | [uc.micro](#ucmicro) | 2.1.0 | MIT |
 | [markdown-it-footnote](#markdown-it-footnote) | 4.0.0 | MIT |
+| [markdown-it-task-lists](#markdown-it-task-lists) | 2.1.1 | ISC |
+| [@nimblescape/markdowntext](#nimblescapemarkdowntext) | 0.1.0 | MIT |
+| [@nimblescape/markdownrender](#nimblescapemarkdownrender) | 0.1.0 | MIT |
+| [@nimblescape/markdownlayout](#nimblescapemarkdownlayout) | 0.1.0 | MIT |
+| [@decimalturn/toml-patch](#decimalturntoml-patch) | 3.3.2 | MIT |
+| [jsonc-parser](#jsonc-parser) | 3.3.1 | MIT |
+| [@cfworker/json-schema](#cfworkerjson-schema) | 4.1.4 | MIT |
+| [diff](#diff) | 9.0.0 | BSD-3-Clause |
 | [yaml](#yaml) | 2.9.1 | ISC |
 | [hyphen](#hyphen) | 1.14.1 | ISC |
 | [pdf-lib](#pdf-lib) | 1.17.1 | MIT |
@@ -312,6 +324,141 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
+```
+
+## markdown-it-task-lists
+
+Source code: <https://github.com/revin/markdown-it-task-lists>. Its license:
+
+```text
+Copyright (c) 2016, Revin Guillen
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+```
+
+## @nimblescape/markdowntext
+
+Source code: <https://github.com/nimblescape/markdown>, the folder
+`packages/markdowntext/`. Its license is the same text as the license of
+[@nimblescape/markdowneditor](#nimblescapemarkdowneditor).
+
+## @nimblescape/markdownrender
+
+Source code: <https://github.com/nimblescape/markdown>, the folder
+`packages/markdownrender/`. Its license is the same text as the license of
+[@nimblescape/markdowneditor](#nimblescapemarkdowneditor).
+
+## @nimblescape/markdownlayout
+
+Source code: <https://github.com/nimblescape/markdown>, the folder
+`packages/markdownlayout/`. Its license is the same text as the license of
+[@nimblescape/markdowneditor](#nimblescapemarkdowneditor).
+
+## @decimalturn/toml-patch
+
+Source code: <https://github.com/DecimalTurn/toml-patch>. Its license:
+
+```text
+MIT License
+
+Copyright (c) 2019–2025 Tim Hall
+Copyright (c) 2025 Martin Leduc
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## jsonc-parser
+
+Source code: <https://github.com/microsoft/node-jsonc-parser>. Its license:
+
+```text
+The MIT License (MIT)
+
+Copyright (c) Microsoft
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## @cfworker/json-schema
+
+Source code: <https://github.com/cfworker/cfworker>. Its package names the MIT License, and the package holds no text of the license.
+
+## diff
+
+Source code: <https://github.com/kpdecker/jsdiff>. Its license:
+
+```text
+BSD 3-Clause License
+
+Copyright (c) 2009-2015, Kevin Decker <kpdecker@gmail.com>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
 ## yaml

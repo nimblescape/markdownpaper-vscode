@@ -2,10 +2,10 @@
 // © 2026 Hannes Stauss (scalarion@nimblescape.com)
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
+import type { Layout } from '@nimblescape/markdownlayout';
 import { describe, expect, test } from 'vitest';
 import { readFrontMatter } from './frontMatter';
 import { applyChange, changedLines, formOf, orderOf } from './frontMatterForm';
-import type { Layout } from './layout';
 
 /** layout is a layout with a required field, a parameter with a default, and a free field. */
 const layout = {

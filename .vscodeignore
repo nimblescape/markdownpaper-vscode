@@ -24,7 +24,8 @@
 !media/paged.js
 !media/paged.polyfill.js
 !media/plantuml/**
-!media/paperHandlers.js
+!media/paperDrawings.js
+!media/paperLayout.js
 !media/paperPreview.css
 !media/paperPreview.js
 !layouts/**

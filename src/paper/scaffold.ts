@@ -9,10 +9,10 @@
  * files; the host writes them, and never over an existing file. It uses no API of VS Code.
  */
 
+import { type FieldSpec, formatText, type Layout, layoutFile } from '@nimblescape/markdownlayout';
 import { readFrontMatter } from './frontMatter';
 import { type Origin, type RemoteSpec, readOrigin, referenceText } from './gallery';
 import { editJsonText } from './jsonText';
-import { type FieldSpec, formatText, type Layout, layoutFile } from './layout';
 import { cloneName, clonesFolder } from './references';
 
 /** NewFile is a file to write: its path, relative to the folder of the new project or layout, and its content. */

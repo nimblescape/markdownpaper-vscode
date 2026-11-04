@@ -12,10 +12,10 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { Browser } from '@nimblescape/markdownlayout/pdf';
 import { PDFDocument } from 'pdf-lib';
 import { afterEach, describe, expect, it } from 'vitest';
 import { findBrowser } from '../../src/pdf/browser';
-import { Browser } from '../../src/pdf/cdp';
 
 const repository = path.resolve(import.meta.dirname, '../..');
 const command = path.join(repository, 'cli', 'dist', 'mp.js');
@@ -50,7 +50,7 @@ const browser = (() => {
 
 describe('the command mp', () => {
   it('shows its version and the version of the format of the layouts', () => {
-    expect(run(temporary(), ['--version'])).toEqual({ code: 0, stdout: `mp ${cli.version} (layouts: nimblescape-layout 1.0.0)\n`, stderr: '' });
+    expect(run(temporary(), ['--version'])).toEqual({ code: 0, stdout: `mp ${cli.version} (layouts: nimblescape-layout 1.1.0)\n`, stderr: '' });
   });
 
   it('clones a layout on GitHub for a new project and the repositories of its paper with Git (R-CLI-004)', () => {
@@ -108,7 +108,7 @@ describe('the command mp', () => {
   it('prints the rules of the layouts for an AI agent', () => {
     const result = run(temporary(), ['instructions', 'layout']);
     expect(result.code).toBe(0);
-    expect(result.stdout).toContain('"format": "nimblescape-layout 1.0.0"');
+    expect(result.stdout).toContain('"format": "nimblescape-layout 1.1.0"');
   });
 
   it.skipIf(!browser)('writes the PDF of a document with the name of its layout, without the notes (R-PDF-001)', async () => {

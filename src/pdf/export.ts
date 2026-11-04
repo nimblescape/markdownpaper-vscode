@@ -7,36 +7,24 @@
  * the extension ([R-PDF-001](../../docs/requirements.md#r-pdf-001)): the renderer makes the page with the files of
  * the disk, the PlantUML diagrams of nimblescape PlantUML ([R-REN-015](../../docs/requirements.md#r-ren-015)), on the
  * command line the diagrams of Mermaid ([R-REN-016](../../docs/requirements.md#r-ren-016)), and Paged.js in the page,
- * the browser prints it, and the PDF gets its metadata. The module uses no API of VS Code.
+ * and `printPage` of `@nimblescape/markdownlayout/pdf` prints it with the browser and gives the PDF its metadata
+ * ([R-GEN-010](../../docs/requirements.md#r-gen-010)). The module uses no API of VS Code.
  */
 
 import { randomBytes } from 'node:crypto';
 import * as fs from 'node:fs';
-import * as os from 'node:os';
 import * as path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import type { Problem } from '../paper/layout';
+import { pathToFileURL } from 'node:url';
+import type { Problem } from '@nimblescape/markdownlayout';
+import { fileReader, folderUrl, printPage } from '@nimblescape/markdownlayout/pdf';
 import type { MarkdownPlugin } from '../paper/markdown';
-import { type Extensions, type Reader, type Rendered, render } from '../paper/render';
+import { type Extensions, type Rendered, render } from '../paper/render';
 import { findBrowser, NoBrowserError } from './browser';
 import { mermaidParts, mermaidSettingsOf } from './mermaid';
-import { finishPdf, printPdf } from './pdf';
 import { commandLineOptions, type PlantUmlOptions, plantUmlParts } from './plantUml';
 import { workspaceFolderOf, workspaceSettings } from './workspace';
 
-/** fileReader reads the files of the disk by their file URLs. */
-export const fileReader: Reader = {
-  async read(url) {
-    if (!url.startsWith('file:')) {
-      return undefined;
-    }
-    try {
-      return await fs.promises.readFile(fileURLToPath(url));
-    } catch {
-      return undefined;
-    }
-  },
-};
+export { fileReader, folderUrl } from '@nimblescape/markdownlayout/pdf';
 
 /** Assets are the files of the package that the renderer needs. */
 export interface Assets {
@@ -104,15 +92,6 @@ export interface ExportResult {
 }
 
 /**
- * folderUrl returns the file URL of a folder, with a slash at its end.
- * @param folder - The path of the folder.
- */
-export const folderUrl = (folder: string): string => {
-  const url = pathToFileURL(folder).href;
-  return url.endsWith('/') ? url : `${url}/`;
-};
-
-/**
  * renderFile renders a Markdown file of the disk for the PDF: the page loads the files of the disk, and Paged.js is a
  * part of the page. The PlantUML diagrams come after the parts of the other Markdown extensions. Without these
  * extensions, as on the command line, the page draws the diagrams of Mermaid itself, with the settings of the
@@ -132,8 +111,7 @@ export async function renderFile(file: string, options: Pick<ExportOptions, 'ass
       ...(options.top ? { top: folderUrl(options.top) } : {}),
       resource: (url) => url,
       sources: 'file:',
-      // A script element ends at the first "</script", which the code of Paged.js does not hold; the check keeps it so.
-      scripts: [{ text: pagedJs.replace(/<\/script/gi, '<\\/script') }],
+      scripts: [{ text: pagedJs }],
       extensions: {
         styles: [...(options.extensions?.styles ?? []), plantUml.style],
         scripts: [...(options.extensions?.scripts ?? []), ...(mermaid?.scripts ?? []), plantUml.script],
@@ -166,25 +144,13 @@ export async function exportPdf(file: string, options: ExportOptions): Promise<E
   const rendered = await renderFile(file, options);
   const errors = rendered.problems.filter((problem) => problem.severity === 'error');
   const output = options.output ?? path.join(path.dirname(file), rendered.pdfName);
-  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'markdownpaper-'));
-  try {
-    const html = path.join(folder, 'page.html');
-    fs.writeFileSync(html, rendered.html, 'utf8');
-    if (options.html) {
-      fs.mkdirSync(path.dirname(options.html), { recursive: true });
-      fs.copyFileSync(html, options.html);
-    }
-    const printed = await printPdf(browser, html);
-    const pdf = await finishPdf(printed.pdf, {
-      title: rendered.title,
-      ...(rendered.frontMatter?.values.author ? { author: rendered.frontMatter.values.author } : {}),
-      ...(rendered.frontMatter?.values.subtitle ? { subject: rendered.frontMatter.values.subtitle } : {}),
-      language: rendered.layout.language,
-    });
-    fs.mkdirSync(path.dirname(output), { recursive: true });
-    fs.writeFileSync(output, pdf);
-    return { pdf: output, rendered, problems: [...errors, ...rendered.problems.filter((problem) => problem.severity !== 'error')], messages: printed.messages };
-  } finally {
-    fs.rmSync(folder, { recursive: true, force: true });
-  }
+  const printed = await printPage(rendered.page, {
+    browser,
+    ...(options.html ? { html: options.html } : {}),
+    creator: 'nimblescape Markdown Paper',
+    producer: 'nimblescape Markdown Paper with Paged.js and Chromium',
+  });
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.writeFileSync(output, printed.pdf);
+  return { pdf: output, rendered, problems: [...errors, ...rendered.problems.filter((problem) => problem.severity !== 'error')], messages: printed.messages };
 }

@@ -12,10 +12,10 @@
  * is no document of a layout and gets no check. The module uses no API of VS Code.
  */
 
+import type { Layout, Problem } from '@nimblescape/markdownlayout';
 import { citationProblems, writeCitations } from './citations';
 import { citationStyleOf } from './csl';
 import { bodyOf, type FrontMatter, readFrontMatter } from './frontMatter';
-import type { Layout, Problem } from './layout';
 import { renderBody } from './markdown';
 import { clonesFolder, referencesOf } from './references';
 import { findClone, findLayout, type Host } from './render';

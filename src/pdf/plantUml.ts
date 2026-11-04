@@ -8,7 +8,7 @@
  * the Markdown preview of VS Code shows them with the extension. Its markdown-it plugin writes each PlantUML block
  * with the settings of the extension and the files that its diagrams include; the script of its page renders the
  * diagrams as SVG with the engine of the package, in the page of the PDF; the page copies them out of their shadow
- * roots before Paged.js makes the pages (media/paperHandlers.js). The build copies the files of the page of the package
+ * roots before Paged.js makes the pages (media/paperDrawings.js). The build copies the files of the page of the package
  * into the folder `plantuml` of the assets (esbuild.mjs). The module uses no API of VS Code.
  */
 

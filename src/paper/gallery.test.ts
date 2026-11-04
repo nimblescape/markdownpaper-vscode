@@ -7,9 +7,9 @@
  * [R-NEW-004](../../docs/requirements.md#r-new-004)). A map of addresses stands for GitHub.
  */
 
+import { formatText } from '@nimblescape/markdownlayout';
 import { describe, expect, test } from 'vitest';
 import { downloadRemote, findRemote, findRemotes, layoutFolders, parseRemote, previewUrl, referenceText, remoteName } from './gallery';
-import { formatText } from './layout';
 import type { Fetcher } from './lookup';
 
 const encoder = new TextEncoder();

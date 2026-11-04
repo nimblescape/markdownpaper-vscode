@@ -30,6 +30,8 @@ await esbuild.build({
   bundle: true,
   platform: 'node',
   format: 'cjs',
+  // As the bundles of esbuild.mjs: the ES module of a package before its CommonJS file.
+  mainFields: ['module', 'main'],
   target: 'es2022',
   sourcemap: true,
   external: ['vscode', 'mocha'],

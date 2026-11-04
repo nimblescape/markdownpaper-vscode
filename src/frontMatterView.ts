@@ -15,11 +15,11 @@
 
 import { randomBytes } from 'node:crypto';
 import * as path from 'node:path';
+import type { Layout } from '@nimblescape/markdownlayout';
 import * as vscode from 'vscode';
 import { fileOf, textOf } from './notesApi';
 import { readFrontMatter } from './paper/frontMatter';
 import { applyChange, type Change, changedLines, type Form, formOf, orderOf } from './paper/frontMatterForm';
-import type { Layout } from './paper/layout';
 import { findLayout } from './paper/render';
 import { searchHost } from './workspaceHost';
 

@@ -9,7 +9,7 @@
  * copies the chosen one into the new project. The module reads GitHub through a fetcher and uses no API of VS Code.
  */
 
-import { type Layout, layoutFile, layoutName, parseLayout, type Problem } from './layout';
+import { type Layout, layoutFile, layoutName, parseLayout, type Problem } from '@nimblescape/markdownlayout';
 import type { Fetcher, Response } from './lookup';
 
 /** layoutTopic is the topic of GitHub that marks a repository of layouts of nimblescape Markdown Paper. */

@@ -3,21 +3,21 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 /**
- * The tests of the parts of the renderer around the text: the front matter, the layout, the templates, the
- * hyphenation, the page, the checks and the scaffold. A reader of files in memory stands for the disk.
+ * The tests of the parts of Markdown Paper around the text: the front matter, the built-in layout, the page with the
+ * layouts on GitHub and the public repositories, the checks and the scaffold. A reader of files in memory stands for
+ * the disk. The tests of @nimblescape/markdownlayout check the format of the layouts, the templates, the hyphenation
+ * and the rest of the page.
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { formatText, parseLayout } from '@nimblescape/markdownlayout';
 import { describe, expect, test } from 'vitest';
 import { checkDocument } from './checks';
 import { bodyOf, isPaperDocument, readFrontMatter } from './frontMatter';
-import { hyphenateHtml, hyphenatorOf, softHyphen } from './hyphenate';
 import { topicList, topics } from './instructions';
-import { formatText, parseLayout, termsFor } from './layout';
-import { findLayout, type Host, type Reader, render, rewriteCss, rewriteHtml } from './render';
+import { findLayout, type Host, type Reader, render } from './render';
 import { frontMatterOf, linkedFiles, mapLinks, newDocumentText, newLayoutFiles, newProjectFiles, rebaseLinks, splitStart, startFiles } from './scaffold';
-import { fill, pdfNameOf } from './template';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -84,58 +84,6 @@ describe('front matter (R-DOC-001)', () => {
 });
 
 describe('layout.json (R-LAY-002)', () => {
-  test('the defaults of the format and of the language fill the fields that the file leaves out', () => {
-    const { layout, problems } = parseLayout(JSON.stringify({ format: formatText }), 'mine', 'file:///repo/layouts/mine/');
-    expect(problems).toEqual([]);
-    expect(layout).toMatchObject({ id: 'mine', name: 'mine', language: 'en-US', stylesheets: ['page.css'], before: [], numbered: true, depth: 3, numberedSections: [], contentsFront: true, hyphenate: true, references: { hyphenate: false }, pdfName: '{{file}}' });
-    expect(layout?.terms.sections.TOC).toContain('Table of Contents');
-  });
-
-  test('a file of another format or of another major version is not read', () => {
-    expect(parseLayout('{', 'x', 'file:///x/').problems[0].message).toContain('no JSON');
-    expect(parseLayout(JSON.stringify({ format: 'other 1.0.0' }), 'x', 'file:///x/').layout).toBeUndefined();
-    expect(parseLayout(JSON.stringify({ format: 'nimblescape-layout 2.0.0' }), 'x', 'file:///x/').problems[0].message).toContain('reads the format 1.x');
-    expect(parseLayout(JSON.stringify({ format: 'nimblescape-layout 1.4.0' }), 'x', 'file:///x/').problems[0].severity).toBe('warning');
-  });
-
-  test('a field can give the values that the author chooses from, and its default is one of them', () => {
-    const field = (spec: unknown) => parseLayout(JSON.stringify({ format: formatText, fields: { schrift: spec } }), 'x', 'file:///x/');
-    const chosen = field({ description: 'Die Schrift.', default: 'arial', values: ['arial', 'times'] });
-    expect(chosen.problems).toEqual([]);
-    expect(chosen.layout?.fields.schrift).toEqual({ description: 'Die Schrift.', required: false, default: 'arial', values: ['arial', 'times'] });
-    expect(field({ description: 'Die Schrift.', default: 'serif', values: ['arial', 'times'] }).problems[0].message).toBe('The default "serif" of the field "schrift" of the layout "x" is not one of its values: arial, times.');
-    const wrong = field({ description: 'Die Schrift.', values: 'arial' });
-    expect(wrong.problems[0].message).toBe('The field "schrift" of the layout "x" must give "values" as a list of texts.');
-    expect(wrong.layout?.fields.schrift.values).toBeUndefined();
-  });
-
-  test('a path outside the folder, a wrong language, a wrong term and a wrong pattern are warnings, and the rest is read', () => {
-    const { layout, problems } = parseLayout(JSON.stringify({ format: formatText, before: ['../x.html', 'cover.html'], language: 'deutsch', terms: { BIB: 'Quellen', table: ['Tab.'], other: 'x' }, headings: { unnumbered: ['('] } }), 'x', 'file:///x/');
-    expect(layout?.before).toEqual(['cover.html']);
-    expect(layout?.language).toBe('en-US');
-    expect(layout?.terms.sections.BIB).toEqual(['Quellen']);
-    expect(layout?.terms.table).toBe('Tab.');
-    expect(layout?.unnumbered).toEqual([]);
-    expect(problems.map((problem) => problem.severity)).toEqual(['warning', 'warning', 'warning', 'warning']);
-  });
-
-  test('the empty paper document and the preview name files of the folder; a missing one is no warning for a document (R-LAY-009)', () => {
-    expect(parseLayout(JSON.stringify({ format: formatText, document: 'document.md', preview: 'document.pdf' }), 'x', 'file:///x/')).toMatchObject({ layout: { document: 'document.md', preview: 'document.pdf' }, problems: [] });
-    expect(parseLayout(JSON.stringify({ format: formatText }), 'x', 'file:///x/').problems).toEqual([]);
-    const { layout, problems } = parseLayout(JSON.stringify({ format: formatText, document: '../a.md', preview: 3 }), 'x', 'file:///x/');
-    expect(layout?.document).toBeUndefined();
-    expect(layout?.preview).toBeUndefined();
-    expect(problems.map((problem) => problem.message)).toEqual(['The field "document" of the layout "x" must name a file of the layout folder.', 'The field "preview" of the layout "x" must name a file of the layout folder.']);
-  });
-
-  test('a layout can number special sections, hyphenate the reference list and leave the front part out of the table of contents', () => {
-    const { layout, problems } = parseLayout(JSON.stringify({ format: formatText, headings: { numberedSections: ['bib', 'XYZ'] }, references: { hyphenate: true }, contents: { front: false } }), 'x', 'file:///x/');
-    expect(layout?.numberedSections).toEqual(['BIB']);
-    expect(layout?.references).toEqual({ hyphenate: true });
-    expect(layout?.contentsFront).toBe(false);
-    expect(problems.map((problem) => problem.message)).toEqual(['The layout "x" has the unknown section "XYZ" in "headings.numberedSections"; the sections are TOC, LOF, LOT, LOL, BIB, ADT, AST, ACC, FWD, APX.']);
-  });
-
   test('the built-in layout plain is a valid layout', () => {
     const { layout, problems } = parseLayout(fs.readFileSync(path.join(repository, 'layouts/plain/layout.json'), 'utf8'), 'plain', 'file:///builtin/plain/');
     expect(problems).toEqual([]);
@@ -145,51 +93,6 @@ describe('layout.json (R-LAY-002)', () => {
     }
   });
 
-  test('German and English have their words, and another language the English ones', () => {
-    expect(termsFor('de-CH').figure).toBe('Abbildung');
-    expect(termsFor('en-GB').sections.APX).toContain('Appendix');
-    expect(termsFor('fr').table).toBe('Table');
-  });
-});
-
-describe('templates (R-LAY-004)', () => {
-  test('fields, escaped, and parts for fields with and without a value', () => {
-    expect(fill('<p>{{title}}</p>{{#sub}}<i>{{sub}}</i>{{/sub}}{{^sub}}none{{/sub}}', { title: 'A & <B>' })).toBe('<p>A &amp; &lt;B&gt;</p>none');
-    expect(fill('{{#a}}[{{#b}}{{b}}{{/b}}]{{/a}}', { a: '1', b: '2' })).toBe('[2]');
-  });
-
-  test('the name of the PDF from the pattern, without empty parts, else from the name of the file', () => {
-    expect(pdfNameOf('{{nr}}_{{author}}_{{type}}', { nr: '0025', author: 'Mag. Hannes Stauß', type: '', file: 'paper' })).toBe('0025_Mag.-Hannes-Stauss.pdf');
-    expect(pdfNameOf('{{title}}', { title: '', file: 'concept.paper' })).toBe('concept.paper.pdf');
-  });
-});
-
-describe('hyphenation (R-REN-007)', () => {
-  test('soft hyphens in the words of the text, not in addresses, gender forms, headings, links and code', () => {
-    const hyphenate = hyphenatorOf('de-AT');
-    expect(hyphenate).toBeDefined();
-    const html = hyphenateHtml('<h1>Wirtschaftspädagogik</h1><p>Wirtschaftspädagogik der Schüler:innen, https://example.com/Wirtschaftspädagogik <a href="x">Wirtschaftspädagogik</a> <code>Wirtschaftspädagogik</code></p>', hyphenate!);
-    expect(html).toContain('<h1>Wirtschaftspädagogik</h1>');
-    expect(html).toContain(`Wirt${softHyphen}schafts`);
-    expect(html).toContain('Schü');
-    expect(html).toContain(':innen');
-    expect(html).toContain(' https://example.com/Wirtschaftspädagogik ');
-    expect(html).toContain('<a href="x">Wirtschaftspädagogik</a>');
-    expect(html).toContain('<code>Wirtschaftspädagogik</code>');
-  });
-
-  test('words joined by a slash get soft hyphens, paths do not', () => {
-    const hyphenate = hyphenatorOf('de-AT')!;
-    expect(hyphenate('(zentrale Forschungsfrage/n)')).toBe(`(zen${softHyphen}tra${softHyphen}le For${softHyphen}schungs${softHyphen}fra${softHyphen}ge/n)`);
-    for (const path of ['/usr/share/Wirtschaftspädagogik', './Wirtschaftspädagogik', '~/Wirtschaftspädagogik', 'bilder/Wirtschaftspädagogik.png']) {
-      expect(hyphenate(path)).toBe(path);
-    }
-  });
-
-  test('a language without patterns gets no hyphenation', () => {
-    expect(hyphenatorOf('ja-JP')).toBeUndefined();
-    expect(hyphenatorOf('en-GB')).toBeDefined();
-  });
 });
 
 describe('the page (R-REN-001, R-REN-008)', () => {
@@ -278,11 +181,6 @@ describe('the page (R-REN-001, R-REN-008)', () => {
     expect(rendered.html).toContain('<span class="caption-source"> (a.ts, L1-L2)</span>');
   });
 
-  test('relative addresses only: a style sheet and a template keep the addresses with a scheme, an anchor or a root', () => {
-    const resource = (url: string) => `R:${url}`;
-    expect(rewriteCss('a{b:url(#x)}c{d:url(/e.png)}f{g:url( h.png )}', 'file:///l/page.css', resource)).toBe('a{b:url(#x)}c{d:url(/e.png)}f{g:url("R:file:///l/h.png")}');
-    expect(rewriteHtml('<a href="#x"></a><img src="i.png">', 'file:///l/c.html', resource)).toBe('<a href="#x"></a><img src="R:file:///l/i.png">');
-  });
 });
 
 describe('checks of the front matter (R-DOC-002)', () => {

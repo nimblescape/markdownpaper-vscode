@@ -23,8 +23,8 @@
  * `mp format`.
  */
 
+import type { Layout } from '@nimblescape/markdownlayout';
 import { bodyOf, readFrontMatter } from './frontMatter';
-import type { Layout } from './layout';
 import { listCodes } from './marks';
 import { type Body, inContents, renderBody } from './markdown';
 

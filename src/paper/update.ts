@@ -14,9 +14,9 @@
  */
 
 import { createHash } from 'node:crypto';
+import { formatText, layoutFile } from '@nimblescape/markdownlayout';
 import { downloadFiles, findRemote, type Origin, parseRemote, readOrigin } from './gallery';
 import { editJsonText, type Json, sameJson } from './jsonText';
-import { formatText, layoutFile } from './layout';
 import type { Fetcher } from './lookup';
 
 const decoder = new TextDecoder();

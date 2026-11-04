@@ -10,11 +10,11 @@
  * its default and its values, and the required fields are required. `layout` is read-only, because `mp create` writes
  * it. `repos`, which `mp get` writes, is no key of the schema: the form shows it when the file has it, with the input of
  * the plugin. Other keys are allowed, because other extensions keep their keys in the front matter too. The function
- * `schemaOfFields` of the layout part of nimblescape Markdown makes the same schema for the fields; this module goes
- * when the layout code of Markdown Paper moves there. The module uses no API of VS Code.
+ * `schemaOfFields` of the layout part of nimblescape Markdown makes the general schema of the fields; the schema of a
+ * paper adds that `layout` is required and read-only, and the field `lang`. The module uses no API of VS Code.
  */
 
-import type { Layout } from './layout';
+import type { Layout } from '@nimblescape/markdownlayout';
 
 /** FrontMatterSchema is the JSON schema of the front matter of a paper. */
 export type FrontMatterSchema = Record<string, unknown>;

@@ -10,10 +10,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { type Layout, termsFor } from '@nimblescape/markdownlayout';
 import { describe, expect, test } from 'vitest';
 import { addSources, citationProblems, findCitations, findDatabase, parseData, researchEdit, researchMarkers, sourceLine, writeCitations } from './citations';
 import type { CitationStyle } from './csl';
-import { type Layout, termsFor } from './layout';
 
 /** layout is a German layout of the PHT. */
 const layout: Layout = {

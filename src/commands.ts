@@ -12,11 +12,11 @@
  */
 
 import * as path from 'node:path';
+import type { Layout } from '@nimblescape/markdownlayout';
 import * as vscode from 'vscode';
 import { markdownExtensions, plantUmlOptions } from './markdownExtensions';
 import { fileOf, textOf } from './notesApi';
 import { downloadRemote, findRemotes, previewUrl, type RemoteLayout, type RemoteSpec, readOrigin, remoteName } from './paper/gallery';
-import type { Layout } from './paper/layout';
 import type { Fetcher } from './paper/lookup';
 import { clonesFolder, type Reference, referencesOf } from './paper/references';
 import { defaultLayout, findClone, findLayout, layoutName } from './paper/render';

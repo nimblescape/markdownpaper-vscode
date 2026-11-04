@@ -29,9 +29,9 @@
  * module uses no API of VS Code.
  */
 
+import type { Layout, Problem } from '@nimblescape/markdownlayout';
 import { type CitationStyle, cite, type Form, type Source } from './csl';
 import { bodyOf, readFrontMatter } from './frontMatter';
-import type { Layout, Problem } from './layout';
 import { type Heading, renderBody } from './markdown';
 import { idPattern, researchEdit, type ResearchEdit, researchMark, researchText, sourcesName } from './marks';
 import { sameSource, sourceId } from './metadata';

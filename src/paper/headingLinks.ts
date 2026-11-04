@@ -11,8 +11,8 @@
  * the links to figures, tables and listings. The module uses no API of VS Code.
  */
 
+import type { Layout } from '@nimblescape/markdownlayout';
 import { bodyOf, readFrontMatter } from './frontMatter';
-import type { Layout } from './layout';
 import { decodedTarget, type Heading, referenceText, renderBody } from './markdown';
 
 /** link matches a link to a place in the file, not an image: its text, its target and its title. */

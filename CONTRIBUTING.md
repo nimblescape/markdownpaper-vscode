@@ -207,7 +207,12 @@ packages, packs them and installs the packed packages into `node_modules/`
 without a change of `package.json` and `package-lock.json`, as Markdown Notes
 does. The repository of nimblescape Markdown is public, so git reads it
 without a token, also in CI, which runs the script after
-`npm ci --ignore-scripts`. A new version of the libraries is a new
+`npm ci --ignore-scripts`. The libraries that the packages use get the
+versions of the lock file of nimblescape Markdown at that commit, with which
+its tests ran: the script gives them to npm in the field `overrides` of
+`package.json`, which has the field only while npm runs. So a new version of a
+library on npmjs.com changes no build, and the table of
+`THIRD-PARTY-NOTICES.md` stays right. A new version of the libraries is a new
 commit in the script. After the release of nimblescape Markdown, the packages
 become development dependencies of `package.json` with their versions, and
 the script and its part of the script `postinstall` go away.

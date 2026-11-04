@@ -86,7 +86,7 @@ English, Spanish, French and Italian.
 | [@nimblescape/markdownlayout](#nimblescapemarkdownlayout) | 0.1.0 | MIT |
 | [@decimalturn/toml-patch](#decimalturntoml-patch) | 3.3.2 | MIT |
 | [jsonc-parser](#jsonc-parser) | 3.3.1 | MIT |
-| [@cfworker/json-schema](#cfworkerjson-schema) | 4.1.4 | MIT |
+| [@cfworker/json-schema](#cfworkerjson-schema) | 4.1.3 | MIT |
 | [diff](#diff) | 9.0.0 | BSD-3-Clause |
 | [yaml](#yaml) | 2.9.1 | ISC |
 | [hyphen](#hyphen) | 1.14.1 | ISC |

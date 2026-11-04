@@ -105,7 +105,9 @@ Node.js 22 or newer.
 - **Front matter form.** The view "Front Matter" in the side bar shows the
   front matter of the active Markdown file as a form, with one row for each
   field of its layout, a choice list for a field with names, and read-only
-  rows for `layout` and `repos`. Each change is one edit of the file.
+  rows for `layout` and `repos`. Each change is one edit of the file. In the
+  editor of a whole file of Markdown Notes, the form is at the top of the
+  file.
 - **Export PDF.** "Export PDF" in the menu "Run" of the title of a Markdown
   file writes the PDF beside the file, with the name that the layout gives,
   for example `{{matrikelnummer}}_{{author}}`. The PDF shows what the other

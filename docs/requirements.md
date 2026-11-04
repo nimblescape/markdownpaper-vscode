@@ -407,6 +407,14 @@ with one row for each field of its layout ([decision 56](#decisions)):
   by `mp get`, shows in the form at once.
 - A front matter with a YAML error, or a layout that cannot be read, shows
   the problem, and the rows are read-only until the text editor solves it.
+- For a file in the editor of a whole file of Markdown Notes, the form of
+  the front matter of that editor takes the place of the form of the view
+  ([R-PAPER-001](https://github.com/nimblescape/markdown/blob/main/docs/plugins.md#r-paper-001)
+  of nimblescape Markdown): Paper gives it the schema of the layout and the
+  read-only `layout` and `repos` ([R-EDIT-001](#r-edit-001)). *(proposal)*
+  While that editor is the active tab, the view shows that the editor has
+  the form at the top of the file, with the button "Show the Editor", and
+  "Edit Front Matter" for its file shows the editor.
 
 ## Layouts
 

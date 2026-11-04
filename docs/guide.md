@@ -269,6 +269,11 @@ matter in the text is read-only; the link "Edit Front Matter" above the front
 matter opens the view. "Markdown Paper: Edit Front Matter" in the Command
 Palette opens it too.
 
+In the editor of a whole file of Markdown Notes, the front matter is a form
+at the top of the file, with the same fields of the layout. While that
+editor is the active tab, the view says so and has the button "Show the
+Editor".
+
 ## Paper documents and notes documents
 
 A Markdown file whose front matter has the field `layout` is a paper

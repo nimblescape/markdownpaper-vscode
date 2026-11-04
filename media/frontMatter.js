@@ -131,13 +131,24 @@
   }
 
   /**
-   * render shows a form, and keeps the text and the place of the cursor of the text line that has the focus.
+   * render shows a form, and keeps the text and the place of the cursor of the text line that has the focus. Without a
+   * form, it shows the hint, or for a file in the editor of a whole file of Markdown Notes, that the editor shows the
+   * form, with a button that shows the editor.
    * @param {any} form
+   * @param {string | undefined} editor - The name of the file in the editor of Markdown Notes.
    */
-  function render(form) {
+  function render(form, editor) {
     const active = /** @type {HTMLInputElement | null} */ (document.activeElement && document.activeElement.matches('input[data-key]') ? document.activeElement : null);
     const typed = active ? { key: active.dataset.key, value: active.value, start: active.selectionStart, end: active.selectionEnd, from: active.dataset.value } : undefined;
     root.replaceChildren();
+    if (!form && editor) {
+      root.append(element('p', 'hint', `The editor of ${editor} shows its front matter as a form, at the top of the file.`));
+      const show = element('button', 'button', 'Show the Editor');
+      show.type = 'button';
+      show.addEventListener('click', () => vscode.postMessage({ type: 'reveal' }));
+      root.append(show);
+      return;
+    }
     if (!form) {
       root.append(element('p', 'hint', 'Open a Markdown file to see the fields of its front matter.'));
       return;
@@ -214,7 +225,7 @@
   window.addEventListener('message', (event) => {
     const message = event.data;
     if (message && message.type === 'form') {
-      render(message.form);
+      render(message.form, typeof message.editor === 'string' ? message.editor : undefined);
     }
   });
   vscode.postMessage({ type: 'ready' });

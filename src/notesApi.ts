@@ -19,6 +19,27 @@ export const notesExtensionId = 'nimblescape.nimblescape-markdownnotes';
 /** cleanScheme is the scheme of the documents of the clean editing view of Markdown Notes. */
 export const cleanScheme = 'markdownnotes';
 
+/** notesEditorViewType is the view type of the editor of a whole file of Markdown Notes, a custom editor of VS Code. */
+export const notesEditorViewType = 'nimblescape.markdownNotes.editor';
+
+/**
+ * notesEditorFileOf returns the file of a tab of the editor of a whole file of Markdown Notes, or undefined for another
+ * tab.
+ * @param tab - The tab.
+ */
+export function notesEditorFileOf(tab: vscode.Tab | undefined): vscode.Uri | undefined {
+  return tab?.input instanceof vscode.TabInputCustom && tab.input.viewType === notesEditorViewType ? tab.input.uri : undefined;
+}
+
+/**
+ * openInNotesEditor shows a file in the editor of a whole file of Markdown Notes, whose form of the front matter takes
+ * the place of the view "Front Matter" for the file.
+ * @param file - The file.
+ */
+export async function openInNotesEditor(file: vscode.Uri): Promise<void> {
+  await vscode.commands.executeCommand('vscode.openWith', file, notesEditorViewType);
+}
+
 /** NotesApiV1 is version 1 of the API of Markdown Notes, as its src/extension.ts defines it. */
 export interface NotesApiV1 {
   readonly version: 1;

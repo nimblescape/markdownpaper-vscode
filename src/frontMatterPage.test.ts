@@ -59,7 +59,7 @@ async function evaluate<T>(session: { browser: Browser; id: string }, expression
 }
 
 describe('the page of the view "Front Matter" (R-DOC-005)', () => {
-  it.skipIf(!browser)('shows one row for each field and the read-only references, and sends each change', { timeout: 60_000 }, async () => {
+  it.skipIf(!browser)('shows one row for each field and the read-only references, sends each change, and leaves a file in the editor of Markdown Notes to its form', { timeout: 60_000 }, async () => {
     const text = '---\nlayout: majikmate/markdownpaper-layout-pht/thesis@main\nrepos:\n  server: myorg/server@v2.1.0\nauthor: Anna\nkeywords: [Agenten, Teams]\nsigned: true\n---\n';
     const form = formOf(text, 'paper.md', layout);
     const page = path.join(folder, 'view.html');
@@ -127,6 +127,12 @@ describe('the page of the view "Front Matter" (R-DOC-005)', () => {
       expect(await evaluate(session, `[document.activeElement.dataset.key, document.activeElement.value]`)).toEqual(['author', 'Anna B']);
       await evaluate(session, `window.postMessage({ type: 'form', form: null }, '*'), new Promise((resolve) => setTimeout(resolve, 50))`);
       expect(await evaluate(session, `document.querySelector('.hint').textContent`)).toBe('Open a Markdown file to see the fields of its front matter.');
+
+      // A file in the editor of a whole file of Markdown Notes: the form of that editor takes the place of the form.
+      await evaluate(session, `window.postMessage({ type: 'form', form: null, editor: 'paper.md' }, '*'), new Promise((resolve) => setTimeout(resolve, 50))`);
+      expect(await evaluate(session, `document.querySelector('.hint').textContent`)).toBe('The editor of paper.md shows its front matter as a form, at the top of the file.');
+      await evaluate(session, `document.querySelector('button.button').click()`);
+      expect(await evaluate(session, 'window.messages.at(-1)')).toEqual({ type: 'reveal' });
     } finally {
       await running.close();
     }

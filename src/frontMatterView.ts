@@ -6,7 +6,9 @@
  * The view "Front Matter" in the side bar ([R-DOC-005](../docs/requirements.md#r-doc-005),
  * [decision 56](../docs/requirements.md#decisions)): a form of the front matter of the Markdown file in the active
  * editor, also of a file in the clean editing view of Markdown Notes, with one row for each field of its layout. The
- * view stands in the container of the view of Markdown Notes, and in the Explorer without Markdown Notes. Each change
+ * view stands in the container of the view of Markdown Notes, and in the Explorer without Markdown Notes. For a file in
+ * the editor of a whole file of Markdown Notes, the form of the front matter of that editor takes the place of the form
+ * of the view: the view says so, with a button that shows the editor. Each change
  * of a row is one edit of the file, which the author can undo in the text editor of the file; a file without unsaved
  * changes is saved after the edit. The form keeps no copy: a change of the file, for example by `mp get`, shows at
  * once. The rows and the edits are in [paper/frontMatterForm.ts](paper/frontMatterForm.ts), the page of the view in
@@ -17,7 +19,7 @@ import { randomBytes } from 'node:crypto';
 import * as path from 'node:path';
 import type { Layout } from '@nimblescape/markdownlayout';
 import * as vscode from 'vscode';
-import { fileOf, textOf } from './notesApi';
+import { fileOf, notesEditorFileOf, openInNotesEditor, textOf } from './notesApi';
 import { readFrontMatter } from './paper/frontMatter';
 import { applyChange, type Change, changedLines, type Form, formOf, orderOf } from './paper/frontMatterForm';
 import { findLayout } from './paper/render';
@@ -95,13 +97,15 @@ export async function applyFrontMatterChange(extension: vscode.Uri, file: vscode
 }
 
 /** Message is a message of the page of the view. */
-type Message = { type: 'ready' } | { type: 'change'; key: string; value: string };
+type Message = { type: 'ready' } | { type: 'change'; key: string; value: string } | { type: 'reveal' };
 
 /** FrontMatterView is the provider of the view; it follows the Markdown file of the active editor. */
 export class FrontMatterView implements vscode.WebviewViewProvider, vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private view: vscode.WebviewView | undefined;
   private current: vscode.Uri | undefined;
+  /** inEditor is true while the file is in the active editor of a whole file of Markdown Notes, which shows its form. */
+  private inEditor = false;
   private watcher: vscode.FileSystemWatcher | undefined;
   /** generation counts the updates, so that a slow update does not write over a newer one. */
   private generation = 0;
@@ -109,6 +113,8 @@ export class FrontMatterView implements vscode.WebviewViewProvider, vscode.Dispo
   constructor(private readonly extension: vscode.Uri) {
     this.disposables.push(
       vscode.window.onDidChangeActiveTextEditor((editor) => this.follow(editor)),
+      vscode.window.tabGroups.onDidChangeTabs(() => this.followTab()),
+      vscode.window.tabGroups.onDidChangeTabGroups(() => this.followTab()),
       vscode.workspace.onDidChangeTextDocument((event) => {
         if (this.current && event.contentChanges.length > 0 && fileOf(event.document.uri).toString() === this.current.toString()) {
           void this.update();
@@ -116,6 +122,7 @@ export class FrontMatterView implements vscode.WebviewViewProvider, vscode.Dispo
       }),
     );
     this.follow(vscode.window.activeTextEditor);
+    this.followTab();
   }
 
   /** file is the file whose front matter the view shows. */
@@ -138,11 +145,21 @@ export class FrontMatterView implements vscode.WebviewViewProvider, vscode.Dispo
     }
   }
 
+  /** followTab shows that the editor of a whole file of Markdown Notes has the form, when it is the active tab. */
+  private followTab(): void {
+    const file = notesEditorFileOf(vscode.window.tabGroups.activeTabGroup.activeTab);
+    if (file && (!this.inEditor || this.current?.toString() !== file.toString())) {
+      this.show(file, true);
+    }
+  }
+
   /**
    * show shows the front matter of a file.
    * @param file - The file.
+   * @param inEditor - True for a file in the active editor of a whole file of Markdown Notes.
    */
-  show(file: vscode.Uri): void {
+  show(file: vscode.Uri, inEditor = false): void {
+    this.inEditor = inEditor;
     if (this.current?.toString() !== file.toString()) {
       this.current = file;
       this.watcher?.dispose();
@@ -194,6 +211,8 @@ export class FrontMatterView implements vscode.WebviewViewProvider, vscode.Dispo
   private async receive(message: Message): Promise<void> {
     if (message.type === 'ready') {
       await this.update();
+    } else if (message.type === 'reveal' && this.current) {
+      await openInNotesEditor(this.current);
     } else if (message.type === 'change' && this.current) {
       try {
         await applyFrontMatterChange(this.extension, this.current, { key: String(message.key), value: String(message.value) });
@@ -212,6 +231,10 @@ export class FrontMatterView implements vscode.WebviewViewProvider, vscode.Dispo
       return;
     }
     const generation = ++this.generation;
+    if (this.inEditor && this.current) {
+      void view.webview.postMessage({ type: 'form', form: null, editor: path.basename(this.current.path) });
+      return;
+    }
     let form: Form | undefined;
     try {
       form = this.current ? await formFor(this.extension, this.current) : undefined;

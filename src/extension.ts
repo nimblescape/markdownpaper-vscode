@@ -23,7 +23,7 @@ import { FrontMatterChecks } from './frontMatterChecks';
 import { FrontMatterView, frontMatterViewId } from './frontMatterView';
 import { ReferenceLinks, referenceLinkSelector } from './referenceLinks';
 import { PaperPreview } from './markdownPreview';
-import { fileOf, type SlashCommand } from './notesApi';
+import { fileOf, notesEditorFileOf, openInNotesEditor, type SlashCommand } from './notesApi';
 import { registerNotesParts, researchCommand } from './notesParts';
 import { PaperDocuments } from './paperDocuments';
 import { checkedSettings, type Settings, settingsSection } from './settings';
@@ -134,6 +134,12 @@ export function activate(context: vscode.ExtensionContext): Api {
     vscode.commands.registerCommand(commands.editFrontMatter, async (uri?: unknown) => {
       const editor = vscode.window.activeTextEditor;
       const target = uri instanceof vscode.Uri ? uri : editor?.document.languageId === 'markdown' ? editor.document.uri : undefined;
+      // A file in the active editor of a whole file of Markdown Notes has the form of that editor at its top.
+      const inEditor = notesEditorFileOf(vscode.window.tabGroups.activeTabGroup.activeTab);
+      if (target && inEditor?.toString() === fileOf(target).toString()) {
+        await openInNotesEditor(inEditor);
+        return;
+      }
       if (target) {
         frontMatterView.show(fileOf(target));
       }

@@ -30,7 +30,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Footnotes](#footnotes) | pages | available | [R-REN-008](requirements.md#r-ren-008) |
 | [Hyphenation](#hyphenation) | pages | available | [R-REN-007](requirements.md#r-ren-007) |
 | [Notes of Markdown Notes](#notes-of-markdown-notes) | pages | available | [R-REN-002](requirements.md#r-ren-002), [R-GEN-003](requirements.md#r-gen-003) |
-| [The rendered editor of Markdown Notes](#the-rendered-editor-of-markdown-notes) | the editor of a whole file of Markdown Notes | built *(proposal)*; needs the version of Markdown Notes that loads the plugins of other extensions | [R-EDIT-001](requirements.md#r-edit-001), [R-GEN-003](requirements.md#r-gen-003) |
+| [The rendered editor of Markdown Notes](#the-rendered-editor-of-markdown-notes) | the editor of a whole file of Markdown Notes | available | [R-EDIT-001](requirements.md#r-edit-001), [R-GEN-003](requirements.md#r-gen-003) |
 | [Paper documents and notes documents](#paper-documents-and-notes-documents) | the Markdown file | available | [R-DOC-004](requirements.md#r-doc-004) |
 | [Page preview](#page-preview), the pages in the Markdown preview of VS Code | Markdown preview, Ctrl+Shift+V, Ctrl+K V | available | [R-PRV-001](requirements.md#r-prv-001) to [R-PRV-006](requirements.md#r-prv-006) |
 | [Export PDF](#export-pdf) | title of the editor, Explorer, command line | available | [R-PDF-001](requirements.md#r-pdf-001) to [R-PDF-003](requirements.md#r-pdf-003) |

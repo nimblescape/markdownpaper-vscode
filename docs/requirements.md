@@ -123,7 +123,7 @@ without it.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
-- *(proposal)* For its editor of a whole file, Markdown Notes loads the
+- For its editor of a whole file, Markdown Notes loads the
   plugins that other extensions contribute in their package.json, and its
   version 1 has `registerEditorPlugin(name, connect)`, which connects the
   part of such a plugin in the other extension. Markdown Paper contributes
@@ -1980,7 +1980,7 @@ writes no metadata ([decision 42](#decisions)).
 
 ### R-EDIT-001
 
-*(proposal)* **The plugin of the editor of nimblescape Markdown.** Markdown
+**The plugin of the editor of nimblescape Markdown.** Markdown
 Paper adds its parts to the editor of rendered Markdown of nimblescape
 Markdown, for example in the editor of a whole file of Markdown Notes
 ([R-GEN-003](#r-gen-003)). The bundle `dist/editorPlugins.js` holds the
@@ -2021,7 +2021,7 @@ nimblescape Markdown is public, so CI reads it without a token
   the end of the document.
 - In the pages of the editor, the anchors of the entries stay, so that the
   citations go to their entries, and the other markup has no output.
-- *(proposal)* The part of the plugin in the extension connects through
+- The part of the plugin in the extension connects through
   `registerEditorPlugin` of Markdown Notes ([R-GEN-003](#r-gen-003)) and the
   channel of the plugin. It gives the form of the front matter of the editor
   the JSON schema of the layout of the document: `layout`, the fields of the
@@ -2030,16 +2030,16 @@ nimblescape Markdown is public, so CI reads it without a token
   view "Front Matter" ([R-DOC-005](#r-doc-005)). It sends the schema again
   after a change of `layout` or of a file of a layout. A document that is no
   paper gets no schema.
-- *(proposal)* `layout` and `repos` are read-only in the form, because only
+- `layout` and `repos` are read-only in the form, because only
   the command `mp` writes them. Ctrl+click (Cmd+click on macOS) on a
   reference to GitHub runs "Open Repository in New Window" for it
   ([R-CLI-004](#r-cli-004)).
-- *(proposal)* In a paper, `/cite` in the slash commands and in the insert
+- In a paper, `/cite` in the slash commands and in the insert
   menu, and "Cite" in the format bar, show the list of `/cite` in VS Code
   ([R-CITE-006](#r-cite-006)); the editor inserts the citation of the chosen
   source at the cursor or after the selected text, with a space before it
   after a word. An item of Zotero goes into the database first.
-- *(proposal)* "Research" in the format bar marks the selected argument as
+- "Research" in the format bar marks the selected argument as
   `/research` does in the text editor ([R-CITE-002](#r-cite-002)). It shows
   only in a paper and only on a selection that is an argument.
 

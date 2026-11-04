@@ -78,7 +78,7 @@ a script element or an event attribute of a template is removed.
 | `before`, `after` | The templates of the fixed pages before and after the text, in their order. | `[]` |
 | `document` | The empty paper document, the Markdown file that starts a new document (section 7). The JSON schema requires it. | |
 | `preview` | The PDF of the empty paper document, which shows the pages of the layout before a person chooses it (section 7). The JSON schema requires it. | |
-| `frontMatterSchema` | *(proposal)* The JSON schema of the front matter of the documents, a file of the layout folder, for example `frontmatter.schema.json` (format 1.1.0). The layout gets its fields from the schema when it has no `fields`. | |
+| `frontMatterSchema` | The JSON schema of the front matter of the documents, a file of the layout folder, for example `frontmatter.schema.json` (format 1.1.0). The layout gets its fields from the schema when it has no `fields`. | |
 | `fields` | The fields of the front matter: each a description, or an object with `description`, `required` (`true` or `false`), `default`, and `values`, the list of names that the author chooses from (see "Parameters" below). | `{}` |
 | `headings.numbered` | `false`: the renderer numbers no heading. | `true` |
 | `headings.depth` | The deepest level of a numbered heading, 1 to 6. | `3` |

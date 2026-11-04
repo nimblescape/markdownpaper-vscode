@@ -27,13 +27,12 @@ This document replaces it where the two differ.
 
 ## Plan
 
-The plan of Markdown Paper is a part of the
-[one plan of all products](https://github.com/nimblescape/markdown/blob/main/docs/plan.md) of nimblescape Markdown
-([decision 65](#decisions)). It holds the open steps of Markdown Paper in the
-order of all work, in its [section 3](https://github.com/nimblescape/markdown/blob/main/docs/plan.md#3-open-steps), among them the
-release (step 15). It holds the built steps 1 to 49 with the numbers that the
-code, the tests and the documents name, in its
-[section 7.3](https://github.com/nimblescape/markdown/blob/main/docs/plan.md#73-nimblescape-markdown-paper).
+The plan of Markdown Paper is a part of the Claude document
+[One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy) ([decision 65](#decisions)). Its
+section "Open steps" holds the open steps of Markdown Paper in the order of
+all work, among them the release (step 15). Its tab "Built steps" holds the
+built steps 1 to 49 with the numbers that the code, the tests and the
+documents name.
 
 ## General
 
@@ -171,7 +170,7 @@ the language of the layout ([R-LAY-005](#r-lay-005)).
 
 **This specification.** This document holds all requirements of Markdown
 Paper and the decisions ([decision 12](#decisions)). The steps of the work are
-in the [one plan of all products](https://github.com/nimblescape/markdown/blob/main/docs/plan.md) of nimblescape Markdown, and the
+in the Claude document [One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy), and the
 section [Plan](#plan) links to it ([decision 65](#decisions)). Everything that
 is built or decided is in it: each decision is also a requirement, each
 function of the extension and of the command is described, and a change of
@@ -2405,10 +2404,12 @@ requirement ([R-GEN-007](#r-gen-007)).
     `@nimblescape/markdownlayout` of nimblescape Markdown, and the code of the
     extension holds no copy of them.
 65. **One plan for all products** ([R-GEN-007](#r-gen-007)): the open steps
-    and the built steps of Markdown Paper are in
-    [docs/plan.md](https://github.com/nimblescape/markdown/blob/main/docs/plan.md) of nimblescape Markdown, the one plan of the
-    libraries and of all products that build on them, and the section
-    [Plan](#plan) of this document links to it.
+    and the built steps of Markdown Paper are in the Claude document
+    [One plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy), the one plan of the libraries and of
+    all products that build on them, and the section [Plan](#plan) of this
+    document links to it. No repository holds a plan. The plan names the
+    requirements of each step by their IDs, with links into the
+    repositories, and the requirements stay the normative text.
 66. **The same functions in both editors** ([R-EDIT-001](#r-edit-001)):
     the paper has the same functions in the editor of nimblescape Markdown,
     which shows the text rendered, and in the clean editing view of
@@ -2420,5 +2421,5 @@ requirement ([R-GEN-007](#r-gen-007)).
 ## Open questions
 
 The open questions of all products, among them those of Markdown Paper, are
-in [section 4](https://github.com/nimblescape/markdown/blob/main/docs/plan.md#4-decisions-that-wait-for-the-owner) of the one plan
-of all products ([decision 65](#decisions)).
+in the section "Decisions that wait for you" of the
+[one plan of all products](https://claude.ai/artifact/SatbygA2FkJiW3ob623NEy) ([decision 65](#decisions)).

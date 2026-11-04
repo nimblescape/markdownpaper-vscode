@@ -202,9 +202,10 @@ test('the package holds the bundle, the plugins of the editor, Paged.js, the pag
     '!LICENSE',
     '!THIRD-PARTY-NOTICES.md',
   ]);
-  // The build writes dist/ and cli/dist/, and copies Paged.js and the page files of @nimblescape/plantuml into media/
-  // (esbuild.mjs).
-  const built = (pattern: string) => pattern.startsWith('!dist/') || pattern.startsWith('!cli/dist/') || pattern.startsWith('!media/paged.') || pattern.startsWith('!media/plantuml/');
+  // The build writes dist/ and cli/dist/, copies Paged.js and the page files of @nimblescape/plantuml into media/, and
+  // writes the script of the layout of @nimblescape/markdownlayout into media/paperLayout.js (esbuild.mjs).
+  const built = (pattern: string) =>
+    pattern.startsWith('!dist/') || pattern.startsWith('!cli/dist/') || pattern.startsWith('!media/paged.') || pattern.startsWith('!media/plantuml/') || pattern === '!media/paperLayout.js';
   for (const pattern of patterns.filter((pattern) => pattern.startsWith('!') && !built(pattern))) {
     expect(fs.existsSync(path.join(repository, pattern.slice(1).replace('/**', ''))), pattern).toBe(true);
   }

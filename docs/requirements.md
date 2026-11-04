@@ -2001,11 +2001,12 @@ the libraries of the lock file of that commit. The repository of
 nimblescape Markdown is public, so CI reads it without a token
 ([decision 61](#decisions)).
 
-- Each new feature of the plugin `paper` gets its solution in the clean
-  editing view of Markdown Notes in the same step, through the interface of
-  Markdown Notes ([R-GEN-003](#r-gen-003);
-  [R-TEXT-009](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-text-009) of Markdown Notes;
-  [decision 66](#decisions)).
+- The plugin `paper` has the same functions in the editor and in the clean
+  editing view of Markdown Notes, which shows the Markdown text through the
+  interface of Markdown Notes ([R-GEN-003](#r-gen-003);
+  [R-TEXT-009](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-text-009) of Markdown Notes). Each new feature
+  of the paper in one of the two gets its solution in the other in the same
+  step ([decision 66](#decisions)).
 - The database of the sources ([R-CITE-001](#r-cite-001)) and the markers
   of the lists of the special sections ([R-REN-004](#r-ren-004)) are hidden
   blocks. The anchor at the start of an entry of the reference list and the
@@ -2408,12 +2409,13 @@ requirement ([R-GEN-007](#r-gen-007)).
     [docs/plan.md](https://github.com/nimblescape/markdown/blob/main/docs/plan.md) of nimblescape Markdown, the one plan of the
     libraries and of all products that build on them, and the section
     [Plan](#plan) of this document links to it.
-66. **Each feature of the editor also in the clean editing view**
-    ([R-EDIT-001](#r-edit-001)): each new feature of the plugin `paper` of
-    the editor gets its solution in the clean editing view of Markdown Notes
-    in the same step. The clean editing view is the text-only editor that
-    keeps the format of the file
-    ([R-TEXT-009](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-text-009) of Markdown Notes).
+66. **The same functions in both editors** ([R-EDIT-001](#r-edit-001)):
+    the paper has the same functions in the editor of nimblescape Markdown,
+    which shows the text rendered, and in the clean editing view of
+    Markdown Notes, the text-only editor that keeps the format of the file
+    ([R-TEXT-009](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-text-009) of Markdown Notes). Each new
+    feature of the paper in one of the two gets its solution in the other in
+    the same step.
 
 ## Open questions
 

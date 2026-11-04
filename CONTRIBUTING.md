@@ -66,7 +66,7 @@ request.
 | `package-lock.json` | The locked development tools. npm writes this file, and nobody edits it by hand. |
 | `.node-version` | The Node release of the development tools. `actions/setup-node` in the workflows and local Node version managers read it. |
 | `.vscodeignore` | Lists the files of the package: `dist/extension.js`, `dist/editorPlugins.js`, the copy of the npm package in `cli/` (`cli/package.json`, `cli/dist/mp.js`, Paged.js, the layouts, the page files of `@nimblescape/plantuml` and the script of Mermaid with its notices, without source maps), the files of `media/` for the pages, `layouts/**`, `schemas/layout.schema.json`, `resources/icon.png`, `package.json`, `README.md`, `CHANGELOG.md`, `SUPPORT.md`, `LICENSE` and `THIRD-PARTY-NOTICES.md`. `src/manifest.test.ts` checks the list. |
-| `.github/workflows/ci.yml` | Installs the locked development tools, among them `@nimblescape/plantuml`, with `npm ci --ignore-scripts` and then the packages of nimblescape Markdown, checks the types and the sources (ESLint), runs all tests, packages the VSIX and the npm package for every push to `main`, every pull request and the commit of every release, and runs the tests of `mp` on Ubuntu and macOS with Node.js 22 and 26. The tests of the PDF use the Google Chrome of the runners. The release publishes the packages of this workflow, so a change of it needs a dry run (rule 4 of the [release rules](#release-rules)). |
+| `.github/workflows/ci.yml` | Installs the locked development tools, among them `@nimblescape/plantuml`, with `npm ci --ignore-scripts`, then the packages of nimblescape Markdown and `@nimblescape/markdownnotes`, checks the types and the sources (ESLint), runs all tests, packages the VSIX and the npm package for every push to `main`, every pull request and the commit of every release, and runs the tests of `mp` on Ubuntu and macOS with Node.js 22 and 26. The tests of the PDF use the Google Chrome of the runners. The release publishes the packages of this workflow, so a change of it needs a dry run (rule 4 of the [release rules](#release-rules)). |
 | `.github/workflows/vscode-versions.yml` | Runs `ci.yml` once per week with VS Code Insiders and with the lowest supported VS Code version. |
 | `.github/workflows/release.yml` | Releases a version on a manual start. The section [Release](#release) explains it. |
 | `.github/workflows/release-dry-run.yml` | Fails on a pull request that changes the release process (`release.yml`, `ci.yml` or `scripts/release-checks.mjs`) until a dry run on its branch tested the change (rule 4 of the [release rules](#release-rules)). |
@@ -75,6 +75,7 @@ request.
 | `scripts/build-vscode-tests.mjs` | Bundles each test of `test/vscode/` into `out/test/vscode/` for the tests in VS Code. |
 | `scripts/third-party-notices.mjs` | Writes the notices of the packages of a bundle from the installed packages, for the script of Mermaid (see [Diagrams of Mermaid on the command line](#diagrams-of-mermaid-on-the-command-line)). |
 | `scripts/install-markdown.mjs` | Installs the npm packages `@nimblescape/markdowntext`, `@nimblescape/markdownrender` and `@nimblescape/markdowneditor` of nimblescape Markdown from its GitHub repository at a fixed commit, for the build and the tests of the plugin of the editor, until the packages are on npmjs.com (see [The editor of nimblescape Markdown](#the-editor-of-nimblescape-markdown)). |
+| `scripts/install-markdownnotes.mjs` | Installs the npm package `@nimblescape/markdownnotes` of Markdown Notes from its GitHub repository at a fixed commit, for `mp format`, until the package is on npmjs.com (see [The formatter of Markdown Notes](#the-formatter-of-markdown-notes)). |
 | `scripts/install-local.mjs`, `scripts/uninstall-local.mjs` | Install the built package into every profile of the VS Code of this computer, and remove it again. |
 | `scripts/marketplace-setup.sh` | Sets up the Marketplace publishing of the repository ([Setup of a repository](#setup-of-a-repository)). |
 | `scripts/npm-setup.sh` | Sets up the npm publishing of the package ([npmjs.com setup](#npmjscom-setup)). |
@@ -97,6 +98,7 @@ Node.js 22 or later (`engines` of `cli/package.json`).
 | --- | --- |
 | `npm ci --ignore-scripts` | Installs the locked development tools and runs no install script of a dependency. |
 | `node scripts/install-markdown.mjs` | Installs the packages of nimblescape Markdown from GitHub after `npm ci --ignore-scripts`, which skips it; `npm ci` and `npm install` run it as a part of the script `postinstall`. It does nothing when the packages of its commit are installed. Where git cannot read the private repository, `NIMBLESCAPE_MARKDOWN_TOKEN` gives a token that may read it. |
+| `node scripts/install-markdownnotes.mjs` | Installs `@nimblescape/markdownnotes` from GitHub after `node scripts/install-markdown.mjs`; `npm ci` and `npm install` run it as a part of the script `postinstall`. It does nothing when the package of its commit is installed. |
 | `npm run typecheck` | Checks the types with `tsc`, of `src/editor/` with its own settings. esbuild does not check them. |
 | `npm run lint` | Checks the sources with ESLint (`eslint.config.mjs`). `npm run lint -- --fix` corrects what ESLint can correct itself. TypeScript stays at version 6.0.3, because typescript-eslint supports TypeScript only up to 6.0. A rule that a line breaks on purpose is switched off for that line only, with `// eslint-disable-next-line <rule>` and the reason. |
 | `npm test` | Runs the unit tests with vitest. The tests touch no installed editor and start no browser. |
@@ -208,10 +210,39 @@ packages, packs them and installs the packed packages into `node_modules/`
 without a change of `package.json` and `package-lock.json`, as Markdown Notes
 does. The repository of nimblescape Markdown is public, so git reads it
 without a token, also in CI, which runs the script after
-`npm ci --ignore-scripts`. A new version of the libraries is a new
+`npm ci --ignore-scripts`. The libraries that the packages use get the
+versions of the lock file of nimblescape Markdown at that commit, with which
+its tests ran: the script gives them to npm in the field `overrides` of
+`package.json`, which has the field only while npm runs. So a new version of a
+library on npmjs.com changes no build, and the table of
+`THIRD-PARTY-NOTICES.md` stays right. A new version of the libraries is a new
 commit in the script. After the release of nimblescape Markdown, the packages
 become development dependencies of `package.json` with their versions, and
 the script and its part of the script `postinstall` go away.
+
+## The formatter of Markdown Notes
+
+`mp format` formats a paper with the formatter of Markdown Notes and then
+with the steps of the paper ([R-CLI-002](docs/requirements.md#r-cli-002)),
+in `src/cli/format.ts`. The formatter of Markdown Notes is the function
+`formatMarkdown` of its npm package `@nimblescape/markdownnotes`, which has
+no dependencies, so the bundle of `mp` holds it and still imports only the
+modules of Node.js. The extension does not use the package: in VS Code,
+Markdown Notes runs the steps of the paper through its interface.
+
+The package is not on npmjs.com before the release of Markdown Notes, and npm
+cannot install a folder of a repository. So
+`scripts/install-markdownnotes.mjs` fetches the commit that it names,
+builds it as the CI of Markdown Notes does (`npm ci --ignore-scripts`,
+`node scripts/install-markdown.mjs`, `node esbuild.mjs --production`) and
+copies the files that `npm pack ./cli` packs into
+`node_modules/@nimblescape/markdownnotes`. It runs after
+`scripts/install-markdown.mjs`, whose `npm install` removes the folders of
+the packages that `package.json` does not name. A new version of the
+formatter is a new commit in the script. After the release of Markdown
+Notes, the package becomes a development dependency of `package.json` with
+its version, and the script, its steps in the CI and its part of the script
+`postinstall` go away.
 
 ## The download of Chromium
 

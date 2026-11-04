@@ -1477,7 +1477,7 @@ extension gives the command (below).
 ### R-CLI-002
 
 **One formatter command.** A paper has one formatter command, although the
-notes and the paper are two packages. The plan:
+notes and the paper are two packages.
 
 - `mp format <file>` is the one formatter of a paper. It calls the
   formatter of Markdown Notes as a library, `formatMarkdown(lines)` of
@@ -1494,18 +1494,23 @@ notes and the paper are two packages. The plan:
   paper once. The steps of the paper run in one order: first the citations
   and the reference list, then the lists, so that a new reference list is in
   the table of contents after one format.
-- Today `mp format` runs the steps of the paper; the steps of
-  Markdown Notes join it with the library of Markdown Notes. Until the
-  release, the build checks out the GitHub repository
-  `nimblescape/markdownnotes-vscode` at a fixed commit, builds it and installs
-  its folder `cli/` as a file dependency, because npm cannot install a folder
-  of a Git repository ([decision 36](#decisions)). Then it runs the
-  steps of Markdown Notes and the steps of the paper again while the text
-  changes, at most three rounds, as Markdown Notes does in VS Code, so that
-  `--check` passes after one format. The steps of the paper keep a text that
-  they formatted already as it is. `--check` writes
-  nothing and exits with 1 when the format would change a file, for a check
-  in CI ([R-GEN-008](#r-gen-008)).
+- `mp format` runs the formatter of Markdown Notes first, then the steps of
+  the paper. Then it runs the formatter of Markdown Notes and the steps of the
+  paper again while the text changes, at most three rounds, as Markdown Notes
+  does in VS Code, so that `--check` passes after one format. The steps of the
+  paper keep a text that they formatted already as it is. The formatter of
+  Markdown Notes writes the code of a listing from its file, by its path
+  relative to the folder of the document. A file keeps its line breaks and
+  its byte order mark. `mp preview` formats the empty paper document of a
+  layout in the same way. `--check` writes nothing and exits with 1 when the
+  format would change a file, for a check in CI ([R-GEN-008](#r-gen-008)).
+- Until the release of Markdown Notes, the development tools install
+  `@nimblescape/markdownnotes` from the GitHub repository
+  `nimblescape/markdownnotes-vscode` at a fixed commit
+  (`scripts/install-markdownnotes.mjs`): the script builds the repository
+  and copies the files of its folder `cli/`, because npm cannot install a
+  folder of a Git repository ([decision 36](#decisions)). The bundle of
+  `mp` holds the library.
 - The step of the lists writes the four lists of
   [R-REN-004](#r-ren-004) from what the renderer reads in the file: the
   numbers of the headings by the rules of the layout, and the labels and
@@ -1992,7 +1997,8 @@ and
 The bundle uses the modules of the page and holds only the code of this
 extension. Before the release of nimblescape Markdown,
 `scripts/install-markdown.mjs` installs its packages for the build from a
-fixed commit of its repository, as Markdown Notes does. The repository of
+fixed commit of its repository, as Markdown Notes does, with the versions of
+the libraries of the lock file of that commit. The repository of
 nimblescape Markdown is public, so CI reads it without a token
 ([decision 61](#decisions)).
 

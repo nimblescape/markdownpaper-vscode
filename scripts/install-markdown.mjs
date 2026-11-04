@@ -11,7 +11,9 @@
 // Markdown the packages are not on npmjs.com, and npm cannot install a folder of a repository. So the script fetches the
 // commit below of the GitHub repository into a temporary folder, installs its locked development tools without install
 // scripts, builds its packages and packs them, and installs the packed packages with their libraries, without a change
-// of package.json and package-lock.json. The file .commit in the folder of each package names the commit; when it
+// of package.json and package-lock.json. The libraries of the packages get the versions of the lock file of
+// nimblescape Markdown at the commit, with which its tests ran, so that a new version of a library on npmjs.com
+// changes nothing here. The file .commit in the folder of each package names the commit; when it
 // names the commit below, the script does nothing. The repository is public, so git, also in CI, fetches it without a
 // token; CI runs this script after `npm ci --ignore-scripts`. After the release of nimblescape Markdown, the packages become development dependencies of package.json, and this
 // script goes away (CONTRIBUTING.md).
@@ -23,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 
 /** The repository and the commit of nimblescape Markdown whose packages the extension and the command use. */
 const repository = 'https://github.com/nimblescape/markdown.git';
-const commit = '7f99e98f5ee2abbbbfac64f832ea01d493e64e27';
+const commit = '283d7464352891679768e8103b8d4f1211d5027d';
 /** The packages that the extension and the command use, each with the packages of nimblescape Markdown that it depends on. */
 const packages = ['markdowntext', 'markdownrender', 'markdownlayout', 'markdowneditor'];
 
@@ -46,6 +48,57 @@ function run(program, args, cwd, env = process.env) {
     throw new Error(`${program} ${args.join(' ')} failed${result.error ? `: ${result.error.message}` : ` with the exit code ${result.status}`}.`);
   }
   return result.stdout;
+}
+
+/**
+ * parentOf returns the place in a lock file above a place: `node_modules/a` above `node_modules/a/node_modules/b`, and
+ * the root, the empty text, above `node_modules/a` and above a workspace such as `packages/markdowntext`.
+ * @param place - The place.
+ */
+const parentOf = (place) => {
+  const index = place.lastIndexOf('/node_modules/');
+  return index < 0 ? '' : place.slice(0, index);
+};
+
+/**
+ * lockedVersions returns the overrides of npm that give the libraries of each package, also the libraries of its
+ * libraries, the versions of the lock file of the clone of nimblescape Markdown, for example
+ * `{ "@nimblescape/markdowntext": { "diff": "9.0.0" } }`. They apply only below the package, so the libraries of this
+ * repository keep the versions of its own lock file. A library is found from the place of the package that depends on
+ * it, as Node.js finds it: in the folder node_modules of that place, then of each place above it. A library with two
+ * versions below a package keeps the versions of its ranges.
+ * @param clone - The folder of the clone of nimblescape Markdown.
+ */
+function lockedVersions(clone) {
+  const locked = JSON.parse(fs.readFileSync(path.join(clone, 'package-lock.json'), 'utf8')).packages;
+  const overrides = {};
+  for (const name of packages) {
+    const versions = new Map();
+    const seen = new Set();
+    const visit = (place) => {
+      const entry = locked[place];
+      for (const library of Object.keys({ ...entry.dependencies, ...entry.optionalDependencies, ...entry.peerDependencies })) {
+        let found;
+        for (let at = place; found === undefined; at = parentOf(at)) {
+          const candidate = `${at ? `${at}/` : ''}node_modules/${library}`;
+          if (locked[candidate]) {
+            found = candidate;
+          } else if (!at) {
+            break;
+          }
+        }
+        if (found === undefined || seen.has(found) || library.startsWith('@nimblescape/')) {
+          continue;
+        }
+        seen.add(found);
+        versions.set(library, new Set([...(versions.get(library) ?? []), locked[found].version]));
+        visit(found);
+      }
+    };
+    visit(`packages/${name}`);
+    overrides[`@nimblescape/${name}`] = Object.fromEntries([...versions].filter(([, each]) => each.size === 1).map(([library, each]) => [library, [...each][0]]));
+  }
+  return overrides;
 }
 
 /** installed is true when each package is installed from the commit above. */
@@ -73,9 +126,17 @@ try {
     const [pack] = JSON.parse(run('npm', ['pack', `./packages/${name}`, '--pack-destination', packs, '--json', '--loglevel', 'error'], clone));
     files.push(path.join(packs, pack.filename));
   }
-  // The packed packages with the libraries that they depend on, in the versions of their ranges. The packages of
+  // The packed packages with the libraries that they depend on, in the versions of the lock file of the clone: npm
+  // reads them from the field overrides of package.json, which has them only while npm runs. The packages of
   // nimblescape Markdown depend on each other in the same version, so npm takes the packed ones.
-  run('npm', ['install', '--no-save', '--ignore-scripts', '--no-audit', '--no-fund', '--loglevel', 'error', ...files], root);
+  const manifest = path.join(root, 'package.json');
+  const original = fs.readFileSync(manifest, 'utf8');
+  try {
+    fs.writeFileSync(manifest, `${JSON.stringify({ ...JSON.parse(original), overrides: lockedVersions(clone) }, null, 2)}\n`);
+    run('npm', ['install', '--no-save', '--ignore-scripts', '--no-audit', '--no-fund', '--loglevel', 'error', ...files], root);
+  } finally {
+    fs.writeFileSync(manifest, original);
+  }
   for (const name of packages) {
     fs.writeFileSync(path.join(folderOf(name), '.commit'), `${commit}\n`);
   }

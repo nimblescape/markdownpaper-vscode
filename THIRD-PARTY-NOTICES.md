@@ -17,7 +17,11 @@ JSON schema; the comparison of texts; the hyphenation; the PDF library that
 finishes the PDF; and citeproc-js, which writes the citations and the
 reference list in a citation style. The
 command `mp` of the npm package `@nimblescape/markdownpaper`,
-`cli/dist/mp.js`, contains the same packages. The extension holds a copy of
+`cli/dist/mp.js`, contains the same packages and the library of the npm
+package `@nimblescape/markdownnotes` of Markdown Notes, by the same author
+under the MIT License, which formats the Markdown and the notes in
+`mp format`; that library contains markdown-it with the packages that it
+uses, which the first table names. The extension holds a copy of
 the files of the npm package in its folder `cli/`, for the command `mp` in
 the terminals of VS Code, with the files and the notices that the next
 paragraphs name for the npm package.
@@ -86,7 +90,7 @@ English, Spanish, French and Italian.
 | [@nimblescape/markdownlayout](#nimblescapemarkdownlayout) | 0.1.0 | MIT |
 | [@decimalturn/toml-patch](#decimalturntoml-patch) | 3.3.2 | MIT |
 | [jsonc-parser](#jsonc-parser) | 3.3.1 | MIT |
-| [@cfworker/json-schema](#cfworkerjson-schema) | 4.1.4 | MIT |
+| [@cfworker/json-schema](#cfworkerjson-schema) | 4.1.3 | MIT |
 | [diff](#diff) | 9.0.0 | BSD-3-Clause |
 | [yaml](#yaml) | 2.9.1 | ISC |
 | [hyphen](#hyphen) | 1.14.1 | ISC |
@@ -97,6 +101,7 @@ English, Spanish, French and Italian.
 | [tslib](#tslib) | 1.14.1 | 0BSD |
 | [citeproc](#citeproc) | 2.4.63 | CPAL-1.0 OR AGPL-1.0 |
 | [@nimblescape/plantuml](#nimblescapeplantuml) | 0.2.2 | MIT |
+| [@nimblescape/markdownnotes](#nimblescapemarkdownnotes) | 0.1.0 | MIT |
 
 | Package in `paged.polyfill.js` | Version | License |
 | --- | --- | --- |
@@ -1202,6 +1207,35 @@ Display of Attribution Information is [required/not required] in Larger Works wh
 ## @nimblescape/plantuml
 
 Source code: <https://github.com/nimblescape/plantuml-vscode>, the
+folder `cli/`. Its license:
+
+```text
+MIT License
+
+© 2026 Hannes Stauss (scalarion@nimblescape.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## @nimblescape/markdownnotes
+
+Source code: <https://github.com/nimblescape/markdownnotes-vscode>, the
 folder `cli/`. Its license:
 
 ```text

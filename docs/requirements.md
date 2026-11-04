@@ -2032,7 +2032,8 @@ and
 The bundle uses the modules of the page and holds only the code of this
 extension. Before the release of nimblescape Markdown,
 `scripts/install-markdown.mjs` installs its packages for the build from a
-fixed commit of its repository, as Markdown Notes does. The repository of
+fixed commit of its repository, as Markdown Notes does, with the versions of
+the libraries of the lock file of that commit. The repository of
 nimblescape Markdown is public, so CI reads it without a token
 ([decision 61](#decisions)).
 

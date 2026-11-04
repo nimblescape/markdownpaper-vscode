@@ -10,7 +10,7 @@
 // and paged.js, which does not start on its own, and the script of the layout of nimblescape Markdown (paperLayout.js)
 // into media/ for the script of the pages in the Markdown preview, and the built-in layouts of layouts/ into cli/dist/layouts/;
 // the extension reads layouts/ of its own folder. The page of the PDF draws the PlantUML diagrams with the files of the
-// page of the npm package @nimblescape/plantuml (scripts/install-plantuml.mjs installs it): the build copies them with
+// page of the npm package @nimblescape/plantuml, a development dependency: the build copies them with
 // the notices of the package into media/plantuml/ and cli/dist/plantuml/. The command line has no Mermaid extension of
 // VS Code: the build bundles the script src/page/mermaid.ts, which draws the diagrams of Mermaid in the page of its PDF,
 // with Mermaid into cli/dist/mermaid/, as an ECMAScript module with parts that it loads when a diagram needs them, and
@@ -59,7 +59,7 @@ fs.rmSync('cli/dist/layouts', { recursive: true, force: true });
 fs.cpSync('layouts', 'cli/dist/layouts', { recursive: true });
 const plantUml = 'node_modules/@nimblescape/plantuml';
 if (!fs.existsSync(`${plantUml}/dist/page/markdownPreview.js`)) {
-  throw new Error('The npm package @nimblescape/plantuml is missing: run node scripts/install-plantuml.mjs.');
+  throw new Error('The npm package @nimblescape/plantuml is missing: run npm ci --ignore-scripts.');
 }
 for (const folder of ['media/plantuml', 'cli/dist/plantuml']) {
   fs.rmSync(folder, { recursive: true, force: true });

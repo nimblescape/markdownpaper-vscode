@@ -30,11 +30,10 @@ This document replaces it where the two differ.
 The plan of Markdown Paper is a part of the
 [one plan of all products](https://github.com/nimblescape/markdown/blob/main/docs/plan.md) of nimblescape Markdown
 ([decision 65](#decisions)). It holds the open steps of Markdown Paper in the
-order of all work, in its [section 3](https://github.com/nimblescape/markdown/blob/main/docs/plan.md#3-open-steps), among them step 48,
-the renderer, the pages and the PDF from the packages of nimblescape Markdown
-([decision 64](#decisions)), and the rest of step 12, one formatter command
-([R-CLI-002](#r-cli-002)). It holds the built steps 1 to 47 with the numbers
-that the code, the tests and the documents name, in its
+order of all work, in its [section 3](https://github.com/nimblescape/markdown/blob/main/docs/plan.md#3-open-steps), among them the
+rest of step 12, one formatter command ([R-CLI-002](#r-cli-002)). It holds the
+built steps 1 to 48 with the numbers that the code, the tests and the
+documents name, in its
 [section 7.3](https://github.com/nimblescape/markdown/blob/main/docs/plan.md#73-nimblescape-markdown-paper).
 
 ## General

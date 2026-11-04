@@ -412,7 +412,7 @@ repository of the document ([decision 3](#decisions)).
 - `stylesheets`, `before` and `after` (the templates of the fixed pages before
   and after the text), `document` and `preview` (the empty paper document and
   its PDF, [R-LAY-009](#r-lay-009)).
-- *(proposal)* `frontMatterSchema` (format 1.1.0): the file of the JSON
+- `frontMatterSchema` (format 1.1.0): the file of the JSON
   schema of the front matter of the documents in the layout folder, from
   which the layout gets its fields when it has no `fields`.
 - `fields`: the fields of the front matter, each with a description, and with
@@ -2421,6 +2421,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     ([R-TEXT-009](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-text-009) of Markdown Notes). Each new
     feature of the paper in one of the two gets its solution in the other in
     the same step.
+67. **The schema of a layout as a file** ([R-LAY-002](#r-lay-002)): a layout
+    may hold the JSON schema of the front matter of its documents as a file,
+    which the field `frontMatterSchema` of `layout.json` names (format
+    1.1.0); the layout gets its fields from the schema when `layout.json`
+    gives none.
 
 ## Open questions
 

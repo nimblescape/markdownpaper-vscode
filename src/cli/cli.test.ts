@@ -132,6 +132,21 @@ test('format writes the lists of the special sections, and --check exits with 1 
   expect(await run(['format', 'missing.md'], io())).toBe(2);
 });
 
+test('format runs the formatter of Markdown Notes before the steps of the paper, so that a second format keeps the file (R-CLI-002)', async () => {
+  fs.writeFileSync(path.join(folder, 'code.ts'), 'const answer = 42;\n');
+  const text = '---\nlayout: plain\nlang: de-AT\n---\n\n# Inhaltsverzeichnis\n\n# Einleitung\n\nEin Satz\nin zwei Zeilen.  \n\n| a | bb |\n|---|---|\n| ccc | d |\n\n<!-- listing: code.ts -->\n```ts\nold\n```\n';
+  fs.writeFileSync(path.join(folder, 'a.md'), text);
+  expect(await run(['format', 'a.md'], io())).toBe(0);
+  expect(read('a.md')).toBe(
+    '---\nlayout: plain\nlang: de-AT\n---\n\n# Inhaltsverzeichnis\n\n<!-- toc -->\n- [1 Einleitung](#einleitung)\n<!-- /toc -->\n\n# Einleitung\n\nEin Satz in zwei Zeilen.\n\n| a   | bb  |\n| --- | --- |\n| ccc | d   |\n\n<!-- listing: code.ts -->\n```ts\nconst answer = 42;\n```\n',
+  );
+  expect(await run(['format', '--check', 'a.md'], io())).toBe(0);
+  // A file with Windows line breaks keeps them.
+  fs.writeFileSync(path.join(folder, 'b.md'), '---\r\nlayout: plain\r\n---\r\n\r\nEin Satz\r\nin zwei Zeilen.\r\n');
+  expect(await run(['format', 'b.md'], io())).toBe(0);
+  expect(read('b.md')).toBe('---\r\nlayout: plain\r\n---\r\n\r\nEin Satz in zwei Zeilen.\r\n');
+});
+
 test('format writes the citations and the reference list in the style of a CSL file of the layout, and check names a citation of no data (R-CLI-002, R-CITE-003, R-CITE-004)', async () => {
   fs.mkdirSync(path.join(folder, 'layouts/pht'), { recursive: true });
   fs.writeFileSync(path.join(folder, 'layouts/pht/layout.json'), JSON.stringify({ format: 'nimblescape-layout 1.0.0', language: 'de-AT', citationStyle: 'pht-apa7.csl', stylesheets: [] }));

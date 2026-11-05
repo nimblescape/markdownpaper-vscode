@@ -216,13 +216,13 @@ const pluginOf = (plugin: MarkdownPlugin, index: number): RenderPlugin => ({ nam
 
 /**
  * paperRenderer returns the renderer of the text of the pages: the markdown-it plugins of other extensions first, then
- * the plugin `paper`, then the plugin of the layout. The raw HTML of the file shows as the file writes it, because the
- * policy of the page lets only the scripts of the page run
+ * the plugin `paper`, then the plugin of the layout. The raw HTML of the file shows only with the fixed list of safe
+ * elements of the renderer; any other raw HTML shows as its text
  * ([R-REN-001](../../docs/requirements.md#r-ren-001)).
  * @param plugins - The markdown-it plugins of other extensions ([R-REN-010](../../docs/requirements.md#r-ren-010)).
  */
 export function paperRenderer(plugins: readonly MarkdownPlugin[] = []): MarkdownRenderer {
-  return createLayoutRenderer({ plugins: [...plugins.map(pluginOf), paperTextPlugin], rawHtml: 'trusted' });
+  return createLayoutRenderer({ plugins: [...plugins.map(pluginOf), paperTextPlugin] });
 }
 
 /** defaultRenderer is the renderer without the plugins of other extensions, made once. */

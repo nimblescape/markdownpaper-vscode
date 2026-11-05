@@ -11,7 +11,8 @@ packages of the first table: the packages `@nimblescape/markdowntext`,
 `@nimblescape/markdownrender` and `@nimblescape/markdownlayout` of
 nimblescape Markdown, by the same author under the MIT License, which make
 the pages and the PDF; the Markdown parser markdown-it with the packages that
-it uses and its plugins for footnotes and task lists; the parsers of the front
+it uses and its plugins for footnotes and task lists; highlight.js, which
+colors the code blocks; the parsers of the front
 matter in YAML, TOML and JSON, and the check of the front matter against its
 JSON schema; the comparison of texts; the hyphenation; the PDF library that
 finishes the PDF; and citeproc-js, which writes the citations and the
@@ -88,6 +89,7 @@ English, Spanish, French and Italian.
 | [@nimblescape/markdowntext](#nimblescapemarkdowntext) | 0.1.0 | MIT |
 | [@nimblescape/markdownrender](#nimblescapemarkdownrender) | 0.1.0 | MIT |
 | [@nimblescape/markdownlayout](#nimblescapemarkdownlayout) | 0.1.0 | MIT |
+| [highlight.js](#highlightjs) | 11.11.2 | BSD-3-Clause |
 | [@decimalturn/toml-patch](#decimalturntoml-patch) | 3.3.2 | MIT |
 | [jsonc-parser](#jsonc-parser) | 3.3.1 | MIT |
 | [@cfworker/json-schema](#cfworkerjson-schema) | 4.1.3 | MIT |
@@ -368,6 +370,42 @@ Source code: <https://github.com/nimblescape/markdown>, the folder
 Source code: <https://github.com/nimblescape/markdown>, the folder
 `packages/markdownlayout/`. Its license is the same text as the license of
 [@nimblescape/markdowneditor](#nimblescapemarkdowneditor).
+
+## highlight.js
+
+Source code: <https://github.com/highlightjs/highlight.js>. Its license:
+
+```text
+BSD 3-Clause License
+
+Copyright (c) 2006, Ivan Sagalaev.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
 ## @decimalturn/toml-patch
 

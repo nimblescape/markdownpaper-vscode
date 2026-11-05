@@ -360,7 +360,9 @@ Figure 1: Die Rollen von Agenten im Team <a id="fig-rollen"></a>
 ```
 
 The page shows "Abbildung 1: Die Rollen von Agenten im Team"; an image
-without a caption has no number. A paragraph `Table 1:` directly before a
+without a caption has no number. The image must be a file of the workspace,
+for example in `images/`: the pages and the PDF load nothing from the
+internet, so an image from an address on the internet does not show. A paragraph `Table 1:` directly before a
 table is the caption of the table:
 
 ```markdown

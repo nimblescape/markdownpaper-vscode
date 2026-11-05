@@ -652,11 +652,14 @@ Markdown ([R-GEN-010](#r-gen-010)).
 
 1. It reads the front matter and finds the layout ([R-LAY-001](#r-lay-001)).
 2. It reads the style sheets and fills the templates with the fields.
-3. It turns the Markdown text into HTML with markdown-it, with HTML in the
-   text, links from addresses and footnotes, and the steps of
+3. It turns the Markdown text into HTML with markdown-it, with the raw HTML
+   of the fixed list of safe elements
+   ([R-REN-001](https://github.com/nimblescape/markdown/blob/main/docs/rendering.md#r-ren-001)
+   of nimblescape Markdown), links from addresses and footnotes, and the steps of
    [R-REN-002](#r-ren-002) to [R-REN-010](#r-ren-010).
 4. It writes the page: a content security policy that lets only the scripts of
-   the renderer run, the folder of the document as the base address for
+   the renderer run, loads nothing from the internet and lets no form send
+   data, the folder of the document as the base address for
    images, the style sheets, the fields, the fixed pages and the text, and
    Paged.js. The page reports when Paged.js has made all pages.
 

@@ -51,6 +51,16 @@ function run(program, args, cwd, env = process.env) {
 }
 
 /**
+ * packOf returns the description of the one package that `npm pack --json` packed: npm 10 and 11 write a list of the
+ * packed packages, npm 12 an object with the name of each package as its key.
+ * @param output - The standard output of `npm pack --json`.
+ */
+function packOf(output) {
+  const result = JSON.parse(output);
+  return (Array.isArray(result) ? result : Object.values(result))[0];
+}
+
+/**
  * parentOf returns the place in a lock file above a place: `node_modules/a` above `node_modules/a/node_modules/b`, and
  * the root, the empty text, above `node_modules/a` and above a workspace such as `packages/markdowntext`.
  * @param place - The place.
@@ -123,7 +133,7 @@ try {
   run('npm', ['run', 'build', '--silent'], clone);
   const files = [];
   for (const name of packages) {
-    const [pack] = JSON.parse(run('npm', ['pack', `./packages/${name}`, '--pack-destination', packs, '--json', '--loglevel', 'error'], clone));
+    const pack = packOf(run('npm', ['pack', `./packages/${name}`, '--pack-destination', packs, '--json', '--loglevel', 'error'], clone));
     files.push(path.join(packs, pack.filename));
   }
   // The packed packages with the libraries that they depend on, in the versions of the lock file of the clone: npm

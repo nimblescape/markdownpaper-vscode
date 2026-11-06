@@ -263,7 +263,9 @@ const filesOf = (folder: string): string[] =>
 
 test('the npm package holds the bundle, Paged.js, the page files of @nimblescape/plantuml, the script of Mermaid, the built-in layouts, the notices, the README and the license (npm pack --dry-run)', () => {
   const listed = execFileSync('npm', ['pack', './cli', '--dry-run', '--json'], { cwd: repository, encoding: 'utf8' });
-  const files = (JSON.parse(listed) as { files: { path: string }[] }[])[0].files.map((file) => file.path);
+  // npm 10 and 11 write a list of the packed packages, npm 12 an object with the name of each package as its key.
+  const packed = JSON.parse(listed) as { files: { path: string }[] }[] | Record<string, { files: { path: string }[] }>;
+  const files = (Array.isArray(packed) ? packed : Object.values(packed))[0].files.map((file) => file.path);
   // The build writes dist/ with the layouts, the page files of @nimblescape/plantuml with its notices, the script of
   // Mermaid in parts with its notices, LICENSE and THIRD-PARTY-NOTICES.md (esbuild.mjs). The source maps of a
   // development build stay out.

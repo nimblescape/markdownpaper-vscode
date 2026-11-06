@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 /** The repository and the commit of Markdown Notes whose package the command uses. */
 const repository = 'https://github.com/nimblescape/markdownnotes-vscode.git';
-const commit = '3d91238a5c8f1def3ac45aa3d34a0d8c123e8d4b';
+const commit = '0d643711ba59f993b033eae78409aa73ee8b71e8';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const target = path.join(root, 'node_modules', '@nimblescape', 'markdownnotes');
@@ -46,6 +46,16 @@ function run(program, args, cwd) {
   return result.stdout;
 }
 
+/**
+ * packOf returns the description of the one package that `npm pack --json` packed: npm 10 and 11 write a list of the
+ * packed packages, npm 12 an object with the name of each package as its key.
+ * @param output - The standard output of `npm pack --json`.
+ */
+function packOf(output) {
+  const result = JSON.parse(output);
+  return (Array.isArray(result) ? result : Object.values(result))[0];
+}
+
 const installed = fs.existsSync(marker) ? fs.readFileSync(marker, 'utf8').trim() : '';
 if (installed === commit) {
   process.exit(0);
@@ -59,7 +69,7 @@ try {
   run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund', '--loglevel', 'error'], work);
   run('node', ['scripts/install-markdown.mjs'], work);
   run('node', ['esbuild.mjs', '--production'], work);
-  const [pack] = JSON.parse(run('npm', ['pack', './cli', '--dry-run', '--json', '--loglevel', 'error'], work));
+  const pack = packOf(run('npm', ['pack', './cli', '--dry-run', '--json', '--loglevel', 'error'], work));
   fs.rmSync(target, { recursive: true, force: true });
   for (const { path: file } of pack.files) {
     fs.mkdirSync(path.dirname(path.join(target, file)), { recursive: true });

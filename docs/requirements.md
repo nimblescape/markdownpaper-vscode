@@ -1383,7 +1383,7 @@ PDF, in the same order.
 plugin gives the Markdown preview works on the pages as well
 ([decision 20](#decisions)). For Markdown Notes: the highlights of the notes,
 a click on a highlight that selects its note, opens the side view and scrolls
-it to the note (decision 83 of Markdown Notes), a click on a thread of its side
+it to the note (decision 85 of Markdown Notes), a click on a thread of its side
 view that scrolls the pages to the highlight of its note and shows it
 selected, and "Add Note" above a selected passage.
 

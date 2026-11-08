@@ -4,15 +4,19 @@
 
 // The script of the pages in the Markdown preview of VS Code (docs/requirements.md, R-PRV-001 to R-PRV-006). VS Code
 // runs it in the preview of every Markdown file. For a paper document, the markdown-it plugin of the extension puts a
-// hidden element `.nimblescape-paper` with the layout into the content `.markdown-body` (src/markdownPreview.ts), or
-// one that says that the extension still reads the layout, and then the script shows only a note. The script then:
+// hidden element `.nimblescape-paper` with the layout and the style sheets of the page of the PDF into the content
+// `.markdown-body`, then the element `.nimblescape-paper-text` with the text of the renderer of the PDF
+// (src/markdownPreview.ts); or a hidden element that says that the extension still reads the layout, and then the
+// script shows only a note. The script then:
 //
 // 1. lets the content of the preview stay in the page, hidden and off screen, so that VS Code keeps changing it and
-//    the scripts of other extensions keep drawing in it, for example the diagrams of Mermaid;
-// 2. waits until these scripts are done, and lets Paged.js make the pages from a copy of the blocks of the text, without
-//    the elements that the plugins of other extensions put around the whole content (textOf), with the style
-//    sheets and the templates of the layout, in a hidden area before the content; in the copy, each PlantUML block of
-//    nimblescape PlantUML gets copies of the diagrams that the extension drew into its shadow root (paperDrawings.js);
+//    the scripts of other extensions keep drawing in it, for example the diagrams of Mermaid; without nimblescape
+//    PlantUML, the script of the PlantUML diagrams of the PDF draws them;
+// 2. waits until these scripts are done, and lets Paged.js make the pages from a copy of the blocks of the text of
+//    `.nimblescape-paper-text` (textOf), also when the plugin of another extension puts elements around the whole
+//    content, with the style sheets of the page of the PDF and the templates of the layout, in a hidden area before
+//    the content; in the copy, each PlantUML block gets copies of the diagrams that its script drew into its shadow
+//    root (paperDrawings.js), and each block with a line gets the class of the lines of VS Code (`code-line`);
 // 3. shows the new pages in place of the old ones, so the pages do not flicker, and keeps the place on the page; the
 //    pages get smaller when the preview is narrower than a page. VS Code loads the page of the preview again for
 //    "Markdown: Refresh Preview", and so also each time Markdown Notes selects a note; it then puts the empty page at
@@ -26,11 +30,12 @@
 // 5. sends the event `nimblescape-paper-rendered` to `window`, so that the scripts of other extensions, such as the one
 //    of Markdown Notes, can mark the pages.
 //
-// While a paper document shows, the style sheets of the Markdown preview of VS Code, of the setting `markdown.styles`
-// and of the theme do not apply, as in the PDF, and the body has the classes of a light theme, since the pages are
-// white paper; paperPreview.css gives the colors of
-// the theme the values of a light theme, which scripts such as the one of Mermaid read. A notes document keeps the
-// preview as VS Code shows it.
+// While a paper document shows, only the style sheets of the page of the PDF apply to the pages: the style sheets of the
+// Markdown preview of VS Code, of the setting `markdown.styles`, of the theme and of other extensions are off, except
+// those of Paper and of Markdown Notes, which paints the highlights of the notes (data `keep`). The body has the
+// classes of a light theme, since the pages are white paper; paperPreview.css gives the colors of the theme the values
+// of a light theme, which scripts such as the one of Mermaid read. A notes document keeps the preview as VS Code shows
+// it.
 (function () {
   'use strict';
   const script = document.currentScript;
@@ -263,14 +268,12 @@
     return document.querySelector('.markdown-body');
   }
 
-  // textOf returns the element of the content whose children are the blocks of the text of a paper document: the parent
-  // of the hidden element `.nimblescape-paper`, which stands where the HTML of the text starts (src/markdownPreview.ts).
-  // The plugin of another extension can put elements around the whole HTML, for example "Markdown Preview Github
-  // Styling" its element `.github-markdown-body` with the space, the font and the headings of GitHub; the pages leave
-  // them out, as the PDF does not have them.
+  // textOf returns the element of the content whose children are the blocks of the text of a paper document, from the
+  // renderer of the PDF (src/markdownPreview.ts). The plugin of another extension can put elements around the whole
+  // HTML, for example "Markdown Preview Github Styling" its element `.github-markdown-body`; the pages leave them out,
+  // as the PDF does not have them.
   function textOf(body) {
-    const element = body.querySelector('.nimblescape-paper');
-    return (element && element.parentElement) || body;
+    return body.querySelector('.nimblescape-paper-text') || body;
   }
 
   function paperData() {
@@ -285,10 +288,13 @@
     }
   }
 
-  function loadScript(file, what) {
+  function loadScript(file, what, module) {
     return new Promise((resolve, reject) => {
       const element = document.createElement('script');
       element.src = new URL(file, base).href;
+      if (module) {
+        element.type = 'module';
+      }
       element.setAttribute('nonce', nonce);
       element.onload = () => resolve();
       element.onerror = () => reject(new Error(`${what} did not load.`));
@@ -315,16 +321,46 @@
     return pagedJs;
   }
 
-  // The style sheets of VS Code: those of its Markdown extension, those of the setting `markdown.styles`, which VS Code
-  // adds with the class `code-user-style`, and the inline styles of the theme and of the settings of the preview. The
-  // PDF has none of them. The style sheets of other extensions, such as KaTeX or Markdown Notes, stay.
-  function styleSheetsOfVsCode() {
+  // The script of the PlantUML diagrams of the page of the PDF, from the npm package of nimblescape PlantUML, when the
+  // extension is not installed (data `plantUml`): it draws the PlantUML blocks of the text as the extension does.
+  let plantUml;
+  function loadPlantUml(paper) {
+    if (!paper.plantUml) {
+      return Promise.resolve();
+    }
+    if (!plantUml) {
+      plantUml = loadScript(paper.plantUml, 'The script of the PlantUML diagrams', true).catch((error) => {
+        console.error('nimblescape Markdown Paper:', error);
+      });
+    }
+    return plantUml;
+  }
+
+  // The style sheets of the preview that are not in the page of the PDF: those of the Markdown extension of VS Code, of
+  // the setting `markdown.styles`, which VS Code adds with the class `code-user-style`, of other extensions, such as
+  // KaTeX or "Markdown Preview Github Styling", whose style sheets the pages have as the PDF has them, and the inline
+  // styles of the theme and of the settings of the preview. Those of Paper and of Markdown Notes stay (data `keep`), and
+  // those of Paged.js.
+  function foreignStyleSheets() {
+    const paper = paperData();
+    // The browser writes an address in its own form, for example with `file+.` where VS Code writes `file%2B.`.
+    const keep = ((paper && paper.keep) || []).map((start) => {
+      try {
+        return new URL(start, location.href).href;
+      } catch {
+        return start;
+      }
+    });
     const sheets = [];
-    for (const element of Array.from(document.head.querySelectorAll('link[rel="stylesheet"], style'))) {
+    for (const element of Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))) {
       if (element.hasAttribute('data-nimblescape-paper') || [previewer, building].some((own) => own && own.polisher && (own.polisher.styleEl === element || (own.polisher.inserted || []).includes(element)))) {
         continue;
       }
-      if (element.tagName === 'LINK' ? /\/markdown-language-features\//.test(element.href || '') || element.classList.contains('code-user-style') : !element.hasAttribute('data-pagedjs-inserted-styles')) {
+      // A style element in the content or in a drawing, such as the one of a diagram of Mermaid, is a part of it.
+      if (element.tagName === 'STYLE' && !document.head.contains(element)) {
+        continue;
+      }
+      if (element.tagName === 'LINK' ? !keep.includes(element.href) : !element.hasAttribute('data-pagedjs-inserted-styles')) {
         sheets.push(element);
       }
     }
@@ -357,7 +393,7 @@
   }
 
   function switchOffStyleSheets() {
-    for (const element of styleSheetsOfVsCode()) {
+    for (const element of foreignStyleSheets()) {
       if (!element.disabled || element.sheet?.disabled === false) {
         element.disabled = true;
         if (element.sheet) {
@@ -497,6 +533,7 @@
     }
     // The key of the content of these pages, before the scripts of other extensions draw into it.
     const key = contentKey;
+    await loadPlantUml(paper);
     await loadPagedJs();
     await settle(body);
     // A script that draws only after an update, such as the one of Mermaid for the first content, draws after the
@@ -523,6 +560,11 @@
     const text = template.content.querySelector('main.paper-text');
     for (const [name, value] of Object.entries(paper.attributes || {})) {
       text.setAttribute(name, value);
+    }
+    // VS Code finds the blocks of the lines of the text by their class, for the double click and for the scrolling with
+    // the text editor; the renderer of the PDF gives them only their line.
+    for (const block of Array.from(text.querySelectorAll('[data-line]'))) {
+      block.classList.add('code-line');
     }
     window.paperDrawings.copyPlantUml(holder, template.content);
     keepFromScripts(template.content);

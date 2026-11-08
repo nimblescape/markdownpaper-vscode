@@ -16,8 +16,9 @@
  *   sheet of the extension for the parts of its shadow roots, for the copies; a diagram stands in the middle of the
  *   text, as a diagram of Mermaid does.
  *
- * The page of the PDF gets this style sheet; the Markdown preview gets the same rules from media/paperPreview.css,
- * which a test compares with this module.
+ * The page of the PDF gets this style sheet, and the pages of the Markdown preview get it with the other style sheets
+ * of the page of the PDF (src/markdownPreview.ts). The colors of the theme are also in media/paperPreview.css, for the
+ * scripts that draw in the hidden content of the preview, which a test compares with this module.
  */
 
 /** lightThemeColors are the CSS variables of the theme with their values. */

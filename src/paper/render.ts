@@ -59,6 +59,16 @@ export interface Extensions {
   scripts: Script[];
 }
 
+/**
+ * extensionStyles returns the style sheets of the extensions in the page, before the style sheets of the layout: their
+ * own, then the style of their drawings, whose parts for the screen do not show. The pages of the Markdown preview take
+ * the same style sheets ([R-PRV-005](../../docs/requirements.md#r-prv-005)).
+ * @param extensions - The style sheets and the scripts of the extensions, if any.
+ */
+export function extensionStyles(extensions: Extensions | undefined): string[] {
+  return extensions ? [...extensions.styles, extensionCss] : [];
+}
+
 /** Host is what the renderer needs from its host. */
 export interface Host {
   reader: Reader;
@@ -255,7 +265,7 @@ export async function render(
   ];
   // The style sheets of the extensions come first, so that the layout can change what they set; the diagrams lose
   // their parts for the screen.
-  const styles = host.extensions ? [...host.extensions.styles, extensionCss] : [];
+  const styles = extensionStyles(host.extensions);
   const page = await renderPage(
     {
       ...placesOf(host),

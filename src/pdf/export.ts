@@ -20,8 +20,8 @@ import { fileReader, folderUrl, printPage } from '@nimblescape/markdownlayout/pd
 import type { MarkdownPlugin } from '../paper/markdown';
 import { type Extensions, type Rendered, render } from '../paper/render';
 import { findBrowser, NoBrowserError } from './browser';
-import { mermaidParts, mermaidSettingsOf } from './mermaid';
-import { commandLineOptions, type PlantUmlOptions, plantUmlParts } from './plantUml';
+import { type MermaidParts, mermaidParts, mermaidSettingsOf } from './mermaid';
+import { commandLineOptions, type PlantUmlOptions, type PlantUmlParts, plantUmlParts } from './plantUml';
 import { workspaceFolderOf, workspaceSettings } from './workspace';
 
 export { fileReader, folderUrl } from '@nimblescape/markdownlayout/pdf';
@@ -92,6 +92,33 @@ export interface ExportResult {
 }
 
 /**
+ * pagePlugins returns the markdown-it plugins of the page of the PDF: those of the Markdown extensions of VS Code, then
+ * the one of the diagrams of Mermaid of the command line, if any, then the one of the PlantUML diagrams. The pages of
+ * the Markdown preview take the same plugins ([R-PRV-005](../../docs/requirements.md#r-prv-005)).
+ * @param extensions - The parts of the Markdown extensions of VS Code, if any.
+ * @param plantUml - The parts of the PlantUML diagrams.
+ * @param mermaid - The parts of the diagrams of Mermaid of the command line, if any.
+ */
+export function pagePlugins(extensions: MarkdownExtensions | undefined, plantUml: PlantUmlParts, mermaid?: MermaidParts): MarkdownPlugin[] {
+  return [...(extensions?.plugins ?? []), ...(mermaid ? [mermaid.plugin] : []), plantUml.plugin];
+}
+
+/**
+ * pageExtensions returns the style sheets and the scripts of the extensions in the page of the PDF: those of the
+ * Markdown extensions of VS Code, then those of the diagrams of Mermaid of the command line, if any, and of the
+ * PlantUML diagrams. The pages of the Markdown preview take the same style sheets.
+ * @param extensions - The parts of the Markdown extensions of VS Code, if any.
+ * @param plantUml - The parts of the PlantUML diagrams.
+ * @param mermaid - The parts of the diagrams of Mermaid of the command line, if any.
+ */
+export function pageExtensions(extensions: MarkdownExtensions | undefined, plantUml: PlantUmlParts, mermaid?: MermaidParts): Extensions {
+  return {
+    styles: [...(extensions?.styles ?? []), plantUml.style],
+    scripts: [...(extensions?.scripts ?? []), ...(mermaid?.scripts ?? []), plantUml.script],
+  };
+}
+
+/**
  * renderFile renders a Markdown file of the disk for the PDF: the page loads the files of the disk, and Paged.js is a
  * part of the page. The PlantUML diagrams come after the parts of the other Markdown extensions. Without these
  * extensions, as on the command line, the page draws the diagrams of Mermaid itself, with the settings of the
@@ -112,15 +139,12 @@ export async function renderFile(file: string, options: Pick<ExportOptions, 'ass
       resource: (url) => url,
       sources: 'file:',
       scripts: [{ text: pagedJs }],
-      extensions: {
-        styles: [...(options.extensions?.styles ?? []), plantUml.style],
-        scripts: [...(options.extensions?.scripts ?? []), ...(mermaid?.scripts ?? []), plantUml.script],
-      },
+      extensions: pageExtensions(options.extensions, plantUml, mermaid),
       nonce: randomBytes(16).toString('base64'),
     },
     pathToFileURL(file).href,
     text,
-    [...(options.extensions?.plugins ?? []), ...(mermaid ? [mermaid.plugin] : []), plantUml.plugin],
+    pagePlugins(options.extensions, plantUml, mermaid),
     options.extensions?.env,
   );
 }

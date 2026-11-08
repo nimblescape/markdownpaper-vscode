@@ -9,7 +9,8 @@
  * small stand-in for the script of VS Code, which puts the content into the page after the scripts of the extensions
  * ran, and for each message `updateContent` changes the content and sends the event `vscode.markdown.updateContent`,
  * and a stand-in for the script of nimblescape PlantUML, which draws the PlantUML blocks of the markdown-it plugin of
- * its npm package into shadow roots after a while.
+ * its npm package into shadow roots after a while. The page also has style sheets of other extensions: one of
+ * "Markdown Preview Github Styling", one that sets the color of every paragraph, and one of Markdown Notes.
  * They need an installed Chrome, Chromium or Edge, as the PDF does; on the runners of GitHub there is one.
  */
 
@@ -20,7 +21,6 @@ import { pathToFileURL } from 'node:url';
 import { baseCss, compose, escapeHtml, layoutScript, valuesOf } from '@nimblescape/markdownlayout';
 import { Browser, fileReader, folderUrl } from '@nimblescape/markdownlayout/pdf';
 import { extendMarkdownIt } from '@nimblescape/plantuml';
-import type MarkdownIt from 'markdown-it';
 import { afterAll, describe, expect, it } from 'vitest';
 import { readFrontMatter } from './paper/frontMatter';
 import { renderBody } from './paper/markdown';
@@ -54,9 +54,16 @@ afterAll(() => {
 const githubWrapper = (html: string): string =>
   `<div\n            class="github-markdown-body"\n            data-color-mode="auto"\n            data-light-theme="light"\n            data-dark-theme="dark"\n        >\n            <div class="github-markdown-content">${html}</div>\n        </div>`;
 
+/** notesStyle is the stand-in for the style sheet of Markdown Notes in the preview, which stays on. */
+const notesStyle = 'nimblescape.nimblescape-markdownnotes/media/markdownPreview.css';
+
+/** extensionStyle is the stand-in for a style sheet of another extension in the page of the PDF, for inline code. */
+const extensionStyle = 'code { color: rgb(1, 2, 3); }';
+
 /**
  * paperContent returns the content `.markdown-body` of a paper document in the layout "plain", as the plugin of the
- * extension renders it in the Markdown preview: the hidden element with the layout first.
+ * extension renders it in the Markdown preview: the hidden element with the layout and the style sheets of the page of
+ * the PDF, then the element with the text of the renderer of the PDF.
  * @param text - The Markdown text.
  * @param wrap - The elements that the plugin of another extension puts around the whole HTML, if any.
  */
@@ -65,19 +72,20 @@ async function paperContent(text: string, wrap: (html: string) => string = (html
   const frontMatter = readFrontMatter(text);
   const loaded = await loadLayout({ reader: fileReader, builtinLayouts: folderUrl(path.join(repository, 'layouts')) }, document, frontMatter);
   const composed = compose(loaded, valuesOf(loaded.layout, frontMatter?.values ?? {}, document), (url) => url);
-  // The Markdown preview of VS Code gives every block its line, also a fenced code block, which the renderer does not.
-  const lines = (md: MarkdownIt) => {
-    md.core.ruler.push('lines', (state) => {
-      for (const token of state.tokens.filter((token) => token.type === 'fence' && token.map)) {
-        token.attrSet('data-line', String(token.map![0]));
-      }
-    });
+  const body = renderBody(text.replace(/^---[\s\S]*?\n---\n/, ''), loaded.layout, undefined, [(md) => extendMarkdownIt(md)]);
+  const data = {
+    layout: loaded.layout.id,
+    language: loaded.layout.language,
+    styles: [extensionStyle, baseCss, ...composed.styles, composed.variables],
+    before: composed.before,
+    after: composed.after,
+    attributes: composed.attributes,
+    delay: 0,
+    keep: [pathToFileURL(path.join(folder, 'paperPreview.css')).href, pathToFileURL(path.join(folder, notesStyle)).href],
   };
-  const body = renderBody(text.replace(/^---[\s\S]*?\n---\n/, ''), loaded.layout, undefined, [lines, (md) => extendMarkdownIt(md)]);
-  const data = { layout: loaded.layout.id, language: loaded.layout.language, styles: [baseCss, ...composed.styles, composed.variables], before: composed.before, after: composed.after, attributes: composed.attributes, delay: 0 };
   // A diagram as the script of Mermaid of VS Code draws it: an SVG element whose style sheet names its ID.
   const diagram = '<pre class="mermaid" id="mermaid-1"><svg id="dmermaid-1"><style>#dmermaid-1 rect { fill: rgb(1, 2, 3); }</style><rect width="40" height="20"></rect></svg></pre>';
-  return `<div class="markdown-body">${wrap(`<div class="nimblescape-paper" hidden data-paper="${escapeHtml(JSON.stringify(data))}"></div>\n${body.html}${diagram}`)}</div>`;
+  return `<div class="markdown-body">${wrap(`<div class="nimblescape-paper" hidden data-paper="${escapeHtml(JSON.stringify(data))}"></div>\n<div class="nimblescape-paper-text">\n${body.html}${diagram}</div>`)}</div>`;
 }
 
 /** page is the stand-in of the Markdown preview of VS Code, with the script and the style of the pages. */
@@ -87,12 +95,17 @@ function writePage(): string {
   // A style sheet of the setting `markdown.styles` of a workspace, which sets the font of every text with !important.
   fs.writeFileSync(path.join(folder, 'user.css'), 'body, p, h1 { font-family: Georgia, serif !important; letter-spacing: 0.04em; }\n');
   // The rules of the style sheets of "Markdown Preview Github Styling" for its elements around the whole HTML
-  // (githubWrapper): the space around the text, the font, and the line below a heading. They stay on.
+  // (githubWrapper): the space around the text, the font, and the line below a heading.
   fs.mkdirSync(path.join(folder, 'bierner.markdown-preview-github-styles', 'dist'), { recursive: true });
   fs.writeFileSync(
     path.join(folder, 'bierner.markdown-preview-github-styles', 'dist', 'base.css'),
     '.github-markdown-content { padding: 32px !important; max-width: 980px; margin: 0 auto; }\n.github-markdown-body { font-family: system-ui, sans-serif; font-size: 16px; line-height: 1.5; }\n.github-markdown-body h1 { padding-bottom: .3em; border-bottom: 1px solid #d1d9e0; }\n',
   );
+  // A style sheet of another extension that sets the color of every paragraph, and the one of Markdown Notes.
+  fs.mkdirSync(path.join(folder, 'test.other-extension'), { recursive: true });
+  fs.writeFileSync(path.join(folder, 'test.other-extension', 'preview.css'), 'p { color: rgb(200, 0, 0) !important; }\n');
+  fs.mkdirSync(path.dirname(path.join(folder, notesStyle)), { recursive: true });
+  fs.writeFileSync(path.join(folder, notesStyle), '.test-notes-mark { color: rgb(4, 5, 6); }\n');
   fs.copyFileSync(path.join(repository, 'media', 'paperPreview.js'), path.join(folder, 'paperPreview.js'));
   fs.copyFileSync(path.join(repository, 'media', 'paperPreview.css'), path.join(folder, 'paperPreview.css'));
   fs.writeFileSync(path.join(folder, 'paperLayout.js'), layoutScript);
@@ -111,6 +124,8 @@ function writePage(): string {
 <link rel="stylesheet" href="paperPreview.css">
 <link rel="stylesheet" class="code-user-style" data-source="user.css" href="user.css" type="text/css" media="screen">
 <link rel="stylesheet" href="bierner.markdown-preview-github-styles/dist/base.css">
+<link rel="stylesheet" href="test.other-extension/preview.css">
+<link rel="stylesheet" href="${notesStyle}">
 </head>
 <body class="vscode-body vscode-dark">
 <script src="paperPreview.js"></script>
@@ -310,6 +325,64 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       );
       // The text starts at the margin of the page, as in the PDF, without the space, the font and the heading of GitHub.
       expect(state).toEqual({ wrappers: 0, hidden: 0, heading: expect.stringContaining('Einleitung'), left: 0, right: 0, line: 'none', font: expect.not.stringContaining('system-ui'), diagram: 1 });
+    } finally {
+      await running.close();
+    }
+  });
+
+  it.skipIf(!browser)('gives the pages only the style sheets of the page of the PDF: the style sheets of other extensions in the preview are off, those of Paper and Markdown Notes stay, and each block with a line gets the class of the lines of VS Code (R-PRV-005)', { timeout: 90_000 }, async () => {
+    const paragraph = 'Ein Absatz über die Arbeit von Teams mit Agenten. '.repeat(12);
+    const text = `---\nlayout: plain\ntitle: Agenten\nauthor: Hannes\n---\n\n# Einleitung\n\n${paragraph}\n\nDer Befehl \`mp build\`.\n`;
+    const paper = await paperContent(text);
+    const page = writePage();
+    const running = await Browser.launch(browser as string);
+    try {
+      const { targetId } = (await running.send('Target.createTarget', { url: 'about:blank' })) as { targetId: string };
+      const { sessionId } = (await running.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
+      const session = { browser: running, id: sessionId };
+      await running.send('Page.enable', {}, sessionId);
+      const loaded = running.once('Page.loadEventFired', sessionId);
+      await running.send('Page.navigate', { url: pathToFileURL(page).href }, sessionId);
+      await loaded;
+      await evaluate(session, `window.show(${JSON.stringify(paper)})`);
+      await evaluate(session, waitFor('window.rendered.length > 0'));
+      const sheets = `({
+        github: document.querySelector('link[href*="bierner"]').disabled,
+        other: document.querySelector('link[href*="other-extension"]').disabled,
+        notes: document.querySelector('link[href*="markdownnotes"]').disabled,
+        paper: document.querySelector('link[href="paperPreview.css"]').disabled,
+      })`;
+      const state = await evaluate<{ sheets: Record<string, boolean>; color: string; code: string; lines: number; classes: number; hidden: number }>(
+        session,
+        `(() => {
+          const pages = document.querySelector('.nimblescape-paper-pages');
+          const lines = [...pages.querySelectorAll('[data-line]')];
+          return {
+            sheets: ${sheets},
+            color: getComputedStyle(pages.querySelector('p')).color,
+            code: getComputedStyle(pages.querySelector('code')).color,
+            lines: lines.length,
+            classes: lines.filter((block) => block.classList.contains('code-line')).length,
+            hidden: document.querySelectorAll('.markdown-body .code-line').length,
+          };
+        })()`,
+      );
+      // The paragraphs do not get the color of the other extension, and the inline code gets the color of the style
+      // sheet of an extension in the page of the PDF.
+      expect(state.sheets).toEqual({ github: true, other: true, notes: false, paper: false });
+      expect(state.color).not.toBe('rgb(200, 0, 0)');
+      expect(state.code).toBe('rgb(1, 2, 3)');
+      expect(state.lines).toBeGreaterThan(1);
+      expect(state.classes).toBe(state.lines);
+      expect(state.hidden).toBe(0);
+
+      // A notes document gets the style sheets of the other extensions back.
+      await evaluate(
+        session,
+        `window.postMessage({ type: 'updateContent', source: 'file:///notes.md', content: '<!DOCTYPE html><html><body><div class="markdown-body"><h1 data-line="0" class="code-line">Notizen</h1></div></body></html>' }, '*')`,
+      );
+      await evaluate(session, waitFor("!document.body.classList.contains('nimblescape-paper-mode')"));
+      expect(await evaluate<Record<string, boolean>>(session, sheets)).toEqual({ github: false, other: false, notes: false, paper: false });
     } finally {
       await running.close();
     }

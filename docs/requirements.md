@@ -1299,7 +1299,10 @@ other way round.
 **Links and safety.** A link to a place in the document goes to that place on
 the pages, and Go Back returns to the link ([decision 79](#decisions)): the
 page keeps the place before the click, and Go Back and Go Forward return
-through the places with the keys of Go Back and Go Forward of VS Code, with
+through the places with the keys that the user binds to Go Back and Go
+Forward of VS Code, for example Option+Cmd+Left, which Markdown Notes gives
+the page (decision 87 of Markdown Notes; without Markdown Notes, the
+default keys of VS Code apply), with
 the back and forward buttons of the mouse, and with the buttons "Back" and
 "Forward" at the bottom right of the preview, which show while there is a
 place in their direction (the way back in a rendered page of nimblescape
@@ -2700,9 +2703,9 @@ requirement ([R-GEN-007](#r-gen-007)).
     Markdown Editor, and Go Back returns to the link (decision 85 of
     Markdown Notes). The pages of the preview and the editor keep their
     places themselves, because the history of VS Code holds no place inside
-    them, and go back with the keys of Go Back and Go Forward of VS Code,
-    the buttons of the mouse and their own buttons. A key without a place
-    goes on to VS Code.
+    them, and go back with the keys that the user binds to Go Back and Go
+    Forward of VS Code (decision 87 of Markdown Notes), the buttons of the
+    mouse and their own buttons. A key without a place goes on to VS Code.
 
 ## Open questions
 

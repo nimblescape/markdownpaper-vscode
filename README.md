@@ -129,9 +129,9 @@ Node.js 22 or newer.
   repository: the document names its reference in the field `layout`, and
   "New Project" runs `mp get` in a terminal of VS Code, which clones it into
   `.markdownpaper/repos/`. "New Document" and "New Layout" add a document or
-  a layout. "Update Layout" updates a copy of a layout on GitHub in
-  `layouts/` of an older project from its repository when the repository has
-  a newer version, and keeps the changes of the project.
+  a layout. "Get Layouts and Repositories" runs `mp get` in a terminal of
+  VS Code, which gives each layout and repository on a branch its newest
+  version.
 - **Clones.** "Open Repository in New Window" opens the clone of a reference
   of the paper in `.markdownpaper/repos/` in a new window of VS Code, where
   Source Control shows its Git repository; Ctrl+click on a reference in the

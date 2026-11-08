@@ -5,8 +5,8 @@
 /**
  * The commands of the extension that write files: "Export PDF" ([R-PDF-001](../docs/requirements.md#r-pdf-001)),
  * "New Project", "New Document" and "New Layout" ([R-NEW-001](../docs/requirements.md#r-new-001) to
- * [R-NEW-004](../docs/requirements.md#r-new-004)), which write no file over an existing one, and "Update Layout"
- * ([R-LAY-010](../docs/requirements.md#r-lay-010)), which updates a copy of a layout on GitHub from its repository.
+ * [R-NEW-004](../docs/requirements.md#r-new-004)), which write no file over an existing one, and "Get Layouts and
+ * Repositories" ([R-LAY-010](../docs/requirements.md#r-lay-010)), which runs `mp get` in a terminal of VS Code.
  * "Open Repository in New Window" ([R-CLI-004](../docs/requirements.md#r-cli-004)) opens the clone of a reference of a
  * paper.
  */
@@ -17,12 +17,11 @@ import * as vscode from 'vscode';
 import { markdownExtensions, plantUmlOptions } from './markdownExtensions';
 import { fileOf, textOf } from './notesApi';
 import { activeViewFile } from './paperDocuments';
-import { downloadRemote, findRemotes, previewUrl, type RemoteLayout, type RemoteSpec, readOrigin, remoteName } from './paper/gallery';
+import { downloadRemote, findRemotes, previewUrl, type RemoteLayout, type RemoteSpec, remoteName } from './paper/gallery';
 import type { Fetcher } from './paper/lookup';
 import { clonesFolder, type Reference, referencesOf } from './paper/references';
 import { defaultLayout, findClone, findLayout, layoutName } from './paper/render';
 import { type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, startFiles } from './paper/scaffold';
-import { planUpdate, type Update } from './paper/update';
 import { defaultPlace, downloadBrowser, downloadSize } from './pdf/download';
 import { exportPdf } from './pdf/export';
 import { settingsSection } from './settings';
@@ -508,101 +507,34 @@ export async function openRepositoryCommand(context: Context, uri?: unknown, nam
   return folder;
 }
 
-/** CopyItem is an entry of the list of the copies of layouts on GitHub of "Update Layout". */
-interface CopyItem extends vscode.QuickPickItem {
-  folders: vscode.Uri[];
-}
-
 /**
- * applyUpdate writes the changes of an update into the folder of a copy, and removes the files that the repository
- * removed, with the folders that they leave empty.
- * @param folder - The folder of the copy.
- * @param update - The update.
- */
-async function applyUpdate(folder: vscode.Uri, update: Update): Promise<void> {
-  for (const [path, content] of update.write) {
-    await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, ...path.split('/')), content);
-  }
-  for (const path of update.remove) {
-    await vscode.workspace.fs.delete(vscode.Uri.joinPath(folder, ...path.split('/')), { useTrash: false });
-    const parts = path.split('/').slice(0, -1);
-    for (; parts.length > 0; parts.pop()) {
-      const parent = vscode.Uri.joinPath(folder, ...parts);
-      if ((await vscode.workspace.fs.readDirectory(parent)).length > 0) {
-        break;
-      }
-      await vscode.workspace.fs.delete(parent);
-    }
-  }
-}
-
-/**
- * updateLayoutCommand updates copies of layouts on GitHub from their repositories
- * ([R-LAY-010](../docs/requirements.md#r-lay-010)): the layout folder of the Explorer, else the chosen copy of the
- * workspace, or all of them. A copy whose files the project and the repository both changed is updated only after a
- * confirmation, which replaces the changes of the project.
+ * getCommand runs `mp get` in a new terminal of VS Code ([R-LAY-010](../docs/requirements.md#r-lay-010),
+ * [R-CLI-004](../docs/requirements.md#r-cli-004)), with the Git and the access of the author: it clones the missing
+ * repositories of the papers of the project, their layouts and the repositories of `repos`, and gets the newest
+ * version of each reference to a branch. The terminal starts in the folder of the Markdown file of the active
+ * Markdown preview or of the active text editor, else in the folder of the workspace, which the author chooses when
+ * the workspace has more than one; `mp get` finds the project there.
  * @param context - The context.
- * @param uri - The layout folder of the Explorer, if any.
- * @returns The messages of the copies, or undefined when nothing was chosen.
+ * @param uri - The Markdown file of another extension or of a command link, if any.
+ * @returns The folder of the terminal, or undefined.
  */
-export async function updateLayoutCommand(context: Context, uri?: unknown): Promise<string[] | undefined> {
-  let folders: vscode.Uri[];
-  if (uri instanceof vscode.Uri) {
-    folders = [uri];
-  } else {
-    const found = await vscode.workspace.findFiles('**/layouts/*/layout.json', '**/node_modules/**', 50);
-    const copies: CopyItem[] = [];
-    for (const file of found.sort((a, b) => a.path.localeCompare(b.path))) {
-      const origin = readOrigin(decoder.decode(await vscode.workspace.fs.readFile(file)));
-      if (origin) {
-        copies.push({ label: vscode.workspace.asRelativePath(vscode.Uri.joinPath(file, '..')), description: `${origin.layout}@${origin.ref}`, folders: [vscode.Uri.joinPath(file, '..')] });
-      }
-    }
-    if (copies.length === 0) {
-      void vscode.window.showInformationMessage('Update Layout: no folder layouts/<name>/ of the workspace is a copy of a layout on GitHub with the field "origin" in its layout.json.');
-      return undefined;
-    }
-    const all: CopyItem = { label: 'All layouts', description: `${copies.length} copies of layouts on GitHub`, folders: copies.flatMap((copy) => copy.folders) };
-    const chosen = copies.length === 1 ? copies[0] : await vscode.window.showQuickPick([all, ...copies], { title: 'Update Layout', placeHolder: 'The copy of a layout on GitHub to update from its repository' });
-    if (!chosen) {
-      return undefined;
-    }
-    folders = chosen.folders;
+export async function getCommand(context: Context, uri?: unknown): Promise<vscode.Uri | undefined> {
+  const file = targetOf(context, uri);
+  const folders = vscode.workspace.workspaceFolders ?? [];
+  if (!file && folders.length === 0) {
+    void vscode.window.showInformationMessage('Get Layouts and Repositories: open a paper or the folder of its project first.');
+    return undefined;
   }
-  const token = await githubToken();
-  const fetch = fetcher(`nimblescape-markdownpaper/${context.version ?? '0'}`);
-  const short = (commit: string): string => commit.slice(0, 7);
-  const messages: string[] = [];
-  for (const folder of folders) {
-    const name = vscode.workspace.asRelativePath(folder);
-    try {
-      const update = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Update Layout: reading the repository of ${name}` }, async () =>
-        planUpdate(fetch, await readFolder(folder), { ...(token ? { token } : {}), force: true }),
-      );
-      const { origin } = update;
-      if (update.from === origin.commit) {
-        messages.push(`${name} is up to date with ${origin.layout}@${origin.ref}.`);
-        continue;
-      }
-      if (update.conflicts.length > 0) {
-        const replace = await vscode.window.showWarningMessage(
-          `Update Layout: the project and ${origin.layout}@${origin.ref} changed the same parts of ${name}: ${update.conflicts.join(', ')}. Replace them with the versions of the repository?`,
-          { modal: true },
-          'Replace',
-        );
-        if (replace !== 'Replace') {
-          messages.push(`${name} stays as it is.`);
-          continue;
-        }
-      }
-      await applyUpdate(folder, update);
-      messages.push(`${name} is updated from ${short(update.from)} to ${short(origin.commit)}: ${update.changed.length > 0 ? update.changed.join(', ') : 'no file of the layout changed'}.${update.kept.length > 0 ? ` The changes of the project stay in ${update.kept.join(', ')}.` : ''}`);
-    } catch (error) {
-      messages.push(`${name}: ${error instanceof Error ? error.message : String(error)}`);
-    }
+  const folder = file
+    ? vscode.Uri.joinPath(file, '..')
+    : folders.length === 1
+      ? folders[0].uri
+      : (await vscode.window.showWorkspaceFolderPick({ placeHolder: `The folder of the project, where ${terminalCommand} get runs` }))?.uri;
+  if (!folder) {
+    return undefined;
   }
-  void vscode.window.showInformationMessage(`Update Layout: ${messages.join(' ')}`);
-  return messages;
+  runInTerminal(folder, `${terminalCommand} get`);
+  return folder;
 }
 
 /** builtinFolder returns the URL of the folder of the built-in layouts, for the tests. */

@@ -55,11 +55,14 @@ The first version.
 - A Markdown file whose front matter names a layout is a paper document. The
   Markdown preview of VS Code shows its pages in its layout as the PDF prints
   them, without the front matter also when another extension shows the front
-  matter as a table, as white paper also in a dark theme, and updates them
-  after a pause in typing and after a change of the layout. The preview
-  scrolls with the text editor, a double click on a page shows its line in the
-  text editor, and the other Markdown extensions work on the pages, for
-  example Mermaid, KaTeX and the highlights and "Add Note" of Markdown Notes.
+  matter as a table, with the text at the margins of the layout also when
+  another extension such as "Markdown Preview Github Styling" puts its own
+  elements around the content, as white paper also in a dark theme, and
+  updates them after a pause in typing and after a change of the layout. The
+  preview scrolls with the text editor, a double click on a page shows its
+  line in the text editor, and the other Markdown extensions work on the
+  pages, for example Mermaid, KaTeX and the highlights and "Add Note" of
+  Markdown Notes.
   "Show Page Preview" in the Command Palette opens the preview beside the
   text editor. Another
   Markdown file keeps the Markdown preview as VS Code shows it.
@@ -183,14 +186,10 @@ The first version.
   GitHub does. A hint at the start of the reference list stays before the
   entries and keeps the form of its box: the hanging indent of the reference
   list is only for the entries, `.references > p`.
-- The update of a copy of a layout on GitHub: the copy names its origin in
-  the field `origin` (the layout, the ref and the commit) of its
-  `layout.json`. `mp get` and "Update Layout" read the newest commit of
-  the ref and update the copy: a file that only the repository changed gets
-  its new version, a file that only the project changed stays, and a file that
-  both changed stops the update unless `--force` or a confirmation replaces it.
-  The `layout.json` of a
-  copy keeps the form of the file of the layout, with `origin` at its end.
+- "Get Layouts and Repositories" runs `mp get` in a terminal of VS Code,
+  which gives each layout and repository on a branch its newest version. The
+  `layout.json` of a copy of a layout keeps the form of the file of the other
+  layout.
 - `/cite` with Markdown Notes inserts a citation of a source of the database
   of the document or of an item of the Zotero library of the author. "Connect
   Zotero" keeps an API key of zotero.org in the secret storage of VS Code. A

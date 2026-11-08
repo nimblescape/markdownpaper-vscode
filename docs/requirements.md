@@ -65,8 +65,8 @@ Marketplace does not accept extensions that use one.
   needs a file on the disk, because the browser reads the file and its images
   from the disk.
 - The extension collects no telemetry. It connects only to GitHub, for the
-  layouts on GitHub in the list of "New Project" ([R-NEW-004](#r-new-004)) and
-  for "Update Layout" ([R-LAY-010](#r-lay-010)), and to the Zotero web API
+  layouts on GitHub in the list of "New Project" ([R-NEW-004](#r-new-004)),
+  and to the Zotero web API
   (`api.zotero.org`) after the author connected Zotero, for `/cite` and
   "Update Sources from Zotero" ([R-CITE-006](#r-cite-006)), and to
   `storage.googleapis.com` for the download of Chromium after the author
@@ -455,8 +455,6 @@ repository of the document ([decision 3](#decisions)).
   [R-REN-011](#r-ren-011)). `pdfName`: the name of the PDF with fields, for
   example `{{matrikelnummer}}_{{author}}_{{type}}`. `terms`
   ([R-LAY-005](#r-lay-005)).
-- `origin`: in a copy of a layout on GitHub, where it comes from, which the
-  scaffold writes and the update reads ([R-LAY-010](#r-lay-010)).
 - Every path is relative to the layout folder and stays inside it.
 
 `npx -y @nimblescape/markdownpaper instructions layout` prints the whole
@@ -553,9 +551,9 @@ the look of the PHT templates and the citation style of the PHT.
   `.markdownpaper/repos/` of the project ([R-CLI-004](#r-cli-004)). A tag or a
   commit keeps the pages as they are; a branch follows the layout.
 - An author who changes a layout copies it into `layouts/<folder>/`, and the
-  documents name the copy, for example `layout: thesis`. The copy stays as it
-  is when the layout changes in its repository, until it changes by hand or
-  by the update from the repository ([R-LAY-010](#r-lay-010)).
+  documents name the copy, for example `layout: thesis`. The copy is a layout
+  of the project: it stays as it is when the layout changes in its
+  repository ([R-LAY-010](#r-lay-010)).
 - There are no layouts in npm packages ([decision 51](#decisions)).
 
 ### R-LAY-008
@@ -607,56 +605,34 @@ function ([decision 40](#decisions)).
   into the layout folder, with its own front matter.
 - "New Layout" and a new project copy a layout without its preview PDF,
   because the PDF shows the pages of the other layout.
+- The `layout.json` of a copy keeps the form of the file of the other layout,
+  for example an array on one line: the copy changes only the fields whose
+  values differ, such as `name` and `language`. So a comparison of the copy
+  with the other layout shows only real changes.
 
 ### R-LAY-010
 
-**The update of a copy of a layout on GitHub.** A project updates its copy of
-a layout on GitHub from the repository of the layout when the repository has
-a newer version ([decision 46](#decisions)):
+**The newest version of a layout on GitHub.** A project gets the newest
+version of its layout on GitHub from the repository of the layout, not from a
+copy ([decision 46](#decisions)):
 
-- A copy of a layout on GitHub in `layouts/` of a project has in its
-  `layout.json` the field `origin`: `layout`, the name of the layout on
-  GitHub, `ref`, the branch, tag or commit that the copy follows, and
-  `commit`, the commit of the copied files. Since
-  [decision 51](#decisions), a new project names a layout on GitHub by its
-  reference and makes no copy ([R-NEW-004](#r-new-004)); the copies of older
-  projects keep their origin:
-
-  ```json
-  "origin": {
-    "layout": "majikmate/markdownpaper-layout-pht/thesis",
-    "ref": "main",
-    "commit": "c2907533d7d01329769c76e8f0efa23b48fa3bd1"
-  }
-  ```
-
-  A copy of a copy keeps the origin; "New Layout" and `new layout` make a
-  layout of their own, without an origin. A copy made by hand gets the field
-  by hand, with the commit of its files.
-- The `layout.json` of a copy keeps the form of the file of the layout, for
-  example an array on one line: the scaffold and the update change only the
-  fields whose values differ, and a new `origin` stands at the end. So a comparison of
-  the copy with the file of the repository shows only real changes.
-- `mp get` ([R-CLI-004](#r-cli-004)) and "Update Layout" in VS Code (in the
-  Command Palette, and in the context menu of a folder in `layouts/` of the
-  Explorer) read the newest commit of the ref. `mp get` takes each folder of
-  `layouts/` of the project with an origin; VS Code offers the copies of the
-  workspace and "All layouts".
-- The update compares three versions of each file of the folder by the IDs of
-  their contents, as Git computes them: the copy, the file at the commit of
-  the copy, and the file at the newest commit. A file that only the
-  repository changed gets its new version, a new file comes, and a removed
-  file goes. A file that only the project changed stays. `layout.json` is
-  compared field by field in the same way, so the copy keeps a language of its
-  own; it gets the `format` of the extension and the new commit in `origin`.
-  The preview PDF stays out, as at the copy ([R-LAY-009](#r-lay-009)).
-- A file or a field of `layout.json` that the project and the repository both
-  changed is a conflict: the update writes nothing and names them. With
-  `mp get --force`, or in VS Code after a confirmation, the versions of the
-  repository replace them. A ref that is a tag or a commit gets no newer
-  version.
-- The update reads GitHub as the scaffold does, with the token of
-  `GITHUB_TOKEN` or `GH_TOKEN`, or of the GitHub sign-in of VS Code.
+- A project names a layout on GitHub by its reference with a rev
+  ([R-LAY-007](#r-lay-007)), and `mp get` clones it into
+  `.markdownpaper/repos/` ([R-CLI-004](#r-cli-004)). The project keeps no copy
+  of it, and `layout.json` has no field that names where a layout comes from.
+- `mp get` gives each reference to a branch the newest commit of the branch,
+  with a fast-forward; a reference to a tag or a commit keeps its version, and
+  `mp get -u` moves a reference to a tag to the newest tag.
+- "Get Layouts and Repositories" in the Command Palette of VS Code runs
+  `mp get` in a new terminal of VS Code, with the Git and the access of the
+  author: in the folder of the Markdown file of the active editor or of the
+  active Markdown preview, else in the folder of the workspace, which the
+  author chooses when the workspace has more than one. `mp get` finds the
+  project there, so the command gets the layouts and the repositories of
+  `repos` of all papers of the project.
+- A copy of a layout in `layouts/` is a layout of the project
+  ([R-LAY-007](#r-lay-007)): no command changes it from the repository of the
+  layout that it was copied from.
 
 ## Renderer
 
@@ -1327,6 +1303,14 @@ Markdown preview as VS Code shows it.
   content of the preview. The copy gets the PlantUML diagrams, which the
   extension draws into shadow roots, as elements of their own
   ([R-REN-015](#r-ren-015)).
+- The copy holds only the blocks of the text, as in the PDF: the hidden
+  element with the layout stands where the HTML of the text starts, and the
+  copy takes the blocks next to it. Elements that the markdown-it plugin of
+  another extension puts around the whole HTML of the preview are not on the
+  pages, also not in a footnote, for example the elements of "Markdown
+  Preview Github Styling" with the space, the font and the headings of
+  GitHub; so the text starts at the margins of the layout. The style sheets
+  of other extensions stay.
 - The pages stand before the content of the preview, which stays in the page
   but hidden, so that the scripts of other extensions keep their elements and
   VS Code finds the lines on the pages. After the new pages show, the script
@@ -1520,14 +1504,14 @@ extension gives the command (below).
   `new document|layout|project`, `layouts` ([R-NEW-004](#r-new-004)),
   `preview` ([R-LAY-009](#r-lay-009)), `instructions`, and `completion
   bash|zsh|fish`, which prints the Tab completion script of a shell. `pdf`
-  and `update` were the names of `build` and of the update of the copies
-  before; they now name the new command and stop.
+  and `update` name `build` and `get` and stop.
 - `--help` prints the use, `--version` the version and the version of the
   layout format.
 - The exit code is 0 for success, 1 for problems of a document, for a file
   that `format --check` would change, for an input of `source` that gave
-  no source, or for a copy of a layout that `get` leaves as it is because of
-  a conflict, and 2 for a wrong call or a failure, also of Git.
+  no source, or for a clone that `get` leaves as it is because of changes
+  that are not committed or commits that are not pushed, and 2 for a wrong
+  call or a failure, also of Git.
 - The command uses the same renderer, checks and scaffold as the extension.
 - The extension ships the command in the terminals of VS Code, as
   nimblescape TypeScript ships `ts` (step 37, [decision 51](#decisions)): the
@@ -1636,8 +1620,8 @@ repos:
   `.markdownpaper/` hides from Git, and fetches the head of each reference to
   a branch; a reference to a tag or a commit stays. It changes no reference.
   Two papers that give one name two repositories or two revs are an error,
-  because one clone has one rev. `get` also updates the copies of layouts in
-  `layouts/` of the project ([R-LAY-010](#r-lay-010)); there is no subcommand
+  because one clone has one rev. A copy of a layout in `layouts/` of the
+  project stays as it is ([R-LAY-010](#r-lay-010)); there is no subcommand
   `update`.
 - The clone of a reference to a branch has the local branch of the same name,
   which follows the branch on GitHub, so its `.git/HEAD` names the branch
@@ -1662,7 +1646,9 @@ repos:
   reference in the front matter, in the text editor and in the clean editing
   view of Markdown Notes, opens its clone in the same way
   ([decision 58](#decisions)). Markdown Notes opens the same folder itself with
-  Ctrl+click on the name of the reference of a listing. A missing clone offers `mp get` in a terminal of VS Code.
+  Ctrl+click on the name of the reference of a listing. A missing clone offers `mp get` in a terminal of VS Code,
+  and "Get Layouts and Repositories" runs it there at any time
+  ([R-LAY-010](#r-lay-010)).
 - In the clean editing view of Markdown Notes, the lines of `repos` are
   read-only ([R-DOC-005](#r-doc-005), [decision 72](#decisions)): a change
   there goes back, with a message in the status bar. The commands, such as
@@ -2366,13 +2352,13 @@ requirement ([R-GEN-007](#r-gen-007)).
     stays a quotation. The empty paper document of the PHT concept layout and
     the concept papers of its authors have the hints of the template under
     their chapter headings.
-46. **The update of a copied layout** ([R-LAY-010](#r-lay-010)): a project
-    keeps its copy of a layout, and a command updates the copy from the
-    repository of the layout when the repository has a newer version. The
-    copy names its origin in its `layout.json`; the update replaces only what
-    the project did not change, and replaces a change of the project only
-    when the author confirms it. With [decision 51](#decisions), `get` is
-    this command.
+46. **The newest version of a layout from its repository**
+    ([R-LAY-010](#r-lay-010)): a project keeps no copy of a layout on GitHub.
+    `mp get`, and the command "Get Layouts and Repositories" in VS Code, which
+    runs `mp get` in a terminal, give each layout and repository on a branch
+    the newest version of the branch. A copy of a layout in `layouts/` is a
+    layout of the project, and no command updates it from another
+    repository. There is no command "Update Layout" and no field `origin`.
 47. **Works of the same authors in one citation** ([R-CITE-002](#r-cite-002)):
     a comma between two citations in one pair of parentheses joins a work of
     the same authors to the citation before it, as APA 7 writes
@@ -2409,8 +2395,8 @@ requirement ([R-GEN-007](#r-gen-007)).
     commit pins the version, a branch follows its head, and a paper has no
     lock file. The command of the npm package is `mp`, with no second name and
     no setting for one.
-    `mp get` clones the missing repositories into a folder that Git ignores,
-    pulls the branches and updates the copies of layouts; `mp get
+    `mp get` clones the missing repositories into a folder that Git ignores
+    and pulls the branches; `mp get
     <owner>/<repository>@<rev>` writes or changes a reference, and `mp get -u`
     moves each tag to the newest tag. `get` replaces `update`, `build`
     replaces `pdf`, and `mp create` needs a layout and writes its reference in
@@ -2575,7 +2561,7 @@ requirement ([R-GEN-007](#r-gen-007)).
 75. **"Export PDF" in the three views** ([R-DOC-004](#r-doc-004),
     [R-PDF-001](#r-pdf-001)): the button "Export PDF" is in the menu "Run"
     of the title of the three views of a paper document, Text Editor,
-    Markdown Preview and Markdown Editor (decision 80 of Markdown Notes).
+    Markdown Preview and Markdown Editor (decision 81 of Markdown Notes).
     "Show Page Preview" leaves the title and stays in the Command Palette,
     because "Open Preview to the Side" of VS Code does the same and VS Code
     shows at most eight buttons in the title. The other choice was "Export

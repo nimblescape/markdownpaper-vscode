@@ -11,7 +11,7 @@
 
 import { type FieldSpec, formatText, type Layout, layoutFile } from '@nimblescape/markdownlayout';
 import { readFrontMatter } from './frontMatter';
-import { type Origin, type RemoteSpec, readOrigin, referenceText } from './gallery';
+import { type RemoteSpec, referenceText } from './gallery';
 import { editJsonText } from './jsonText';
 import { cloneName, clonesFolder } from './references';
 
@@ -203,13 +203,11 @@ function previewOf(source: ReadonlyMap<string, Uint8Array>): string | undefined 
 
 /**
  * newLayoutFiles returns the files of a new layout, copied from another layout, with a new name and language. The
- * preview PDF of the other layout stays out: it shows the other layout. The field `origin` of the other layout stays
- * out too, and the copy gets the origin of the options ([R-LAY-010](../../docs/requirements.md#r-lay-010)).
+ * preview PDF of the other layout stays out: it shows the other layout ([R-LAY-009](../../docs/requirements.md#r-lay-009)).
  * @param source - The files of the layout to copy, by their paths in its folder.
- * @param options - The name of the new layout, its language, and where the copy comes from, for a copy of a layout on
- * GitHub that its repository updates.
+ * @param options - The name of the new layout and its language.
  */
-export function newLayoutFiles(source: ReadonlyMap<string, Uint8Array>, options: { name: string; language?: string; origin?: Origin }): NewFile[] {
+export function newLayoutFiles(source: ReadonlyMap<string, Uint8Array>, options: { name: string; language?: string }): NewFile[] {
   const files: NewFile[] = [];
   const preview = previewOf(source);
   for (const [path, content] of source) {
@@ -223,10 +221,6 @@ export function newLayoutFiles(source: ReadonlyMap<string, Uint8Array>, options:
       json.name = options.name;
       if (options.language) {
         json.language = options.language;
-      }
-      delete json.origin;
-      if (options.origin) {
-        json.origin = options.origin;
       }
       // The copy keeps the form of the file, so that it differs from the other layout only in these fields.
       files.push({ path, content: editJsonText(text, json) });
@@ -246,11 +240,6 @@ export interface ProjectOptions {
   language: string;
   /** values are the fields of the new document, for example title and author. */
   values: Readonly<Record<string, string>>;
-  /**
-   * origin is where a layout on GitHub comes from; without it, the copy keeps the origin of the layout that it copies,
-   * for example of a copy in `layouts/` of the workspace.
-   */
-  origin?: Origin;
   /**
    * reference is the reference of a layout on GitHub in its clone ([R-CLI-004](../../docs/requirements.md#r-cli-004)):
    * the document names it in its field `layout`, and the project gets no copy of the layout.
@@ -323,19 +312,18 @@ authors; the PDF leaves them out. Keep them as they are unless you are asked to 
 }
 
 /**
- * newProjectFiles returns the files of a new project: AGENTS.md, the copy of the layout, the document from the empty
+ * newProjectFiles returns the files of a new project: AGENTS.md, the copy of the layout (none for a layout on GitHub,
+ * which the document names by its reference), the document from the empty
  * paper document of the layout with the files that it links to at the same paths in the project, and the folders of the
  * sources and of the images.
  * @param options - The options.
  * @param start - The text of the start document of the layout, or undefined.
  */
 export function newProjectFiles(options: ProjectOptions, start: string | undefined): NewFile[] {
-  const json = options.source.get(layoutFile);
-  const origin = options.origin ?? (json ? readOrigin(decoder.decode(json)) : undefined);
   const { reference } = options;
   const layoutFiles = reference
     ? []
-    : newLayoutFiles(options.source, { name: options.layout.name, language: options.language, ...(origin ? { origin } : {}) }).map((file) => ({ ...file, path: `layouts/${options.layout.id}/${file.path}` }));
+    : newLayoutFiles(options.source, { name: options.layout.name, language: options.language }).map((file) => ({ ...file, path: `layouts/${options.layout.id}/${file.path}` }));
   const linked = startFiles(start, options.source);
   const values = reference && options.language && options.language !== options.layout.language ? { ...options.values, lang: options.language } : options.values;
   const text = newDocumentText(options.layout, start, values, reference ? referenceText(reference) : options.layout.id);

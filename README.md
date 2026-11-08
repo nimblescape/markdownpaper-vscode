@@ -150,8 +150,9 @@ Node.js 22 or newer.
   generated lists are read-only. Ctrl+click on a citation goes to its entry,
   and on a link of a list to its heading or caption. The format step writes
   these parts again when you save the file. The form of the front matter shows
-  the fields of the layout, `/cite` and "Cite" insert a citation, and
-  "Research" marks a selected argument.
+  the fields of the layout, `/cite` and "Cite" insert a citation,
+  "Research" marks a selected argument, and `/toc`, `/lof`, `/lot` and
+  `/lol` insert the table of contents and the lists.
 - **Citations and Zotero.** With Markdown Notes, type `/cite` in a paper
   document and choose a source: the citation goes in at the place, in the
   citation style of the layout. After "Connect Zotero" (with an API key of
@@ -165,6 +166,11 @@ Node.js 22 or newer.
   and type `/research`: the argument gets a hidden start marker and
   `(RESEARCH)` at its end, where an AI agent puts the citations of the
   sources that it finds.
+- **Table of contents and lists.** With Markdown Notes, type `/toc`, `/lof`,
+  `/lot` or `/lol` in a paper document: the heading of the table of
+  contents, the list of figures, the list of tables or the list of listings
+  goes in, in the language of the layout, with the list under it. The
+  format step keeps the list current when you save the file.
 
 ## Usage
 

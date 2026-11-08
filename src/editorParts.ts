@@ -10,11 +10,14 @@
  * asks for it, and again after a change of the field `layout` or of a file of a layout. It opens the clone of a
  * reference of the front matter with "Open Repository in New Window", and lets the user choose the source of a citation
  * in the list of `/cite`, which merges an item of Zotero into the database of the file; the page inserts the citation.
+ * For `/toc`, `/lof`, `/lot` and `/lol` it sends the change of the text of the file that inserts the list of the special
+ * section (src/listCommands.ts), which the page makes as a change of the user.
  */
 
 import type { Layout } from '@nimblescape/markdownlayout';
 import * as vscode from 'vscode';
 import { citationFor, type CiteContext } from './cite';
+import { listChange } from './listCommands';
 import { type EditorPanelChannel, type FrontMatterRules, registerWithNotes } from './notesApi';
 import { editorPluginName, type ExtensionMessage, pageMessage } from './paper/editorMessages';
 import { isPaperDocument, readFrontMatter } from './paper/frontMatter';
@@ -113,6 +116,11 @@ export function connectPanel(context: EditorPartsContext, channel: EditorPanelCh
         void citationFor(context.citations, document.uri)
           .catch(() => undefined)
           .then((found) => post({ type: 'citation', request: message.request, ...found }));
+      } else if (message?.type === 'list') {
+        // The page sends the text of the file, so the list comes from the text at the place of the cursor.
+        void listChange(context.citations.formatStep, document.uri, message.code, message.text, message.at, false)
+          .catch(() => undefined)
+          .then((change) => post({ type: 'listChange', request: message.request, ...(change ? { change } : {}) }));
       }
     }),
   );

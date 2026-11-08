@@ -7,7 +7,8 @@
  * key of paper documents, the format step of the paper in the formatter of Markdown Notes
  * ([formatStep.ts](formatStep.ts)), the parts of the paper in the editor of Markdown Notes
  * ([notesParts.ts](notesParts.ts)) and in its editor of a whole file ([editorParts.ts](editorParts.ts)), the citations from
- * the editor and from Zotero ([cite.ts](cite.ts)), the command mp
+ * the editor and from Zotero ([cite.ts](cite.ts)), the slash commands of the lists of the special sections
+ * ([listCommands.ts](listCommands.ts)), the command mp
  * in the terminals of VS Code ([terminal.ts](terminal.ts)) and the commands, and returns the export of the extension: the markdown-it plugin
  * of the pages in the Markdown preview of VS Code ([markdownPreview.ts](markdownPreview.ts)), which VS Code reads, and
  * the functions that the tests in VS Code read.
@@ -23,6 +24,7 @@ import { FrontMatterChecks } from './frontMatterChecks';
 import { ReferenceLinks, referenceLinkSelector } from './referenceLinks';
 import { PaperPreview } from './markdownPreview';
 import { type SlashCommand } from './notesApi';
+import { listCommands } from './listCommands';
 import { registerNotesParts, researchCommand } from './notesParts';
 import { PaperDocuments } from './paperDocuments';
 import { checkedSettings, type Settings, settingsSection } from './settings';
@@ -56,6 +58,8 @@ export interface Api {
   research: SlashCommand;
   /** cite is the slash command `/cite`, which Markdown Notes offers in the text editor. */
   cite: SlashCommand;
+  /** lists are the slash commands `/toc`, `/lof`, `/lot` and `/lol`, which Markdown Notes offers in the text editor. */
+  lists: SlashCommand[];
   /** terminalFolder is the folder of the script mp, at the end of the PATH of the terminals, or undefined. */
   terminalFolder?: string;
 }
@@ -98,13 +102,14 @@ export function activate(context: vscode.ExtensionContext): Api {
   };
   const citations = citeContext(context, formatStep);
   const cite = citeCommand(citations);
+  const lists = listCommands(formatStep);
   context.subscriptions.push(
     checks,
     papers,
     preview,
     formatStep,
     registerFormatStep(formatStep),
-    registerNotesParts([cite]),
+    registerNotesParts([cite, ...lists]),
     // The part in this extension of the plugin of the paper in the editor of a whole file of Markdown Notes.
     registerEditorParts({ extension: context.extensionUri, citations, openRepository: commands.openRepository }),
     // The rules of the front matter of a paper for the clean editing view of Markdown Notes.
@@ -134,6 +139,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     formatStep,
     research: researchCommand,
     cite,
+    lists,
     ...(terminalFolder ? { terminalFolder } : {}),
   };
 }

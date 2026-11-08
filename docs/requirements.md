@@ -1367,8 +1367,8 @@ PDF, in the same order.
   front matter, and each line keeps its number. (VS Code shows the front
   matter of a notes document as a table, as set in
   `markdown.preview.frontMatter`.)
-- When the preview is narrower than a page, the pages get smaller until they
-  fit its width; they never get larger than the size of the paper.
+- The pages have the zoom of the bar of the zoom ([R-PRV-007](#r-prv-007));
+  by default a page is as wide as the window of the preview.
 - The extension keeps each layout that it read, and reads it again after a
   change of one of its files; then it lets the Markdown preview render again.
   While the extension reads a layout for the first time, the preview shows a
@@ -1408,17 +1408,53 @@ selected, and "Add Note" above a selected passage.
   `data-deselect`, `data-hidden`). A script that reads these attributes
   takes them from the content of VS Code, as the script of Markdown Notes
   does.
-- When the preview is narrower than a page, the pages get smaller with the
-  CSS property `zoom`. The browser of VS Code has no standardized zoom: it
-  gives the rectangles of text and elements in the pages in the coordinates
-  of the pages, smaller by the zoom. A script that places an element outside
-  the pages at a text on the pages multiplies these rectangles by the zoom.
+- The pages get their zoom ([R-PRV-007](#r-prv-007)) with the CSS property
+  `zoom` on `.nimblescape-paper-pages`, smaller or larger than the paper. The
+  browser of VS Code has no standardized zoom: it gives the rectangles of
+  text and elements in the pages in the coordinates of the pages, without
+  the zoom. A script that places an element outside the pages at a text on
+  the pages multiplies these rectangles by the zoom. After each change of the
+  zoom, the script of the pages sends the event `nimblescape-paper-zoomed` to
+  `window`, with the new factor, so that such a script places its elements
+  again; Markdown Notes does so for the frame of the selected note and for
+  "Add Note".
 - The text on the pages has soft hyphens (U+00AD) where the layout
   hyphenates words ([R-REN-007](#r-ren-007)); a script that compares a
   selected passage with the Markdown text leaves them out. The text of a page
   is in `.pagedjs_page_content`; a highlight is drawn only inside it.
 - Markdown Notes adapts its preview script to the pages where it needs to
   ([R-GEN-003](#r-gen-003)).
+
+### R-PRV-007
+
+**The zoom of the pages.** A bar at the bottom right of the preview of a
+paper document sets the zoom of the pages ([decision 78](#decisions)):
+
+- "Page Width" makes a page as wide as the window of the preview, with a
+  small space at each side, also larger than the paper. It is the zoom of a
+  new preview, and Ctrl+0 (on macOS Cmd+0) chooses it.
+- "Single Page" shows a whole page in the window of the preview, with the
+  space above and below it, and scrolls to the page in the middle of the
+  window, so that it starts at the top of the window.
+- "Zoom Out" (−) and "Zoom In" (+) go to the next smaller or larger factor
+  of 25 % to 500 %, and keep the place in the middle of the window; Ctrl and
+  − or + (on macOS Cmd) do the same while the preview has the focus, and VS
+  Code then does not zoom its whole window. The button between them shows
+  the factor, and a click on it shows the pages in the size of the paper
+  (100 %).
+- The wheel with Ctrl (on macOS Cmd), and the pinch on a touchpad, zoom in
+  small steps, and the place under the pointer stays under it. When the
+  pages are wider than the window, the window scrolls to the side.
+- "Page Width" and "Single Page" fit the pages again after each change of
+  the size of the preview, for example when it opens in Zen mode of VS Code.
+  The preview fills the whole window in Zen mode when the setting
+  `zenMode.centerLayout` of VS Code is off; VS Code centers the editor in
+  Zen mode by default.
+- The zoom stays while the preview is open, also when VS Code loads the page
+  of the preview again ([R-PRV-002](#r-prv-002)), and it applies to every
+  paper document in that preview. A new preview starts with "Page Width".
+- A click on the bar is not a click on the pages: it does not open the text
+  editor at a line and does not select a note. A notes document has no bar.
 
 ## New files
 
@@ -2630,6 +2666,14 @@ requirement ([R-GEN-007](#r-gen-007)).
     the preview allow only with all its files, fonts and engines inside the
     HTML of each update, and filters for the HTML and the style sheets of
     other extensions, which a new extension can get around.
+78. **The zoom of the pages** ([R-PRV-007](#r-prv-007)): the preview of a
+    paper has a bar of the zoom with "Page Width" (a page as wide as the
+    window of the preview), "Single Page" (a whole page in the window),
+    "Zoom Out", "Zoom In" and the size of the paper, and Ctrl or Cmd with the
+    keys and the wheel zoom too. "Page Width" is the zoom of a new preview,
+    also when it makes a page larger than the paper; before, the pages got
+    only smaller. In Zen mode, the pages fill the whole window when the
+    setting `zenMode.centerLayout` of VS Code is off.
 
 ## Open questions
 

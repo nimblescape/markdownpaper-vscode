@@ -513,8 +513,16 @@ the text editor, and "Open Preview" in the context menu of the Explorer.
 Preview" in the Command Palette, open it beside the text editor too. The preview of a notes
 document stays as VS Code shows it. The pages in the preview:
 
-- are white paper on a grey background, also in a dark theme, and get
-  smaller when the preview is narrower than a page;
+- are white paper on a grey background, also in a dark theme;
+- have the zoom of the bar at the bottom right: "Page Width" makes a page as
+  wide as the window of the preview (the zoom of a new preview), "Single
+  Page" shows a whole page in the window, − and + zoom out and in, and the
+  factor between them gives the size of the paper. Ctrl+0, Ctrl+− and Ctrl++
+  (on macOS Cmd) do the same while the preview has the focus, and the wheel
+  with Ctrl, or a pinch on a touchpad, zooms at the pointer. In Zen mode of
+  VS Code, the pages fill the whole window when the setting
+  `zenMode.centerLayout` is off, since VS Code centers the editor in Zen mode
+  by default;
 - are made again after a pause in typing
   (`nimblescape.markdownPaper.previewDelay`) and after a change of a file of
   the layout, without a flicker and at the same place; a note "Making the

@@ -197,6 +197,15 @@ describe('the generated parts', () => {
     expect(editor.getMarkdown()).toBe(text.replace('Teams change (', 'Teams change a lot ('));
   });
 
+  it('are the texts of the links to headings that the format step writes, a word and a number or a label (R-REN-009)', () => {
+    const linked = text.replace('see [the plan](#nobody).', 'see [Kapitel 2](#methoden), [Anhang B](#einleitung), [the plan](#methoden) and [Tabelle 2](#nobody).');
+    const editor = open(linked);
+    expect(generatedTexts(editor)).toEqual(['1 Einleitung|2 Methoden', 'Doe, 2020, S. 3', 'Doe (2020)', 'Kapitel 2', 'Anhang B', 'Doe, J. (2020). An example.']);
+    const { view } = editor.tiptap;
+    view.dispatch(view.state.tr.insertText('x', positionOf(editor, 'Anhang B') + 2));
+    expect(editor.getMarkdown()).toBe(linked);
+  });
+
   it('go to their targets with Ctrl+click: a citation to its entry, a link of the list to its heading', () => {
     const editor = open(text);
     const { view } = editor.tiptap;

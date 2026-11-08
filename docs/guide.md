@@ -450,11 +450,15 @@ paper as the rendered editor does:
   to research do not show. A line of a marker of a list shows as an empty
   line. A database whose comment has no end stays visible, so that you see
   its warning.
-- The text of a citation, each entry of the reference list and each list of
-  a special section are read-only: an edit of them goes back, and the status
-  bar says why. Change the source in the database, the heading or the
-  caption instead; the format step writes the parts again when you save the
-  file. Your own HTML comments stay visible and editable.
+- The text of a citation, each entry of the reference list, each list of a
+  special section and the text of a link to a heading with its number or
+  label, such as `[Anhang B](#daten)`, are read-only: an edit of them goes
+  back, and the status bar says why. Change the source in the database, the
+  heading or the caption instead; the format step writes the parts again
+  when you save the file. Your own HTML comments stay visible and editable.
+- The hidden tags come only from the slash commands, such as `/cite` and
+  `/research`, and from the format step. A tag that you type or paste, such
+  as `<wbr><!--[research-->`, goes back.
 
 ## The rendered editor of Markdown Notes
 
@@ -466,8 +470,9 @@ Markdown. Markdown Paper adds the parts of a paper to it:
   sections, the anchors at the start of the entries of the reference list and
   the start markers of the arguments to research do not show. The file keeps
   each of them byte for byte.
-- The text of a citation, each entry of the reference list and each list of a
-  special section are read-only, because the format step writes them. Change
+- The text of a citation, each entry of the reference list, each list of a
+  special section and the text of a link to a heading with its number or
+  label are read-only, because the format step writes them. Change
   the source in the database, the heading or the caption instead; the format
   step writes the parts again when you save the file.
 - Ctrl+click (Cmd+click on macOS) on a citation goes to the entry of its

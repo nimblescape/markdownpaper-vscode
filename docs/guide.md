@@ -283,6 +283,13 @@ checks, its pages in the Markdown preview, and the buttons "Show Page
 Preview" and "Export PDF" in the title of the editor. A notes document keeps
 the Markdown preview as VS Code shows it.
 
+Each Markdown file has the three views of Markdown Notes, which the list of
+the editors at the right end of the breadcrumbs and the buttons in the title
+of the editor change: "Text Editor" (for a paper, the clean editing view of
+Markdown Notes), "Markdown Preview" (for a paper, its pages) and "Markdown
+Editor" ([the rendered editor of Markdown Notes](#the-rendered-editor-of-markdown-notes),
+for a paper with the parts of the paper).
+
 ## Checks and hover
 
 A Markdown file whose front matter names a layout gets warnings in the text

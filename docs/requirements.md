@@ -2561,7 +2561,7 @@ requirement ([R-GEN-007](#r-gen-007)).
 75. **"Export PDF" in the three views** ([R-DOC-004](#r-doc-004),
     [R-PDF-001](#r-pdf-001)): the button "Export PDF" is in the menu "Run"
     of the title of the three views of a paper document, Text Editor,
-    Markdown Preview and Markdown Editor (decision 81 of Markdown Notes).
+    Markdown Preview and Markdown Editor (decision 82 of Markdown Notes).
     "Show Page Preview" leaves the title and stays in the Command Palette,
     because "Open Preview to the Side" of VS Code does the same and VS Code
     shows at most eight buttons in the title. The other choice was "Export

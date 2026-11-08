@@ -1427,7 +1427,7 @@ selected, and "Add Note" above a selected passage.
 
 ### R-PRV-007
 
-**The zoom of the pages.** A bar at the bottom right of the preview of a
+**The zoom of the pages.** A bar at the top right of the preview of a
 paper document sets the zoom of the pages ([decision 78](#decisions)):
 
 - "Page Width" makes a page as wide as the window of the preview, with a
@@ -1453,8 +1453,11 @@ paper document sets the zoom of the pages ([decision 78](#decisions)):
 - The zoom stays while the preview is open, also when VS Code loads the page
   of the preview again ([R-PRV-002](#r-prv-002)), and it applies to every
   paper document in that preview. A new preview starts with "Page Width".
-- A click on the bar is not a click on the pages: it does not open the text
-  editor at a line and does not select a note. A notes document has no bar.
+- The bar stands at the top, since VS Code shows its messages at the bottom
+  right of its window. A click on the bar is not a click on the pages: it
+  does not open the text editor at a line and does not select a note, and
+  the selected text stays selected, so "Add Note" of Markdown Notes stays at
+  its text. A notes document has no bar.
 
 ## New files
 

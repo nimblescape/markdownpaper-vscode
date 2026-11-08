@@ -813,9 +813,15 @@
         setZoom({ mode: action });
       }
     });
-    // A press on the bar is no press on the pages: no double click to the text editor, no selection of a note.
+    // A press on the bar is no press on the pages: no double click to the text editor, no selection of a note. It
+    // keeps the selected text and the focus, as a button of a tool bar does, so that "Add Note" of Markdown Notes stays.
     for (const type of ['mousedown', 'mouseup', 'click', 'dblclick', 'contextmenu']) {
-      zoomBar.addEventListener(type, (event) => event.stopPropagation());
+      zoomBar.addEventListener(type, (event) => {
+        event.stopPropagation();
+        if (type === 'mousedown') {
+          event.preventDefault();
+        }
+      });
     }
     document.body.appendChild(zoomBar);
     updateZoomBar();

@@ -514,7 +514,7 @@ Preview" in the Command Palette, open it beside the text editor too. The preview
 document stays as VS Code shows it. The pages in the preview:
 
 - are white paper on a grey background, also in a dark theme;
-- have the zoom of the bar at the bottom right: "Page Width" makes a page as
+- have the zoom of the bar at the top right: "Page Width" makes a page as
   wide as the window of the preview (the zoom of a new preview), "Single
   Page" shows a whole page in the window, − and + zoom out and in, and the
   factor between them gives the size of the paper. Ctrl+0, Ctrl+− and Ctrl++

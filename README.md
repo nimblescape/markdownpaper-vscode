@@ -83,7 +83,7 @@ Node.js 22 or newer.
   its line in the text editor. The other Markdown extensions work on the
   pages: the diagrams of Mermaid, the math of KaTeX, and the highlights and
   "Add Note" of Markdown Notes. The pages show what Export PDF prints. The
-  pages are white paper also in a dark theme. The bar at the bottom right
+  pages are white paper also in a dark theme. The bar at the top right
   zooms the pages: "Page Width" (a page as wide as the window), "Single
   Page" (a whole page in the window), − and +, and the size of the paper;
   Ctrl+0, Ctrl+− and Ctrl++ (on macOS Cmd), and the wheel with Ctrl, zoom

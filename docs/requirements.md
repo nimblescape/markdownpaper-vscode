@@ -350,6 +350,9 @@ with one row for each field of its layout ([decision 56](#decisions)):
 - `layout` and `repos` are read-only rows, which name the command that
   writes them: `mp create` and `mp get`. `lang` is a text line with the
   language of the layout as its placeholder.
+- Each field of the layout, `layout`, `repos` and `lang` keep their rows:
+  the form renames none of these keys and has no button that removes one
+  ([decision 69](#decisions)).
 - A key that the layout does not know stays in the file and shows at the end
   of the form with a warning and a button that removes it
   ([decision 60](#decisions)); the author cannot add such a key.
@@ -2032,7 +2035,10 @@ nimblescape Markdown is public, so CI reads it without a token
   `lang` with the language of the layout as its default, in the order of the
   view "Front Matter" ([R-DOC-005](#r-doc-005)). It sends the schema again
   after a change of `layout` or of a file of a layout. A document that is no
-  paper gets no schema.
+  paper gets no schema. The keys of this schema stay in both modes of the
+  form: the author changes their values, but does not rename or remove them
+  ([R-FM-003](https://github.com/nimblescape/markdown/blob/main/docs/editor.md#r-fm-003)
+  of nimblescape Markdown, [decision 69](#decisions)).
 - `layout` and `repos` are read-only in the form, because only
   the command `mp` writes them. Ctrl+click (Cmd+click on macOS) on a
   reference to GitHub runs "Open Repository in New Window" for it
@@ -2422,6 +2428,12 @@ requirement ([R-GEN-007](#r-gen-007)).
 68. **Only what holds now** ([R-GEN-007](#r-gen-007)): the requirements
     state each decision as it holds now, not how it came about. They link
     no discussion document and no outline of an earlier design.
+69. **The keys of the layout stay in the form** ([R-DOC-005](#r-doc-005),
+    [R-EDIT-001](#r-edit-001)): the form of the front matter in the editor
+    of nimblescape Markdown and the view "Front Matter" rename no key of the
+    layout and have no button that removes one; the author changes only
+    their values. Only a key that the layout does not know goes, and in the
+    editor it also gets a new name.
 
 ## Open questions
 

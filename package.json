@@ -129,8 +129,8 @@
         "category": "Markdown Paper"
       },
       {
-        "command": "nimblescape.markdownPaper.updateLayout",
-        "title": "Update Layout",
+        "command": "nimblescape.markdownPaper.getLayoutsAndRepositories",
+        "title": "Get Layouts and Repositories",
         "category": "Markdown Paper"
       },
       {
@@ -196,11 +196,6 @@
           "command": "nimblescape.markdownPaper.newLayout",
           "group": "nimblescape@3",
           "when": "explorerResourceIsFolder"
-        },
-        {
-          "command": "nimblescape.markdownPaper.updateLayout",
-          "group": "nimblescape@4",
-          "when": "explorerResourceIsFolder && resourceDirname =~ /[\\\\/]layouts$/"
         }
       ]
     },

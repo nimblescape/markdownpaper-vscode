@@ -43,13 +43,12 @@ import { addSources, sourceLine } from '../paper/citations';
 import { citationStyleOf } from '../paper/csl';
 import { readFrontMatter } from '../paper/frontMatter';
 import { topicList, topics } from '../paper/instructions';
-import { findRemotes, parseRemote, previewUrl, type RemoteSpec, readOrigin, referenceText, remoteName } from '../paper/gallery';
+import { findRemotes, parseRemote, previewUrl, type RemoteSpec, referenceText, remoteName } from '../paper/gallery';
 import { type Fetcher, type Lookup, lookUpFile, lookUpIdentifier, searchWorks, titleProblem } from '../paper/lookup';
 import { identifierOf, missingFields } from '../paper/metadata';
 import { cloneName, clonesFolder, type Reference, referencesOf, setReference } from '../paper/references';
 import { defaultLayout, documentLayout, findLayout } from '../paper/render';
 import { mapLinks, type NewFile, newDocumentText, newLayoutFiles, newProjectFiles, packageName, splitStart, startFiles } from '../paper/scaffold';
-import { planUpdate } from '../paper/update';
 import { defaultPlace, downloadBrowser, downloadSize, type Place } from '../pdf/download';
 import { type Assets, exportPdf, fileReader, folderUrl } from '../pdf/export';
 import { completionScript, shells } from './completion';
@@ -91,10 +90,10 @@ export const usage = [
   '  preview <layout folder>       write the preview PDF of a layout: the PDF of its empty paper document',
   '      --write                   also write the formatted empty paper document back into the layout folder',
   '  get [<file.md>...]            clone the repositories that the papers name (their layouts and the field repos) into',
-  '                                .markdownpaper/repos/, pull the heads of their branches, and update the copies of',
-  '                                layouts on GitHub in layouts/; without a file, each paper of the project',
+  '                                .markdownpaper/repos/ and pull the heads of their branches, so that a layout and a',
+  '                                repository on a branch get their newest version; without a file, each paper of the',
+  '                                project',
   '      -u                        also move each reference to a tag to the newest tag of its repository',
-  '      --force                   also replace the files of a copy that the project changed when the repository did',
   '  get <owner>/<repository>[@<rev>] [<file.md>]',
   '                                write the reference into the field repos of the paper and clone the repository; the',
   '                                rev is a branch, a tag or a commit; without it, a terminal shows the branches and',
@@ -863,52 +862,6 @@ function papersOf(project: string): string[] {
 }
 
 /**
- * updateCopies updates each copy of a layout on GitHub in a folder `layouts/` from the repository of the layout
- * ([R-LAY-010](../../docs/requirements.md#r-lay-010)): each folder whose `layout.json` has an origin.
- * @param io - The streams and the network.
- * @param layouts - The folder `layouts/`.
- * @param force - Whether the files of the repository replace the changes of the project.
- * @returns 1 when a copy stays as it is because of a conflict, else 0.
- */
-async function updateCopies(io: Io, layouts: string, force: boolean): Promise<number> {
-  const entries = fs.existsSync(layouts) ? fs.readdirSync(layouts, { withFileTypes: true }).filter((entry) => entry.isDirectory()) : [];
-  const folders = entries.map((entry) => path.join(layouts, entry.name)).filter((folder) => fs.existsSync(path.join(folder, layoutFile)) && readOrigin(fs.readFileSync(path.join(folder, layoutFile), 'utf8')));
-  const short = (commit: string): string => commit.slice(0, 7);
-  let result = 0;
-  for (const folder of folders.sort()) {
-    const name = path.relative(io.cwd, folder) || '.';
-    const update = await planUpdate(fetcherOf(io), readFolder(folder), { ...(token() ? { token: token() } : {}), force });
-    const { origin } = update;
-    const from = `${origin.layout.replace(/^github:/, '')}@${origin.ref}`;
-    if (update.from === origin.commit) {
-      io.out(`${name}: up to date with ${from} (${short(update.from)})`);
-      continue;
-    }
-    if (update.conflicts.length > 0 && !force) {
-      io.err(`${name}: the project and ${from} changed the same files: ${update.conflicts.join(', ')}. Nothing was written; --force replaces them with the files of ${short(origin.commit)}.`);
-      result = 1;
-      continue;
-    }
-    for (const [file, content] of update.write) {
-      fs.mkdirSync(path.dirname(path.join(folder, file)), { recursive: true });
-      fs.writeFileSync(path.join(folder, file), content);
-    }
-    for (const file of update.remove) {
-      fs.rmSync(path.join(folder, file), { force: true });
-      // A folder of the layout that the removed file leaves empty goes too.
-      for (let parent = path.dirname(path.join(folder, file)); parent.startsWith(folder + path.sep) && fs.readdirSync(parent).length === 0; parent = path.dirname(parent)) {
-        fs.rmdirSync(parent);
-      }
-    }
-    io.out(`${name}: updated from ${short(update.from)} to ${short(origin.commit)} of ${from}: ${update.changed.length > 0 ? update.changed.join(', ') : 'no file of the layout changed'}`);
-    if (update.kept.length > 0) {
-      io.out(`  The changes of the project stay in: ${update.kept.join(', ')}`);
-    }
-  }
-  return result;
-}
-
-/**
  * ignoreClones makes Git ignore the folder of the clones of a project, with a file `.gitignore` in it.
  * @param project - The folder of the project.
  */
@@ -989,8 +942,7 @@ async function chooseRev(io: Io, git: Git, repository: string): Promise<string> 
 /**
  * runGet runs `get` ([R-CLI-004](../../docs/requirements.md#r-cli-004)): with a reference, it writes the reference
  * into the field `repos` of a paper and clones the repository; without one, it clones each repository that the papers
- * name and is missing, fetches into the others and checks out their revs, moves the references to tags with `-u`, and
- * updates the copies of layouts on GitHub in `layouts/` of the project.
+ * name and is missing, fetches into the others and checks out their revs, and moves the references to tags with `-u`.
  * @param args - The arguments after the command.
  * @param io - The streams, the network and Git.
  */
@@ -999,7 +951,7 @@ async function runGet(args: readonly string[], io: Io): Promise<number> {
   const { positional, options } = parse(
     args.filter((arg) => arg !== '-u'),
     ['name'],
-    ['force', 'yes'],
+    ['yes'],
   );
   const files = positional.filter((arg) => /\.md$/i.test(arg));
   const targets = positional.filter((arg) => !/\.md$/i.test(arg));
@@ -1105,11 +1057,10 @@ async function runGet(args: readonly string[], io: Io): Promise<number> {
       result = 2;
     }
   }
-  const copies = await updateCopies(io, path.join(project, 'layouts'), options.force !== undefined);
-  if (clones.size === 0 && !fs.existsSync(path.join(project, 'layouts'))) {
-    io.out('No paper of the project names a repository on GitHub, and no folder layouts/ has a copy of a layout on GitHub.');
+  if (clones.size === 0) {
+    io.out('No paper of the project names a repository on GitHub.');
   }
-  return Math.max(result, copies);
+  return result;
 }
 
 /**
@@ -1170,7 +1121,7 @@ export async function run(args: readonly string[], io: Io): Promise<number> {
       case 'pdf':
         throw new UsageError(`${command} build writes the PDF now: ${command} build ${rest.join(' ')}`.trimEnd());
       case 'update':
-        throw new UsageError(`${command} get updates the copies of layouts now, with the clones of the references.`);
+        throw new UsageError(`${command} get gets the newest version of the layouts and of the repositories that the papers name.`);
       default:
         throw new UsageError(`Unknown command: ${name}`);
     }

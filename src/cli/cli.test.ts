@@ -9,7 +9,6 @@ import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { version } from '../../package.json';
 import type { Fetcher } from '../paper/lookup';
-import { blobId } from '../paper/update';
 import { type Io, run } from './cli';
 import { type Git, gitOf } from './git';
 
@@ -68,7 +67,7 @@ test('the help, the version and a wrong command (R-CLI-001)', async () => {
   expect(await run(['pdf', 'a.md'], io())).toBe(2);
   expect(err).toContain('mp: mp build writes the PDF now: mp build a.md');
   expect(await run(['update'], io())).toBe(2);
-  expect(err).toContain('mp: mp get updates the copies of layouts now, with the clones of the references.');
+  expect(err).toContain('mp: mp get gets the newest version of the layouts and of the repositories that the papers name.');
 });
 
 test('create asks for what its options do not give, and writes the project (R-NEW-003)', async () => {
@@ -605,55 +604,7 @@ test('preview needs a layout folder with an empty paper document (R-LAY-009)', a
   expect(err.join('\n')).toContain('The layout "bare" has no empty paper document');
 });
 
-test('get updates a copy of a layout on GitHub from the newer version of its branch and keeps the changes of the project (R-LAY-010)', async () => {
-  // A copy of the layout thesis at the commit c…, with the origin of an older copy that has github: before its name.
-  const raw = 'https://raw.githubusercontent.com/school/layouts';
-  const base = github();
-  const paths = ['layout.json', 'page.css', 'document.md', 'document.pdf', 'images/folders.svg'];
-  const before = new Map(await Promise.all(paths.map(async (file) => [file, (await base(`${raw}/${commit}/thesis/${file}`, '*/*')).body] as const)));
-  const copy = path.join(folder, 'one/layouts/thesis');
-  for (const [file, content] of before) {
-    fs.mkdirSync(path.dirname(path.join(copy, file)), { recursive: true });
-    fs.writeFileSync(path.join(copy, file), content);
-  }
-  const json = JSON.parse(new TextDecoder().decode(before.get('layout.json')));
-  fs.writeFileSync(path.join(copy, 'layout.json'), JSON.stringify({ ...json, origin: { layout: 'github:school/layouts/thesis', ref: 'main', commit } }, null, 2));
-  // The newer commit of main changes page.css, adds a font and removes the image.
-  const newer = 'd'.repeat(40);
-  const after = new Map([...before].filter(([file]) => file !== 'images/folders.svg'));
-  after.set('page.css', encoder.encode('p { margin: 0; }'));
-  after.set('fonts/a.ttf', encoder.encode('font'));
-  const tree = (files: Map<string, Uint8Array>): string => JSON.stringify({ tree: [...files].map(([file, content]) => ({ path: `thesis/${file}`, type: 'blob', sha: blobId(content) })) });
-  const answers = new Map<string, Uint8Array>([
-    ['https://api.github.com/repos/school/layouts/commits/main', encoder.encode(newer)],
-    [`https://api.github.com/repos/school/layouts/commits/${commit}`, encoder.encode(commit)],
-    [`https://api.github.com/repos/school/layouts/git/trees/${commit}?recursive=1`, encoder.encode(tree(before))],
-    [`https://api.github.com/repos/school/layouts/git/trees/${newer}?recursive=1`, encoder.encode(tree(after))],
-    ...[...after].map(([file, content]) => [`${raw}/${newer}/thesis/${file}`, content] as const),
-  ]);
-  const network: Fetcher = async (url, accept, headers) => {
-    const body = answers.get(url);
-    return body ? { status: 200, type: 'text/plain', url, body } : base(url, accept, headers);
-  };
-  const project: Io = { ...io(), cwd: path.join(folder, 'one'), fetch: network, git };
-  fs.appendFileSync(path.join(copy, 'document.md'), '\nMine.\n');
-  fs.writeFileSync(path.join(copy, 'page.css'), 'p { color: red; }');
-  expect(await run(['get'], project)).toBe(1);
-  expect(err.join('\n')).toContain('layouts/thesis: the project and school/layouts/thesis@main changed the same files: page.css. Nothing was written');
-  expect(read('one/layouts/thesis/page.css')).toBe('p { color: red; }');
-  fs.writeFileSync(path.join(copy, 'page.css'), 'p {}');
-  out.length = 0;
-  expect(await run(['get'], project)).toBe(0);
-  expect(out).toEqual(['layouts/thesis: updated from ccccccc to ddddddd of school/layouts/thesis@main: fonts/a.ttf, images/folders.svg, page.css', '  The changes of the project stay in: document.md']);
-  expect(read('one/layouts/thesis/page.css')).toBe('p { margin: 0; }');
-  expect(read('one/layouts/thesis/fonts/a.ttf')).toBe('font');
-  expect(fs.existsSync(path.join(copy, 'images'))).toBe(false);
-  expect(read('one/layouts/thesis/document.md')).toContain('Mine.');
-  expect(JSON.parse(read('one/layouts/thesis/layout.json')).origin.commit).toBe(newer);
-  out.length = 0;
-  expect(await run(['get'], project)).toBe(0);
-  expect(out).toEqual([`layouts/thesis: up to date with school/layouts/thesis@main (ddddddd)`]);
-  out.length = 0;
+test('get says so when no paper of the project names a repository on GitHub (R-CLI-004)', async () => {
   expect(await run(['get'], { ...io(), git })).toBe(0);
-  expect(out).toEqual(['No paper of the project names a repository on GitHub, and no folder layouts/ has a copy of a layout on GitHub.']);
+  expect(out).toEqual(['No paper of the project names a repository on GitHub.']);
 });

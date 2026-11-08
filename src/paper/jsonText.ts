@@ -4,8 +4,8 @@
 
 /**
  * Changes of the text of a JSON object that keep its form, for the `layout.json` of a copy of a layout
- * ([R-LAY-010](../../docs/requirements.md#r-lay-010)). A field whose value stays keeps its text, such as an array on
- * one line, so that the copy differs from the file of its repository only in the fields that differ. The module uses
+ * ([R-LAY-009](../../docs/requirements.md#r-lay-009)). A field whose value stays keeps its text, such as an array on
+ * one line, so that the copy differs from the file of the other layout only in the fields that differ. The module uses
  * no API of VS Code.
  */
 

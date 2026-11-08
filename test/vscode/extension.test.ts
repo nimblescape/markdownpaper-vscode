@@ -107,7 +107,7 @@ describe('nimblescape Markdown Paper', function () {
   it('the extension starts and has its commands', async () => {
     await api();
     const commands = await vscode.commands.getCommands(true);
-    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'openRepository', 'connectZotero', 'updateSourcesFromZotero']) {
+    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'getLayoutsAndRepositories', 'openRepository', 'connectZotero', 'updateSourcesFromZotero']) {
       assert.ok(commands.includes(`nimblescape.markdownPaper.${name}`), name);
     }
   });
@@ -145,6 +145,19 @@ describe('nimblescape Markdown Paper', function () {
     const args = JSON.parse(decodeURIComponent(references[0].target!.query)) as [string, string];
     assert.deepEqual(args, [file.toString(), 'server']);
     assert.equal((await cloneOfReference(context, args[0], args[1]))?.fsPath, clone?.fsPath);
+  });
+
+  it('"Get Layouts and Repositories" runs mp get in a new terminal in the folder of the paper (R-LAY-010)', async () => {
+    await api();
+    // A paper without a reference: mp get in the terminal clones nothing.
+    const file = write('get/paper/paper.md', '---\nlayout: plain\n---\n\n# Text\n');
+    const before = vscode.window.terminals.length;
+    const result = await vscode.commands.executeCommand<vscode.Uri | undefined>('nimblescape.markdownPaper.getLayoutsAndRepositories', file);
+    assert.equal(result?.fsPath, path.join(folder, 'get', 'paper'));
+    const terminal = await waitFor(() => vscode.window.terminals.slice(before).find((candidate) => candidate.name === 'Markdown Paper'), 'the terminal of mp get');
+    const { cwd } = terminal.creationOptions as vscode.TerminalOptions;
+    assert.equal(cwd instanceof vscode.Uri ? cwd.fsPath : cwd, path.join(folder, 'get', 'paper'));
+    terminal.dispose();
   });
 
   it('a missing required field of the layout is a warning at the field layout, with the description in its hover (R-DOC-002, R-DOC-003)', async () => {

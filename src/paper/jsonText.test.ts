@@ -3,7 +3,7 @@
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
 /**
- * The tests of the changes of a JSON text that keep its form ([R-LAY-010](../../docs/requirements.md#r-lay-010)).
+ * The tests of the changes of a JSON text that keep its form ([R-LAY-009](../../docs/requirements.md#r-lay-009)).
  */
 
 import { describe, expect, test } from 'vitest';
@@ -20,7 +20,7 @@ const text = `{
 }
 `;
 
-describe('the changes of a JSON text that keep its form (R-LAY-010)', () => {
+describe('the changes of a JSON text that keep its form (R-LAY-009)', () => {
   test('a field with the same value keeps its text, a changed field gets its new value in its place', () => {
     const json = JSON.parse(text) as Record<string, unknown>;
     expect(editJsonText(text, json)).toBe(text);
@@ -31,9 +31,9 @@ describe('the changes of a JSON text that keep its form (R-LAY-010)', () => {
   test('a new field comes at the end with the indent of the text, and a field that the object has no longer goes', () => {
     const json = JSON.parse(text) as Record<string, unknown>;
     delete json.hyphenate;
-    const edited = editJsonText(text, { ...json, origin: { layout: 'github:owner/layouts/thesis', ref: 'main' } });
-    expect(edited).toBe(text.replace('"hyphenate": true', '"origin": {\n    "layout": "github:owner/layouts/thesis",\n    "ref": "main"\n  }'));
-    expect(JSON.parse(edited)).toEqual({ ...json, origin: { layout: 'github:owner/layouts/thesis', ref: 'main' } });
+    const edited = editJsonText(text, { ...json, contents: { depth: 2, front: false } });
+    expect(edited).toBe(text.replace('"hyphenate": true', '"contents": {\n    "depth": 2,\n    "front": false\n  }'));
+    expect(JSON.parse(edited)).toEqual({ ...json, contents: { depth: 2, front: false } });
   });
 
   test('strings with quotes, brackets and braces do not end a value early', () => {

@@ -19,7 +19,7 @@ import { sectionCodes } from '@nimblescape/markdownlayout';
 import { expect, test, vi } from 'vitest';
 import { commands, extensionId } from './extension';
 import { drawingsCss, lightThemeColors } from './paper/extensionStyles';
-import { paperDocumentKey } from './paperDocuments';
+import { markdownEditor, markdownPreviewEditor, paperDocumentKey } from './paperDocuments';
 import { defaults, settingsSection } from './settings';
 // @ts-expect-error The script of the build has no declarations.
 import { packageFolders, thirdPartyNotices } from '../scripts/third-party-notices.mjs';
@@ -110,10 +110,15 @@ test('the extension contributes no view: the editors of Markdown Notes edit the 
   expect(manifest.contributes.views).toBeUndefined();
 });
 
-test('"Show Page Preview" is a button of the title of a paper document, and "Export PDF" a button of its menu "Run" and of its Markdown preview (R-PRV-001, R-PDF-001, R-DOC-004)', () => {
+test('"Export PDF" is a button of the menu "Run" of the three views of a paper document and of its Markdown preview, and "Show Page Preview" is only in the Command Palette (R-PRV-001, R-PDF-001, R-DOC-004)', () => {
   const menus = manifest.contributes.menus;
-  expect(menus['editor/title']).toContainEqual({ command: commands.showPagePreview, group: 'navigation', when: `editorLangId == markdown && ${paperDocumentKey}` });
-  expect(menus['editor/title/run']).toContainEqual({ command: commands.exportPdf, when: `(editorLangId == markdown || activeWebviewPanelId == 'markdown.preview') && ${paperDocumentKey}` });
+  // The views "Markdown Preview" and "Markdown Editor" are custom editors, which have no language: their IDs name them.
+  const views = `activeCustomEditorId == '${markdownPreviewEditor}' || activeCustomEditorId == '${markdownEditor}'`;
+  expect(menus['editor/title/run']).toEqual([{ command: commands.exportPdf, when: `(editorLangId == markdown || activeWebviewPanelId == 'markdown.preview' || ${views}) && ${paperDocumentKey}` }]);
+  expect(menus.commandPalette).toContainEqual({ command: commands.exportPdf, when: `editorLangId == markdown || activeWebviewPanelId == 'markdown.preview' || ${views}` });
+  // "Open Preview to the Side" of VS Code is the same button; VS Code shows at most eight buttons in the title.
+  expect(menus['editor/title']).toBeUndefined();
+  expect(menus.commandPalette).toContainEqual({ command: commands.showPagePreview, when: `editorLangId == markdown && ${paperDocumentKey}` });
   expect(manifest.activationEvents).toEqual(['onLanguage:markdown']);
 });
 

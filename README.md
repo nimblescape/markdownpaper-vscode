@@ -74,7 +74,8 @@ Node.js 22 or newer.
   layout `plain`.
 - **Page preview.** A Markdown file whose front matter names a layout is a
   paper document, and the Markdown preview of VS Code shows its pages:
-  Ctrl+Shift+V, Ctrl+K V or "Show Page Preview" in the title of the editor.
+  Ctrl+Shift+V, Ctrl+K V or "Open Preview to the Side" in the title of the
+  editor.
   Another Markdown file keeps the Markdown preview as VS Code shows it. The
   pages update after a pause in typing and after a change of the layout, the
   preview scrolls with the text editor, and a double click on a page shows
@@ -178,8 +179,9 @@ Node.js 22 or newer.
 2. Write the fields of the layout in the front matter, in the text editor or
    in the form at the top of the editor. The warnings name the missing ones.
 3. Press Ctrl+Shift+V or Ctrl+K V (on macOS Cmd) for the Markdown preview,
-   or choose "Show Page Preview" in the title of the editor.
-4. Choose "Export PDF" in the menu "Run" of the title of the editor.
+   or choose "Open Preview to the Side" in the title of the editor.
+4. Choose "Export PDF" in the menu "Run" of the title of the editor, in
+   any of the three views of the file.
 
 The rules of the documents and of the layouts, for people and AI agents:
 

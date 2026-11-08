@@ -73,6 +73,6 @@ After a change of the document or of the layout, check the pages:
 ## 4. In VS Code
 
 The extension nimblescape Markdown Paper shows the same pages beside the text
-editor ("Show Page Preview"), updates them after a pause in typing, and shows
+editor ("Open Preview to the Side" of VS Code, or "Show Page Preview"), updates them after a pause in typing, and shows
 the line of a place on a page when you click on it. "Export PDF" writes the PDF
 as the command does.

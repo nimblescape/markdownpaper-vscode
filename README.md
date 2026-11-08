@@ -139,7 +139,10 @@ Node.js 22 or newer.
   a commit pins the version.
 - **Notes.** The notes of nimblescape Markdown Notes do not show on the pages.
   The page preview and the PDF of a file in its clean editing view show the
-  file itself. The clean editing view hides the database of the sources.
+  file itself. The clean editing view hides the database of the sources, the
+  anchors of the entries of the reference list and the markers of the lists,
+  and keeps the citations, the entries and the lists read-only, as the
+  rendered editor does.
 - **Rendered editor.** In the editor of a whole file of Markdown Notes, which
   shows the rendered text, the database of the sources and the hidden markers
   do not show, and the citations, the entries of the reference list and the

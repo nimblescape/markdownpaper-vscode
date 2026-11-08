@@ -117,9 +117,20 @@ without it.
   the range of that text; and `registerHiddenMarkers({ find(lines) })`, parts
   of lines that the clean editing view leaves out and keeps at their text.
   Markdown Paper registers the database of the sources as a hidden block
-  ([R-CITE-001](#r-cite-001)), each start marker `<wbr><!--[research-->`
-  outside code as a hidden marker, and `/research`. A version of Markdown
-  Notes without a function gets no such part.
+  ([R-CITE-001](#r-cite-001)); each start marker `<wbr><!--[research-->`
+  outside code, the anchor at the start of each entry of the reference list
+  and, in a paper document, the markers of the lists of the special sections
+  as hidden markers; and `/research`. A version of Markdown Notes without a
+  function gets no such part.
+- For the parts that the format step writes, Markdown Notes has
+  `registerGeneratedParts({ find(lines) })` (decision 74 of Markdown Notes):
+  parts of a line and blocks of whole lines that its clean editing view
+  keeps read-only. Markdown Paper registers the text of each citation
+  between its square brackets, each entry of the reference list and, in a
+  paper document, each list of a special section with its markers
+  ([R-EDIT-001](#r-edit-001), [decision 71](#decisions)). An edit of such a
+  part in the clean editing view goes back. A version of Markdown Notes
+  without the function keeps these parts editable there.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
@@ -358,7 +369,7 @@ Markdown Notes; Markdown Paper has no view of its own for it
   warnings with quick fixes; and the completion offers the keys and the
   values of the schema
   ([R-TEXT-009](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-text-009)
-  of Markdown Notes, [decision 71](#decisions)). Markdown Paper gives the
+  of Markdown Notes, [decision 72](#decisions)). Markdown Paper gives the
   schema again after a change of a file of a layout.
 - In both editors, the keys of the layout keep their place: the author
   changes their values, but does not rename or remove them
@@ -840,7 +851,8 @@ number again, as a link to the footnote. A link to the outside with its own
 text gets a footnote with its address ([R-PDF-005](#r-pdf-005)). The style
 sheet of the renderer holds only the rules without which this does not work
 in Paged.js, and the look of the links of the PDF; a layout gives the
-footnotes their look.
+footnotes their look. The inline footnotes `^[text]` are no footnotes: they
+stay text, as on GitHub.
 
 ### R-REN-009
 
@@ -932,7 +944,14 @@ Mermaid and PlantUML ([decision 17](#decisions)).
   diagram into an area that the mouse moves and zooms, moved to the middle of
   the width of the page at the time of the drawing, with buttons. The pages of
   the PDF and of the preview leave out the movement and the buttons.
-- Footnotes are part of the renderer ([R-REN-008](#r-ren-008)).
+- Footnotes are part of the renderer ([R-REN-008](#r-ren-008)). When the
+  plugin of another extension adds footnotes too, for example
+  markdown-it-footnote of the extension "Markdown Footnotes"
+  (`bierner.markdown-footnotes`, in the extension pack of Markdown Notes),
+  the footnotes show as the renderer shows them, in the PDF and in the page
+  preview: each footnote once, at the foot of its page, and the inline
+  footnotes as text. A notes document keeps the footnotes of that extension
+  in the Markdown preview.
 - The renderer itself stays without an API of VS Code
   ([R-REN-001](#r-ren-001)): it takes the plugins, the scripts and the style
   sheets as input. On the command line there are no extensions of VS Code;
@@ -1237,6 +1256,13 @@ setting `previewDelay`, [R-SET-001](#r-set-001)), and after a change of a
 file of the layout. It makes the new pages beside the old ones and then shows
 them, so the pages do not flicker, and it keeps the place on the page.
 
+VS Code loads the page of the preview again for "Markdown: Refresh Preview"
+and for each change that an extension asks for in this way, for example a
+note that Markdown Notes selects. The pages then show at the place of the
+pages of before, not at the top: the script of the pages keeps the place of
+the pages of its file in the storage of the page (`sessionStorage`), which
+stays when VS Code loads the page again.
+
 ### R-PRV-003
 
 **From a page to the line, and back.** The pages keep the lines of the file
@@ -1308,8 +1334,9 @@ Markdown preview as VS Code shows it.
 **The functions of plugins on the pages.** Every function that a Markdown
 plugin gives the Markdown preview works on the pages as well
 ([decision 20](#decisions)). For Markdown Notes: the highlights of the notes,
-a click on a highlight that selects its note, and "Add Note" above a selected
-passage.
+a click on a highlight that selects its note, a click on a thread of its side
+view that scrolls the pages to the highlight of its note and shows it
+selected, and "Add Note" above a selected passage.
 
 - The pages are copies of the blocks of the preview, with their attributes,
   among them `data-line`; a script that listens on the document, not on one
@@ -1324,7 +1351,15 @@ passage.
   more after the next pause.
 - After each new set of pages, the script of the pages sends the event
   `nimblescape-paper-rendered` to `window`, with the number of the pages, so
-  that another script can mark the pages again.
+  that another script can mark the pages again. The pages stand at their
+  place before the event ([R-PRV-002](#r-prv-002)), so a script that scrolls
+  to a place on the pages after the event, such as the one of Markdown
+  Notes, has the last word.
+- When the preview is narrower than a page, the pages get smaller with the
+  CSS property `zoom`. The browser of VS Code has no standardized zoom: it
+  gives the rectangles of text and elements in the pages in the coordinates
+  of the pages, smaller by the zoom. A script that places an element outside
+  the pages at a text on the pages multiplies these rectangles by the zoom.
 - The text on the pages has soft hyphens (U+00AD) where the layout
   hyphenates words ([R-REN-007](#r-ren-007)); a script that compares a
   selected passage with the Markdown text leaves them out. The text of a page
@@ -1595,11 +1630,11 @@ repos:
   view of Markdown Notes, opens its clone in the same way
   ([decision 58](#decisions)). Markdown Notes opens the same folder itself with
   Ctrl+click on the name of the reference of a listing. A missing clone offers `mp get` in a terminal of VS Code.
-- In the clean editing view of Markdown Notes, the whole front matter is
-  read-only (R-TEXT-009 of Markdown Notes): a change there goes back, with a
-  message in the status bar that names "Open File with Markup". The text
-  editor with the markup and the commands, such as `mp get`, still write the
-  references, and the view shows a change of `mp get`.
+- In the clean editing view of Markdown Notes, the lines of `repos` are
+  read-only ([R-DOC-005](#r-doc-005), [decision 72](#decisions)): a change
+  there goes back, with a message in the status bar. The commands, such as
+  `mp get`, and the text editor with the markup still write the references,
+  and the view shows a change of `mp get`.
 - `get <owner>/<repository>@<rev>` with more than one paper in the project
   needs the paper: `get <owner>/<repository>@<rev> <file.md>`.
 - `get -u` also moves each reference to a tag to the newest tag of its
@@ -1704,7 +1739,10 @@ cited or not, in one HTML comment at the end of the file, its database:
 - The checks report a line that is no JSON object, a source without a valid
   `id`, a second source with the same `id`, and a comment without its end.
 - The clean editing view of Markdown Notes leaves the database out (a hidden
-  block of [R-GEN-003](#r-gen-003)), when only empty lines follow it.
+  block of [R-GEN-003](#r-gen-003)), wherever it stands, when its comment
+  has its end; a comment without its end stays in the view, so that its
+  check shows. An edit that the view writes anew moves the database to the
+  end of the file.
 
 ### R-CITE-002
 
@@ -2010,7 +2048,12 @@ nimblescape Markdown is public, so CI reads it without a token
   interface of Markdown Notes ([R-GEN-003](#r-gen-003);
   [R-TEXT-009](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-text-009) of Markdown Notes). Each new feature
   of the paper in one of the two gets its solution in the other in the same
-  step ([decision 66](#decisions)).
+  step ([decision 66](#decisions)). The clean editing view hides the same
+  markup as the editor and keeps the same parts read-only
+  ([decision 71](#decisions)): the database of the sources, the anchors of
+  the entries, the markers of the lists and the start markers of the
+  arguments to research do not show there, and an edit of the text of a
+  citation, of an entry of the reference list or of a list goes back.
 - The database of the sources ([R-CITE-001](#r-cite-001)) and the markers
   of the lists of the special sections ([R-REN-004](#r-ren-004)) are hidden
   blocks. The anchor at the start of an entry of the reference list and the
@@ -2445,7 +2488,19 @@ requirement ([R-GEN-007](#r-gen-007)).
     which parts it shows. The other choice was a fourth view of Markdown
     Notes beside the visual editor of VS Code, which VS Code names "Markdown
     Editor".
-71. **The clean editing view keeps the structure of the front matter**
+71. **The clean editing view hides the markup of the paper and keeps its
+    generated parts read-only** ([R-EDIT-001](#r-edit-001),
+    [R-GEN-003](#r-gen-003), [R-CITE-001](#r-cite-001)): as in the editor of
+    nimblescape Markdown, the clean editing view of Markdown Notes hides the
+    database of the sources wherever it stands, the anchor at the start of
+    each entry of the reference list, the markers of the lists of the
+    special sections and the start markers of the arguments to research.
+    The text of each citation, each entry of the reference list and each
+    list of a special section are read-only there; an edit of them goes
+    back. The other choice was to show the anchors and the markers in the
+    view, to hide the database only at the end of the file, and to keep the
+    parts editable until the format step writes them again.
+72. **The clean editing view keeps the structure of the front matter**
     ([R-DOC-005](#r-doc-005)): the clean editing view of Markdown Notes stays
     a text editor, and it controls how an edit changes the front matter of a
     paper: the keys of the schema of the layout are read-only and only the
@@ -2453,7 +2508,9 @@ requirement ([R-GEN-007](#r-gen-007)).
     problems of the schema show as warnings with quick fixes, and the
     completion offers the keys and the values of the schema. An empty value
     keeps its key in both editors. Markdown Paper gives Markdown Notes the
-    schema through `registerFrontMatterSchema`.
+    schema through `registerFrontMatterSchema`. The other choices were the
+    whole front matter read-only in the clean editing view, and a form of
+    the front matter in the side bar.
 
 ## Open questions
 

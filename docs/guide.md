@@ -441,6 +441,21 @@ four letters or digits, do not show on the pages. When Markdown Notes shows a
 file in its clean editing view, the pages in the preview and "Export PDF" use
 the file itself.
 
+The clean editing view, the text editor of a paper, shows the parts of the
+paper as the rendered editor does:
+
+- The database of the sources, wherever it stands in the file, the anchors
+  at the start of the entries of the reference list, the markers of the
+  lists, for example `<!-- toc -->`, and the start markers of the arguments
+  to research do not show. A line of a marker of a list shows as an empty
+  line. A database whose comment has no end stays visible, so that you see
+  its warning.
+- The text of a citation, each entry of the reference list and each list of
+  a special section are read-only: an edit of them goes back, and the status
+  bar says why. Change the source in the database, the heading or the
+  caption instead; the format step writes the parts again when you save the
+  file. Your own HTML comments stay visible and editable.
+
 ## The rendered editor of Markdown Notes
 
 Markdown Notes has an editor of a whole file that

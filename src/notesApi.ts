@@ -36,9 +36,16 @@ export interface NotesApiV1 {
   registerHiddenBlocks?(blocks: { find(lines: readonly string[]): readonly { first: number; last: number }[] }): vscode.Disposable;
   /**
    * registerHiddenMarkers makes the clean editing view leave out parts of lines, such as the start marker of an
-   * argument to research. An older version of Markdown Notes does not have it.
+   * argument to research or the anchor of an entry of the reference list. An older version of Markdown Notes does not
+   * have it.
    */
   registerHiddenMarkers?(markers: { find(lines: readonly string[]): readonly { line: number; start: number; end: number }[] }): vscode.Disposable;
+  /**
+   * registerGeneratedParts makes the clean editing view keep the parts of a file that the format step writes read-only:
+   * parts of a line, such as the text of a citation, and blocks of whole lines, such as an entry of the reference list.
+   * An older version of Markdown Notes does not have it.
+   */
+  registerGeneratedParts?(parts: { find(lines: readonly string[]): readonly ({ line: number; start: number; end: number } | { first: number; last: number })[] }): vscode.Disposable;
   /**
    * registerSlashCommand adds a slash command to the text editors of Markdown files. A command with `selection` shows
    * only when the typed slash replaced selected text, and `run` gets the range of that text; an older version of

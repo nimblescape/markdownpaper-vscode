@@ -17,8 +17,10 @@ The first version.
   `layout`.
 - The renderer turns a Markdown document into one HTML page, which Paged.js
   turns into pages, for the preview and for the PDF alike. It numbers the
-  headings, puts footnotes at the foot of their page, hyphenates the text by
-  the language of the layout with soft hyphens, also words joined by a slash
+  headings, puts footnotes at the foot of their page (each footnote once, also
+  when another extension such as "Markdown Footnotes" adds footnotes too; an
+  inline footnote `^[text]` stays text), hyphenates the text by the language
+  of the layout with soft hyphens, also words joined by a slash
   such as "Forschungsfrage/n" but not paths, and leaves out the notes of
   nimblescape Markdown Notes.
 - Special sections without a chapter number, found by the words of their
@@ -167,7 +169,9 @@ The first version.
   that it finds. The checks warn of each `(RESEARCH)` and of a start marker
   without one, the pages leave the start marker out, and the clean editing
   view of Markdown Notes hides the start marker and the database of the
-  sources.
+  sources. The clean editing view also hides the anchors of the entries of
+  the reference list and the markers of the lists, and keeps the citations,
+  the entries and the lists read-only, as the rendered editor does.
 - Alerts of GitHub: a block quote whose first line is `[!NOTE]`, `[!TIP]`,
   `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]` becomes the element of an alert
   as GitHub writes it, which a layout draws as a box, for example the hint of

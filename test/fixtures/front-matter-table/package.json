@@ -1,0 +1,17 @@
+{
+  "name": "front-matter-table",
+  "displayName": "Front matter table (test)",
+  "description": "A test extension of the tests in VS Code: its markdown-it plugin shows the front matter of a Markdown file as a table of its own.",
+  "version": "0.0.0",
+  "private": true,
+  "publisher": "nimblescape-test",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.125.0"
+  },
+  "main": "./extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "markdown.markdownItPlugins": true
+  }
+}

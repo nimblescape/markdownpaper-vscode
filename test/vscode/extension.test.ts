@@ -7,10 +7,11 @@
 // layout and Markdown files into a temporary folder, and check the commands of the extension, among them "Open
 // Repository in New Window" (R-CLI-004) and the view "Front Matter" (R-DOC-005), the checks of the front
 // matter and their hover (R-DOC-002, R-DOC-003), the format step of the paper (R-REN-004, R-CLI-002), the slash
-// commands /research and /cite (R-CITE-002), the plugin of
-// the pages in the Markdown preview of VS Code for a paper document and none for a notes document (R-PRV-001,
-// R-PRV-005, R-DOC-004), and "Export PDF" (R-PDF-001), with the diagrams of Mermaid and the math of KaTeX of the
-// built-in Markdown extensions (R-REN-010), when a Chrome, Chromium or Edge is installed, as on the runners of GitHub.
+// commands /research and /cite (R-CITE-002), the plugin of the pages in the Markdown preview of VS Code for a paper
+// document, without its front matter also when the plugin of another extension shows the front matter (the test
+// extension of test/fixtures/front-matter-table/), and none for a notes document (R-PRV-001, R-PRV-005, R-DOC-004),
+// and "Export PDF" (R-PDF-001), with the diagrams of Mermaid and the math of KaTeX of the built-in Markdown
+// extensions (R-REN-010), when a Chrome, Chromium or Edge is installed, as on the runners of GitHub.
 // The test of the script of the pages, which needs a browser page, is in src/paperPreview.test.ts.
 
 import * as assert from 'node:assert/strict';
@@ -223,7 +224,7 @@ describe('nimblescape Markdown Paper', function () {
     assert.equal(editor.document.lineAt(5).text, 'Agents change the work of teams ([Hong et al., 2024](#hong2024)).');
   });
 
-  it('the Markdown preview of a paper document gets the layout and the steps of the renderer, with the content of the other plugins, and a notes document keeps its preview (R-PRV-001, R-PRV-005, R-DOC-004)', async () => {
+  it('the Markdown preview of a paper document gets the layout and the steps of the renderer, with the content of the other plugins and without the front matter, and a notes document keeps its preview (R-PRV-001, R-PRV-005, R-DOC-004)', async () => {
     await api();
     const paper = write('paper/preview.md', '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nDie Formel $a^2 + b^2 = c^2$.[^1]\n\n[^1]: Eine Fußnote.\n');
     const document = await vscode.workspace.openTextDocument(paper);
@@ -244,9 +245,13 @@ describe('nimblescape Markdown Paper', function () {
     assert.match(rendered, /<h1[^>]* id="einleitung"[^>]*><span class="heading-number">1<\/span> Einleitung<\/h1>/);
     assert.match(rendered, /class="katex"/, 'the math of the built-in extension Markdown Math');
     assert.match(rendered, /<span class="footnote"/, 'the footnote at its reference, for the foot of its page');
-    const notes = await vscode.workspace.openTextDocument(write('paper/notes.md', '# Notizen\n\nText.[^1]\n\n[^1]: Fußnote.\n'));
+    // The front matter fills the templates of the layout: neither VS Code nor the plugin of another extension shows it.
+    assert.doesNotMatch(rendered, /class="frontmatter"|test_front_matter_table|<t[hd]>(?:layout|title)<\/t[hd]>/, 'no table of the front matter');
+    assert.doesNotMatch(rendered.replace(/^<div class="nimblescape-paper"[^>]*><\/div>/, ''), /Agenten/, 'no value of the front matter in the text');
+    const notes = await vscode.workspace.openTextDocument(write('paper/notes.md', '---\ntitle: Notizen\n---\n\n# Notizen\n\nText.[^1]\n\n[^1]: Fußnote.\n'));
     const plain = await vscode.commands.executeCommand<string>('markdown.api.render', notes);
     assert.doesNotMatch(plain, /nimblescape-paper|heading-number|class="footnote"/);
+    assert.match(plain, /<table class="test_front_matter_table"><tr><th>title<\/th><\/tr><tr><td>Notizen<\/td><\/tr><\/table>/, 'a notes document keeps the front matter of the test extension');
   });
 
   it('"Show Page Preview" opens the Markdown preview of VS Code beside the text editor (R-PRV-001)', async () => {

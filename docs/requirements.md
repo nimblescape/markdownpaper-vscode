@@ -1288,8 +1288,14 @@ Markdown preview as VS Code shows it.
   values of the light theme "Light Modern" of VS Code, so a diagram has the
   colors of white paper.
 - The front matter of a paper document does not show on the pages: its
-  fields go into the templates of the layout. (VS Code shows the front matter
-  of a notes document as a table, as set in `markdown.preview.frontMatter`.)
+  fields go into the templates of the layout. This holds also when the
+  markdown-it plugin of another extension shows the front matter in its own
+  way, for example as a table with keys and values: markdown-it reads the
+  text of a paper document with a blank line for each line of its front
+  matter, as the renderer of the PDF does, so no rule of a plugin finds the
+  front matter, and each line keeps its number. (VS Code shows the front
+  matter of a notes document as a table, as set in
+  `markdown.preview.frontMatter`.)
 - When the preview is narrower than a page, the pages get smaller until they
   fit its width; they never get larger than the size of the paper.
 - The extension keeps each layout that it read, and reads it again after a
@@ -2119,7 +2125,8 @@ requirement ([R-GEN-007](#r-gen-007)).
     ([R-DOC-004](#r-doc-004), [R-PRV-005](#r-prv-005),
     [R-REN-010](#r-ren-010)): a file with the field `layout` is a paper
     document ([decision 62](#decisions)), and its Markdown preview shows its
-    pages, with all Markdown plugins of VS Code; every other file is a notes
+    pages in its layout, as the PDF prints them, without the front matter,
+    with all Markdown plugins of VS Code; every other file is a notes
     document with the Markdown preview of VS Code.
 18. **Layouts from other places** ([R-LAY-007](#r-lay-007)): a layout can also
     come from another repository; `layouts/` of the repository counts first.

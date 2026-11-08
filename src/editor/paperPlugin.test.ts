@@ -303,7 +303,7 @@ describe('the part on the platform', () => {
     const platform = platformOf();
     const editor = open(paper, platform);
     const items = paperPlugin.menus!.insert!(editor.tiptap);
-    expect(items.map((item) => item.hint)).toEqual(['/cite']);
+    expect(items.map((item) => item.slash)).toEqual(['cite']);
     select(editor, positionOf(editor, 'Teams change', true));
     items[0].run();
     expect(platform.sent[1]).toEqual({ type: 'cite', request: 1 });
@@ -339,6 +339,27 @@ describe('Research', () => {
     view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, start - 1, positionOf(editor, '(RESEARCH)', true))));
     expect(researchPlaces(view.state)).toBeUndefined();
     expect(markResearch(editor.tiptap)).toBe(false);
+  });
+
+  it('offers /research after a slash typed on the selected argument, and marks it as the text editor does', () => {
+    const editor = open(paper);
+    const { view } = editor.tiptap;
+    const start = positionOf(editor, 'Teams plan');
+    const end = positionOf(editor, 'talk more.', true);
+    // Without selected text, and on text that is no argument, the slash commands have no /research.
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, start)));
+    expect(paperPlugin.menus!.insert!(editor.tiptap)).toEqual([]);
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, start - 2, start)));
+    expect(paperPlugin.menus!.insert!(editor.tiptap)).toEqual([]);
+    view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, start, end)));
+    const typed = view.someProp('handleTextInput', (handle) => handle(view, start, end, '/', () => view.state.tr.insertText('/', start, end)));
+    expect(typed).toBe(true);
+    expect(paperPlugin.menus!.insert!(editor.tiptap).map((item) => [item.slash, item.selection])).toEqual([['research', true]]);
+    // The list shows /research of the plugin; Enter runs it on the selected text, without the slash.
+    expect(document.querySelector('.nsmd-menu')?.textContent).toContain('/research');
+    const used = view.someProp('handleKeyDown', (handle) => handle(view, new KeyboardEvent('keydown', { key: 'Enter' })));
+    expect(used).toBe(true);
+    expect(editor.getMarkdown()).toBe(paper.replace('Teams plan less, and they talk more.', '<wbr><!--[research-->Teams plan less, and they talk more (RESEARCH).'));
   });
 
   it('shows its button and Cite only in a paper, Cite only with a platform', () => {

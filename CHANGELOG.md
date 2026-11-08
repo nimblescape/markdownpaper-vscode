@@ -55,11 +55,14 @@ The first version.
 - A Markdown file whose front matter names a layout is a paper document. The
   Markdown preview of VS Code shows its pages in its layout as the PDF prints
   them, without the front matter also when another extension shows the front
-  matter as a table, as white paper also in a dark theme, and updates them
-  after a pause in typing and after a change of the layout. The preview
-  scrolls with the text editor, a double click on a page shows its line in the
-  text editor, and the other Markdown extensions work on the pages, for
-  example Mermaid, KaTeX and the highlights and "Add Note" of Markdown Notes.
+  matter as a table, with the text at the margins of the layout also when
+  another extension such as "Markdown Preview Github Styling" puts its own
+  elements around the content, as white paper also in a dark theme, and
+  updates them after a pause in typing and after a change of the layout. The
+  preview scrolls with the text editor, a double click on a page shows its
+  line in the text editor, and the other Markdown extensions work on the
+  pages, for example Mermaid, KaTeX and the highlights and "Add Note" of
+  Markdown Notes.
   "Show Page Preview" opens the preview beside the text editor. Another
   Markdown file keeps the Markdown preview as VS Code shows it.
 - "Export PDF" writes the PDF with an installed Google Chrome, Chromium or

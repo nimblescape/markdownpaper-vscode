@@ -1,0 +1,21 @@
+/*
+SPDX-License-Identifier: MIT
+© 2026 Hannes Stauss (scalarion@nimblescape.com)
+Licensed under the MIT License. See LICENSE in the repository root for details.
+
+The style sheet of the test extension of test/fixtures/page-wrapper/: the space around the text, the font and the line
+below a heading of "Markdown Preview Github Styling".
+*/
+
+.test-page-content {
+  padding: 32px !important;
+}
+
+.test-page-wrapper {
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+.test-page-wrapper h1 {
+  border-bottom: 1px solid #d1d9e0;
+}

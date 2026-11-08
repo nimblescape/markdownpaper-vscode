@@ -9,7 +9,8 @@
 //
 // 1. lets the content of the preview stay in the page, hidden and off screen, so that VS Code keeps changing it and
 //    the scripts of other extensions keep drawing in it, for example the diagrams of Mermaid;
-// 2. waits until these scripts are done, and lets Paged.js make the pages from a copy of the content, with the style
+// 2. waits until these scripts are done, and lets Paged.js make the pages from a copy of the blocks of the text, without
+//    the elements that the plugins of other extensions put around the whole content (textOf), with the style
 //    sheets and the templates of the layout, in a hidden area before the content; in the copy, each PlantUML block of
 //    nimblescape PlantUML gets copies of the diagrams that the extension drew into its shadow root (paperDrawings.js);
 // 3. shows the new pages in place of the old ones, so the pages do not flicker, and keeps the place on the page; the
@@ -262,6 +263,16 @@
     return document.querySelector('.markdown-body');
   }
 
+  // textOf returns the element of the content whose children are the blocks of the text of a paper document: the parent
+  // of the hidden element `.nimblescape-paper`, which stands where the HTML of the text starts (src/markdownPreview.ts).
+  // The plugin of another extension can put elements around the whole HTML, for example "Markdown Preview Github
+  // Styling" its element `.github-markdown-body` with the space, the font and the headings of GitHub; the pages leave
+  // them out, as the PDF does not have them.
+  function textOf(body) {
+    const element = body.querySelector('.nimblescape-paper');
+    return (element && element.parentElement) || body;
+  }
+
   function paperData() {
     const element = document.querySelector('.markdown-body .nimblescape-paper');
     if (!element) {
@@ -500,7 +511,8 @@
     }
     setBodyAttributes(Object.assign({ 'data-layout': paper.layout }, paper.attributes || {}));
     document.documentElement.lang = paper.language || document.documentElement.lang;
-    const blocks = Array.from(body.children)
+    const holder = textOf(body);
+    const blocks = Array.from(holder.children)
       .filter((element) => !element.classList.contains('nimblescape-paper'))
       .map((element) => element.outerHTML)
       .join('\n');
@@ -512,7 +524,7 @@
     for (const [name, value] of Object.entries(paper.attributes || {})) {
       text.setAttribute(name, value);
     }
-    window.paperDrawings.copyPlantUml(body, template.content);
+    window.paperDrawings.copyPlantUml(holder, template.content);
     keepFromScripts(template.content);
     const area = document.createElement('div');
     area.className = 'nimblescape-paper-next';

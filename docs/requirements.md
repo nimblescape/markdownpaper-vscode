@@ -1322,6 +1322,14 @@ Markdown preview as VS Code shows it.
   content of the preview. The copy gets the PlantUML diagrams, which the
   extension draws into shadow roots, as elements of their own
   ([R-REN-015](#r-ren-015)).
+- The copy holds only the blocks of the text, as in the PDF: the hidden
+  element with the layout stands where the HTML of the text starts, and the
+  copy takes the blocks next to it. Elements that the markdown-it plugin of
+  another extension puts around the whole HTML of the preview are not on the
+  pages, also not in a footnote, for example the elements of "Markdown
+  Preview Github Styling" with the space, the font and the headings of
+  GitHub; so the text starts at the margins of the layout. The style sheets
+  of other extensions stay.
 - The pages stand before the content of the preview, which stays in the page
   but hidden, so that the scripts of other extensions keep their elements and
   VS Code finds the lines on the pages. After the new pages show, the script

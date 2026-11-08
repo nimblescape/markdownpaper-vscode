@@ -27,6 +27,11 @@
  * - The rendering of these tokens puts a hidden element `.nimblescape-paper` first, with the style sheets, the filled
  *   templates and the fields of the layout, whose addresses the webview loads, then the text with its lists and its
  *   soft hyphens. The script of the pages ([media/paperPreview.js](../media/paperPreview.js)) makes the pages from it.
+ * - The hidden element stands in place of the first token, so also inside the elements that the plugin of another
+ *   extension puts around the whole HTML, for example "Markdown Preview Github Styling" its element
+ *   `.github-markdown-body`, which has the space, the font and the headings of GitHub. The pages take only the
+ *   blocks next to the hidden element: they leave out these elements, which the PDF does not have either
+ *   ([R-PRV-005](../docs/requirements.md#r-prv-005)).
  * - A layout that is not in the cache yet: the extension reads it, and the preview shows "Making the pages …" until
  *   then. After a change of a file of a layout, the extension reads the layout again. Then it lets VS Code render
  *   the previews again (`markdown.preview.refresh`).
@@ -98,6 +103,13 @@ export const paperClass = 'nimblescape-paper';
 
 /** paperTokenType is the type of the hidden token that the plugin puts first, with the PreviewPaper as its meta. */
 const paperTokenType = 'nimblescape_paper';
+
+/**
+ * paperMark is the HTML of the first token of a paper document, which finish replaces with the hidden element of the
+ * layout: so the hidden element stands where the HTML of the text starts, also inside the elements that the plugins of
+ * other extensions put around the whole HTML.
+ */
+const paperMark = `<div class="${paperClass}" hidden></div>\n`;
 
 /** Ruler is the part of a ruler of markdown-it that onlyForPapers and paperFootnotes need. */
 interface Ruler {
@@ -243,7 +255,7 @@ export class PaperPreview implements vscode.Disposable {
     void paperTextPlugin.extendMarkdownIt?.(md);
     void layoutPlugin.extendMarkdownIt?.(md);
     addOutputRules(md);
-    md.renderer.rules[paperTokenType] = () => '';
+    md.renderer.rules[paperTokenType] = () => paperMark;
     // VS Code gives each heading the ID of its text before this rule renders it; a paper keeps the ID of the renderer,
     // which its table of contents and its links name.
     const heading = md.renderer.rules.heading_open;
@@ -321,7 +333,7 @@ export class PaperPreview implements vscode.Disposable {
    */
   private finish(html: string, paper: PreviewPaper | Pending, env: RenderEnv): string {
     if ('pending' in paper) {
-      return `${this.element({ pending: true })}${html}`;
+      return this.place(html, { pending: true });
     }
     const { loaded, values, file } = paper;
     const { layout, found } = paper.layout;
@@ -344,7 +356,19 @@ export class PaperPreview implements vscode.Disposable {
       delay: this.delay(),
     };
     const hyphenate = layout.hyphenate ? hyphenatorOf(layout.language) : undefined;
-    return `${this.element(data)}${hyphenate ? hyphenateHtml(html, hyphenate) : html}`;
+    return this.place(hyphenate ? hyphenateHtml(html, hyphenate) : html, data);
+  }
+
+  /**
+   * place returns the HTML of a paper document with the hidden element with the data of the paper in place of the mark
+   * of the first token (paperMark), or first when a plugin of another extension left out the HTML of that token.
+   * @param html - The HTML of markdown-it, with the elements of the plugins of other extensions around it.
+   * @param data - The data.
+   */
+  private place(html: string, data: PaperData): string {
+    const element = this.element(data);
+    const index = html.indexOf(paperMark);
+    return index < 0 ? `${element}${html}` : `${html.slice(0, index)}${element}${html.slice(index + paperMark.length)}`;
   }
 
   /**

@@ -171,7 +171,10 @@ The first version.
   view of Markdown Notes hides the start marker and the database of the
   sources. The clean editing view also hides the anchors of the entries of
   the reference list and the markers of the lists, and keeps the citations,
-  the entries and the lists read-only, as the rendered editor does.
+  the entries, the lists and the links to headings with their numbers or
+  labels read-only, as the rendered editor does. A tag that the user types
+  or pastes there goes back: the tags come only from the slash commands and
+  the format step.
 - Alerts of GitHub: a block quote whose first line is `[!NOTE]`, `[!TIP]`,
   `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]` becomes the element of an alert
   as GitHub writes it, which a layout draws as a box, for example the hint of

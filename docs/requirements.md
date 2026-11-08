@@ -127,8 +127,10 @@ without it.
   parts of a line and blocks of whole lines that its clean editing view
   keeps read-only. Markdown Paper registers the text of each citation
   between its square brackets, each entry of the reference list and, in a
-  paper document, each list of a special section with its markers
-  ([R-EDIT-001](#r-edit-001), [decision 71](#decisions)). An edit of such a
+  paper document, each list of a special section with its markers and the
+  text of each link to a heading that the format step writes
+  ([R-REN-009](#r-ren-009)) ([R-EDIT-001](#r-edit-001),
+  [decision 71](#decisions), [decision 73](#decisions)). An edit of such a
   part in the clean editing view goes back. A version of Markdown Notes
   without the function keeps these parts editable there.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
@@ -910,6 +912,10 @@ Table 1: Noten nach Schulstufe <a id="tab-grades"></a>
   `[Kapitel 2.1](#methoden)`, and a link to an appendix gets its label, such
   as `[Anhang B](#daten)`. A link in code or in an HTML comment, a link with
   other words, and a link to a heading without a number keep their text.
+  The text of such a link to a heading is read-only in the editor and in the
+  clean editing view of Markdown Notes, as the numbers of the captions and
+  of the links to figures, tables and listings are
+  ([R-EDIT-001](#r-edit-001), [decision 73](#decisions)).
 - Markdown Notes defines the form of the anchors and of the links in
   [R-XREF-001](https://github.com/nimblescape/markdownnotes-vscode/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-001),
   [R-XREF-002](https://github.com/nimblescape/markdownnotes-vscode/blob/claude/project-thread-on67uj/docs/requirements.md#r-xref-002)
@@ -2075,15 +2081,21 @@ nimblescape Markdown is public, so CI reads it without a token
   ([decision 71](#decisions)): the database of the sources, the anchors of
   the entries, the markers of the lists and the start markers of the
   arguments to research do not show there, and an edit of the text of a
-  citation, of an entry of the reference list or of a list goes back.
+  citation, of an entry of the reference list, of a list or of a link to a
+  heading goes back. A tag that the view hides comes only from the slash
+  commands, such as `/cite` and `/research`, and the format step: a tag
+  that the user types or pastes there goes back
+  ([decision 73](#decisions)).
 - The database of the sources ([R-CITE-001](#r-cite-001)) and the markers
   of the lists of the special sections ([R-REN-004](#r-ren-004)) are hidden
   blocks. The anchor at the start of an entry of the reference list and the
   start marker of an argument to research ([R-CITE-002](#r-cite-002)) are
   hidden in the line. Each keeps its text byte for byte.
 - The parts that the format step writes ([R-GEN-008](#r-gen-008)) are
-  read-only: the text of a citation, each entry of the reference list, and
-  each list of a special section. Ctrl+click (Cmd+click on macOS) on a
+  read-only: the text of a citation, each entry of the reference list, each
+  list of a special section, and the text of each link to a heading whose
+  number or label the format step writes, such as `[Anhang B](#daten)`
+  ([R-REN-009](#r-ren-009), [decision 73](#decisions)). Ctrl+click (Cmd+click on macOS) on a
   citation goes to the entry of its source, and on a link of a list to its
   heading or its caption. The user changes these parts through what they
   come from, and the format step writes them again when the file is saved.
@@ -2533,6 +2545,16 @@ requirement ([R-GEN-007](#r-gen-007)).
     schema through `registerFrontMatterSchema`. The other choices were the
     whole front matter read-only in the clean editing view, and a form of
     the front matter in the side bar.
+73. **All generated parts are read-only, and the hidden tags come only from
+    slash commands** ([R-EDIT-001](#r-edit-001), [R-GEN-003](#r-gen-003),
+    [R-REN-009](#r-ren-009)): in the editor and in the clean editing view of
+    Markdown Notes, each part that the format step writes is read-only, also
+    the text of each link to a heading with its number or label, such as
+    `[Anhang B](#daten)`; each tag in a comment that the paper writes is
+    hidden; and the user adds the tags only with the slash commands, such
+    as `/cite` and `/research`, or the format step writes them (decision 78
+    of Markdown Notes). The other choice was to keep the links to headings
+    editable and to take typed tags into the file.
 
 ## Open questions
 

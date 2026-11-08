@@ -6,8 +6,9 @@
  * The marks of a paper document that the format steps, the checks and the plugins of the editor share: the name of the
  * comment of the database of the sources, the form of the identifier of a source, the marks of an argument to research and
  * their places in a selected argument
- * ([R-CITE-001](../../docs/requirements.md#r-cite-001), [R-CITE-002](../../docs/requirements.md#r-cite-002)), and the
- * names of the markers of the lists of the special sections ([R-GEN-008](../../docs/requirements.md#r-gen-008)). The
+ * ([R-CITE-001](../../docs/requirements.md#r-cite-001), [R-CITE-002](../../docs/requirements.md#r-cite-002)), the
+ * names of the markers of the lists of the special sections ([R-GEN-008](../../docs/requirements.md#r-gen-008)), and the
+ * text of a link to a heading with the ID of a heading ([R-REN-009](../../docs/requirements.md#r-ren-009)). The
  * module imports nothing, so that the bundle of the plugins of the editor holds no more than these marks.
  */
 
@@ -26,6 +27,25 @@ export const researchMark = '<!--[research-->';
 
 /** listCodes are the codes of the sections with a list, and the names of their markers, for example `<!-- toc -->`. */
 export const listCodes = { TOC: 'toc', LOF: 'lof', LOT: 'lot', LOL: 'lol' } as const;
+
+/**
+ * headingLinkText matches the text of a link to a heading that the format step writes anew
+ * ([R-REN-009](../../docs/requirements.md#r-ren-009)): a word and the number or the label of the heading, such as
+ * `Kapitel 2.1` or `Anhang B`. It is `referenceText` of the layouts, here so that the plugins of the editor need no
+ * more than this module.
+ */
+export const headingLinkText = /^(\p{L}+\.?)\s+(?:[A-Z]?\d+(?:\.\d+)*|[A-Z])$/u;
+
+/**
+ * headingSlug returns the ID of a heading by the text that it shows, before a number for a heading of the same ID, as
+ * GitHub and the renderer give it.
+ * @param text - The text of the heading.
+ */
+export const headingSlug = (text: string): string =>
+  text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}\p{Pc}\- ]/gu, '')
+    .replace(/ /g, '-');
 
 /** closingMark matches the punctuation mark at the end of a selected argument, before which its citation goes. */
 const closingMark = /[.,;:!?]$/;

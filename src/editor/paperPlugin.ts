@@ -14,9 +14,10 @@
  * - The parts that the format step writes are read-only
  *   ([the generated parts](https://github.com/nimblescape/markdown/blob/main/docs/editor.md#r-edit-011)): the text of a
  *   citation, a link to a source of the database, which Ctrl+click (Cmd+click on macOS) follows to the entry of the
- *   source; each entry of the reference list; and each list between the markers of a special section, whose links
- *   Ctrl+click follows to their headings and captions. The user changes them through what they come from, and the
- *   format step writes them again when the file is saved.
+ *   source; each entry of the reference list; each list between the markers of a special section, whose links
+ *   Ctrl+click follows to their headings and captions; and the text of each link to a heading that the format step
+ *   writes, a word and the number or the label of the heading, such as `[Anhang B](#daten)`. The user changes them
+ *   through what they come from, and the format step writes them again when the file is saved.
  * - Backspace and Delete jump over the hidden anchors and markers in the line. A database of the sources that an edit of
  *   the user deleted goes back to the end of the document. Changes from outside, Undo and Redo pass.
  *
@@ -51,7 +52,7 @@ import {
 } from '@nimblescape/markdowneditor';
 import type { JsonSchema } from '@nimblescape/markdowntext';
 import { editorPluginName, extensionMessage, type PageMessage } from '../paper/editorMessages';
-import { idPattern, listCodes, researchEdit, researchMark, researchText, sourcesName } from '../paper/marks';
+import { headingLinkText, headingSlug, idPattern, listCodes, researchEdit, researchMark, researchText, sourcesName } from '../paper/marks';
 
 /** pluginName is the name of the plugin. */
 export const pluginName = editorPluginName;
@@ -251,17 +252,6 @@ export function sourceIds(text: string): Set<string> {
   return ids;
 }
 
-/**
- * slugOf returns the GitHub ID of a heading from its text: the text in small letters, without the characters that are
- * no letter, digit, mark, `_`, `-` or space, and a `-` for each space. A second heading with the same ID gets `-1`.
- * @param text - The text of the heading.
- */
-const slugOf = (text: string): string =>
-  text
-    .toLowerCase()
-    .replace(/[^\p{L}\p{M}\p{N}\p{Pc}\- ]/gu, '')
-    .replace(/ /g, '-');
-
 /** List is a list of a special section between its markers, with its range. */
 interface List {
   readonly from: number;
@@ -318,12 +308,12 @@ function linkTarget(mark: Mark): string | undefined {
 }
 
 /**
- * citationsOf returns the ranges of the texts of the links of a textblock to a source of the database.
+ * linksOf returns the ranges of the texts of the links of a textblock to a place of the document, with the name of the
+ * place.
  * @param block - The textblock.
  * @param pos - The position of the textblock.
- * @param ids - The identifiers of the sources.
  */
-function citationsOf(block: PmNode, pos: number, ids: ReadonlySet<string>): { from: number; to: number; id: string }[] {
+function linksOf(block: PmNode, pos: number): { from: number; to: number; id: string }[] {
   const citations: { from: number; to: number; id: string }[] = [];
   let open: { from: number; to: number; id: string; mark: Mark } | undefined;
   block.forEach((child, offset) => {
@@ -338,7 +328,7 @@ function citationsOf(block: PmNode, pos: number, ids: ReadonlySet<string>): { fr
       open = undefined;
     }
     const id = mark ? linkTarget(mark) : undefined;
-    if (mark && id !== undefined && ids.has(id)) {
+    if (mark && id !== undefined) {
       open = { from, to: from + child.nodeSize, id, mark };
     }
   });
@@ -369,7 +359,9 @@ export function analysisOf(doc: PmNode): Analysis {
   const lists: List[] = [];
   const targets = new Map<string, number>();
   const headingIds = new Map<string, number>();
-  const citations: { from: number; to: number; id: string }[] = [];
+  /** headings are the IDs of the headings and the anchors in them, the targets of the links that the format step writes. */
+  const headings = new Set<string>();
+  const links: { from: number; to: number; id: string }[] = [];
   const opens = new Map<string, number>();
   doc.descendants((node, pos, parent) => {
     if (node.type.name === nodeNames.list) {
@@ -385,11 +377,13 @@ export function analysisOf(doc: PmNode): Analysis {
     if (!node.isTextblock) {
       return true;
     }
-    if (node.type.name === 'heading') {
-      const slug = slugOf(node.textContent);
+    const heading = node.type.name === 'heading';
+    if (heading) {
+      const slug = headingSlug(node.textContent);
       const count = headingIds.get(slug) ?? 0;
       headingIds.set(slug, count + 1);
       const id = count === 0 ? slug : `${slug}-${count}`;
+      headings.add(id);
       if (!targets.has(id)) {
         targets.set(id, pos);
       }
@@ -399,6 +393,9 @@ export function analysisOf(doc: PmNode): Analysis {
       const name = child.type.name === 'figureAnchor' ? (child.attrs.name as string) : undefined;
       if (name) {
         targets.set(name, pos);
+        if (heading) {
+          headings.add(name);
+        }
       }
     });
     const first = node.firstChild;
@@ -410,16 +407,23 @@ export function analysisOf(doc: PmNode): Analysis {
         return false;
       }
     }
-    citations.push(...citationsOf(node, pos, ids));
+    links.push(...linksOf(node, pos));
     return false;
   });
   for (const list of lists) {
     parts.push({ from: list.from, to: list.to });
   }
   const inPart = (pos: number) => parts.some((part) => part.from <= pos && pos < part.to);
-  for (const citation of citations) {
-    if (!inPart(citation.from)) {
-      parts.push({ from: citation.from, to: citation.to, open: () => (targets.has(citation.id) ? reveal(doc, targets.get(citation.id)!) : undefined) });
+  for (const link of links) {
+    if (inPart(link.from)) {
+      continue;
+    }
+    if (ids.has(link.id)) {
+      // A citation.
+      parts.push({ from: link.from, to: link.to, open: () => (targets.has(link.id) ? reveal(doc, targets.get(link.id)!) : undefined) });
+    } else if (headings.has(link.id) && headingLinkText.test(doc.textBetween(link.from, link.to).trim())) {
+      // A link to a heading whose number or label the format step writes (R-REN-009).
+      parts.push({ from: link.from, to: link.to });
     }
   }
   const analysis: Analysis = { parts: parts.sort((a, b) => a.from - b.from), lists, targets, sources };

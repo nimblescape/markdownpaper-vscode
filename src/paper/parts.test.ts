@@ -79,3 +79,37 @@ describe('generatedParts', () => {
     expect(generatedParts(['# A text', '', 'See [Hong](#hong2024).'])).toEqual([]);
   });
 });
+
+describe('the links to headings', () => {
+  /** linked is a paper document with links to its headings and other links. */
+  const linked = [
+    '---',
+    'layout: plain',
+    '---',
+    '',
+    '# Einleitung',
+    '',
+    'See [Kapitel 1](#einleitung), [Anhang B](#daten), [Abschnitt 2.1](#methoden-1) and [Teil 3](#teil "a title").',
+    'Not [the intro](#einleitung), [Kapitel 9](#nirgends), `[Kapitel 1](#einleitung)` or <!-- [Kapitel 1](#einleitung) -->.',
+    '',
+    '## *Methoden*',
+    '',
+    '## Methoden',
+    '',
+    'Teil',
+    '====',
+    '',
+    '# <wbr><!--{appendix}-->Daten<!--{/appendix}--> <a id="anhang-daten"></a>',
+    '',
+    'And [Anhang B](#anhang-daten).',
+  ];
+
+  test('are read-only in a paper document: the text of a link whose text is a word and a number or a label, to a heading of the file (R-REN-009)', () => {
+    expect(texts(linked, generatedParts(linked))).toEqual(['Kapitel 1', 'Anhang B', 'Abschnitt 2.1', 'Teil 3', 'Anhang B']);
+  });
+
+  test('count only in a paper document', () => {
+    const plain = linked.slice(4);
+    expect(generatedParts(plain)).toEqual([]);
+  });
+});

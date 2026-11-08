@@ -13,16 +13,18 @@
  * - Hidden markers: the anchor at the start of each entry of the reference list, the markers of the lists of the
  *   special sections, for example `<!-- toc -->` ([R-GEN-008](../../docs/requirements.md#r-gen-008)), and the start
  *   marker of each argument to research ([R-CITE-002](../../docs/requirements.md#r-cite-002)).
- * - Generated parts: the text of each citation between its square brackets, each entry of the reference list, and
- *   each list of a special section with its markers.
+ * - Generated parts: the text of each citation between its square brackets, each entry of the reference list, each
+ *   list of a special section with its markers, and the text of each link to a heading that the format step writes,
+ *   a word and the number or the label of the heading, such as `[Anhang B](#daten)`
+ *   ([R-REN-009](../../docs/requirements.md#r-ren-009)).
  *
- * The lists and their markers count only in a paper document, because other tools write the marker `<!-- toc -->`
- * too. The module uses no API of VS Code.
+ * The lists, their markers and the links to headings count only in a paper document, because other tools write the
+ * marker `<!-- toc -->` too. The module uses no API of VS Code.
  */
 
-import { anchorStart, findCitations, findDatabase, noteMarkup, researchMarkers, textLines, type Marker } from './citations';
+import { anchorStart, codeSpans, findCitations, findDatabase, noteMarkup, researchMarkers, textLines, type Marker } from './citations';
 import { isPaperDocument } from './frontMatter';
-import { listCodes } from './marks';
+import { headingLinkText, headingSlug, listCodes } from './marks';
 
 /** Block is a block of whole lines of a file, from its first to its last line. */
 export interface Block {
@@ -33,11 +35,12 @@ export interface Block {
 /** listMarker matches a marker of a list of a special section, with `/` for the end marker and the name of the list. */
 const listMarker = new RegExp(String.raw`^\s*<!--\s*(/?)(${Object.values(listCodes).join('|')})\s*-->\s*$`, 'i');
 
-/** Analysis is what the module finds in a text: the identifiers of its sources, its entries and its lists. */
+/** Analysis is what the module finds in a text: the identifiers of its sources, its entries, its lists and its links to headings. */
 interface Analysis {
   ids: Set<string>;
   entries: { block: Block; anchor: Marker }[];
   lists: Block[];
+  headingLinks: Marker[];
 }
 
 /** analyzed holds the analysis of the last text: Markdown Notes asks for the markers and the parts of one text often. */
@@ -51,7 +54,8 @@ function analysisOf(lines: readonly string[]): Analysis {
   const text = lines.join('\n');
   if (analyzed?.text !== text) {
     const ids = new Set(findDatabase(lines)?.sources.map((source) => source.id) ?? []);
-    analyzed = { text, analysis: { ids, entries: entriesOf(lines, ids), lists: listsOf(lines, text) } };
+    const paper = isPaperDocument(text);
+    analyzed = { text, analysis: { ids, entries: entriesOf(lines, ids), lists: paper ? listsOf(lines) : [], headingLinks: paper ? headingLinksOf(lines) : [] } };
   }
   return analyzed.analysis;
 }
@@ -92,12 +96,11 @@ function entriesOf(lines: readonly string[], ids: ReadonlySet<string>): { block:
 
 /**
  * listsOf returns the lists of the special sections of a paper document: each pair of an open and an end marker of the
- * same list, outside code, as a block from the open to the end marker. Another text has none.
- * @param lines - The lines of the text.
- * @param text - The text.
+ * same list, outside code, as a block from the open to the end marker.
+ * @param lines - The lines of the paper document.
  */
-function listsOf(lines: readonly string[], text: string): Block[] {
-  if (!lines.some((line) => listMarker.test(line)) || !isPaperDocument(text)) {
+function listsOf(lines: readonly string[]): Block[] {
+  if (!lines.some((line) => listMarker.test(line))) {
     return [];
   }
   const lists: Block[] = [];
@@ -116,6 +119,96 @@ function listsOf(lines: readonly string[], text: string): Block[] {
     }
   }
   return lists.sort((a, b) => a.first - b.first);
+}
+
+/** atxHeading matches a heading with `#`, also in a quote, with its text without the closing `#`. */
+const atxHeading = /^(?:[ \t]*>)*[ \t]{0,3}#{1,6}(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$/;
+
+/** underline matches the line of `=` or `-` under the text of a heading, also in a quote. */
+const underline = /^(?:[ \t]*>)*[ \t]{0,3}(?:=+|-+)[ \t]*$/;
+
+/** headingLink matches a link to a place of the file, not an image: its text and its target. */
+const headingLink = /(?<!!)\[([^[\]\n]+)\]\(#([^()\s]+)(?:\s+"[^"]*")?\)/g;
+
+/**
+ * shownText returns the text that a heading shows, without its markup: without comments, tags, images, footnote
+ * references, link targets, code marks, emphasis marks and escapes.
+ * @param text - The Markdown text of the heading.
+ */
+const shownText = (text: string): string =>
+  text
+    .replace(/<!--.*?-->/g, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[\^[^\]]+\]/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/`+/g, '')
+    .replace(/(^|[^\p{L}\p{N}\\])[*_]+|(?<=[^\\])[*_]+(?=[^\p{L}\p{N}]|$)/gu, '$1')
+    .replace(/\\([!-/:-@[-`{-~])/g, '$1')
+    .trim();
+
+/**
+ * headingTargets returns the names of the places of the headings of a text: the ID of each heading by its text, as
+ * the renderer and the editor give it, and each anchor in a heading.
+ * @param lines - The lines of the text.
+ * @param text - The indexes of the lines of Markdown text.
+ */
+function headingTargets(lines: readonly string[], text: readonly number[]): Set<string> {
+  const targets = new Set<string>();
+  const counts = new Map<string, number>();
+  const inText = new Set(text);
+  for (const line of text) {
+    const atx = atxHeading.exec(lines[line]);
+    const previous = lines[line - 1];
+    const setext =
+      !atx && underline.test(lines[line]) && inText.has(line - 1) && previous.trim() !== '' && !atxHeading.test(previous) && !underline.test(previous) ? previous.replace(/^(?:[ \t]*>)*/, '') : undefined;
+    const heading = atx ? (atx[1] ?? '') : setext;
+    if (heading === undefined) {
+      continue;
+    }
+    for (const anchor of heading.matchAll(/<a id="([^"]+)"><\/a>/g)) {
+      targets.add(anchor[1]);
+    }
+    const slug = headingSlug(shownText(heading));
+    const count = counts.get(slug) ?? 0;
+    counts.set(slug, count + 1);
+    targets.add(count === 0 ? slug : `${slug}-${count}`);
+  }
+  return targets;
+}
+
+/**
+ * headingLinksOf returns the texts of the links to headings that the format step writes in a paper document
+ * ([R-REN-009](../../docs/requirements.md#r-ren-009)): a link outside code and comments whose text is a word and a
+ * number or a label, such as `[Anhang B](#daten)`, and whose target is a heading of the file.
+ * @param lines - The lines of the paper document.
+ */
+function headingLinksOf(lines: readonly string[]): Marker[] {
+  if (!lines.some((line) => line.includes('](#'))) {
+    return [];
+  }
+  const text = textLines(lines);
+  const targets = headingTargets(lines, text);
+  const links: Marker[] = [];
+  for (const line of text) {
+    const source = lines[line];
+    if (!source.includes('](#')) {
+      continue;
+    }
+    const skipped = [...codeSpans(source), ...[...source.matchAll(/<!--.*?-->/g)].map((match): [number, number] => [match.index, match.index + match[0].length])];
+    for (const match of source.matchAll(headingLink)) {
+      let target = match[2];
+      try {
+        target = decodeURIComponent(target);
+      } catch {
+        // The target as it stands.
+      }
+      if (targets.has(target) && headingLinkText.test(match[1].trim()) && !skipped.some(([start, end]) => start <= match.index && match.index < end)) {
+        links.push({ line, start: match.index + 1, end: match.index + 1 + match[1].length });
+      }
+    }
+  }
+  return links;
 }
 
 /**
@@ -138,14 +231,14 @@ export function hiddenMarkers(lines: readonly string[]): Marker[] {
 /**
  * generatedParts returns the parts of a paper document that the format step writes, which the clean editing view
  * keeps read-only: the text of each citation between its square brackets, without one that holds the markup of a note,
- * as a part of its line; and each entry of the reference list and each list of a special section with its markers, as
- * a block of whole lines.
+ * and the text of each link to a heading that the format step writes, as a part of its line; and each entry of the
+ * reference list and each list of a special section with its markers, as a block of whole lines.
  * @param lines - The lines of the file.
  */
 export function generatedParts(lines: readonly string[]): (Marker | Block)[] {
-  const { ids, entries, lists } = analysisOf(lines);
+  const { ids, entries, lists, headingLinks } = analysisOf(lines);
   const citations: Marker[] = (ids.size > 0 ? findCitations(lines, ids) : [])
     .filter((citation) => citation.textEnd > citation.textStart && !noteMarkup.test(lines[citation.line].slice(citation.textStart, citation.textEnd)))
     .map((citation) => ({ line: citation.line, start: citation.textStart, end: citation.textEnd }));
-  return [...citations, ...entries.map((entry) => entry.block), ...lists];
+  return [...citations, ...headingLinks, ...entries.map((entry) => entry.block), ...lists];
 }

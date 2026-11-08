@@ -381,7 +381,7 @@ export function textLines(lines: readonly string[]): number[] {
  * codeSpans returns the columns of the code spans of a line, in which a link is text.
  * @param text - The text of the line.
  */
-const codeSpans = (text: string): [number, number][] => [...text.matchAll(codeSearch)].map((match) => [match.index, match.index + match[0].length]);
+export const codeSpans = (text: string): [number, number][] => [...text.matchAll(codeSearch)].map((match) => [match.index, match.index + match[0].length]);
 
 /**
  * researchMarkers returns the start markers of the arguments to research in a text, each with the `<wbr>` before it,

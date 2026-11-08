@@ -5,7 +5,7 @@
 /**
  * These tests check the script of the pages (media/paperPreview.js) in a browser without a window, in a page with the
  * parts of the Markdown preview of VS Code that the script uses: the data of the preview with its source, a style sheet
- * of the Markdown extension of VS Code and the style of the theme, the classes of a dark theme on the body, and a
+ * of the Markdown extension of VS Code, a style sheet of the setting `markdown.styles` and the style of the theme, the classes of a dark theme on the body, and a
  * small stand-in for the script of VS Code, which puts the content into the page after the scripts of the extensions
  * ran, and for each message `updateContent` changes the content and sends the event `vscode.markdown.updateContent`,
  * and a stand-in for the script of nimblescape PlantUML, which draws the PlantUML blocks of the markdown-it plugin of
@@ -75,6 +75,8 @@ async function paperContent(text: string): Promise<string> {
 function writePage(): string {
   fs.mkdirSync(path.join(folder, 'markdown-language-features'), { recursive: true });
   fs.writeFileSync(path.join(folder, 'markdown-language-features', 'markdown.css'), 'body { padding: 0 26px; font-size: 14px; }\n');
+  // A style sheet of the setting `markdown.styles` of a workspace, which sets the font of every text with !important.
+  fs.writeFileSync(path.join(folder, 'user.css'), 'body, p, h1 { font-family: Georgia, serif !important; letter-spacing: 0.04em; }\n');
   fs.copyFileSync(path.join(repository, 'media', 'paperPreview.js'), path.join(folder, 'paperPreview.js'));
   fs.copyFileSync(path.join(repository, 'media', 'paperPreview.css'), path.join(folder, 'paperPreview.css'));
   fs.writeFileSync(path.join(folder, 'paperLayout.js'), layoutScript);
@@ -91,6 +93,7 @@ function writePage(): string {
 <meta id="vscode-markdown-preview-data" data-settings="${escapeHtml(JSON.stringify({ source: 'file:///paper.md' }))}">
 <link rel="stylesheet" href="markdown-language-features/markdown.css">
 <link rel="stylesheet" href="paperPreview.css">
+<link rel="stylesheet" class="code-user-style" data-source="user.css" href="user.css" type="text/css" media="screen">
 </head>
 <body class="vscode-body vscode-dark">
 <script src="paperPreview.js"></script>
@@ -172,6 +175,7 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
         light: boolean;
         dark: boolean;
         vscodeSheets: boolean[];
+        font: string;
         lines: number;
         hidden: string;
         echo: { source: string; same: boolean } | undefined;
@@ -190,7 +194,8 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
             before: Boolean(pages.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING),
             light: document.body.classList.contains('vscode-light'),
             dark: document.body.classList.contains('vscode-dark'),
-            vscodeSheets: [document.getElementById('_defaultStyles').sheet.disabled, document.querySelector('link[href*="markdown-language-features"]').disabled],
+            vscodeSheets: [document.getElementById('_defaultStyles').sheet.disabled, document.querySelector('link[href*="markdown-language-features"]').disabled, document.querySelector('link.code-user-style').disabled],
+            font: getComputedStyle(pages.querySelector('p')).fontFamily,
             lines: pages.querySelectorAll('[data-line]').length,
             hidden: getComputedStyle(body).visibility,
             echo: echo && { source: echo.source, same: echo.content.includes('Einleitung') },
@@ -215,7 +220,9 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       expect(state.before).toBe(true);
       expect(state.light).toBe(true);
       expect(state.dark).toBe(false);
-      expect(state.vscodeSheets).toEqual([true, true]);
+      expect(state.vscodeSheets).toEqual([true, true, true]);
+      // The text has the font of the layout, as in the PDF, not the font of the setting markdown.styles.
+      expect(state.font).not.toContain('Georgia');
       expect(state.lines).toBeGreaterThan(2);
       expect(state.hidden).toBe('hidden');
       // The script sends the content once more, so that VS Code reads the lines of the pages.
@@ -240,10 +247,10 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
         `({
           pages: document.querySelectorAll('.nimblescape-paper-pages, .pagedjs_page').length,
           dark: document.body.classList.contains('vscode-dark'),
-          vscodeSheets: [document.getElementById('_defaultStyles').sheet.disabled, document.querySelector('link[href*="markdown-language-features"]').disabled],
+          vscodeSheets: [document.getElementById('_defaultStyles').sheet.disabled, document.querySelector('link[href*="markdown-language-features"]').disabled, document.querySelector('link.code-user-style').disabled],
         })`,
       );
-      expect(notes).toEqual({ pages: 0, dark: true, vscodeSheets: [false, false] });
+      expect(notes).toEqual({ pages: 0, dark: true, vscodeSheets: [false, false, false] });
     } finally {
       await running.close();
     }

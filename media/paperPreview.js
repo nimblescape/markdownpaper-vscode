@@ -20,8 +20,9 @@
 // 5. sends the event `nimblescape-paper-rendered` to `window`, so that the scripts of other extensions, such as the one
 //    of Markdown Notes, can mark the pages.
 //
-// While a paper document shows, the style sheets of the Markdown preview of VS Code and of the theme do not apply,
-// and the body has the classes of a light theme, since the pages are white paper; paperPreview.css gives the colors of
+// While a paper document shows, the style sheets of the Markdown preview of VS Code, of the setting `markdown.styles`
+// and of the theme do not apply, as in the PDF, and the body has the classes of a light theme, since the pages are
+// white paper; paperPreview.css gives the colors of
 // the theme the values of a light theme, which scripts such as the one of Mermaid read. A notes document keeps the
 // preview as VS Code shows it.
 (function () {
@@ -111,15 +112,16 @@
     return pagedJs;
   }
 
-  // The style sheets of VS Code: those of its Markdown extension, and the inline styles of the theme and of the
-  // settings of the preview. The style sheets of other extensions, such as KaTeX or Markdown Notes, stay.
+  // The style sheets of VS Code: those of its Markdown extension, those of the setting `markdown.styles`, which VS Code
+  // adds with the class `code-user-style`, and the inline styles of the theme and of the settings of the preview. The
+  // PDF has none of them. The style sheets of other extensions, such as KaTeX or Markdown Notes, stay.
   function styleSheetsOfVsCode() {
     const sheets = [];
     for (const element of Array.from(document.head.querySelectorAll('link[rel="stylesheet"], style'))) {
       if (element.hasAttribute('data-nimblescape-paper') || [previewer, building].some((own) => own && own.polisher && (own.polisher.styleEl === element || (own.polisher.inserted || []).includes(element)))) {
         continue;
       }
-      if (element.tagName === 'LINK' ? /\/markdown-language-features\//.test(element.href || '') : !element.hasAttribute('data-pagedjs-inserted-styles')) {
+      if (element.tagName === 'LINK' ? /\/markdown-language-features\//.test(element.href || '') || element.classList.contains('code-user-style') : !element.hasAttribute('data-pagedjs-inserted-styles')) {
         sheets.push(element);
       }
     }

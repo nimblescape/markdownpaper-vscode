@@ -1282,11 +1282,12 @@ Markdown preview as VS Code shows it.
   VS Code finds the lines on the pages. After the new pages show, the script
   lets VS Code read the lines of the pages again.
 - While a paper document shows, the style sheets of the Markdown preview of
-  VS Code and of the theme do not apply, and the pages are white paper also
-  in a dark theme. The colors of the theme that the scripts of other
-  extensions read for their drawings, such as the diagrams of Mermaid, get the
-  values of the light theme "Light Modern" of VS Code, so a diagram has the
-  colors of white paper.
+  VS Code, the style sheets of the setting `markdown.styles` and the styles of
+  the theme do not apply, as in the PDF, so the text has the fonts and sizes
+  of the layout; the pages are white paper also in a dark theme. The colors of
+  the theme that the scripts of other extensions read for their drawings, such
+  as the diagrams of Mermaid, get the values of the light theme "Light Modern"
+  of VS Code, so a diagram has the colors of white paper.
 - The front matter of a paper document does not show on the pages: its
   fields go into the templates of the layout. This holds also when the
   markdown-it plugin of another extension shows the front matter in its own

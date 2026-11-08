@@ -5,8 +5,9 @@
 /**
  * The layouts on GitHub ([R-LAY-007](../../docs/requirements.md#r-lay-007),
  * [R-NEW-004](../../docs/requirements.md#r-new-004)): the repositories with the topic `nimblescape-markdownpaper-layout`
- * hold layouts, each a folder with a `layout.json`, or the repository itself. The scaffold lists them for a choice and
- * copies the chosen one into the new project. The module reads GitHub through a fetcher and uses no API of VS Code.
+ * hold layouts, each a folder with a `layout.json`, or the repository itself. The scaffold lists them for a choice, and
+ * the new project names the chosen one by its reference. The module reads GitHub through a fetcher and uses no API of
+ * VS Code.
  */
 
 import { type Layout, layoutFile, layoutName, parseLayout, type Problem } from '@nimblescape/markdownlayout';
@@ -27,24 +28,6 @@ export interface RemoteLayout {
   /** layout is the read `layout.json`; files are the paths of the files of the folder, relative to it. */
   layout: Layout;
   files: string[];
-  /** blobs are the IDs of the contents of the files, as Git gives them, by the paths of the files in the folder. */
-  blobs: ReadonlyMap<string, string>;
-}
-
-/**
- * Origin is where a copy of a layout on GitHub comes from: the field `origin` of the `layout.json` of the copy
- * ([R-LAY-010](../../docs/requirements.md#r-lay-010)).
- */
-export interface Origin {
-  /**
-   * layout is the name of the layout on GitHub, for example `majikmate/markdownpaper-layout-pht/thesis`; an older copy
-   * has `github:` before it.
-   */
-  layout: string;
-  /** ref is the branch, the tag or the commit that the copy follows. */
-  ref: string;
-  /** commit is the commit of the copied files. */
-  commit: string;
 }
 
 /**
@@ -90,25 +73,6 @@ export const remoteName = (remote: Pick<RemoteLayout, 'repository' | 'folder'>):
 export const referenceText = (spec: RemoteSpec): string => `${remoteName(spec)}${spec.ref ? `@${spec.ref}` : ''}`;
 
 /**
- * readOrigin reads the field `origin` of the text of a `layout.json`, or returns undefined when it has no valid one: a
- * name of a layout on GitHub, a ref, and a commit of 40 hexadecimal digits.
- * @param text - The text of the `layout.json`.
- */
-export function readOrigin(text: string): Origin | undefined {
-  let origin: unknown;
-  try {
-    origin = (JSON.parse(text) as { origin?: unknown }).origin;
-  } catch {
-    return undefined;
-  }
-  const { layout, ref, commit } = (typeof origin === 'object' && origin !== null ? origin : {}) as Partial<Record<keyof Origin, unknown>>;
-  if (typeof layout !== 'string' || !parseRemote(layout) || typeof ref !== 'string' || ref === '' || typeof commit !== 'string' || !/^[0-9a-f]{40}$/.test(commit)) {
-    return undefined;
-  }
-  return { layout, ref, commit };
-}
-
-/**
  * previewUrl returns the address of the preview PDF of a layout on GitHub, or undefined when it has none.
  * @param remote - The layout.
  */
@@ -147,11 +111,10 @@ async function get(fetch: Fetcher, url: string, accept: string, token: string | 
   return response;
 }
 
-/** Tree is the list of the files of a commit of a repository, with the ID of the content of each file. */
+/** Tree is the list of the files of a commit of a repository. */
 interface Tree {
   commit: string;
   paths: string[];
-  blobs: ReadonlyMap<string, string>;
 }
 
 /**
@@ -166,9 +129,8 @@ async function treeOf(fetch: Fetcher, repository: string, ref: string, token: st
   if (!/^[0-9a-f]{40}$/.test(commit)) {
     throw new Error(`GitHub gave no commit for ${repository}@${ref}.`);
   }
-  const tree = JSON.parse(decoder.decode((await get(fetch, `${api}/repos/${repository}/git/trees/${commit}?recursive=1`, json, token)).body)) as { tree?: { path: string; type: string; sha?: string }[] };
-  const blobs = (tree.tree ?? []).filter((entry) => entry.type === 'blob');
-  return { commit, paths: blobs.map((entry) => entry.path), blobs: new Map(blobs.map((entry) => [entry.path, entry.sha ?? ''])) };
+  const tree = JSON.parse(decoder.decode((await get(fetch, `${api}/repos/${repository}/git/trees/${commit}?recursive=1`, json, token)).body)) as { tree?: { path: string; type: string }[] };
+  return { commit, paths: (tree.tree ?? []).filter((entry) => entry.type === 'blob').map((entry) => entry.path) };
 }
 
 /**
@@ -189,8 +151,7 @@ async function readRemote(fetch: Fetcher, repository: string, folder: string, tr
   }
   const prefix = folder ? `${folder}/` : '';
   const files = tree.paths.filter((path) => path.startsWith(prefix)).map((path) => path.slice(prefix.length));
-  const blobs = new Map(files.map((path) => [path, tree.blobs.get(prefix + path) ?? '']));
-  return { remote: { repository, folder, commit: tree.commit, ref, layout, files, blobs }, problems };
+  return { remote: { repository, folder, commit: tree.commit, ref, layout, files }, problems };
 }
 
 /**

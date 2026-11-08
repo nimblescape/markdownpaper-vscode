@@ -147,16 +147,11 @@ layout of the workspace, and "New Layout" copies a layout into a new folder. Bot
 in the context menu of a folder in the Explorer. No command writes a file over
 an existing file.
 
-An older project can have a copy of a layout from GitHub in `layouts/`. The
-copy stays as it is until you update it. Its
-`layout.json` names where it comes from in the field `origin`. "Update
-Layout", in the Command Palette and in the context menu of a folder in
-`layouts/`, reads the newest version from the repository of the layout: the
-files that only the repository changed get their new versions, and your own
-changes stay. When you and the repository changed the same file, VS Code asks
-before it replaces your change. On the command line,
-`npx -y @nimblescape/markdownpaper get` updates the copies together with the
-clones; `--force` replaces the files that both changed.
+"Get Layouts and Repositories" in the Command Palette runs `mp get` in a
+terminal of VS Code, in the folder of the open paper: it clones a missing
+layout or repository of the papers of the project, and gives each reference to
+a branch, such as `@main`, the newest version of the branch. A copy of a layout
+in `layouts/` stays as it is: it is your own layout.
 
 ## Sources in inbox and bib
 
@@ -498,8 +493,8 @@ The Markdown preview of VS Code shows the pages of a paper document; there
 is no other view for the pages. Its keys and buttons open it as for any
 Markdown file: Ctrl+Shift+V in the group of the text editor, Ctrl+K V beside
 the text editor, and "Open Preview" in the context menu of the Explorer.
-"Show Page Preview" in the title of the editor of a paper document (the icon
-of a book) opens it beside the text editor too. The preview of a notes
+"Open Preview to the Side" in the title of the text editor, and "Show Page
+Preview" in the Command Palette, open it beside the text editor too. The preview of a notes
 document stays as VS Code shows it. The pages in the preview:
 
 - are white paper on a grey background, also in a dark theme, and get
@@ -524,7 +519,8 @@ before it.
 
 ## Export PDF
 
-"Export PDF" in the menu "Run" of the title of a Markdown file, or in the
+"Export PDF" in the menu "Run" of the title of a Markdown file, in each of
+its three views (Text Editor, Markdown Preview, Markdown Editor), or in the
 context menu of the Explorer, writes the PDF beside the file, with the name
 that `pdfName` of the layout gives, and opens it
 (`nimblescape.markdownPaper.openPdf`). It needs an installed Google Chrome,

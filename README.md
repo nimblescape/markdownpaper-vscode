@@ -74,7 +74,8 @@ Node.js 22 or newer.
   layout `plain`.
 - **Page preview.** A Markdown file whose front matter names a layout is a
   paper document, and the Markdown preview of VS Code shows its pages:
-  Ctrl+Shift+V, Ctrl+K V or "Show Page Preview" in the title of the editor.
+  Ctrl+Shift+V, Ctrl+K V or "Open Preview to the Side" in the title of the
+  editor.
   Another Markdown file keeps the Markdown preview as VS Code shows it. The
   pages update after a pause in typing and after a change of the layout, the
   preview scrolls with the text editor, and a double click on a page shows
@@ -128,9 +129,9 @@ Node.js 22 or newer.
   repository: the document names its reference in the field `layout`, and
   "New Project" runs `mp get` in a terminal of VS Code, which clones it into
   `.markdownpaper/repos/`. "New Document" and "New Layout" add a document or
-  a layout. "Update Layout" updates a copy of a layout on GitHub in
-  `layouts/` of an older project from its repository when the repository has
-  a newer version, and keeps the changes of the project.
+  a layout. "Get Layouts and Repositories" runs `mp get` in a terminal of
+  VS Code, which gives each layout and repository on a branch its newest
+  version.
 - **Clones.** "Open Repository in New Window" opens the clone of a reference
   of the paper in `.markdownpaper/repos/` in a new window of VS Code, where
   Source Control shows its Git repository; Ctrl+click on a reference in the
@@ -172,8 +173,9 @@ Node.js 22 or newer.
 2. Write the fields of the layout in the front matter, in the text editor or
    in the form at the top of the editor. The warnings name the missing ones.
 3. Press Ctrl+Shift+V or Ctrl+K V (on macOS Cmd) for the Markdown preview,
-   or choose "Show Page Preview" in the title of the editor.
-4. Choose "Export PDF" in the menu "Run" of the title of the editor.
+   or choose "Open Preview to the Side" in the title of the editor.
+4. Choose "Export PDF" in the menu "Run" of the title of the editor, in
+   any of the three views of the file.
 
 The rules of the documents and of the layouts, for people and AI agents:
 

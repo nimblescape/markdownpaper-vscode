@@ -7,11 +7,14 @@
  * [R-DOC-003](../docs/requirements.md#r-doc-003)): a Markdown file whose front matter names a layout gets a warning
  * for a layout that does not exist or cannot be read, and for each missing required field, after a pause in typing.
  * The pointer on the key of a field shows its description from `layout.json`. A document of the clean editing view of
- * Markdown Notes gets the checks of its file: the warnings show on the file, and the hover in the view.
+ * Markdown Notes gets the checks of its file: the warnings show on the file, and the hover in the view. While Markdown
+ * Notes checks the front matter of a paper against its schema in the view, the checks leave out the problems that the
+ * schema finds too, which the view shows with quick fixes ([R-DOC-002](../docs/requirements.md#r-doc-002)).
  */
 
 import type { Problem } from '@nimblescape/markdownlayout';
 import * as vscode from 'vscode';
+import { notesChecksFrontMatter } from './editorParts';
 import { cleanScheme, fileOf } from './notesApi';
 import { checkDocument } from './paper/checks';
 import { searchHost } from './workspaceHost';
@@ -51,6 +54,9 @@ export class FrontMatterChecks implements vscode.Disposable {
           this.collection.delete(document.uri);
           this.checked.delete(document.uri.toString());
           this.rendered.delete(document.uri.toString());
+        } else {
+          // The file without its view gets the problems of the front matter again.
+          this.schedule(document);
         }
       }),
       vscode.languages.registerHoverProvider({ language: 'markdown' }, { provideHover: (document, position) => this.hover(document, position) }),
@@ -89,7 +95,8 @@ export class FrontMatterChecks implements vscode.Disposable {
     if (!document) {
       return [];
     }
-    const checked = await checkDocument(searchHost(this.extension, file), file.toString(), document.getText());
+    const inView = notesChecksFrontMatter() && vscode.workspace.textDocuments.some((candidate) => candidate.uri.scheme === cleanScheme && fileOf(candidate.uri).toString() === file.toString());
+    const checked = await checkDocument(searchHost(this.extension, file), file.toString(), document.getText(), { fields: !inView });
     this.checked.set(file.toString(), checked.problems);
     this.show(file);
     return checked.problems;

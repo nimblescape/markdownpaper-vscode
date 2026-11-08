@@ -306,6 +306,13 @@ in the text editor as warnings after a pause in typing, and with
   reference list ([R-CITE-004](#r-cite-004)). All of them are warnings.
 - The Markdown preview of a paper document adds the problems of the renderer,
   for example a template that does not exist. Each problem shows once.
+- While the clean editing view of Markdown Notes shows a paper with the
+  schema of its layout ([R-DOC-005](#r-doc-005)), Markdown Notes shows the
+  problems of the front matter against the schema in the view, with quick
+  fixes: a missing required field, a value that is not one of the names of
+  a parameter, and a front matter that does not parse. Markdown Paper then
+  leaves out its own warnings of these three in VS Code, so that each
+  problem shows once; `mp check` keeps them.
 - `mp check` prints each problem as `file:line:column: severity:
   message` on the standard error and exits with 0 without problems, 1 with
   problems and 2 when it cannot check.
@@ -349,52 +356,36 @@ only features of Markdown Notes or none ([decision 17](#decisions)).
 
 ### R-DOC-005
 
-**The form of the front matter.** The view "Front Matter" in the side bar
-shows the front matter of the Markdown file in the active editor as a form,
-with one row for each field of its layout ([decision 56](#decisions)):
+**The front matter in the page of the editor.** The author changes the
+front matter of a paper in the page of its editor, in both editors of
+Markdown Notes; Markdown Paper has no view of its own for it
+([decision 56](#decisions)):
 
-- The view stands in the side bar beside the view of Markdown Notes, in its
-  container; without Markdown Notes, it stands in the Explorer. It follows
-  the active editor, also a file in the clean editing view of Markdown Notes,
-  where the whole front matter is read-only ([R-CLI-004](#r-cli-004)).
-  "Edit Front Matter" (`nimblescape.markdownPaper.editFrontMatter`, with the
-  URI of a file) opens the view for a file; the link "Edit Front Matter" of
-  Markdown Notes above the front matter calls it.
-- The form has one row for each field of `layout.json`, in its order: the
-  name, the description, a mark when the field is required, and the warning
-  of the checks ([R-DOC-002](#r-doc-002)), such as a required field without a
-  value. A field with `values` gets a choice list of its names, any other
-  field a text line. The `default` of a field shows as the placeholder. A
-  value that is no text, such as a list, shows as read-only text; the text
-  editor of the file changes it.
-- `layout` and `repos` are read-only rows, which name the command that
-  writes them: `mp create` and `mp get`. `lang` is a text line with the
-  language of the layout as its placeholder.
-- Each field of the layout, `layout`, `repos` and `lang` keep their rows:
-  the form renames none of these keys and has no button that removes one
-  ([decision 69](#decisions)).
-- A key that the layout does not know stays in the file and shows at the end
-  of the form with a warning and a button that removes it
-  ([decision 60](#decisions)); the author cannot add such a key.
-- A file without the field `layout` gets the fields of the built-in layout
-  `plain` ([decision 60](#decisions)); a value for it writes a front matter
-  into the file.
-- The file stays the source; the form keeps no copy. A change of a row is
-  one edit of the file that replaces only the lines of its key, or removes
-  them for an empty value; a new key goes in at its place in the order of the
-  layout. The author undoes it in the text editor of the file. A file without
-  unsaved changes is saved after the edit. A change of the file, for example
-  by `mp get`, shows in the form at once.
-- A front matter with a YAML error, or a layout that cannot be read, shows
-  the problem, and the rows are read-only until the text editor solves it.
-- For a file in the editor of a whole file of Markdown Notes, the form of
-  the front matter of that editor takes the place of the form of the view
-  ([R-PAPER-001](https://github.com/nimblescape/markdown/blob/main/docs/plugins.md#r-paper-001)
-  of nimblescape Markdown): Paper gives it the schema of the layout and the
-  read-only `layout` and `repos` ([R-EDIT-001](#r-edit-001)). *(proposal)*
-  While that editor is the active tab, the view shows that the editor has
-  the form at the top of the file, with the button "Show the Editor", and
-  "Edit Front Matter" for its file shows the editor.
+- In the editor of rendered Markdown, the form of the front matter at the
+  top of the file
+  ([R-FM-001](https://github.com/nimblescape/markdown/blob/main/docs/editor.md#r-fm-001)
+  of nimblescape Markdown) shows it with the JSON schema of the layout that
+  Markdown Paper gives ([R-EDIT-001](#r-edit-001)).
+- In the clean editing view of Markdown Notes, the text editor of a paper,
+  the front matter is text. Markdown Paper gives the same schema through
+  `registerFrontMatterSchema` of Markdown Notes ([R-GEN-003](#r-gen-003)),
+  with `repos` as a read-only key besides `layout`, which the schema marks
+  read-only. The keys of the schema stay and only the text after a key
+  changes; the lines of `layout` and `repos`, which only `mp create` and
+  `mp get` write, stay as they are; the problems of the schema show as
+  warnings with quick fixes; and the completion offers the keys and the
+  values of the schema
+  ([R-TEXT-009](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-text-009)
+  of Markdown Notes, [decision 72](#decisions)). Markdown Paper gives the
+  schema again after a change of a file of a layout.
+- In both editors, the keys of the layout keep their place: the author
+  changes their values, but does not rename or remove them
+  ([decision 69](#decisions)). An empty value keeps its key. A key that the
+  layout does not know stays in the file after the keys of the layout
+  ([decision 60](#decisions)).
+- A document that is no paper gets no schema ([R-DOC-004](#r-doc-004)).
+- The preview of a paper shows no front matter ([R-DOC-004](#r-doc-004)):
+  its fields fill the templates of the layout.
 
 ## Layouts
 
@@ -1646,11 +1637,11 @@ repos:
   view of Markdown Notes, opens its clone in the same way
   ([decision 58](#decisions)). Markdown Notes opens the same folder itself with
   Ctrl+click on the name of the reference of a listing. A missing clone offers `mp get` in a terminal of VS Code.
-- In the clean editing view of Markdown Notes, the whole front matter is
-  read-only (R-TEXT-009 of Markdown Notes): a change there goes back, with a
-  message in the status bar that names "Open File with Markup". The text
-  editor with the markup and the commands, such as `mp get`, still write the
-  references, and the view shows a change of `mp get`.
+- In the clean editing view of Markdown Notes, the lines of `repos` are
+  read-only ([R-DOC-005](#r-doc-005), [decision 72](#decisions)): a change
+  there goes back, with a message in the status bar. The commands, such as
+  `mp get`, and the text editor with the markup still write the references,
+  and the view shows a change of `mp get`.
 - `get <owner>/<repository>@<rev>` with more than one paper in the project
   needs the paper: `get <owner>/<repository>@<rev> <file.md>`.
 - `get -u` also moves each reference to a tag to the newest tag of its
@@ -2092,7 +2083,7 @@ nimblescape Markdown is public, so CI reads it without a token
   the JSON schema of the layout of the document: `layout`, the fields of the
   layout with their descriptions, defaults, values and the required ones, and
   `lang` with the language of the layout as its default, in the order of the
-  view "Front Matter" ([R-DOC-005](#r-doc-005)). It sends the schema again
+  layout ([R-DOC-005](#r-doc-005)). It sends the schema again
   after a change of `layout` or of a file of a layout. A document that is no
   paper gets no schema. The keys of this schema stay in both modes of the
   form: the author changes their values, but does not rename or remove them
@@ -2419,10 +2410,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     reference in the front matter opens the clone ([decision 58](#decisions)). The files of a clone stay
     editable in the window of the paper; the extensions set no read-only
     default for them.
-56. **The form of the front matter in the side bar** ([R-DOC-005](#r-doc-005)):
-    the author changes the front matter of a paper in the view "Front Matter"
-    of Markdown Paper in the side bar, beside the view of Markdown Notes,
-    with one row for each field of the layout.
+56. **The front matter in the page of the editor** ([R-DOC-005](#r-doc-005)):
+    the author changes the front matter of a paper in the page of its
+    editor: in the form at the top of the editor of rendered Markdown, and as
+    text in the clean editing view of Markdown Notes. Markdown Paper has no
+    view of its own for the front matter.
 57. **The clone of a branch on its branch** ([R-CLI-004](#r-cli-004)): the
     rev of a reference decides what the author may change in its clone. The
     clone of a branch, for example `@main`, has the local branch, so the
@@ -2439,11 +2431,11 @@ requirement ([R-GEN-007](#r-gen-007)).
     `mp get <owner>/<repository>` without `@<rev>` asks in a terminal for the
     rev, with the default branch first and marked; without a terminal it takes
     the default branch. The front matter always holds the rev.
-60. **Unknown keys and files without a layout in the form**
-    ([R-DOC-005](#r-doc-005)): a key that the layout does not know stays in
-    the file; the form shows it with a warning and a button that removes it.
-    The form also shows for a Markdown file without the field `layout`, with
-    the fields of the built-in layout `plain`.
+60. **Unknown keys in the front matter** ([R-DOC-005](#r-doc-005)): a key
+    that the layout does not know stays in the file, after the keys of the
+    layout, because other extensions keep their keys in the front matter too.
+    The author renames or removes it in the mode "Edit keys" of the form of
+    the editor, or in the text of the clean editing view.
 61. **nimblescape Markdown is public** ([R-EDIT-001](#r-edit-001)): the
     repository of nimblescape Markdown is public before its release, so that
     CI reads it without a token. CI installs the packages of nimblescape
@@ -2490,10 +2482,10 @@ requirement ([R-GEN-007](#r-gen-007)).
     no discussion document and no outline of an earlier design.
 69. **The keys of the layout stay in the form** ([R-DOC-005](#r-doc-005),
     [R-EDIT-001](#r-edit-001)): the form of the front matter in the editor
-    of nimblescape Markdown and the view "Front Matter" rename no key of the
-    layout and have no button that removes one; the author changes only
-    their values. Only a key that the layout does not know goes, and in the
-    editor it also gets a new name.
+    of nimblescape Markdown renames no key of the layout and has no button
+    that removes one, and the clean editing view keeps these keys too; the
+    author changes only their values. Only a key that the layout does not
+    know gets a new name or goes.
 70. **The three views of a paper document** ([R-DOC-004](#r-doc-004)): a
     paper document has the three views of a Markdown file of Markdown Notes:
     "Text Editor", the clean editing view; "Markdown Preview", the pages of
@@ -2515,6 +2507,17 @@ requirement ([R-GEN-007](#r-gen-007)).
     back. The other choice was to show the anchors and the markers in the
     view, to hide the database only at the end of the file, and to keep the
     parts editable until the format step writes them again.
+72. **The clean editing view keeps the structure of the front matter**
+    ([R-DOC-005](#r-doc-005)): the clean editing view of Markdown Notes stays
+    a text editor, and it controls how an edit changes the front matter of a
+    paper: the keys of the schema of the layout are read-only and only the
+    text after a key changes, `layout` and `repos` stay as they are, the
+    problems of the schema show as warnings with quick fixes, and the
+    completion offers the keys and the values of the schema. An empty value
+    keeps its key in both editors. Markdown Paper gives Markdown Notes the
+    schema through `registerFrontMatterSchema`. The other choices were the
+    whole front matter read-only in the clean editing view, and a form of
+    the front matter in the side bar.
 
 ## Open questions
 

@@ -5,7 +5,7 @@
 
 // Tests in a real VS Code (npm run test:vscode, .vscode-test.mjs): mocha runs them in the extension host. They write a
 // layout and Markdown files into a temporary folder, and check the commands of the extension, among them "Open
-// Repository in New Window" (R-CLI-004) and the view "Front Matter" (R-DOC-005), the checks of the front
+// Repository in New Window" (R-CLI-004), the checks of the front
 // matter and their hover (R-DOC-002, R-DOC-003), the format step of the paper (R-REN-004, R-CLI-002), the slash
 // commands /research and /cite (R-CITE-002), the plugin of the pages in the Markdown preview of VS Code for a paper
 // document, without its front matter also when the plugin of another extension shows the front matter (the test
@@ -25,7 +25,7 @@ import { promisify } from 'node:util';
 import { Browser } from '@nimblescape/markdownlayout/pdf';
 import * as vscode from 'vscode';
 import { type Context, cloneOfReference } from '../../src/commands';
-import { applyFrontMatterChange, formFor } from '../../src/frontMatterView';
+import { rulesOf } from '../../src/editorParts';
 import type { Api } from '../../src/extension';
 import { markdownExtensions, plantUmlOptions } from '../../src/markdownExtensions';
 import { findBrowser } from '../../src/pdf/browser';
@@ -92,7 +92,7 @@ describe('nimblescape Markdown Paper', function () {
   it('the extension starts and has its commands', async () => {
     await api();
     const commands = await vscode.commands.getCommands(true);
-    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'openRepository', 'editFrontMatter', 'connectZotero', 'updateSourcesFromZotero']) {
+    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'updateLayout', 'openRepository', 'connectZotero', 'updateSourcesFromZotero']) {
       assert.ok(commands.includes(`nimblescape.markdownPaper.${name}`), name);
     }
   });
@@ -132,28 +132,6 @@ describe('nimblescape Markdown Paper', function () {
     assert.equal((await cloneOfReference(context, args[0], args[1]))?.fsPath, clone?.fsPath);
   });
 
-  it('"Edit Front Matter" opens the view "Front Matter" for a file, and a change of the form is one edit of the file (R-DOC-005)', async () => {
-    const extension = await api();
-    const file = write('paper/form.md', '---\nlayout: thesis\nsigned: yes\n---\n\n# Einleitung\n');
-    await vscode.commands.executeCommand('nimblescape.markdownPaper.editFrontMatter', file);
-    await waitFor(() => (extension.frontMatter().shown ? true : undefined), 'the page of the view');
-    assert.equal(extension.frontMatter().file?.toString(), file.toString());
-    const self = vscode.extensions.getExtension(extensionId)!.extensionUri;
-    const form = await formFor(self, file);
-    assert.deepEqual(
-      form.fields.map((field) => [field.key, field.required, field.warning]),
-      [['title', true, 'The layout needs this field.']],
-    );
-    assert.deepEqual(form.unknown, [{ key: 'signed', value: 'yes' }]);
-    // The value goes into the file, which is saved because it had no unsaved changes; layout and repos stay.
-    assert.equal(await applyFrontMatterChange(self, file, { key: 'title', value: 'Agenten im Team' }), true);
-    assert.equal(await applyFrontMatterChange(self, file, { key: 'layout', value: 'plain' }), false);
-    assert.equal(await applyFrontMatterChange(self, file, { key: 'signed', value: '' }), true);
-    const document = await vscode.workspace.openTextDocument(file);
-    assert.equal(document.isDirty, false);
-    assert.equal(fs.readFileSync(file.fsPath, 'utf8'), '---\nlayout: thesis\ntitle: Agenten im Team\n---\n\n# Einleitung\n');
-  });
-
   it('a missing required field of the layout is a warning at the field layout, with the description in its hover (R-DOC-002, R-DOC-003)', async () => {
     const extension = await api();
     const file = write('paper/missing.md', '---\nlayout: thesis\n---\n\n# Einleitung\n');
@@ -169,6 +147,18 @@ describe('nimblescape Markdown Paper', function () {
     const hovers = await vscode.commands.executeCommand<vscode.Hover[]>('vscode.executeHoverProvider', file, new vscode.Position(2, 2));
     const text = hovers.flatMap((hover) => hover.contents.map((content) => (typeof content === 'string' ? content : content.value))).join('\n').replaceAll('&nbsp;', ' ');
     assert.match(text, /Der Titel der Arbeit\./);
+  });
+
+  it('the clean editing view of Markdown Notes gets the schema of the layout of a paper with repos read-only, and a notes document gets none (R-DOC-005)', async () => {
+    const text = '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n';
+    const file = write('paper/rules.md', text);
+    await api();
+    const self = vscode.extensions.getExtension(extensionId)!.extensionUri;
+    const rules = await rulesOf(self, file, text);
+    assert.deepEqual(rules?.readOnly, ['repos']);
+    assert.deepEqual(Object.keys(rules?.schema.properties as Record<string, unknown>), ['layout', 'title', 'lang']);
+    assert.deepEqual(rules?.schema.required, ['layout', 'title']);
+    assert.equal(await rulesOf(self, file, '# Notes\n'), undefined);
   });
 
   it('the format step of the paper writes the table of contents of a paper document, for the formatter of Markdown Notes (R-REN-004, R-CLI-002)', async () => {

@@ -150,17 +150,10 @@
       }
     ],
     "menus": {
-      "editor/title": [
-        {
-          "command": "nimblescape.markdownPaper.showPagePreview",
-          "group": "navigation",
-          "when": "editorLangId == markdown && nimblescape.markdownPaper.paperDocument"
-        }
-      ],
       "editor/title/run": [
         {
           "command": "nimblescape.markdownPaper.exportPdf",
-          "when": "(editorLangId == markdown || activeWebviewPanelId == 'markdown.preview') && nimblescape.markdownPaper.paperDocument"
+          "when": "(editorLangId == markdown || activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor' || activeCustomEditorId == 'nimblescape.markdownNotes.editor') && nimblescape.markdownPaper.paperDocument"
         }
       ],
       "commandPalette": [
@@ -170,7 +163,7 @@
         },
         {
           "command": "nimblescape.markdownPaper.exportPdf",
-          "when": "editorLangId == markdown || activeWebviewPanelId == 'markdown.preview'"
+          "when": "editorLangId == markdown || activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor' || activeCustomEditorId == 'nimblescape.markdownNotes.editor'"
         },
         {
           "command": "nimblescape.markdownPaper.updateSourcesFromZotero",

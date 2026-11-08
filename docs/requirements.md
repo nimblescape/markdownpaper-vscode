@@ -322,6 +322,15 @@ only features of Markdown Notes or none ([decision 17](#decisions)).
 - A paper document gets the checks ([R-DOC-002](#r-doc-002)), its pages in
   the Markdown preview ([R-PRV-005](#r-prv-005)), and the buttons "Show Page
   Preview" and "Export PDF" in the title bar of the editor.
+- A paper document has the three views of a Markdown file of Markdown Notes
+  ([R-PREV-006](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-prev-006)
+  of Markdown Notes, [decision 70](#decisions)): "Text Editor", the clean
+  editing view of Markdown Notes; "Markdown Preview", its pages in its
+  layout ([R-PRV-001](#r-prv-001)); and "Markdown Editor", the editor of a
+  whole file of Markdown Notes with the plugin `paper`
+  ([R-EDIT-001](#r-edit-001)). Markdown Notes gives the list of the editors
+  and the buttons of the views; a notes document has the same three views
+  without the parts of the paper.
 - A notes document keeps the Markdown preview of VS Code, which Markdown Notes
   uses. "Export PDF" in the Command Palette and in the Explorer, and the
   command line, still make the PDF of any Markdown file, with the built-in
@@ -2442,6 +2451,15 @@ requirement ([R-GEN-007](#r-gen-007)).
     layout and have no button that removes one; the author changes only
     their values. Only a key that the layout does not know goes, and in the
     editor it also gets a new name.
+70. **The three views of a paper document** ([R-DOC-004](#r-doc-004)): a
+    paper document has the three views of a Markdown file of Markdown Notes:
+    "Text Editor", the clean editing view; "Markdown Preview", the pages of
+    its layout; and "Markdown Editor", the editor of rendered Markdown of
+    Markdown Notes with the parts of the paper. The editor of a paper and of
+    a notes document is the same editor, and the format of the file decides
+    which parts it shows. The other choice was a fourth view of Markdown
+    Notes beside the visual editor of VS Code, which VS Code names "Markdown
+    Editor".
 
 ## Open questions
 

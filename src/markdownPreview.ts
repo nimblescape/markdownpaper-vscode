@@ -15,8 +15,12 @@
  *   ([R-GEN-010](../docs/requirements.md#r-gen-010)): the footnotes of the pages, which only a paper document gets
  *   here, the numbers, the captions and the lists. Then the tokens get the form of the output of
  *   `@nimblescape/markdownrender`, such as the alerts and the widths of the columns of the tables, and a first token
- *   with the layout and what it found. The front matter, which VS Code shows as a table, leaves the text: its fields
- *   fill the templates of the layout. The headings keep the IDs of the renderer.
+ *   with the layout and what it found. The headings keep the IDs of the renderer.
+ * - The front matter of a paper document does not show: its fields fill the templates of the layout. VS Code shows the
+ *   front matter as a table, and the plugin of another extension can show it in its own way, for example as a table
+ *   of its own with other tokens. So markdown-it reads the text of a paper document with a blank line for each line of
+ *   its front matter, as the renderer of the PDF does: no rule of a plugin finds the front matter, and every line
+ *   keeps its number.
  * - The rendering of these tokens puts a hidden element `.nimblescape-paper` first, with the style sheets, the filled
  *   templates and the fields of the layout, whose addresses the webview loads, then the text with its lists and its
  *   soft hyphens. The script of the pages ([media/paperPreview.js](../media/paperPreview.js)) makes the pages from it.
@@ -33,7 +37,7 @@ import footnote from 'markdown-it-footnote';
 import type Token from 'markdown-it/lib/token.mjs';
 import * as vscode from 'vscode';
 import { fileOf } from './notesApi';
-import { type FrontMatter, isPaperDocument, readFrontMatter } from './paper/frontMatter';
+import { bodyOf, type FrontMatter, isPaperDocument, readFrontMatter } from './paper/frontMatter';
 import { paperEnvKey, type PaperEnv, paperTextPlugin } from './paper/markdown';
 import { type LoadedLayout, loadLayout } from './paper/render';
 import { referencesOf } from './paper/references';
@@ -88,9 +92,6 @@ export interface PaperData {
 
 /** paperClass is the class of the hidden element with the layout of a paper document. */
 export const paperClass = 'nimblescape-paper';
-
-/** frontMatterType is the type of the token of the front matter in the Markdown preview of VS Code. */
-const frontMatterType = 'front_matter';
 
 /** paperTokenType is the type of the hidden token that the plugin puts first, with the PreviewPaper as its meta. */
 const paperTokenType = 'nimblescape_paper';
@@ -221,16 +222,15 @@ export class PaperPreview implements vscode.Disposable {
       }
       let tokens: Token[];
       try {
-        tokens = parse(src, env);
+        // The front matter fills the templates of the layout, so no rule of a plugin may show it (R-PRV-005).
+        tokens = parse(bodyOf(src, readFrontMatter(src)), env);
       } finally {
         delete values[layoutEnvKey];
         delete values[paperEnvKey];
       }
       if (!('pending' in paper)) {
-        // The front matter fills the templates of the layout; VS Code would show it as a table above the text. The
-        // tokens get the form of the output of the renderer of the PDF, with the IDs of the headings of GitHub and
+        // The tokens get the form of the output of the renderer of the PDF, with the IDs of the headings of GitHub and
         // without the lines, which VS Code gives the blocks itself.
-        tokens = tokens.filter((token) => token.type !== frontMatterType);
         prepareOutput(tokens, { lines: false });
         for (const token of tokens) {
           const id = token.type === 'heading_open' ? token.attrGet('id') : null;

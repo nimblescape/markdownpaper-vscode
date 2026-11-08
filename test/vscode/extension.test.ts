@@ -7,7 +7,7 @@
 // layout and Markdown files into a temporary folder, and check the commands of the extension, among them "Open
 // Repository in New Window" (R-CLI-004), the checks of the front
 // matter and their hover (R-DOC-002, R-DOC-003), the format step of the paper (R-REN-004, R-CLI-002), the slash
-// commands /research and /cite (R-CITE-002), the plugin of the pages in the Markdown preview of VS Code for a paper
+// commands /research and /cite (R-CITE-002) and /toc (R-REN-004), the plugin of the pages in the Markdown preview of VS Code for a paper
 // document, without its front matter also when the plugin of another extension shows the front matter (the test
 // extension of test/fixtures/front-matter-table/), and none for a notes document (R-PRV-001, R-PRV-005, R-DOC-004),
 // each footnote once in the page preview and in the PDF when the plugin of another extension adds markdown-it-footnote
@@ -279,6 +279,35 @@ describe('nimblescape Markdown Paper', function () {
     await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
     assert.equal(await inserted, true);
     assert.equal(editor.document.lineAt(5).text, 'Agents change the work of teams ([Hong et al., 2024](#hong2024)).');
+  });
+
+  it('/toc inserts the table of contents in the language of the layout, with its list, and a second /toc inserts nothing (R-REN-004)', async () => {
+    const extension = await api();
+    const toc = extension.lists.find((command) => command.label === '/toc');
+    assert.ok(toc, 'the slash command /toc');
+    assert.deepEqual(
+      extension.lists.map((command) => command.label),
+      ['/toc', '/lof', '/lot', '/lol'],
+    );
+    const file = write('paper/toc.md', '---\nlayout: plain\nlang: de-AT\n---\n\n# Einleitung\n\nText.\n');
+    const editor = await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(file));
+    const lines = editor.document.getText().split('\n');
+    await waitFor(() => (extension.formatStep.applies(lines, file) ? true : undefined), 'the layout of the format step');
+    const empty = new vscode.Position(4, 0);
+    assert.equal(await toc.run(editor, new vscode.Range(empty, empty)), true);
+    assert.equal(
+      editor.document.getText(),
+      '---\nlayout: plain\nlang: de-AT\n---\n\n# Inhaltsverzeichnis\n\n<!-- toc -->\n- [1 Einleitung](#einleitung)\n<!-- /toc -->\n\n# Einleitung\n\nText.\n',
+    );
+    // The cursor stands at the end of the heading.
+    assert.deepEqual([editor.selection.active.line, editor.selection.active.character], [5, '# Inhaltsverzeichnis'.length]);
+    // The format step keeps the list as it is.
+    const inserted = editor.document.getText().split('\n');
+    assert.deepEqual(extension.formatStep.format(inserted, file), inserted);
+    // A second /toc inserts nothing, because the paper has its table of contents.
+    const end = editor.document.positionAt(editor.document.getText().length);
+    assert.equal(await toc.run(editor, new vscode.Range(end, end)), false);
+    assert.equal(editor.document.lineCount, inserted.length);
   });
 
   it('the Markdown preview of a paper document gets the layout and the steps of the renderer, with the content of the other plugins and without the front matter, and a notes document keeps its preview (R-PRV-001, R-PRV-005, R-DOC-004)', async () => {

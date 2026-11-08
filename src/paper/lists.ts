@@ -24,11 +24,13 @@
  */
 
 import type { Layout } from '@nimblescape/markdownlayout';
+import { textLines } from './citations';
 import { bodyOf, readFrontMatter } from './frontMatter';
 import { listCodes } from './marks';
 import { type Body, inContents, renderBody } from './markdown';
 
-type ListCode = keyof typeof listCodes;
+/** ListCode is the code of a special section with a list that the format step writes. */
+export type ListCode = keyof typeof listCodes;
 
 /**
  * escapeText returns the text of a link with a backslash before each character that would end or change the link.
@@ -53,6 +55,108 @@ function entriesOf(code: ListCode, body: Body, layout: Layout): string[] {
   }
   const captions = code === 'LOF' ? body.figures : code === 'LOT' ? body.tables : body.listings;
   return captions.map((caption) => `- [${escapeText(`${caption.label}: ${caption.text}`)}](#${caption.id})`);
+}
+
+/**
+ * listLines returns the lines of the list of a special section for the lines of a paper document, as the format step
+ * writes them between the markers.
+ * @param lines - The lines of the file.
+ * @param layout - The layout of the file, with the language of its front matter.
+ * @param code - The code of the section.
+ */
+export function listLines(lines: readonly string[], layout: Layout, code: ListCode): string[] {
+  const text = lines.join('\n');
+  return entriesOf(code, renderBody(bodyOf(text, readFrontMatter(text)), layout), layout);
+}
+
+/** ListInsertion is the change of a text that inserts a special section with its list: the range, the new text and the place of the heading in it. */
+export interface ListInsertion {
+  from: number;
+  to: number;
+  text: string;
+  /** heading is the range of the text of the heading in the new text of the change. */
+  heading: { from: number; to: number };
+}
+
+/**
+ * ListExists tells that a document has a special section already: the line of its heading, and `marked` when only the
+ * open marker of its list tells it, under a heading that the renderer does not find as the section.
+ */
+export interface ListExists {
+  exists: number;
+  marked?: true;
+}
+
+/**
+ * listInsertion returns the change of a text that inserts the special section of a list at a place
+ * ([R-REN-004](../../docs/requirements.md#r-ren-004)): the heading of the section in the language of the layout, and the
+ * list between its markers, as the format step writes it. On an empty line the section takes the line; in a paragraph
+ * it comes after the paragraph; each block has an empty line around it. A document that has the section already gets
+ * the line of its heading instead.
+ * @param text - The text of the editor, also the clean text of the clean editing view of Markdown Notes.
+ * @param at - The place in the text, for example the cursor.
+ * @param code - The code of the section.
+ * @param layout - The layout of the document, with the language of its front matter.
+ * @param source - The text of the file, when the text is another text, such as the clean text: the list then comes from
+ * the file with the heading at its end, and the format step writes it again at the save.
+ */
+export function listInsertion(text: string, at: number, code: ListCode, layout: Layout, source?: string): ListInsertion | ListExists {
+  const file = source ?? text;
+  const existing = renderBody(bodyOf(file, readFrontMatter(file)), layout).headings.find((heading) => heading.section === code);
+  if (existing) {
+    return { exists: existing.line };
+  }
+  const marker = listCodes[code];
+  // The open marker of the list outside code also counts, under a heading with other words: the line of the heading before it.
+  const fileLines = file.split('\n');
+  const open = new RegExp(`^\\s*<!--\\s*${marker}\\s*-->\\s*$`, 'i');
+  const marked = textLines(fileLines).find((line) => open.test(fileLines[line]));
+  if (marked !== undefined) {
+    let line = marked;
+    while (line > 0 && !/^ {0,3}#{1,6}(?:[ \t]|$)/.test(fileLines[line])) {
+      line--;
+    }
+    return { exists: /^ {0,3}#/.test(fileLines[line]) ? line : marked, marked: true };
+  }
+  const heading = `# ${layout.terms.sections[code][0]}`;
+  const blockOf = (entries: readonly string[]) => [heading, '', `<!-- ${marker} -->`, ...entries, `<!-- /${marker} -->`].join('\n');
+  const change = placeOf(text, at, blockOf([]));
+  const entries =
+    source === undefined
+      ? listLines((text.slice(0, change.from) + change.text + text.slice(change.to)).split('\n'), layout, code)
+      : listLines([...source.split('\n'), '', heading], layout, code);
+  const placed = placeOf(text, at, blockOf(entries));
+  const offset = placed.text.indexOf(heading);
+  return { ...placed, heading: { from: offset + 2, to: offset + heading.length } };
+}
+
+/**
+ * placeOf returns the change of a text that inserts a block at a place: on an empty line the block takes the line; in a
+ * paragraph it comes after the paragraph; the block gets an empty line around it.
+ * @param text - The text.
+ * @param at - The place in the text.
+ * @param block - The block.
+ */
+function placeOf(text: string, at: number, block: string): { from: number; to: number; text: string } {
+  const lines = text.split('\n');
+  const starts = [0];
+  for (const line of lines) {
+    starts.push(starts[starts.length - 1] + line.length + 1);
+  }
+  const blank = (index: number) => index < 0 || index >= lines.length || lines[index].trim() === '';
+  let line = Math.max(0, starts.findIndex((start) => start > Math.max(0, at)) - 1);
+  line = Math.min(line, lines.length - 1);
+  // The section never ends the text, so that the author can write after its end marker, which is read-only.
+  const last = (index: number) => index === lines.length - 1;
+  if (blank(line)) {
+    const from = starts[line];
+    return { from, to: from + lines[line].replace(/\r$/, '').length, text: `${blank(line - 1) ? '' : '\n'}${block}${last(line) || !blank(line + 1) ? '\n' : ''}` };
+  }
+  while (!blank(line + 1)) {
+    line++;
+  }
+  const end = starts[line] + lines[line].replace(/\r$/, '').length;
+  return { from: end, to: end, text: `\n\n${block}${last(line) ? '\n' : ''}` };
 }
 
 /**

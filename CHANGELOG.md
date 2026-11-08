@@ -31,7 +31,11 @@ The first version.
   foreword (`FWD`) and the appendix (`APX`, with the appendices `APX-A`,
   `APX-B`). The four lists show the list of links that the file holds
   between hidden markers, such as `<!-- toc -->`, with the page numbers; a
-  section without the markers gets the list of the renderer.
+  section without the markers gets the list of the renderer. With Markdown
+  Notes, the slash commands `/toc`, `/lof`, `/lot` and `/lol` insert the
+  heading of a list in the language of the layout and the list under it, in
+  the text editor and in the rendered editor; a paper that has the section
+  already gets a message instead.
 - Figures and tables: a paragraph `Figure 1: …` directly before an image is
   the caption of the figure, above the image; a paragraph `Table 1: …`
   directly before a table is its caption. The pages keep the numbers of the

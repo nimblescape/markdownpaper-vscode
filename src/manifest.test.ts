@@ -125,7 +125,8 @@ test('"Export PDF" is a button of the menu "Run" of the three views of a paper d
 test('the pages are part of the Markdown preview of VS Code: a markdown-it plugin, a script and a style, and no keys or views of their own (R-PRV-005)', () => {
   const contributes = manifest.contributes;
   expect(contributes['markdown.markdownItPlugins']).toBe(true);
-  expect(contributes['markdown.previewScripts']).toEqual(['./media/paperPreview.js']);
+  // The script of the way back after a jump on the pages (R-PRV-004) is a bundle of the build.
+  expect(contributes['markdown.previewScripts']).toEqual(['./media/paperPreview.js', './dist/previewJumps.js']);
   expect(contributes['markdown.previewStyles']).toEqual(['./media/paperPreview.css']);
   expect(contributes).not.toHaveProperty('keybindings');
   expect(contributes).not.toHaveProperty('customEditors');
@@ -180,6 +181,7 @@ test('the package holds the bundle, the plugins of the editor, Paged.js, the pag
     '**',
     '!dist/extension.js',
     '!dist/editorPlugins.js',
+    '!dist/previewJumps.js',
     '!cli/package.json',
     '!cli/dist/mp.js',
     '!cli/dist/paged.polyfill.js',

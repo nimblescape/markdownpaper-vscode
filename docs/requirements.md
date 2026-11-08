@@ -1297,7 +1297,19 @@ other way round.
 ### R-PRV-004
 
 **Links and safety.** A link to a place in the document goes to that place on
-the pages. A link to a web address, an e-mail address or a file works as in
+the pages, and Go Back returns to the link ([decision 79](#decisions)): the
+page keeps the place before the click, and Go Back and Go Forward return
+through the places with the keys of Go Back and Go Forward of VS Code, with
+the back and forward buttons of the mouse, and with the buttons "Back" and
+"Forward" at the bottom right of the preview, which show while there is a
+place in their direction (the way back in a rendered page of nimblescape
+Markdown,
+[R-REN-004](https://github.com/nimblescape/markdown/blob/main/docs/rendering.md#r-ren-004);
+[R-TEXT-011](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-text-011)
+of Markdown Notes). A key without a place goes on to VS Code; on Windows,
+VS Code takes the back and forward buttons of the mouse for its own Go Back
+and Go Forward. The places belong to the file of the preview and stay when
+VS Code loads the page again. A link to a web address, an e-mail address or a file works as in
 the Markdown preview of VS Code. The page preview runs in the Markdown
 preview of VS Code with its rules of safety: only the scripts of the
 extensions of VS Code run, among them the script of the pages and Paged.js of
@@ -2164,7 +2176,10 @@ nimblescape Markdown is public, so CI reads it without a token
   number or label the format step writes, such as `[Anhang B](#daten)`
   ([R-REN-009](#r-ren-009), [decision 73](#decisions)). Ctrl+click (Cmd+click on macOS) on a
   citation goes to the entry of its source, and on a link of a list to its
-  heading or its caption. The user changes these parts through what they
+  heading or its caption; Go Back returns to the citation or the link
+  ([decision 79](#decisions); the jumps of the editor of nimblescape
+  Markdown,
+  [R-EDIT-014](https://github.com/nimblescape/markdown/blob/main/docs/editor.md#r-edit-014)). The user changes these parts through what they
   come from, and the format step writes them again when the file is saved.
 - Backspace and Delete jump over the hidden anchors and markers in the line.
   A database of the sources that an edit of the user deletes goes back to
@@ -2678,6 +2693,16 @@ requirement ([R-GEN-007](#r-gen-007)).
     also when it makes a page larger than the paper; before, the pages got
     only smaller. In Zen mode, the pages fill the whole window when the
     setting `zenMode.centerLayout` of VS Code is off.
+79. **The way back after a jump in all three views**
+    ([R-PRV-004](#r-prv-004), [R-EDIT-001](#r-edit-001)): a citation, an
+    entry of a list of a special section, a cross reference and a footnote
+    go to their target in the Text Editor, the Markdown Preview and the
+    Markdown Editor, and Go Back returns to the link (decision 85 of
+    Markdown Notes). The pages of the preview and the editor keep their
+    places themselves, because the history of VS Code holds no place inside
+    them, and go back with the keys of Go Back and Go Forward of VS Code,
+    the buttons of the mouse and their own buttons. A key without a place
+    goes on to VS Code.
 
 ## Open questions
 

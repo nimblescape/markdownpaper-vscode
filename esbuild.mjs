@@ -124,6 +124,23 @@ await esbuild.build({
   logLevel: 'info',
 });
 
+// The way back after a jump on the pages of the Markdown preview (R-PRV-004), a script of the preview for the browser
+// with the jumps of a page of nimblescape Markdown.
+if (production) {
+  fs.rmSync('dist/previewJumps.js.map', { force: true });
+}
+await esbuild.build({
+  entryPoints: ['src/page/previewJumps.ts'],
+  outfile: 'dist/previewJumps.js',
+  bundle: true,
+  format: 'iife',
+  platform: 'browser',
+  target: 'es2022',
+  sourcemap: !production,
+  minify: false,
+  logLevel: 'info',
+});
+
 for (const bundle of bundles) {
   // A production build writes no source map: remove the map of an earlier development build, so that no map that does
   // not match the bundle of the production build stays in dist/.

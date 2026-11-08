@@ -244,7 +244,8 @@
     },
     "markdown.markdownItPlugins": true,
     "markdown.previewScripts": [
-      "./media/paperPreview.js"
+      "./media/paperPreview.js",
+      "./dist/previewJumps.js"
     ],
     "markdown.previewStyles": [
       "./media/paperPreview.css"

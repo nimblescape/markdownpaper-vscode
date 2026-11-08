@@ -134,6 +134,16 @@ export async function rulesOf(extension: vscode.Uri, file: vscode.Uri, text: str
   return layout ? { schema: frontMatterSchemaOf(layout), readOnly: ['repos'] } : undefined;
 }
 
+/** schemaInNotes tells whether Markdown Notes took the rules of the front matter of the papers. */
+let schemaInNotes = false;
+
+/**
+ * notesChecksFrontMatter tells whether Markdown Notes checks the front matter of a paper against its schema in its clean
+ * editing view, so that the checks of this extension leave out the same problems there
+ * ([R-DOC-002](../docs/requirements.md#r-doc-002)).
+ */
+export const notesChecksFrontMatter = (): boolean => schemaInNotes;
+
 /**
  * registerFrontMatterRules gives the clean editing view of Markdown Notes the rules of the front matter of each paper,
  * again after a change of a file of a layout, when Markdown Notes has `registerFrontMatterSchema`.
@@ -150,7 +160,17 @@ export function registerFrontMatterRules(extension: vscode.Uri): vscode.Disposab
     watcher.onDidChange(changed),
     watcher.onDidCreate(changed),
     watcher.onDidDelete(changed),
-    registerWithNotes((api) => api.registerFrontMatterSchema?.({ schemaOf: (file, text) => rulesOf(extension, file, text).catch(() => undefined), onDidChange: changes.event })),
+    registerWithNotes((api) => {
+      const registration = api.registerFrontMatterSchema?.({ schemaOf: (file, text) => rulesOf(extension, file, text).catch(() => undefined), onDidChange: changes.event });
+      if (!registration) {
+        return undefined;
+      }
+      schemaInNotes = true;
+      return new vscode.Disposable(() => {
+        schemaInNotes = false;
+        registration.dispose();
+      });
+    }),
   );
 }
 

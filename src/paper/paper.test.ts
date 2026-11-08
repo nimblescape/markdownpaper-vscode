@@ -202,6 +202,17 @@ describe('checks of the front matter (R-DOC-002)', () => {
     expect(frontMatterOf({ id: 'fonts', fields: { schrift: { description: 'Die Schrift.', required: false, values: ['arial', 'times'] } } })).toContain('# Die Schrift. Values: arial, times.\nschrift: ""');
   });
 
+  test('leave out the problems that the schema finds too while the clean editing view of Markdown Notes shows them, and keep the others', async () => {
+    const host = hostOf({ 'file:///repo/layouts/thesis/layout.json': thesis });
+    const text = '---\nlayout: thesis\ntitle: ""\nbad\n---\n\nSee [Figure 9](#fig-none).\n';
+    const all = await checkDocument(host, 'file:///repo/a.md', text);
+    expect(all.problems.some((problem) => problem.message.startsWith('Front matter: '))).toBe(true);
+    expect(all.problems.some((problem) => problem.message.includes('needs the field'))).toBe(true);
+    const left = await checkDocument(host, 'file:///repo/a.md', text, { fields: false });
+    expect(left.problems.some((problem) => problem.message.startsWith('Front matter: ') || problem.message.includes('needs the field'))).toBe(false);
+    expect(left.problems.length).toBeGreaterThan(0);
+  });
+
   test('a layout that does not exist is an error at the field layout, and a file without the field gets no check', async () => {
     const checked = await checkDocument(hostOf({}), 'file:///repo/a.md', '---\ntitle: x\nlayout: nope\n---\n');
     expect(checked.problems).toHaveLength(1);

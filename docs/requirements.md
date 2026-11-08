@@ -306,6 +306,13 @@ in the text editor as warnings after a pause in typing, and with
   reference list ([R-CITE-004](#r-cite-004)). All of them are warnings.
 - The Markdown preview of a paper document adds the problems of the renderer,
   for example a template that does not exist. Each problem shows once.
+- While the clean editing view of Markdown Notes shows a paper with the
+  schema of its layout ([R-DOC-005](#r-doc-005)), Markdown Notes shows the
+  problems of the front matter against the schema in the view, with quick
+  fixes: a missing required field, a value that is not one of the names of
+  a parameter, and a front matter that does not parse. Markdown Paper then
+  leaves out its own warnings of these three in VS Code, so that each
+  problem shows once; `mp check` keeps them.
 - `mp check` prints each problem as `file:line:column: severity:
   message` on the standard error and exits with 0 without problems, 1 with
   problems and 2 when it cannot check.

@@ -2125,9 +2125,14 @@ nimblescape Markdown is public, so CI reads it without a token
   ([R-CITE-006](#r-cite-006)); the editor inserts the citation of the chosen
   source at the cursor or after the selected text, with a space before it
   after a word. An item of Zotero goes into the database first.
-- "Research" in the format bar marks the selected argument as
-  `/research` does in the text editor ([R-CITE-002](#r-cite-002)). It shows
-  only in a paper and only on a selection that is an argument.
+- "Research" in the format bar, and `/research` after a slash typed on the
+  selected argument, mark the argument as `/research` does in the text
+  editor ([R-CITE-002](#r-cite-002)). They show only in a paper and only on
+  a selection that is an argument. The slash commands of the editor have
+  the same names as in the text editor, also `/cite`, and the text editor
+  has the commands of the blocks of the editor
+  ([R-EDIT-008](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-edit-008)
+  of Markdown Notes, [decision 74](#decisions)).
 
 ## Settings
 
@@ -2555,6 +2560,13 @@ requirement ([R-GEN-007](#r-gen-007)).
     as `/cite` and `/research`, or the format step writes them (decision 78
     of Markdown Notes). The other choice was to keep the links to headings
     editable and to take typed tags into the file.
+74. **`/cite` and `/research` work in both editors** ([R-EDIT-001](#r-edit-001),
+    [R-CITE-002](#r-cite-002)): the editor of a whole file of Markdown Notes
+    has `/cite` and `/research` of the paper with the same names and the
+    same results as the text editor; `/research` follows a slash typed on
+    the selected argument, as in the text editor (decision 79 of Markdown
+    Notes). The other choice was "Research" in the format bar of the editor
+    only.
 
 ## Open questions
 

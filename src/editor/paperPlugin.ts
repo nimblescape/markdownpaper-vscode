@@ -25,7 +25,8 @@
  *   gives the form of the front matter the JSON schema of the layout of the paper, and shows `layout` and `repos`
  *   read-only: Ctrl+click on a reference opens its clone. `/cite` in the slash commands and in the insert menu, and
  *   "Cite" in the format bar, insert the citation of the source that the user chooses on the platform. "Research" in the
- *   format bar marks the selected argument for an AI agent, as `/research` does in the text editor.
+ *   format bar and `/research` typed on the selected argument mark it for an AI agent, as `/research` does in the text
+ *   editor.
  *
  * In the renderer, for example in the pages, the anchors stay, so that the citations go to their entries, and the other
  * markup has no output. The bundle of the plugins (src/editor/editorPlugins.ts) uses the modules of the page of the
@@ -49,6 +50,7 @@ import {
   type PluginChannel,
   type PluginEditor,
   type PluginHost,
+  slashSelection,
 } from '@nimblescape/markdowneditor';
 import type { JsonSchema } from '@nimblescape/markdowntext';
 import { editorPluginName, extensionMessage, type PageMessage } from '../paper/editorMessages';
@@ -571,9 +573,13 @@ export function isPaper(doc: PmNode): boolean {
  * researchPlaces returns the positions of the start marker and of `(RESEARCH)` for the selected argument of an editor,
  * as `/research` puts them in the text editor (src/paper/marks.ts), or undefined when the selection is no argument.
  * @param state - The state of the editor.
+ * @param range - The selected text, by default the selection of the state; while the list of the slash commands is open
+ *   after a slash typed on selected text, the text before the slash.
  */
-export function researchPlaces(state: EditorState): { start: number; end: number } | undefined {
-  const { from, to, $from, $to } = state.selection;
+export function researchPlaces(state: EditorState, range: { from: number; to: number } = state.selection): { start: number; end: number } | undefined {
+  const { from, to } = range;
+  const $from = state.doc.resolve(from);
+  const $to = state.doc.resolve(to);
   if (from === to || !$from.sameParent($to) || !$from.parent.inlineContent) {
     return undefined;
   }
@@ -643,9 +649,24 @@ function askCitation(tiptap: Editor): void {
 /** canCite returns true when an editor shows a paper and its platform lets the user choose a source. */
 const canCite = (tiptap: Editor): boolean => pages.get(tiptap)?.channel !== undefined && tiptap.isEditable && isPaper(tiptap.state.doc);
 
-/** insertItems are the items of the plugin in the insert menu and in the slash commands: `/cite` in a paper. */
-const insertItems = (tiptap: Editor): MenuItem[] =>
-  canCite(tiptap) ? [{ id: 'cite', label: 'Cite a source', keywords: ['cite', 'citation', 'source', 'zotero'], hint: '/cite', run: () => askCitation(tiptap) }] : [];
+/**
+ * insertItems are the items of the plugin in the insert menu and in the slash commands of a paper: `/cite`, and
+ * `/research` typed on the selected argument, which only the slash commands offer, with the names of the text editor.
+ * @param tiptap - The Tiptap editor.
+ */
+function insertItems(tiptap: Editor): MenuItem[] {
+  const items: MenuItem[] = [];
+  if (canCite(tiptap)) {
+    items.push({ id: 'cite', label: 'Cite a source', slash: 'cite', keywords: ['citation', 'source', 'zotero'], run: () => askCitation(tiptap) });
+  }
+  // The text before a slash typed on selected text, or the selected text, when the user types the slash on it.
+  const { selection } = tiptap.state;
+  const selected = slashSelection(tiptap.state) ?? (selection.empty ? undefined : selection);
+  if (selected && tiptap.isEditable && isPaper(tiptap.state.doc) && researchPlaces(tiptap.state, selected)) {
+    items.push({ id: 'paper-research', label: 'Research the evidence', slash: 'research', keywords: ['argument', 'evidence'], selection: true, run: () => void markResearch(tiptap) });
+  }
+  return items;
+}
 
 /** formatButtons are the buttons of the plugin in the format bar: "Cite" and "Research" in a paper. */
 const formatButtons: FormatButton[] = [

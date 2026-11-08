@@ -63,7 +63,8 @@ The first version.
   line in the text editor, and the other Markdown extensions work on the
   pages, for example Mermaid, KaTeX and the highlights and "Add Note" of
   Markdown Notes.
-  "Show Page Preview" opens the preview beside the text editor. Another
+  "Show Page Preview" in the Command Palette opens the preview beside the
+  text editor. Another
   Markdown file keeps the Markdown preview as VS Code shows it.
 - "Export PDF" writes the PDF with an installed Google Chrome, Chromium or
   Microsoft Edge beside the Markdown file, with the name that the layout

@@ -340,8 +340,11 @@ only features of Markdown Notes or none ([decision 17](#decisions)).
   tables with their anchors, and links of `/ref`, do not make a file a paper
   document.
 - A paper document gets the checks ([R-DOC-002](#r-doc-002)), its pages in
-  the Markdown preview ([R-PRV-005](#r-prv-005)), and the buttons "Show Page
-  Preview" and "Export PDF" in the title bar of the editor.
+  the Markdown preview ([R-PRV-005](#r-prv-005)), and the button "Export
+  PDF" in the menu "Run" of the title of each of its three views and of its
+  Markdown preview to the side ([decision 75](#decisions)). "Show Page
+  Preview" is in the Command Palette, because "Open Preview to the Side" of
+  VS Code in the title of the text editor does the same.
 - A paper document has the three views of a Markdown file of Markdown Notes
   ([R-PREV-006](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-prev-006)
   of Markdown Notes, [decision 70](#decisions)): "Text Editor", the clean
@@ -1143,8 +1146,9 @@ itself ([R-REN-010](#r-ren-010)).
 
 ### R-PDF-001
 
-**Export PDF.** "Export PDF" in the title bar of a Markdown file and
-`mp build <file>` write the PDF of the document.
+**Export PDF.** "Export PDF" in the title bar of a Markdown file, in each
+of its three views ([R-DOC-004](#r-doc-004)), and `mp build <file>` write
+the PDF of the document.
 
 - The PDF goes beside the Markdown file, with the name that `pdfName` of the
   layout gives; `--output` names another file, and `--html` also writes the
@@ -1231,8 +1235,9 @@ metadata, and "nimblescape Markdown Paper" as its creator.
 
 **The pages in the Markdown preview.** The Markdown preview of VS Code shows
 the pages of a paper document ([R-DOC-004](#r-doc-004)) in its layout, as the
-PDF prints them ([R-PRV-005](#r-prv-005)). "Show Page Preview" in the title
-bar of a paper document opens the Markdown preview beside the text editor;
+PDF prints them ([R-PRV-005](#r-prv-005)). "Open Preview to the Side" of VS
+Code in the title bar, and "Show Page Preview" in the Command Palette, open
+the Markdown preview beside the text editor;
 the keys and buttons of the Markdown preview of VS Code work as for any
 Markdown file, and VS Code restores the preview after a restart. A file of
 the clean editing view of Markdown Notes shows the pages of its text
@@ -2553,6 +2558,14 @@ requirement ([R-GEN-007](#r-gen-007)).
     the selected argument, as in the text editor (decision 79 of Markdown
     Notes). The other choice was "Research" in the format bar of the editor
     only.
+75. **"Export PDF" in the three views** ([R-DOC-004](#r-doc-004),
+    [R-PDF-001](#r-pdf-001)): the button "Export PDF" is in the menu "Run"
+    of the title of the three views of a paper document, Text Editor,
+    Markdown Preview and Markdown Editor (decision 81 of Markdown Notes).
+    "Show Page Preview" leaves the title and stays in the Command Palette,
+    because "Open Preview to the Side" of VS Code does the same and VS Code
+    shows at most eight buttons in the title. The other choice was "Export
+    PDF" only in the text editor and the preview to the side.
 
 ## Open questions
 

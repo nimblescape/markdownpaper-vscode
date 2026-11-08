@@ -16,6 +16,7 @@ import type { Layout } from '@nimblescape/markdownlayout';
 import * as vscode from 'vscode';
 import { markdownExtensions, plantUmlOptions } from './markdownExtensions';
 import { fileOf, textOf } from './notesApi';
+import { activeViewFile } from './paperDocuments';
 import { downloadRemote, findRemotes, previewUrl, type RemoteLayout, type RemoteSpec, remoteName } from './paper/gallery';
 import type { Fetcher } from './paper/lookup';
 import { clonesFolder, type Reference, referencesOf } from './paper/references';
@@ -44,7 +45,7 @@ const decoder = new TextDecoder();
 
 /**
  * targetOf returns the file of a command: the file of the Explorer, else of the active Markdown preview, else of the
- * active text editor.
+ * view "Markdown Editor" of Markdown Notes, else of the active text editor.
  * @param context - The context.
  * @param uri - The URI that the Explorer or a menu passes, or the text of a URI of a command link, if any.
  */
@@ -59,6 +60,10 @@ function targetOf(context: Context, uri: unknown): vscode.Uri | undefined {
   const preview = context.previewFile();
   if (preview) {
     return preview;
+  }
+  const view = activeViewFile();
+  if (view) {
+    return fileOf(view);
   }
   const editor = vscode.window.activeTextEditor;
   return editor && editor.document.languageId === 'markdown' ? fileOf(editor.document.uri) : undefined;

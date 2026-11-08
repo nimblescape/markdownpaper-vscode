@@ -16,7 +16,7 @@
 import type MarkdownIt from 'markdown-it';
 import * as vscode from 'vscode';
 import { citeCommand, citeContext, connectZoteroCommand, updateSourcesCommand } from './cite';
-import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, openRepositoryCommand, updateLayoutCommand } from './commands';
+import { exportPdfCommand, getCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, openRepositoryCommand } from './commands';
 import { registerEditorParts, registerFrontMatterRules } from './editorParts';
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
@@ -38,7 +38,7 @@ export const commands = {
   newProject: 'nimblescape.markdownPaper.newProject',
   newDocument: 'nimblescape.markdownPaper.newDocument',
   newLayout: 'nimblescape.markdownPaper.newLayout',
-  updateLayout: 'nimblescape.markdownPaper.updateLayout',
+  getLayoutsAndRepositories: 'nimblescape.markdownPaper.getLayoutsAndRepositories',
   openRepository: 'nimblescape.markdownPaper.openRepository',
   connectZotero: 'nimblescape.markdownPaper.connectZotero',
   updateSources: 'nimblescape.markdownPaper.updateSourcesFromZotero',
@@ -122,7 +122,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     vscode.commands.registerCommand(commands.newProject, (uri?: unknown) => newProjectCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.newDocument, (uri?: unknown) => newDocumentCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.newLayout, (uri?: unknown) => newLayoutCommand(commandContext, uri)),
-    vscode.commands.registerCommand(commands.updateLayout, (uri?: unknown) => updateLayoutCommand(commandContext, uri)),
+    vscode.commands.registerCommand(commands.getLayoutsAndRepositories, (uri?: unknown) => getCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.openRepository, (uri?: unknown, name?: unknown) => openRepositoryCommand(commandContext, uri, name)),
     vscode.languages.registerDocumentLinkProvider(referenceLinkSelector, new ReferenceLinks(commands.openRepository)),
     vscode.commands.registerCommand(commands.connectZotero, () => connectZoteroCommand(citations)),

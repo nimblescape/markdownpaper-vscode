@@ -88,7 +88,7 @@ mp instructions document
 | `new layout <folder>` | Copies a layout into a new folder (`--from <name>`, `--language <tag>`). |
 | `layouts` | Lists the layouts that `create` offers, with the layouts on GitHub and their previews. |
 | `preview <layout folder>` | Writes the preview PDF of a layout, the PDF of its empty paper document; `--write` also writes the formatted document back. |
-| `get [<file>...]` | Clones each repository that the papers of the project name, their layouts (`layout`) and the repositories of their listings (`repos`), into `.markdownpaper/repos/<name>/`, which Git ignores, and checks out the rev of each reference: a branch on the local branch of the same name, which it pulls only with a fast-forward, and a tag or a commit without a branch. A clone with changes that are not committed, or with commits that are not pushed, stays as it is, with a warning and the exit code 1. It also updates the copies of layouts on GitHub in `layouts/` from their repositories: the files that only the repository changed get their new versions, and the changes of the project stay; `--force` also replaces the files that both changed. `-u` moves each reference to a tag to the newest tag of its repository. It asks GitHub without a sign-in whether each repository of `repos` is public, for the link of a listing in the PDF. Without a file, each paper of the project. |
+| `get [<file>...]` | Clones each repository that the papers of the project name, their layouts (`layout`) and the repositories of their listings (`repos`), into `.markdownpaper/repos/<name>/`, which Git ignores, and checks out the rev of each reference: a branch on the local branch of the same name, which it pulls only with a fast-forward, and a tag or a commit without a branch. A clone with changes that are not committed, or with commits that are not pushed, stays as it is, with a warning and the exit code 1. A copy of a layout in `layouts/` stays as it is. `-u` moves each reference to a tag to the newest tag of its repository. It asks GitHub without a sign-in whether each repository of `repos` is public, for the link of a listing in the PDF. Without a file, each paper of the project. |
 | `get <owner>/<repository>[@<rev>] [<file>]` | Writes the reference into `repos` of the paper and clones the repository. Without a rev, a terminal shows a list of the default branch, the other branches and the tags, with the default branch marked; without a terminal, or with `--yes`, it takes the default branch. The front matter always gets the rev. `--name <name>` names the reference. |
 | `build <file>` | Writes the PDF beside the file, with the name that the layout gives. `--output <file.pdf>`, `--html <file.html>`, `--browser <program>`, `--download-browser` (download Chromium once when no browser is installed). |
 | `check <file>...` | Checks the front matter against the layout and the links to figures and tables. |
@@ -100,8 +100,8 @@ mp instructions document
 | `--version` | Shows the version of the command and of the format of the layouts. |
 
 The exit code is 0 for success, 1 when a document has problems, an input of
-`source` gave no source, or `get` left a copy of a layout as it is because the
-project and the repository changed the same files, and 2 for a wrong command or
+`source` gave no source, or `get` left a clone as it is because of changes that
+are not committed or commits that are not pushed, and 2 for a wrong command or
 option, or a failure, also of Git. `get` runs Git with your access to GitHub; in
 CI, a token in `GITHUB_TOKEN` or `GH_TOKEN` gives Git the access to private
 repositories.

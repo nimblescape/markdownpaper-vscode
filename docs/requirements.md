@@ -1241,6 +1241,13 @@ setting `previewDelay`, [R-SET-001](#r-set-001)), and after a change of a
 file of the layout. It makes the new pages beside the old ones and then shows
 them, so the pages do not flicker, and it keeps the place on the page.
 
+VS Code loads the page of the preview again for "Markdown: Refresh Preview"
+and for each change that an extension asks for in this way, for example a
+note that Markdown Notes selects. The pages then show at the place of the
+pages of before, not at the top: the script of the pages keeps the place of
+the pages of its file in the storage of the page (`sessionStorage`), which
+stays when VS Code loads the page again.
+
 ### R-PRV-003
 
 **From a page to the line, and back.** The pages keep the lines of the file
@@ -1305,8 +1312,9 @@ Markdown preview as VS Code shows it.
 **The functions of plugins on the pages.** Every function that a Markdown
 plugin gives the Markdown preview works on the pages as well
 ([decision 20](#decisions)). For Markdown Notes: the highlights of the notes,
-a click on a highlight that selects its note, and "Add Note" above a selected
-passage.
+a click on a highlight that selects its note, a click on a thread of its side
+view that scrolls the pages to the highlight of its note and shows it
+selected, and "Add Note" above a selected passage.
 
 - The pages are copies of the blocks of the preview, with their attributes,
   among them `data-line`; a script that listens on the document, not on one
@@ -1321,7 +1329,15 @@ passage.
   more after the next pause.
 - After each new set of pages, the script of the pages sends the event
   `nimblescape-paper-rendered` to `window`, with the number of the pages, so
-  that another script can mark the pages again.
+  that another script can mark the pages again. The pages stand at their
+  place before the event ([R-PRV-002](#r-prv-002)), so a script that scrolls
+  to a place on the pages after the event, such as the one of Markdown
+  Notes, has the last word.
+- When the preview is narrower than a page, the pages get smaller with the
+  CSS property `zoom`. The browser of VS Code has no standardized zoom: it
+  gives the rectangles of text and elements in the pages in the coordinates
+  of the pages, smaller by the zoom. A script that places an element outside
+  the pages at a text on the pages multiplies these rectangles by the zoom.
 - The text on the pages has soft hyphens (U+00AD) where the layout
   hyphenates words ([R-REN-007](#r-ren-007)); a script that compares a
   selected passage with the Markdown text leaves them out. The text of a page

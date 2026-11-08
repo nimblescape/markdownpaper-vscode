@@ -13,7 +13,10 @@
 //    sheets and the templates of the layout, in a hidden area before the content; in the copy, each PlantUML block of
 //    nimblescape PlantUML gets copies of the diagrams that the extension drew into its shadow root (paperDrawings.js);
 // 3. shows the new pages in place of the old ones, so the pages do not flicker, and keeps the place on the page; the
-//    pages get smaller when the preview is narrower than a page;
+//    pages get smaller when the preview is narrower than a page. VS Code loads the page of the preview again for
+//    "Markdown: Refresh Preview", and so also each time Markdown Notes selects a note; it then puts the empty page at
+//    the top, before the pages exist. The script keeps the place of the pages of its source in the storage of the
+//    page, which stays over such a load, and the first pages after a load show at that place;
 // 4. lets VS Code read the lines of the blocks again, now on the pages, so that the double click to the line and the
 //    scrolling with the text editor work: VS Code keeps the blocks of a version of the content, and the script sends
 //    the last content of VS Code once more, which counts as a new version and changes nothing on the pages;
@@ -47,6 +50,10 @@
   let pagedJs;
   /** The style sheets of VS Code that the script switched off for a paper document. */
   const switchedOff = new Set();
+  /** The key of the place of the pages in the storage of the page (sessionStorage), which stays when VS Code loads the page again. */
+  const placeKey = 'nimblescape-paper-place';
+  /** The place of the pages of the source before VS Code loaded the page, which the first pages take; then undefined. */
+  let restore = readPlace();
   let headWatch;
   let themeWatch;
 
@@ -56,6 +63,29 @@
       return JSON.parse((element && element.getAttribute('data-settings')) || '{}').source;
     } catch {
       return undefined;
+    }
+  }
+
+  // readPlace returns the place of the pages of the source that the page kept before VS Code loaded it again, or
+  // undefined.
+  function readPlace() {
+    try {
+      const place = JSON.parse(sessionStorage.getItem(placeKey) || 'null');
+      return place && place.source === source && typeof place.top === 'number' ? place : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  // keepPlace keeps the place of the pages that show, with their source, in the storage of the page.
+  function keepPlace() {
+    if (typeof source !== 'string' || !document.body.classList.contains('nimblescape-paper-mode') || !document.querySelector('.nimblescape-paper-pages')) {
+      return;
+    }
+    try {
+      sessionStorage.setItem(placeKey, JSON.stringify({ source, top: window.scrollY, left: window.scrollX }));
+    } catch {
+      // A page without storage starts at the top after a load.
     }
   }
 
@@ -346,7 +376,14 @@
     previewer = next;
     area.className = 'nimblescape-paper-pages';
     fit();
-    window.scrollTo(0, scroll);
+    if (restore) {
+      // The first pages after VS Code loaded the page again stand where the pages of before stood.
+      window.scrollTo(restore.left || 0, restore.top);
+      restore = undefined;
+    } else {
+      window.scrollTo(0, scroll);
+    }
+    keepPlace();
     indicator(false);
     // VS Code reads the lines of the blocks again, now on the pages.
     echo = true;
@@ -389,6 +426,8 @@
     const width = page.getBoundingClientRect().width / zoom;
     pages.style.zoom = String(Math.min(1, Math.max(0.25, (document.documentElement.clientWidth - 24) / width)));
   }
+
+  window.addEventListener('scroll', keepPlace, { passive: true });
 
   let resizeTimer;
   window.addEventListener('resize', () => {

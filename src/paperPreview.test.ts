@@ -255,4 +255,44 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       await running.close();
     }
   });
+
+  it.skipIf(!browser)('shows the first pages after VS Code loaded the page again at the place of the pages of before', { timeout: 90_000 }, async () => {
+    const paragraph = 'Ein Absatz über die Arbeit von Teams mit Agenten. '.repeat(12);
+    const text = `---\nlayout: plain\ntitle: Agenten\nauthor: Hannes\n---\n\n# Einleitung\n\n${`${paragraph}\n\n`.repeat(30)}`;
+    const paper = await paperContent(text);
+    const page = writePage();
+    const running = await Browser.launch(browser as string);
+    try {
+      const { targetId } = (await running.send('Target.createTarget', { url: 'about:blank' })) as { targetId: string };
+      const { sessionId } = (await running.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
+      const session = { browser: running, id: sessionId };
+      await running.send('Page.enable', {}, sessionId);
+      const open = async (navigate: () => Promise<unknown>) => {
+        const loaded = running.once('Page.loadEventFired', sessionId);
+        await navigate();
+        await loaded;
+        await evaluate(session, `window.show(${JSON.stringify(paper)})`);
+        await evaluate(session, waitFor('window.rendered.length > 0'));
+      };
+      await open(() => running.send('Page.navigate', { url: pathToFileURL(page).href }, sessionId));
+      const top = await evaluate<number>(
+        session,
+        `new Promise((resolve) => { window.scrollTo(0, 1500); setTimeout(() => resolve(window.scrollY), 200); })`,
+      );
+      expect(top).toBeGreaterThan(1000);
+
+      // VS Code loads the page again, as for "Markdown: Refresh Preview", and scrolls the empty page to its top.
+      await open(() => running.send('Page.reload', {}, sessionId));
+      const after = await evaluate<{ top: number; pages: number }>(session, `({ top: window.scrollY, pages: document.querySelectorAll('.nimblescape-paper-pages .pagedjs_page').length })`);
+      expect(after.pages).toBeGreaterThan(3);
+      expect(Math.abs(after.top - top)).toBeLessThanOrEqual(1);
+
+      // Another document in the same page starts at its top.
+      await evaluate(session, `sessionStorage.setItem('nimblescape-paper-place', JSON.stringify({ source: 'file:///other.md', top: 900, left: 0 }))`);
+      await open(() => running.send('Page.reload', {}, sessionId));
+      expect(await evaluate<number>(session, 'window.scrollY')).toBe(0);
+    } finally {
+      await running.close();
+    }
+  });
 });

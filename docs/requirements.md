@@ -1270,6 +1270,16 @@ pages of before, not at the top: the script of the pages keeps the place of
 the pages of its file in the storage of the page (`sessionStorage`), which
 stays when VS Code loads the page again.
 
+The script also keeps the last pages of its file in this storage, with their
+styles and a key of the content they come from. When VS Code loads the page
+again for the same content, the pages of before show again at once, without
+a new layout: for example, a click on a note changes only the selected note.
+The attributes `data-selected`, `data-reveal`, `data-deselect` and
+`data-hidden`, with which Markdown Notes marks the selected note and the
+hidden highlights, do not count for the key. The pages show after VS Code
+has scrolled the empty page. Pages too large for the storage are not kept,
+and the page makes them again after each load.
+
 ### R-PRV-003
 
 **From a page to the line, and back.** The pages keep the lines of the file
@@ -1362,6 +1372,11 @@ selected, and "Add Note" above a selected passage.
   place before the event ([R-PRV-002](#r-prv-002)), so a script that scrolls
   to a place on the pages after the event, such as the one of Markdown
   Notes, has the last word.
+- Pages that show again without a new layout ([R-PRV-002](#r-prv-002)) keep
+  the attributes of a state of before (`data-selected`, `data-reveal`,
+  `data-deselect`, `data-hidden`). A script that reads these attributes
+  takes them from the content of VS Code, as the script of Markdown Notes
+  does.
 - When the preview is narrower than a page, the pages get smaller with the
   CSS property `zoom`. The browser of VS Code has no standardized zoom: it
   gives the rectangles of text and elements in the pages in the coordinates

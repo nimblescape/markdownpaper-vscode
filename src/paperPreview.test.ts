@@ -47,11 +47,20 @@ afterAll(() => {
 });
 
 /**
+ * githubWrapper puts the HTML of a rendering into the elements of the markdown-it plugin of "Markdown Preview Github
+ * Styling" (bierner.markdown-preview-github-styles 2.2.0), which wraps the whole HTML of the Markdown preview.
+ * @param html - The HTML.
+ */
+const githubWrapper = (html: string): string =>
+  `<div\n            class="github-markdown-body"\n            data-color-mode="auto"\n            data-light-theme="light"\n            data-dark-theme="dark"\n        >\n            <div class="github-markdown-content">${html}</div>\n        </div>`;
+
+/**
  * paperContent returns the content `.markdown-body` of a paper document in the layout "plain", as the plugin of the
  * extension renders it in the Markdown preview: the hidden element with the layout first.
  * @param text - The Markdown text.
+ * @param wrap - The elements that the plugin of another extension puts around the whole HTML, if any.
  */
-async function paperContent(text: string): Promise<string> {
+async function paperContent(text: string, wrap: (html: string) => string = (html) => html): Promise<string> {
   const document = pathToFileURL(path.join(folder, 'paper.md')).href;
   const frontMatter = readFrontMatter(text);
   const loaded = await loadLayout({ reader: fileReader, builtinLayouts: folderUrl(path.join(repository, 'layouts')) }, document, frontMatter);
@@ -68,7 +77,7 @@ async function paperContent(text: string): Promise<string> {
   const data = { layout: loaded.layout.id, language: loaded.layout.language, styles: [baseCss, ...composed.styles, composed.variables], before: composed.before, after: composed.after, attributes: composed.attributes, delay: 0 };
   // A diagram as the script of Mermaid of VS Code draws it: an SVG element whose style sheet names its ID.
   const diagram = '<pre class="mermaid" id="mermaid-1"><svg id="dmermaid-1"><style>#dmermaid-1 rect { fill: rgb(1, 2, 3); }</style><rect width="40" height="20"></rect></svg></pre>';
-  return `<div class="markdown-body"><div class="nimblescape-paper" hidden data-paper="${escapeHtml(JSON.stringify(data))}"></div>\n${body.html}${diagram}</div>`;
+  return `<div class="markdown-body">${wrap(`<div class="nimblescape-paper" hidden data-paper="${escapeHtml(JSON.stringify(data))}"></div>\n${body.html}${diagram}`)}</div>`;
 }
 
 /** page is the stand-in of the Markdown preview of VS Code, with the script and the style of the pages. */
@@ -77,6 +86,13 @@ function writePage(): string {
   fs.writeFileSync(path.join(folder, 'markdown-language-features', 'markdown.css'), 'body { padding: 0 26px; font-size: 14px; }\n');
   // A style sheet of the setting `markdown.styles` of a workspace, which sets the font of every text with !important.
   fs.writeFileSync(path.join(folder, 'user.css'), 'body, p, h1 { font-family: Georgia, serif !important; letter-spacing: 0.04em; }\n');
+  // The rules of the style sheets of "Markdown Preview Github Styling" for its elements around the whole HTML
+  // (githubWrapper): the space around the text, the font, and the line below a heading. They stay on.
+  fs.mkdirSync(path.join(folder, 'bierner.markdown-preview-github-styles', 'dist'), { recursive: true });
+  fs.writeFileSync(
+    path.join(folder, 'bierner.markdown-preview-github-styles', 'dist', 'base.css'),
+    '.github-markdown-content { padding: 32px !important; max-width: 980px; margin: 0 auto; }\n.github-markdown-body { font-family: system-ui, sans-serif; font-size: 16px; line-height: 1.5; }\n.github-markdown-body h1 { padding-bottom: .3em; border-bottom: 1px solid #d1d9e0; }\n',
+  );
   fs.copyFileSync(path.join(repository, 'media', 'paperPreview.js'), path.join(folder, 'paperPreview.js'));
   fs.copyFileSync(path.join(repository, 'media', 'paperPreview.css'), path.join(folder, 'paperPreview.css'));
   fs.writeFileSync(path.join(folder, 'paperLayout.js'), layoutScript);
@@ -94,6 +110,7 @@ function writePage(): string {
 <link rel="stylesheet" href="markdown-language-features/markdown.css">
 <link rel="stylesheet" href="paperPreview.css">
 <link rel="stylesheet" class="code-user-style" data-source="user.css" href="user.css" type="text/css" media="screen">
+<link rel="stylesheet" href="bierner.markdown-preview-github-styles/dist/base.css">
 </head>
 <body class="vscode-body vscode-dark">
 <script src="paperPreview.js"></script>
@@ -251,6 +268,48 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
         })`,
       );
       expect(notes).toEqual({ pages: 0, dark: true, vscodeSheets: [false, false, false] });
+    } finally {
+      await running.close();
+    }
+  });
+
+  it.skipIf(!browser)('leaves out of the pages the elements that the plugin of another extension puts around the whole content, with their space and their font (R-PRV-005)', { timeout: 90_000 }, async () => {
+    const paragraph = 'Ein Absatz über die Arbeit von Teams mit Agenten. '.repeat(12);
+    const text = `---\nlayout: plain\ntitle: Agenten\nauthor: Hannes\n---\n\n# Einleitung\n\n${paragraph}\n`;
+    const paper = await paperContent(text, githubWrapper);
+    const page = writePage();
+    const running = await Browser.launch(browser as string);
+    try {
+      const { targetId } = (await running.send('Target.createTarget', { url: 'about:blank' })) as { targetId: string };
+      const { sessionId } = (await running.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
+      const session = { browser: running, id: sessionId };
+      await running.send('Page.enable', {}, sessionId);
+      const loaded = running.once('Page.loadEventFired', sessionId);
+      await running.send('Page.navigate', { url: pathToFileURL(page).href }, sessionId);
+      await loaded;
+      await evaluate(session, `window.show(${JSON.stringify(paper)})`);
+      await evaluate(session, waitFor('window.rendered.length > 0'));
+      const state = await evaluate<{ wrappers: number; hidden: number; heading: string; left: number; right: number; line: string; font: string; diagram: number }>(
+        session,
+        `(() => {
+          const pages = document.querySelector('.nimblescape-paper-pages');
+          pages.style.zoom = '1';
+          const area = pages.querySelector('.pagedjs_page_content').getBoundingClientRect();
+          const text = pages.querySelector('p').getBoundingClientRect();
+          return {
+            wrappers: pages.querySelectorAll('.github-markdown-body, .github-markdown-content').length,
+            hidden: pages.querySelectorAll('.nimblescape-paper').length,
+            heading: pages.querySelector('h1').textContent,
+            left: Math.round(text.left - area.left),
+            right: Math.round(area.right - text.right),
+            line: getComputedStyle(pages.querySelector('h1')).borderBottomStyle,
+            font: getComputedStyle(pages.querySelector('p')).fontFamily,
+            diagram: pages.querySelectorAll('svg[id="nimblescape-paper-dmermaid-1"]').length,
+          };
+        })()`,
+      );
+      // The text starts at the margin of the page, as in the PDF, without the space, the font and the heading of GitHub.
+      expect(state).toEqual({ wrappers: 0, hidden: 0, heading: expect.stringContaining('Einleitung'), left: 0, right: 0, line: 'none', font: expect.not.stringContaining('system-ui'), diagram: 1 });
     } finally {
       await running.close();
     }

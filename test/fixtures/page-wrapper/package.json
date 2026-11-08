@@ -1,0 +1,20 @@
+{
+  "name": "page-wrapper",
+  "displayName": "Page wrapper (test)",
+  "description": "A test extension of the tests in VS Code: its markdown-it plugin puts elements around the whole HTML of the Markdown preview, as the extension \"Markdown Preview Github Styling\" does.",
+  "version": "0.0.0",
+  "private": true,
+  "publisher": "nimblescape-test",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.125.0"
+  },
+  "main": "./extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "markdown.markdownItPlugins": true,
+    "markdown.previewStyles": [
+      "./page.css"
+    ]
+  }
+}

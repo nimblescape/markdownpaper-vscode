@@ -855,12 +855,15 @@
     return document.body.classList.contains('nimblescape-paper-mode') && document.querySelector('.nimblescape-paper-pages') !== null;
   }
 
-  // Ctrl or Cmd with + or = zooms in, with - zooms out, with 0 gives the mode "width". The script listens on the window
-  // before VS Code, which would otherwise zoom the whole window.
+  // Ctrl (on macOS Cmd) with + or = zooms in, with - zooms out, with 0 gives the mode "width". The script listens on the
+  // window before VS Code, which would otherwise zoom the whole window. On macOS, Ctrl+- is Go Back of VS Code, which
+  // goes back after a jump on the pages (R-PRV-004), so only Cmd zooms there.
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
   window.addEventListener(
     'keydown',
     (event) => {
-      if (!(event.ctrlKey || event.metaKey) || event.altKey || !paperShows()) {
+      const primary = mac ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
+      if (!primary || event.altKey || !paperShows()) {
         return;
       }
       const code = event.code;

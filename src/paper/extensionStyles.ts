@@ -27,6 +27,7 @@ export const lightThemeColors: Readonly<Record<string, string>> = {
   '--vscode-editor-background': '#ffffff',
   '--vscode-editor-foreground': '#3b3b3b',
   '--vscode-editorWidget-background': '#f8f8f8',
+  '--vscode-editorWidget-foreground': '#3b3b3b',
   '--vscode-editorWidget-border': '#c8c8c8',
   '--vscode-focusBorder': '#005fb8',
   '--vscode-editorError-foreground': '#e51400',

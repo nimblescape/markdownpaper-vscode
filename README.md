@@ -36,7 +36,8 @@ Node.js 22 or newer.
   A global `mp` comes first.
 - **Page preview.** The pages are in the Markdown preview of VS Code. The
   extension gives it a markdown-it plugin, a script and a style sheet, as
-  other Markdown extensions do. The preview keeps the rules of safety of
+  other Markdown extensions do. The pages take the same text and the same
+  style sheets as the PDF. The preview keeps the rules of safety of
   VS Code: only the scripts of the extensions run, among them the script of
   the pages and Paged.js; a script in a Markdown file or in a layout does not
   run.
@@ -81,8 +82,8 @@ Node.js 22 or newer.
   preview scrolls with the text editor, and a double click on a page shows
   its line in the text editor. The other Markdown extensions work on the
   pages: the diagrams of Mermaid, the math of KaTeX, and the highlights and
-  "Add Note" of Markdown Notes. The pages are white paper also in a dark
-  theme.
+  "Add Note" of Markdown Notes. The pages show what Export PDF prints. The
+  pages are white paper also in a dark theme.
 - **Numbers and lists.** The headings get numbers such as 1.1. The table of
   contents, the list of figures, the list of tables and the list of listings
   show the lists of the file with the page numbers. A paragraph

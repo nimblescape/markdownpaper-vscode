@@ -17,6 +17,10 @@
  * renderer the PDF has from its npm package in every case ([R-REN-015](../docs/requirements.md#r-ren-015)), and this
  * extension. The PDF draws the PlantUML diagrams with the settings of nimblescape PlantUML for the document and with
  * the files of the workspace folders, as the extension does.
+ *
+ * The pages of the Markdown preview take the same parts ([R-PRV-005](../docs/requirements.md#r-prv-005)), and the
+ * markdown-it plugin of Markdown Notes in its place among them, which writes the highlights of the notes that the
+ * script of Markdown Notes paints on the pages.
  */
 
 import { defaultSettings, settingsOf, settingsSection } from '@nimblescape/plantuml';
@@ -53,31 +57,22 @@ const decoder = new TextDecoder();
  * document in `currentDocument`. An extension that does not start or a file that cannot be read is left out.
  * @param own - The folder of this extension, which is left out.
  * @param document - The URI of the document.
+ * @param options - `notes: true` keeps the markdown-it plugin of Markdown Notes, for the pages of the Markdown preview;
+ *   its style sheets and scripts stay out, since the preview has them itself.
  */
-export async function markdownExtensions(own: vscode.Uri, document: vscode.Uri): Promise<MarkdownExtensions> {
+export async function markdownExtensions(own: vscode.Uri, document: vscode.Uri, options: { notes?: boolean } = {}): Promise<MarkdownExtensions> {
   const plugins: MarkdownPlugin[] = [];
   const styles: string[] = [];
   const scripts: Script[] = [];
   for (const extension of vscode.extensions.all) {
-    if (
-      extension.id === markdownExtensionId ||
-      extension.id === notesExtensionId ||
-      extension.id === plantUmlExtensionId ||
-      extension.extensionUri.toString() === own.toString()
-    ) {
+    const notes = extension.id === notesExtensionId;
+    if (extension.id === markdownExtensionId || (notes && !options.notes) || extension.id === plantUmlExtensionId || extension.extensionUri.toString() === own.toString()) {
       continue;
     }
     const contributes = ((extension.packageJSON as { contributes?: Contributes }).contributes ?? {}) satisfies Contributes;
-    if (contributes['markdown.markdownItPlugins']) {
-      try {
-        const exports = (extension.isActive ? extension.exports : await extension.activate()) as MarkdownExports | undefined;
-        const extend = exports?.extendMarkdownIt;
-        if (typeof extend === 'function') {
-          plugins.push((md) => extend.call(exports, md));
-        }
-      } catch {
-        // An extension that does not start gives nothing, as in the Markdown preview.
-      }
+    await addPlugin(extension, contributes, plugins);
+    if (notes) {
+      continue;
     }
     for (const style of contributes['markdown.previewStyles'] ?? []) {
       const file = vscode.Uri.joinPath(extension.extensionUri, style);
@@ -93,6 +88,28 @@ export async function markdownExtensions(own: vscode.Uri, document: vscode.Uri):
     }
   }
   return { plugins, styles, scripts, env: { currentDocument: document } };
+}
+
+/**
+ * addPlugin adds the markdown-it plugin of an extension, from `extendMarkdownIt` of its export after its activation.
+ * An extension that does not start gives nothing, as in the Markdown preview.
+ * @param extension - The extension.
+ * @param contributes - The part of its manifest that adds to the Markdown preview.
+ * @param plugins - The plugins.
+ */
+async function addPlugin(extension: vscode.Extension<unknown>, contributes: Contributes, plugins: MarkdownPlugin[]): Promise<void> {
+  if (!contributes['markdown.markdownItPlugins']) {
+    return;
+  }
+  try {
+    const exports = (extension.isActive ? extension.exports : await extension.activate()) as MarkdownExports | undefined;
+    const extend = exports?.extendMarkdownIt;
+    if (typeof extend === 'function') {
+      plugins.push((md) => extend.call(exports, md));
+    }
+  } catch {
+    // An extension that does not start gives nothing, as in the Markdown preview.
+  }
 }
 
 /**

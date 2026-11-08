@@ -927,8 +927,10 @@ Table 1: Noten nach Schulstufe <a id="tab-grades"></a>
 extensions of VS Code add to the Markdown preview, for example the diagrams of
 Mermaid and PlantUML ([decision 17](#decisions)).
 
-- In the page preview, the plugins work because the pages are in the
-  Markdown preview of VS Code ([R-PRV-005](#r-prv-005)).
+- In the page preview, the pages have the text of the renderer of the PDF
+  with the same plugins and the style sheets of the PDF, and the scripts of
+  the extensions draw in it, because the pages are in the Markdown preview of
+  VS Code ([R-PRV-005](#r-prv-005)).
 - For the PDF, the renderer takes the markdown-it plugins of the extensions
   that contribute `markdown.markdownItPlugins`, as the Markdown preview of
   VS Code does: the extension activates them and gives their function
@@ -1124,10 +1126,11 @@ included files and the same layout engine ([decision 49](#decisions)).
 - The diagrams include files (`!include`) relative to the folder of the
   document, only from that folder and the workspace folders in VS Code, or
   the workspace folder of the document on the command line, up to 1 MB each.
-- The page preview in the Markdown preview of VS Code shows the diagrams that
-  the installed extension draws, and copies them onto the pages
-  ([R-PRV-005](#r-prv-005)); without the extension the pages show the text of
-  the block.
+- The page preview in the Markdown preview of VS Code has the PlantUML blocks
+  of the renderer of the PDF ([R-PRV-005](#r-prv-005)). The installed
+  extension draws them; without the extension, the script of the page of the
+  PDF from the npm package draws them, with the same settings. The pages get
+  copies of the diagrams.
 - The development tools install the package from npmjs.com at a fixed
   version of `package.json`, and `THIRD-PARTY-NOTICES.md` names that
   version ([R-GEN-004](#r-gen-004)).
@@ -1307,37 +1310,54 @@ shows its pages: there is no other view for the pages ([decision
 17](#decisions), [decision 20](#decisions)). A notes document keeps the
 Markdown preview as VS Code shows it.
 
+The pages take the same inputs as the page of the PDF, from the same code, so
+that they depend only on the text, the layout and the installed Markdown
+extensions, never on what the preview of VS Code or another extension does
+with the text ([decision 77](#decisions), [R-GEN-010](#r-gen-010)): the text
+of the renderer of the PDF, with the same markdown-it plugins as the PDF
+([R-REN-010](#r-ren-010)), and exactly the style sheets of the page of the
+PDF, in the same order.
+
 - The extension gives VS Code a markdown-it plugin, as other extensions do
   (`markdown.markdownItPlugins`). For a paper document, the plugin adds the
   steps of the renderer ([R-REN-002](#r-ren-002) to [R-REN-009](#r-ren-009))
-  and a hidden element with the layout: its style sheets, its templates
-  filled with the fields, and the language.
+  to the tokens of VS Code, which VS Code also gives its outline. The HTML of
+  the preview is a hidden element with the layout, its templates filled with
+  the fields, the language and the style sheets of the page of the PDF, and
+  then the text of the renderer of the PDF, not the HTML of the markdown-it of
+  VS Code. The renderer has the markdown-it plugins of the PDF, those of the
+  Markdown extensions of VS Code and of the PlantUML diagrams, and the plugin
+  of Markdown Notes, which writes the highlights of the notes
+  ([R-PRV-006](#r-prv-006)).
 - The script of the pages (`markdown.previewScripts`) finds that element after
   each update of the preview, waits until the scripts of other extensions
-  have drawn their content, for example the diagrams of Mermaid and of
-  nimblescape PlantUML, and lets Paged.js make the pages from a copy of the
-  content of the preview. The copy gets the PlantUML diagrams, which the
-  extension draws into shadow roots, as elements of their own
+  have drawn their content, for example the diagrams of Mermaid and the
+  PlantUML diagrams, and lets Paged.js make the pages from a copy of the
+  blocks of the text. The copy gets the PlantUML diagrams, which their script
+  draws into shadow roots, as elements of their own
   ([R-REN-015](#r-ren-015)).
-- The copy holds only the blocks of the text, as in the PDF: the hidden
-  element with the layout stands where the HTML of the text starts, and the
-  copy takes the blocks next to it. Elements that the markdown-it plugin of
-  another extension puts around the whole HTML of the preview are not on the
-  pages, also not in a footnote, for example the elements of "Markdown
-  Preview Github Styling" with the space, the font and the headings of
-  GitHub; so the text starts at the margins of the layout. The style sheets
-  of other extensions stay.
+- Elements that the markdown-it plugin of another extension puts around the
+  whole HTML of the preview, for example the elements of "Markdown Preview
+  Github Styling", are not on the pages, as they are not in the PDF; so the
+  text starts at the margins of the layout.
 - The pages stand before the content of the preview, which stays in the page
   but hidden, so that the scripts of other extensions keep their elements and
-  VS Code finds the lines on the pages. After the new pages show, the script
+  VS Code finds the lines on the pages: each block with a line gets the class
+  of the lines of VS Code (`code-line`). After the new pages show, the script
   lets VS Code read the lines of the pages again.
-- While a paper document shows, the style sheets of the Markdown preview of
-  VS Code, the style sheets of the setting `markdown.styles` and the styles of
-  the theme do not apply, as in the PDF, so the text has the fonts and sizes
-  of the layout; the pages are white paper also in a dark theme. The colors of
-  the theme that the scripts of other extensions read for their drawings, such
-  as the diagrams of Mermaid, get the values of the light theme "Light Modern"
-  of VS Code, so a diagram has the colors of white paper.
+- While a paper document shows, only the style sheets of the page of the PDF
+  apply to the pages. The style sheets of the Markdown preview of VS Code, of
+  the setting `markdown.styles`, of the theme and of other extensions are
+  off; the pages have those of other extensions as the PDF has them. The
+  style sheets of this extension and of Markdown Notes stay on: those of
+  Markdown Notes paint the highlights of the notes, which the PDF does not
+  have. So the text has the fonts and sizes of the layout, and the pages are
+  white paper also in a dark theme. The colors of the theme that the scripts
+  of other extensions read for their drawings, such as the diagrams of
+  Mermaid, get the values of the light theme "Light Modern" of VS Code, so a
+  diagram has the colors of white paper. A button that a script of the
+  preview puts into the content, such as the one of VS Code that copies a
+  code block, does not show on the pages.
 - The front matter of a paper document does not show on the pages: its
   fields go into the templates of the layout. This holds also when the
   markdown-it plugin of another extension shows the front matter in its own
@@ -1366,7 +1386,7 @@ a click on a highlight that selects its note, a click on a thread of its side
 view that scrolls the pages to the highlight of its note and shows it
 selected, and "Add Note" above a selected passage.
 
-- The pages are copies of the blocks of the preview, with their attributes,
+- The pages are copies of the blocks of the text, with their attributes,
   among them `data-line`; a script that listens on the document, not on one
   element, works on them.
 - A script that draws into elements of the preview after each update, such as
@@ -2596,6 +2616,20 @@ requirement ([R-GEN-007](#r-gen-007)).
     editors; the format step keeps the list current at each save. A paper
     has each of these sections at most once. The other choice was to type
     the heading and let the format step write the list at the next save.
+77. **The pages of the preview take the inputs of the PDF**
+    ([R-PRV-005](#r-prv-005), [R-REN-015](#r-ren-015)): the pages in the
+    Markdown preview depend only on the text, the layout and the installed
+    Markdown extensions, as the PDF does. They show the text of the renderer
+    of the PDF with the markdown-it plugins of the PDF, and exactly the style
+    sheets of the page of the PDF; the other style sheets of the preview are
+    off while a paper shows, except those of Paper and Markdown Notes. The
+    PlantUML diagrams show also without the extension nimblescape PlantUML.
+    The pages stay in the preview itself, so the lines, the scrolling and the
+    functions of Markdown Notes work as before. The other choices were the
+    page of the PDF in a frame of the preview, which the rules of safety of
+    the preview allow only with all its files, fonts and engines inside the
+    HTML of each update, and filters for the HTML and the style sheets of
+    other extensions, which a new extension can get around.
 
 ## Open questions
 

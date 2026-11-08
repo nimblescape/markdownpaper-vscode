@@ -132,12 +132,12 @@ test('the pages are part of the Markdown preview of VS Code: a markdown-it plugi
   expect(JSON.stringify(contributes.menus)).not.toContain('hasCustomMarkdownPreview');
 });
 
-test('the style of the pages in the Markdown preview has the colors of the theme and the rules of the diagrams of the PDF (R-PRV-005, R-REN-010)', () => {
+test('the style of the pages in the Markdown preview has the colors of the theme of the PDF, and the pages get the rules of the diagrams with the style sheets of the PDF (R-PRV-005, R-REN-010)', () => {
   const css = fs.readFileSync(path.join(repository, 'media', 'paperPreview.css'), 'utf8');
   for (const [name, value] of Object.entries(lightThemeColors)) {
     expect(css).toContain(`${name}: ${value} !important;`);
   }
-  expect(css.replace(/\s+/g, '')).toContain(drawingsCss.replace(/\s+/g, ''));
+  expect(css.replace(/\s+/g, '')).not.toContain(drawingsCss.replace(/\s+/g, ''));
 });
 
 test('the extension uses no proposed API, and the API of the oldest VS Code version that it supports (R-GEN-002)', () => {

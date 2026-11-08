@@ -70,11 +70,48 @@ async function waitFor<T>(read: () => T | undefined, what: string, timeout = 20_
 const wrapperStart = '<div class="test-page-wrapper"><div class="test-page-content">';
 
 /**
- * paperStart matches the start of the HTML of a paper document in the Markdown preview: the elements of the test
- * extension of test/fixtures/page-wrapper/, the hidden element of the built-in extension Markdown Mermaid with its
- * settings, which its plugin puts before the HTML, and then the hidden element of the layout, where the text starts.
+ * paperStart matches the start of the HTML of a paper document in the Markdown preview: the elements of the plugins
+ * that work after the plugin of the extension, which put elements before or around the whole HTML, such as the test
+ * extension of test/fixtures/page-wrapper/ and the hidden element of the built-in extension Markdown Mermaid with its
+ * settings, and then the hidden element of the layout.
  */
-const paperStart = `^${wrapperStart}(?:<span id="markdown-mermaid"[^>]*></span>\\s*)?<div class="nimblescape-paper" hidden data-paper="`;
+const paperStart = `^(?:${wrapperStart})?(?:<span id="markdown-mermaid"[^>]*></span>\\s*)?<div class="nimblescape-paper" hidden data-paper="`;
+
+/** textStart is the start of the element with the text of a paper document in the Markdown preview. */
+const textStart = '<div class="nimblescape-paper-text">\n';
+
+/**
+ * textOfPreview returns the HTML of a paper document in the Markdown preview from the start of the element
+ * `.nimblescape-paper-text`, with the text of the renderer of the PDF, to the end.
+ * @param rendered - The HTML of the Markdown preview.
+ */
+function textOfPreview(rendered: string): string {
+  const start = rendered.indexOf(textStart);
+  assert.ok(start >= 0, 'the element with the text of the renderer of the PDF');
+  return rendered.slice(start);
+}
+
+/**
+ * dataOfPreview returns the data of the hidden element of a paper document in the Markdown preview.
+ * @param rendered - The HTML of the Markdown preview.
+ */
+function dataOfPreview(rendered: string): { styles: string[]; keep: string[] } {
+  const match = /<div class="nimblescape-paper" hidden data-paper="([^"]*)"><\/div>/.exec(rendered);
+  assert.ok(match, 'the hidden element of the layout');
+  const decoded = match[1].replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  return JSON.parse(decoded) as { styles: string[]; keep: string[] };
+}
+
+/**
+ * pageParts returns the text and the style sheets of the page of the PDF, without the style sheets for the screen.
+ * @param html - The HTML of the page.
+ */
+function pageParts(html: string): { text: string; styles: string[] } {
+  const text = /<main class="paper-text"[^>]*>\n([\s\S]*?)<\/main>/.exec(html);
+  assert.ok(text, 'the text of the page of the PDF');
+  const styles = [...html.matchAll(/<style(?![^>]*media="screen")[^>]*>\n([\s\S]*?)\n<\/style>/g)].map((style) => style[1]);
+  return { text: text[1], styles };
+}
 
 /** folder is the temporary folder of the files of the tests. */
 const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'markdownpaper-vscode-'));
@@ -288,8 +325,6 @@ describe('nimblescape Markdown Paper', function () {
       }
       await new Promise((resolve) => setTimeout(resolve, 200));
     } while (Date.now() < end);
-    // The hidden element stands where the HTML of the text starts: inside the elements of the test extension of
-    // test/fixtures/page-wrapper/, around the whole HTML, which the pages leave out.
     assert.match(rendered, new RegExp(`${paperStart}[^"]*&quot;layout&quot;:&quot;thesis&quot;`));
     assert.match(rendered, /&quot;language&quot;:&quot;de-AT&quot;/);
     assert.match(rendered, /size: A5/, 'the style sheet of the layout');
@@ -299,6 +334,29 @@ describe('nimblescape Markdown Paper', function () {
     // The front matter fills the templates of the layout: neither VS Code nor the plugin of another extension shows it.
     assert.doesNotMatch(rendered, /class="frontmatter"|test_front_matter_table|<t[hd]>(?:layout|title)<\/t[hd]>/, 'no table of the front matter');
     assert.doesNotMatch(rendered.replace(/<div class="nimblescape-paper"[^>]*><\/div>/, ''), /Agenten/, 'no value of the front matter in the text');
+    // The pages take the same inputs as the page of the PDF, from the same code (R-PRV-005): the text of the renderer of
+    // the PDF and exactly the style sheets of the page of the PDF, in the same order.
+    const own = vscode.extensions.getExtension(extensionId)?.extensionUri;
+    assert.ok(own);
+    const pdf = await renderFile(paper.fsPath, {
+      assets: {
+        layouts: vscode.Uri.joinPath(own, 'layouts').fsPath,
+        pagedJs: vscode.Uri.joinPath(own, 'media', 'paged.polyfill.js').fsPath,
+        plantUml: vscode.Uri.joinPath(own, 'media', 'plantuml').fsPath,
+      },
+      text: document.getText(),
+      extensions: await markdownExtensions(own, paper),
+      plantUml: plantUmlOptions(paper),
+    });
+    const parts = pageParts(pdf.html);
+    assert.ok(textOfPreview(rendered).startsWith(`${textStart}${parts.text.replace(/\n$/, '')}</div>\n`), 'the text of the PDF');
+    const data = dataOfPreview(rendered);
+    assert.deepEqual(data.styles, parts.styles, 'the style sheets of the PDF');
+    assert.ok(data.styles.some((css) => /\.katex/.test(css)), 'the style sheet of the built-in extension Markdown Math');
+    assert.ok(
+      data.keep.some((address) => address.endsWith('/media/paperPreview.css')),
+      'the style sheet of the extension stays on in the preview',
+    );
     const notes = await vscode.workspace.openTextDocument(write('paper/notes.md', '---\ntitle: Notizen\n---\n\n# Notizen\n\nText.[^1]\n\n[^1]: Fußnote.\n'));
     const plain = await vscode.commands.executeCommand<string>('markdown.api.render', notes);
     assert.doesNotMatch(plain, /nimblescape-paper|heading-number|class="footnote"/);
@@ -322,9 +380,8 @@ describe('nimblescape Markdown Paper', function () {
       await new Promise((resolve) => setTimeout(resolve, 200));
     } while (Date.now() < end);
     assert.match(rendered, new RegExp(paperStart));
-    // The text of a footnote has no elements of the plugins that put them around the whole HTML: the rule of the
-    // footnotes of the layout of nimblescape Markdown renders it with the method of markdown-it itself (R-PRV-005).
-    assert.equal(rendered.match(/test-page-wrapper|id="markdown-mermaid"/g)?.length, 2, 'the elements of the plugins once, around the whole HTML');
+    // The text, also of a footnote, has no elements of the plugins that put them around the whole HTML (R-PRV-005).
+    assert.doesNotMatch(textOfPreview(rendered), /test-page-wrapper|id="markdown-mermaid"/, 'no elements of the plugins in the text');
     assert.equal(rendered.match(/<span class="footnote"/g)?.length, 2, 'two footnotes at their references, for the foot of their pages');
     assert.doesNotMatch(rendered, /footnotes-sep|class="footnotes"|footnote-backref/, 'no list of the footnotes under the text');
     assert.match(rendered.replace(/\u00ad/g, ''), /\^\[inline\]/, 'the inline footnote stays text, with the soft hyphens of the layout');

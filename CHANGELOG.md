@@ -17,8 +17,10 @@ The first version.
   `layout`.
 - The renderer turns a Markdown document into one HTML page, which Paged.js
   turns into pages, for the preview and for the PDF alike. It numbers the
-  headings, puts footnotes at the foot of their page, hyphenates the text by
-  the language of the layout with soft hyphens, also words joined by a slash
+  headings, puts footnotes at the foot of their page (each footnote once, also
+  when another extension such as "Markdown Footnotes" adds footnotes too; an
+  inline footnote `^[text]` stays text), hyphenates the text by the language
+  of the layout with soft hyphens, also words joined by a slash
   such as "Forschungsfrage/n" but not paths, and leaves out the notes of
   nimblescape Markdown Notes.
 - Special sections without a chapter number, found by the words of their

@@ -847,7 +847,8 @@ number again, as a link to the footnote. A link to the outside with its own
 text gets a footnote with its address ([R-PDF-005](#r-pdf-005)). The style
 sheet of the renderer holds only the rules without which this does not work
 in Paged.js, and the look of the links of the PDF; a layout gives the
-footnotes their look.
+footnotes their look. The inline footnotes `^[text]` are no footnotes: they
+stay text, as on GitHub.
 
 ### R-REN-009
 
@@ -939,7 +940,14 @@ Mermaid and PlantUML ([decision 17](#decisions)).
   diagram into an area that the mouse moves and zooms, moved to the middle of
   the width of the page at the time of the drawing, with buttons. The pages of
   the PDF and of the preview leave out the movement and the buttons.
-- Footnotes are part of the renderer ([R-REN-008](#r-ren-008)).
+- Footnotes are part of the renderer ([R-REN-008](#r-ren-008)). When the
+  plugin of another extension adds footnotes too, for example
+  markdown-it-footnote of the extension "Markdown Footnotes"
+  (`bierner.markdown-footnotes`, in the extension pack of Markdown Notes),
+  the footnotes show as the renderer shows them, in the PDF and in the page
+  preview: each footnote once, at the foot of its page, and the inline
+  footnotes as text. A notes document keeps the footnotes of that extension
+  in the Markdown preview.
 - The renderer itself stays without an API of VS Code
   ([R-REN-001](#r-ren-001)): it takes the plugins, the scripts and the style
   sheets as input. On the command line there are no extensions of VS Code;

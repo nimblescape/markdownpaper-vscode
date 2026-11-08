@@ -10,6 +10,8 @@
 // commands /research and /cite (R-CITE-002), the plugin of the pages in the Markdown preview of VS Code for a paper
 // document, without its front matter also when the plugin of another extension shows the front matter (the test
 // extension of test/fixtures/front-matter-table/), and none for a notes document (R-PRV-001, R-PRV-005, R-DOC-004),
+// each footnote once in the page preview and in the PDF when the plugin of another extension adds markdown-it-footnote
+// too (the test extension of test/fixtures/footnotes/, R-REN-010),
 // and "Export PDF" (R-PDF-001), with the diagrams of Mermaid and the math of KaTeX of the built-in Markdown
 // extensions (R-REN-010), when a Chrome, Chromium or Edge is installed, as on the runners of GitHub.
 // The test of the script of the pages, which needs a browser page, is in src/paperPreview.test.ts.
@@ -27,7 +29,7 @@ import { applyFrontMatterChange, formFor } from '../../src/frontMatterView';
 import type { Api } from '../../src/extension';
 import { markdownExtensions, plantUmlOptions } from '../../src/markdownExtensions';
 import { findBrowser } from '../../src/pdf/browser';
-import { exportPdf } from '../../src/pdf/export';
+import { exportPdf, renderFile } from '../../src/pdf/export';
 
 /** extensionId is the identifier of the extension. */
 const extensionId = 'nimblescape.nimblescape-markdownpaper';
@@ -252,6 +254,50 @@ describe('nimblescape Markdown Paper', function () {
     const plain = await vscode.commands.executeCommand<string>('markdown.api.render', notes);
     assert.doesNotMatch(plain, /nimblescape-paper|heading-number|class="footnote"/);
     assert.match(plain, /<table class="test_front_matter_table"><tr><th>title<\/th><\/tr><tr><td>Notizen<\/td><\/tr><\/table>/, 'a notes document keeps the front matter of the test extension');
+  });
+
+  it('the page preview and the PDF of a paper document show each footnote once, and the inline footnotes as text, when another extension adds markdown-it-footnote too, and a notes document keeps its footnotes (R-REN-008, R-REN-010)', async () => {
+    await api();
+    assert.ok(vscode.extensions.getExtension('nimblescape-test.footnotes'), 'the test extension of the footnotes');
+    const text = '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nEins.[^a] Zwei ^[inline] und drei.[^b]\n\n[^a]: Erste Fußnote.\n\n[^b]: Zweite Fußnote.\n';
+    const file = write('paper/footnotes.md', text);
+    const document = await vscode.workspace.openTextDocument(file);
+    await vscode.window.showTextDocument(document);
+    let rendered: string;
+    const end = Date.now() + 30_000;
+    do {
+      rendered = await vscode.commands.executeCommand<string>('markdown.api.render', document);
+      if (rendered.includes('&quot;layout&quot;:&quot;thesis&quot;')) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    } while (Date.now() < end);
+    assert.match(rendered, /^<div class="nimblescape-paper"/);
+    assert.equal(rendered.match(/<span class="footnote"/g)?.length, 2, 'two footnotes at their references, for the foot of their pages');
+    assert.doesNotMatch(rendered, /footnotes-sep|class="footnotes"|footnote-backref/, 'no list of the footnotes under the text');
+    assert.match(rendered.replace(/\u00ad/g, ''), /\^\[inline\]/, 'the inline footnote stays text, with the soft hyphens of the layout');
+    // The PDF: the renderer with the plugins of the extensions, as "Export PDF" calls it.
+    const own = vscode.extensions.getExtension(extensionId)?.extensionUri;
+    assert.ok(own);
+    const page = await renderFile(file.fsPath, {
+      assets: {
+        layouts: vscode.Uri.joinPath(own, 'layouts').fsPath,
+        pagedJs: vscode.Uri.joinPath(own, 'media', 'paged.polyfill.js').fsPath,
+        plantUml: vscode.Uri.joinPath(own, 'media', 'plantuml').fsPath,
+      },
+      text,
+      extensions: await markdownExtensions(own, file),
+      plantUml: plantUmlOptions(file),
+    });
+    assert.equal(page.html.match(/<span class="footnote"/g)?.length, 2, 'two footnotes in the PDF');
+    assert.doesNotMatch(page.html, /footnotes-sep|class="footnotes"|footnote-backref/, 'no list of the footnotes under the text of the PDF');
+    assert.match(page.html.replace(/\u00ad/g, ''), /\^\[inline\]/, 'the inline footnote stays text in the PDF');
+    // A notes document keeps the footnotes of the other extension.
+    const notes = await vscode.workspace.openTextDocument(write('paper/footnotes-notes.md', '# Notizen\n\nText.[^1] Mehr ^[inline].\n\n[^1]: Fußnote.\n'));
+    const plain = await vscode.commands.executeCommand<string>('markdown.api.render', notes);
+    assert.equal(plain.match(/<section class="footnotes">/g)?.length, 1, 'the list of the footnotes of the other extension');
+    assert.match(plain, /<li id="fn2" class="footnote-item"><p>inline/, 'the inline footnote of the other extension');
+    await vscode.commands.executeCommand('workbench.action.closeAllEditors');
   });
 
   it('"Show Page Preview" opens the Markdown preview of VS Code beside the text editor (R-PRV-001)', async () => {

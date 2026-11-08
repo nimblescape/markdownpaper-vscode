@@ -5,7 +5,7 @@
 /**
  * The JSON schema of the front matter of a paper for the form of the front matter of the editor of rendered Markdown of
  * nimblescape Markdown ([R-EDIT-001](../../docs/requirements.md#r-edit-001)): the field `layout`, the fields of the
- * layout and `lang`, in the order of the view "Front Matter" ([R-DOC-005](../../docs/requirements.md#r-doc-005)). It is
+ * layout and `lang`, in the order of the layout ([R-DOC-005](../../docs/requirements.md#r-doc-005)). It is
  * standard JSON Schema (draft 2020-12), as the form reads it: each field of the layout is a text with its description,
  * its default and its values, and the required fields are required. `layout` is read-only, because `mp create` writes
  * it. `repos`, which `mp get` writes, is no key of the schema: the form shows it when the file has it, with the input of

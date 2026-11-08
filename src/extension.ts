@@ -17,13 +17,12 @@ import type MarkdownIt from 'markdown-it';
 import * as vscode from 'vscode';
 import { citeCommand, citeContext, connectZoteroCommand, updateSourcesCommand } from './cite';
 import { exportPdfCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, openRepositoryCommand, updateLayoutCommand } from './commands';
-import { registerEditorParts } from './editorParts';
+import { registerEditorParts, registerFrontMatterRules } from './editorParts';
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
-import { FrontMatterView, frontMatterViewId } from './frontMatterView';
 import { ReferenceLinks, referenceLinkSelector } from './referenceLinks';
 import { PaperPreview } from './markdownPreview';
-import { fileOf, notesEditorFileOf, openInNotesEditor, type SlashCommand } from './notesApi';
+import { type SlashCommand } from './notesApi';
 import { registerNotesParts, researchCommand } from './notesParts';
 import { PaperDocuments } from './paperDocuments';
 import { checkedSettings, type Settings, settingsSection } from './settings';
@@ -41,7 +40,6 @@ export const commands = {
   newLayout: 'nimblescape.markdownPaper.newLayout',
   updateLayout: 'nimblescape.markdownPaper.updateLayout',
   openRepository: 'nimblescape.markdownPaper.openRepository',
-  editFrontMatter: 'nimblescape.markdownPaper.editFrontMatter',
   connectZotero: 'nimblescape.markdownPaper.connectZotero',
   updateSources: 'nimblescape.markdownPaper.updateSourcesFromZotero',
 };
@@ -60,8 +58,6 @@ export interface Api {
   cite: SlashCommand;
   /** terminalFolder is the folder of the script mp, at the end of the PATH of the terminals, or undefined. */
   terminalFolder?: string;
-  /** frontMatter tells which file the view "Front Matter" shows, and whether its page exists. */
-  frontMatter(): { file?: vscode.Uri; shown: boolean };
 }
 
 /**
@@ -101,7 +97,6 @@ export function activate(context: vscode.ExtensionContext): Api {
     version: (context.extension.packageJSON as { version?: string }).version,
   };
   const citations = citeContext(context, formatStep);
-  const frontMatterView = new FrontMatterView(context.extensionUri);
   const cite = citeCommand(citations);
   context.subscriptions.push(
     checks,
@@ -112,6 +107,8 @@ export function activate(context: vscode.ExtensionContext): Api {
     registerNotesParts([cite]),
     // The part in this extension of the plugin of the paper in the editor of a whole file of Markdown Notes.
     registerEditorParts({ extension: context.extensionUri, citations, openRepository: commands.openRepository }),
+    // The rules of the front matter of a paper for the clean editing view of Markdown Notes.
+    registerFrontMatterRules(context.extensionUri),
     // "Show Page Preview": the Markdown preview of VS Code beside the text editor, which shows the pages of a paper.
     vscode.commands.registerCommand(commands.showPagePreview, async (uri?: unknown) => {
       const target = uri instanceof vscode.Uri ? uri : vscode.window.activeTextEditor?.document.uri;
@@ -127,24 +124,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     vscode.commands.registerCommand(commands.newLayout, (uri?: unknown) => newLayoutCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.updateLayout, (uri?: unknown) => updateLayoutCommand(commandContext, uri)),
     vscode.commands.registerCommand(commands.openRepository, (uri?: unknown, name?: unknown) => openRepositoryCommand(commandContext, uri, name)),
-    // The view "Front Matter" follows the active editor; Markdown Notes opens it for a file of its clean editing view.
-    frontMatterView,
-    vscode.window.registerWebviewViewProvider(frontMatterViewId, frontMatterView),
     vscode.languages.registerDocumentLinkProvider(referenceLinkSelector, new ReferenceLinks(commands.openRepository)),
-    vscode.commands.registerCommand(commands.editFrontMatter, async (uri?: unknown) => {
-      const editor = vscode.window.activeTextEditor;
-      const target = uri instanceof vscode.Uri ? uri : editor?.document.languageId === 'markdown' ? editor.document.uri : undefined;
-      // A file in the active editor of a whole file of Markdown Notes has the form of that editor at its top.
-      const inEditor = notesEditorFileOf(vscode.window.tabGroups.activeTabGroup.activeTab);
-      if (target && inEditor?.toString() === fileOf(target).toString()) {
-        await openInNotesEditor(inEditor);
-        return;
-      }
-      if (target) {
-        frontMatterView.show(fileOf(target));
-      }
-      await vscode.commands.executeCommand(`${frontMatterViewId}.focus`);
-    }),
     vscode.commands.registerCommand(commands.connectZotero, () => connectZoteroCommand(citations)),
     vscode.commands.registerCommand(commands.updateSources, (uri?: unknown) => updateSourcesCommand(citations, uri)),
   );
@@ -155,7 +135,6 @@ export function activate(context: vscode.ExtensionContext): Api {
     research: researchCommand,
     cite,
     ...(terminalFolder ? { terminalFolder } : {}),
-    frontMatter: () => ({ ...(frontMatterView.file ? { file: frontMatterView.file } : {}), shown: frontMatterView.shown }),
   };
 }
 

@@ -253,26 +253,26 @@ layout, which its cover page and the name of its PDF use. `lang: de-AT`
 changes the language of the layout for one document. A document without the
 field `layout` gets the built-in layout `plain`.
 
-The view "Front Matter" in the side bar, beside the view of Markdown Notes,
-shows the front matter of the Markdown file in the active editor as a form:
-one row for each field of the layout, in the order of its `layout.json`, with
-the description of the field and a `*` for a required field. A field with a
-list of names, such as `type` of the PHT thesis, has a choice list; the
-default of a field shows in grey. Change a value and press Enter, or leave
-the row: the value goes into the file at once, as one edit, and a file
-without unsaved changes is saved. Ctrl+Z in the text editor of the file
-undoes it. `layout` and `repos` are read-only in the form, because only
-`mp create` and `mp get` write them. A key that the layout does not know
-shows at the end with a warning and a button "Remove". The form also works
-for a file in the clean editing view of Markdown Notes, where the front
-matter in the text is read-only; the link "Edit Front Matter" above the front
-matter opens the view. "Markdown Paper: Edit Front Matter" in the Command
-Palette opens it too.
+You change the front matter in the page of the editor of Markdown Notes:
 
-In the editor of a whole file of Markdown Notes, the front matter is a form
-at the top of the file, with the same fields of the layout. While that
-editor is the active tab, the view says so and has the button "Show the
-Editor".
+- In the editor of rendered Markdown ("Markdown Editor"), the front matter
+  is a form at the top of the file: one row for each field of the layout, in
+  the order of its `layout.json`, with the description of the field and a
+  `*` for a required field. A field with a list of names, such as `type` of
+  the PHT thesis, has a choice list; the default of a field shows in grey.
+  `layout` and `repos` are read-only, because only `mp create` and `mp get`
+  write them. "Edit keys" adds keys of your own; the keys of the layout keep
+  their place.
+- In the text editor ("Text Editor"), the clean editing view of Markdown
+  Notes, the front matter is text. The keys of the layout, such as
+  `title:`, are read-only: you change only the text after a key. The lines
+  of `layout` and `repos` stay as they are. A missing required field or a
+  value that is not one of the names of its field shows as a warning; the
+  light bulb at the warning adds the missing key or sets one of the names.
+  Ctrl+Space after a key offers the names of its field, and at the start of a
+  line the keys of the layout that the front matter does not have yet.
+
+An empty value keeps its key in both editors.
 
 ## Paper documents and notes documents
 

@@ -66,13 +66,11 @@ The first version.
   language in its metadata. In VS Code, the PDF shows what the other Markdown
   extensions add to the Markdown preview, for example the diagrams of Mermaid
   and the math of KaTeX.
-- The view "Front Matter" in the side bar, beside the view of Markdown Notes:
-  a form of the front matter of the active Markdown file with one row for
-  each field of its layout, choice lists for the fields with names, read-only
-  rows for `layout` and `repos`, and a button that removes a key that the
-  layout does not know. Each change is one edit of the file. "Edit Front
-  Matter" opens the view for a file, also from the clean editing view of
-  Markdown Notes.
+- The front matter in the page of the editor of Markdown Notes: the form at
+  the top of the editor of rendered Markdown gets the schema of the layout,
+  and the clean editing view keeps the keys of the layout and the lines of
+  `layout` and `repos`, with warnings, quick fixes and the completion of the
+  schema.
 - The links of the PDF: every reference inside the paper is a link, also
   each citation to its entry in the reference list and a second reference to
   a footnote, in the color of the text without a mark. A link to the outside

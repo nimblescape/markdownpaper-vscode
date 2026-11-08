@@ -83,7 +83,12 @@ Node.js 22 or newer.
   its line in the text editor. The other Markdown extensions work on the
   pages: the diagrams of Mermaid, the math of KaTeX, and the highlights and
   "Add Note" of Markdown Notes. The pages show what Export PDF prints. The
-  pages are white paper also in a dark theme.
+  pages are white paper also in a dark theme. The bar at the top right
+  zooms the pages: "Page Width" (a page as wide as the window), "Single
+  Page" (a whole page in the window), − and +, and the size of the paper;
+  Ctrl+0, Ctrl+− and Ctrl++ (on macOS Cmd), and the wheel with Ctrl, zoom
+  too. In Zen mode, the pages fill the whole window when the setting
+  `zenMode.centerLayout` is off.
 - **Numbers and lists.** The headings get numbers such as 1.1. The table of
   contents, the list of figures, the list of tables and the list of listings
   show the lists of the file with the page numbers. A paragraph

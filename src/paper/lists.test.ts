@@ -187,7 +187,24 @@ describe('the slash commands of the lists insert a special section with its list
     expect(change.text).toContain('- [Abbildung 1: Die Rollen](#fig-rollen)');
   });
 
+  test('at the end of the file, a line follows the end marker of the section', () => {
+    const atEnd = listInsertion(`${figured}\n`, figured.length + 1, 'LOF', layout);
+    if ('exists' in atEnd) throw new Error('no change');
+    expect(applied(`${figured}\n`, atEnd).endsWith('\n\n# Abbildungsverzeichnis\n\n<!-- lof -->\n- [Abbildung 1: Die Rollen](#fig-rollen)\n<!-- /lof -->\n')).toBe(true);
+    const unended = figured.replace(/\n$/, '');
+    const afterParagraph = listInsertion(unended, unended.indexOf('![Rollen]'), 'TOC', layout);
+    if ('exists' in afterParagraph) throw new Error('no change');
+    expect(applied(unended, afterParagraph).endsWith('<!-- /toc -->\n')).toBe(true);
+  });
+
   test('a document with the section gets the line of its heading', () => {
     expect(listInsertion(paper.join('\n'), 0, 'LOT', layout)).toEqual({ exists: 8 });
+  });
+
+  test('the markers of the list count also under a heading with other words, but not in code', () => {
+    const renamed = figured.replace('# Einleitung', '# Übersicht der Arbeit\n\n<!-- toc -->\n- [1 Einleitung](#einleitung)\n<!-- /toc -->\n\n# Einleitung');
+    expect(listInsertion(renamed, renamed.length, 'TOC', layout)).toEqual({ exists: 4, marked: true });
+    const fenced = figured.replace('# Einleitung', '```markdown\n<!-- toc -->\n```\n\n# Einleitung');
+    expect('exists' in listInsertion(fenced, fenced.length, 'TOC', layout)).toBe(false);
   });
 });

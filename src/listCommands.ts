@@ -46,7 +46,12 @@ export async function listChange(formatStep: PaperFormatStep, file: vscode.Uri, 
   }
   const change = listInsertion(text, at, code, entry.layout, clean ? source : undefined);
   if ('exists' in change) {
-    void vscode.window.showInformationMessage(`The paper has its ${listNames[code]} already, under the heading in line ${change.exists + 1} of the file. The formatter keeps it current.`);
+    const place = `under the heading in line ${change.exists + 1} of the file`;
+    void vscode.window.showInformationMessage(
+      change.marked
+        ? `The paper has the markers of its ${listNames[code]} already, ${place}. Give this heading a word of the ${listNames[code]} in the language of the layout, or the code {${code}} at its end, so that the formatter keeps the list current.`
+        : `The paper has its ${listNames[code]} already, ${place}. The formatter keeps it current.`,
+    );
     return undefined;
   }
   return change;

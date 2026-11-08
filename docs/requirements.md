@@ -769,10 +769,12 @@ that numbers its reference list ([decision 38](#decisions)):
   `# Inhaltsverzeichnis`, and under it the list between its markers, as the
   format step writes it. On an empty line the section takes the line; in a
   paragraph it comes after the paragraph. An empty line stands before and
-  after the section, and the cursor stands at the end of the heading, so
-  the author can change its words. The commands work only in a paper
-  document. A paper that has the section already gets a message with the
-  line of its heading, and no second section. The commands work in the text
+  after the section, a line follows it also at the end of the file, and the
+  cursor stands at the end of the heading. A heading with other words keeps
+  the section with its code in curly brackets, such as `# Übersicht {TOC}`.
+  The commands work only in a paper document. A paper that has the section
+  already, or the open marker of its list outside code, gets a message with
+  the line of the heading, and no second section. The commands work in the text
   editor, also in the clean editing view of Markdown Notes, and in the
   editor of a whole file of Markdown Notes ([R-EDIT-001](#r-edit-001)).
 - The reference list gets no soft hyphens, and the layout gives its entries

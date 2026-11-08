@@ -355,9 +355,11 @@ document to insert the table of contents, the list of figures, the list of
 tables or the list of listings. The command inserts the heading in the
 language of the layout, such as `# Inhaltsverzeichnis`, and the list under
 it, on the empty line of the cursor or after the paragraph of the cursor.
-The cursor goes to the end of the heading, so you can change its words. A
-paper has each of these sections once: when the section exists, the command
-names the line of its heading and inserts nothing. The commands work in the
+The cursor goes to the end of the heading. For other words in the heading,
+keep the code in curly brackets at its end, such as `# Übersicht {TOC}`. A
+paper has each of these sections once: when the section or the markers of
+its list exist, the command names the line of the heading and inserts
+nothing. The commands work in the
 text editor, also in the clean editing view, and in the rendered editor of
 Markdown Notes.
 

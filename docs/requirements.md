@@ -104,7 +104,8 @@ without it.
   clean editing view leaves out, for the database of [R-CITE-001](#r-cite-001);
   `registerSlashCommand({ label, description, detail, run(editor, range) })`, a
   slash command of the text editor (a slash and small letters), for `/cite`
-  and `/research` of [R-CITE-002](#r-cite-002). Each call returns a
+  and `/research` of [R-CITE-002](#r-cite-002) and for `/toc`, `/lof`,
+  `/lot` and `/lol` of [R-REN-004](#r-ren-004). Each call returns a
   `Disposable`. Markdown Notes has them since commit `bf3b719` of its
   [pull request 1](https://github.com/nimblescape/markdownnotes-vscode/pull/1).
   Markdown Paper adds its format step with `registerFormatStep`
@@ -761,6 +762,19 @@ that numbers its reference list ([decision 38](#decisions)):
   own heading; the list of figures, the list of tables and the list of
   listings list the label and the text of each caption
   ([R-REN-005](#r-ren-005), [R-REN-011](#r-ren-011)).
+- The slash commands `/toc`, `/lof`, `/lot` and `/lol` insert the table of
+  contents, the list of figures, the list of tables or the list of listings
+  ([decision 75](#decisions)): the heading with the first word of the
+  section in the language of the layout ([R-LAY-005](#r-lay-005)), such as
+  `# Inhaltsverzeichnis`, and under it the list between its markers, as the
+  format step writes it. On an empty line the section takes the line; in a
+  paragraph it comes after the paragraph. An empty line stands before and
+  after the section, and the cursor stands at the end of the heading, so
+  the author can change its words. The commands work only in a paper
+  document. A paper that has the section already gets a message with the
+  line of its heading, and no second section. The commands work in the text
+  editor, also in the clean editing view of Markdown Notes, and in the
+  editor of a whole file of Markdown Notes ([R-EDIT-001](#r-edit-001)).
 - The reference list gets no soft hyphens, and the layout gives its entries
   their indent.
 
@@ -2119,6 +2133,12 @@ nimblescape Markdown is public, so CI reads it without a token
   has the commands of the blocks of the editor
   ([R-EDIT-008](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-edit-008)
   of Markdown Notes, [decision 74](#decisions)).
+- In a paper, `/toc`, `/lof`, `/lot` and `/lol` in the slash commands and in
+  the insert menu insert the special section with its list at the cursor,
+  as in the text editor ([R-REN-004](#r-ren-004), [decision 75](#decisions)).
+  The extension computes the change from the text of the file, and the
+  editor applies it as one step of Undo and puts the cursor at the end of
+  the heading.
 
 ## Settings
 
@@ -2183,7 +2203,8 @@ requirement ([R-GEN-007](#r-gen-007)).
     `/table` add an entry; `/ref` and `/cite` add a reference to an entry.
     `/figure`, `/table` and `/ref` belong to Markdown Notes, `/cite` and
     `/research` to Markdown Paper; `/source` was dropped by
-    [decision 42](#decisions).
+    [decision 42](#decisions). `/toc`, `/lof`, `/lot` and `/lol` of
+    [decision 75](#decisions) also belong to Markdown Paper.
 16. **Plain Markdown links to headings** ([R-REN-003](#r-ren-003),
     [R-REN-009](#r-ren-009)): the formats stay as close to Markdown as
     possible. A heading has the ID of GitHub, and a link to it is a Markdown
@@ -2553,6 +2574,13 @@ requirement ([R-GEN-007](#r-gen-007)).
     the selected argument, as in the text editor (decision 79 of Markdown
     Notes). The other choice was "Research" in the format bar of the editor
     only.
+75. **Slash commands insert the table of contents and the lists**
+    ([R-REN-004](#r-ren-004), [R-EDIT-001](#r-edit-001)): `/toc`, `/lof`,
+    `/lot` and `/lol` insert the heading of the special section in the
+    language of the layout and its list between the markers, in both
+    editors; the format step keeps the list current at each save. A paper
+    has each of these sections at most once. The other choice was to type
+    the heading and let the format step write the list at the next save.
 
 ## Open questions
 

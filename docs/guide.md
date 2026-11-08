@@ -23,7 +23,7 @@ Windows and Linux; on macOS, use Cmd instead of Ctrl.
 | [Front matter](#front-matter) | the Markdown file | available | [R-DOC-001](requirements.md#r-doc-001) |
 | [Checks and hover](#checks-and-hover) | text editor, command line | available | [R-DOC-002](requirements.md#r-doc-002), [R-DOC-003](requirements.md#r-doc-003) |
 | [Headings](#headings) | pages | available | [R-REN-003](requirements.md#r-ren-003) |
-| [Special sections](#special-sections) | pages | available | [R-REN-004](requirements.md#r-ren-004) |
+| [Special sections](#special-sections), `/toc`, `/lof`, `/lot` and `/lol` | pages, VS Code (slash commands of Markdown Notes) | available | [R-REN-004](requirements.md#r-ren-004) |
 | [Figures and tables](#figures-and-tables), links to headings | pages | available | [R-REN-005](requirements.md#r-ren-005), [R-REN-009](requirements.md#r-ren-009) |
 | [Listings](#listings) | pages | available | [R-REN-011](requirements.md#r-ren-011) |
 | [Appendix](#appendix) | pages | available | [R-REN-006](requirements.md#r-ren-006) |
@@ -350,6 +350,17 @@ and the format on save of Markdown Notes, on the command line with
 the markers gets the list of the renderer. The table of contents does not list
 itself.
 
+With Markdown Notes, type `/toc`, `/lof`, `/lot` or `/lol` in a paper
+document to insert the table of contents, the list of figures, the list of
+tables or the list of listings. The command inserts the heading in the
+language of the layout, such as `# Inhaltsverzeichnis`, and the list under
+it, on the empty line of the cursor or after the paragraph of the cursor.
+The cursor goes to the end of the heading, so you can change its words. A
+paper has each of these sections once: when the section exists, the command
+names the line of its heading and inserts nothing. The commands work in the
+text editor, also in the clean editing view, and in the rendered editor of
+Markdown Notes.
+
 ## Figures and tables
 
 A paragraph `Figure 1:` directly before an image is the caption of the
@@ -486,6 +497,9 @@ Markdown. Markdown Paper adds the parts of a paper to it:
 - Select an argument and choose "Research" in the format bar: the argument
   gets the hidden start marker and `(RESEARCH)` at its end, as with
   `/research` in the text editor.
+- Type `/toc`, `/lof`, `/lot` or `/lol` to insert the table of contents or a
+  list at the cursor, as in the text editor
+  ([Special sections](#special-sections)).
 
 ## Page preview
 

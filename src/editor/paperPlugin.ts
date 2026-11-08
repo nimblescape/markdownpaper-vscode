@@ -53,7 +53,7 @@ import {
   slashSelection,
 } from '@nimblescape/markdowneditor';
 import type { JsonSchema } from '@nimblescape/markdowntext';
-import { editorPluginName, extensionMessage, type PageMessage } from '../paper/editorMessages';
+import { editorPluginName, extensionMessage, type ListCode, type PageMessage } from '../paper/editorMessages';
 import { headingLinkText, headingSlug, idPattern, listCodes, researchEdit, researchMark, researchText, sourcesName } from '../paper/marks';
 
 /** pluginName is the name of the plugin. */
@@ -553,8 +553,10 @@ interface Page {
   readonly channel: PluginChannel | undefined;
   /** schema is the JSON schema of the front matter that the platform sent, or undefined. */
   schema: JsonSchema | undefined;
-  /** requests counts the requests of citations; the platform answers each one with its number. */
+  /** requests counts the requests of citations and of lists; the platform answers each one with its number. */
   requests: number;
+  /** lists holds the text of the file that each open request of a list sent, by its number. */
+  readonly lists: Map<number, string>;
 }
 
 /** pages are the states of the plugin, by the Tiptap editor. */
@@ -646,12 +648,57 @@ function askCitation(tiptap: Editor): void {
   }
 }
 
+/**
+ * askList asks the platform for the change of the text of the file that inserts the list of a special section at the
+ * cursor, for `/toc`, `/lof`, `/lot` and `/lol`: the heading in the language of the layout and the list, which only the
+ * platform knows.
+ * @param tiptap - The Tiptap editor.
+ * @param code - The code of the section.
+ */
+function askList(tiptap: Editor, code: ListCode): void {
+  const page = pages.get(tiptap);
+  if (page?.channel) {
+    const request = ++page.requests;
+    const text = page.editor.getMarkdown();
+    page.lists.set(request, text);
+    page.channel.post({ type: 'list', request, code, text, at: page.editor.textOffset(tiptap.state.selection.head) } satisfies PageMessage);
+  }
+}
+
+/**
+ * takeList makes the change that the platform sent for a request of a list as a change of the user, when the text of the
+ * file is still the text that the request sent, and puts the cursor at the end of the heading of the section.
+ * @param page - The state of the plugin.
+ * @param request - The number of the request.
+ * @param change - The change, or undefined when the platform has none, for example for a paper with the section.
+ * @returns Whether the editor made the change.
+ */
+function takeList(page: Page, request: number, change: { from: number; to: number; text: string; heading: { from: number; to: number } } | undefined): boolean {
+  const sent = page.lists.get(request);
+  page.lists.delete(request);
+  const { editor } = page;
+  if (!change || sent === undefined || editor.tiptap.isDestroyed || editor.getMarkdown() !== sent || !editor.changeText([{ from: change.from, to: change.to, insert: change.text }])) {
+    return false;
+  }
+  editor.selectText(change.from + change.heading.to);
+  return true;
+}
+
 /** canCite returns true when an editor shows a paper and its platform lets the user choose a source. */
 const canCite = (tiptap: Editor): boolean => pages.get(tiptap)?.channel !== undefined && tiptap.isEditable && isPaper(tiptap.state.doc);
 
+/** listItems are the lists of the special sections in the insert menu and the slash commands: the code, the label and the words to find it. */
+const listItems: readonly (readonly [ListCode, string, string[]])[] = [
+  ['TOC', 'Table of contents', ['contents', 'toc', 'inhaltsverzeichnis']],
+  ['LOF', 'List of figures', ['figures', 'lof', 'abbildungsverzeichnis']],
+  ['LOT', 'List of tables', ['tables', 'lot', 'tabellenverzeichnis']],
+  ['LOL', 'List of listings', ['listings', 'lol', 'listingverzeichnis']],
+];
+
 /**
- * insertItems are the items of the plugin in the insert menu and in the slash commands of a paper: `/cite`, and
- * `/research` typed on the selected argument, which only the slash commands offer, with the names of the text editor.
+ * insertItems are the items of the plugin in the insert menu and in the slash commands of a paper: `/cite`, `/research`
+ * typed on the selected argument, which only the slash commands offer, and `/toc`, `/lof`, `/lot` and `/lol`, with the
+ * names of the text editor.
  * @param tiptap - The Tiptap editor.
  */
 function insertItems(tiptap: Editor): MenuItem[] {
@@ -664,6 +711,12 @@ function insertItems(tiptap: Editor): MenuItem[] {
   const selected = slashSelection(tiptap.state) ?? (selection.empty ? undefined : selection);
   if (selected && tiptap.isEditable && isPaper(tiptap.state.doc) && researchPlaces(tiptap.state, selected)) {
     items.push({ id: 'paper-research', label: 'Research the evidence', slash: 'research', keywords: ['argument', 'evidence'], selection: true, run: () => void markResearch(tiptap) });
+  }
+  // The lists of the special sections, with the names of the text editor.
+  if (canCite(tiptap)) {
+    for (const [code, label, keywords] of listItems) {
+      items.push({ id: `paper-${listCodes[code]}`, label, slash: listCodes[code], keywords, run: () => askList(tiptap, code) });
+    }
   }
   return items;
 }
@@ -749,7 +802,7 @@ const frontMatterInputs: FrontMatterInput[] = [
 function activate(editor: PluginEditor, host?: PluginHost): () => void {
   const tiptap = editor.tiptap;
   const channel = host?.channel?.(pluginName);
-  const page: Page = { editor, channel, schema: undefined, requests: 0 };
+  const page: Page = { editor, channel, schema: undefined, requests: 0, lists: new Map() };
   editors.add(tiptap);
   pages.set(tiptap, page);
   const stop = channel?.onMessage((value) => {
@@ -759,6 +812,8 @@ function activate(editor: PluginEditor, host?: PluginHost): () => void {
       editor.refreshPlugins();
     } else if (message?.type === 'citation' && message.id !== undefined && message.text !== undefined && !tiptap.isDestroyed) {
       insertCitation(tiptap, message.id, message.text);
+    } else if (message?.type === 'listChange') {
+      takeList(page, message.request, message.change);
     }
   });
   channel?.post({ type: 'hello' } satisfies PageMessage);

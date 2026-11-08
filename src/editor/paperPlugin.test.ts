@@ -303,7 +303,7 @@ describe('the part on the platform', () => {
     const platform = platformOf();
     const editor = open(paper, platform);
     const items = paperPlugin.menus!.insert!(editor.tiptap);
-    expect(items.map((item) => item.slash)).toEqual(['cite']);
+    expect(items.map((item) => item.slash)).toEqual(['cite', 'toc', 'lof', 'lot', 'lol']);
     select(editor, positionOf(editor, 'Teams change', true));
     items[0].run();
     expect(platform.sent[1]).toEqual({ type: 'cite', request: 1 });
@@ -315,6 +315,32 @@ describe('the part on the platform', () => {
     expect(generatedTexts(editor)).toEqual(['Doe, 2020']);
     expect(paperPlugin.menus!.insert!(open('# A note\n', platformOf()).tiptap)).toEqual([]);
     expect(paperPlugin.menus!.insert!(open(paper).tiptap)).toEqual([]);
+  });
+
+  it('offers /toc, /lof, /lot and /lol in a paper, and makes the change that the platform answers, as a change of the user (R-REN-004)', () => {
+    const platform = platformOf();
+    const editor = open(paper, platform);
+    select(editor, positionOf(editor, 'Teams change', true));
+    const items = paperPlugin.menus!.insert!(editor.tiptap);
+    items.find((item) => item.slash === 'lof')!.run();
+    const at = paper.indexOf('Teams change') + 'Teams change'.length;
+    expect(platform.sent[1]).toEqual({ type: 'list', request: 1, code: 'LOF', text: paper, at });
+    const end = paper.indexOf('talk more.') + 'talk more.'.length;
+    const text = '\n\n# Abbildungsverzeichnis\n\n<!-- lof -->\n<!-- /lof -->';
+    // No change for a paper with the section, and none for an answer to another request.
+    platform.send({ type: 'listChange', request: 1 });
+    platform.send({ type: 'listChange', request: 7, change: { from: end, to: end, text, heading: { from: 4, to: 25 } } });
+    expect(editor.getMarkdown()).toBe(paper);
+    items.find((item) => item.slash === 'lof')!.run();
+    platform.send({ type: 'listChange', request: 2, change: { from: end, to: end, text, heading: { from: 4, to: 25 } } });
+    expect(editor.getMarkdown()).toBe(paper.replace('talk more.', `talk more.${text}`));
+    // The cursor stands at the end of the heading.
+    expect(editor.tiptap.state.selection.$head.parent.textContent).toBe('Abbildungsverzeichnis');
+    // An answer to a text that changed since the request does nothing.
+    items.find((item) => item.slash === 'toc')!.run();
+    editor.tiptap.commands.insertContent('x');
+    platform.send({ type: 'listChange', request: 3, change: { from: 0, to: 0, text: '# Inhaltsverzeichnis\n\n' , heading: { from: 2, to: 20 } } });
+    expect(editor.getMarkdown()).not.toContain('Inhaltsverzeichnis');
   });
 
   it('inserts a citation after a space or a parenthesis without a space before it', () => {

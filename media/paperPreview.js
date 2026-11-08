@@ -2,7 +2,7 @@
 // © 2026 Hannes Stauss (scalarion@nimblescape.com)
 // Licensed under the MIT License. See LICENSE in the repository root for details.
 
-// The script of the pages in the Markdown preview of VS Code (docs/requirements.md, R-PRV-001 to R-PRV-006). VS Code
+// The script of the pages in the Markdown preview of VS Code (docs/requirements.md, R-PRV-001 to R-PRV-007). VS Code
 // runs it in the preview of every Markdown file. For a paper document, the markdown-it plugin of the extension puts a
 // hidden element `.nimblescape-paper` with the layout and the style sheets of the page of the PDF into the content
 // `.markdown-body`, then the element `.nimblescape-paper-text` with the text of the renderer of the PDF
@@ -18,9 +18,9 @@
 //    the content; in the copy, each PlantUML block gets copies of the diagrams that its script drew into its shadow
 //    root (paperDrawings.js), and each block with a line gets the class of the lines of VS Code (`code-line`);
 // 3. shows the new pages in place of the old ones, so the pages do not flicker, and keeps the place on the page; the
-//    pages get smaller when the preview is narrower than a page. VS Code loads the page of the preview again for
-//    "Markdown: Refresh Preview", and so also each time Markdown Notes selects a note; it then puts the empty page at
-//    the top, before the pages exist. The script keeps the place of the pages of its source in the storage of the
+//    pages have the zoom of the bar of the zoom, by default as wide as the window (R-PRV-007). VS Code loads the page
+//    of the preview again for "Markdown: Refresh Preview", and so also each time Markdown Notes selects a note; it
+//    then puts the empty page at the top, before the pages exist. The script keeps the place of the pages of its source in the storage of the
 //    page, which stays over such a load, and the first pages after a load show at that place. It also keeps the last
 //    pages there with the key of their content; when only the attributes of a state changed, such as the selected note
 //    of Markdown Notes, the pages of before show again at once, without Paged.js;
@@ -28,7 +28,7 @@
 //    scrolling with the text editor work: VS Code keeps the blocks of a version of the content, and the script sends
 //    the last content of VS Code once more, which counts as a new version and changes nothing on the pages;
 // 5. sends the event `nimblescape-paper-rendered` to `window`, so that the scripts of other extensions, such as the one
-//    of Markdown Notes, can mark the pages.
+//    of Markdown Notes, can mark the pages, and the event `nimblescape-paper-zoomed` after each change of the zoom.
 //
 // While a paper document shows, only the style sheets of the page of the PDF apply to the pages: the style sheets of the
 // Markdown preview of VS Code, of the setting `markdown.styles`, of the theme and of other extensions are off, except
@@ -390,6 +390,7 @@
     }
     lightTheme();
     switchOffStyleSheets();
+    createZoomBar();
   }
 
   function switchOffStyleSheets() {
@@ -412,6 +413,7 @@
     headWatch?.disconnect();
     themeWatch?.disconnect();
     indicator(false);
+    removeZoomBar();
     if (themeClasses) {
       document.body.classList.remove('vscode-light');
       document.body.classList.add(...themeClasses);
@@ -624,26 +626,286 @@
     }
   }
 
-  // fit makes the pages as small as the width of the preview needs, never larger than their size.
-  function fit() {
-    const pages = document.querySelector('.nimblescape-paper-pages');
-    const page = pages && pages.querySelector('.pagedjs_page');
+  // The zoom of the pages (R-PRV-007). The mode "width" (Page Width) makes a page as wide as the window of the preview,
+  // the mode "page" (Single Page) shows a whole page in the window, and the mode "fixed" keeps a factor, which "Zoom In",
+  // "Zoom Out", "Actual Size" and the wheel with Ctrl or Cmd choose. The pages get the zoom with the CSS property `zoom`
+  // on `.nimblescape-paper-pages`; the space around the pages (paperPreview.css) is inside that element, so it zooms too.
+
+  /** The key of the zoom in the storage of the page, which stays when VS Code loads the page again. */
+  const zoomKey = 'nimblescape-paper-zoom';
+  /** The factors of "Zoom In" and "Zoom Out". */
+  const zoomSteps = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
+  /** The smallest and the largest factor of the zoom. */
+  const minZoom = 0.1;
+  const maxZoom = 5;
+  /** The space beside a page in the modes "width" and "page", in pixels of the window. */
+  const sideSpace = 12;
+  /** The space above, below and between the pages without zoom, in CSS pixels (paperPreview.css). */
+  const pageGap = 16;
+  /** The zoom of the pages: { mode: 'width' }, { mode: 'page' } or { mode: 'fixed', factor }. */
+  let zoom = readZoom();
+  /** The bar of the zoom in the window, or undefined outside a paper document. */
+  let zoomBar;
+
+  // readZoom returns the zoom that the page kept before VS Code loaded it again, or the mode "width".
+  function readZoom() {
+    try {
+      const kept = JSON.parse(sessionStorage.getItem(zoomKey) || 'null');
+      if (kept && (kept.mode === 'width' || kept.mode === 'page')) {
+        return { mode: kept.mode };
+      }
+      if (kept && kept.mode === 'fixed' && typeof kept.factor === 'number' && kept.factor >= minZoom && kept.factor <= maxZoom) {
+        return { mode: 'fixed', factor: kept.factor };
+      }
+    } catch {
+      // A page without storage starts with the mode "width".
+    }
+    return { mode: 'width' };
+  }
+
+  function keepZoom() {
+    try {
+      sessionStorage.setItem(zoomKey, JSON.stringify(zoom));
+    } catch {
+      // A page without storage starts with the mode "width" after a load.
+    }
+  }
+
+  function clampZoom(factor) {
+    return Math.min(maxZoom, Math.max(minZoom, factor));
+  }
+
+  // factorOf returns the zoom that the pages have now.
+  function factorOf(pages) {
+    const factor = Number.parseFloat(pages.style.zoom);
+    return factor > 0 ? factor : 1;
+  }
+
+  // pageSize returns the size of the first page without zoom, in CSS pixels. A browser with the standardized zoom
+  // (`Element.currentCSSZoom`) gives the rectangle of an element in a zoomed element with the zoom; the browser of VS
+  // Code has no standardized zoom and gives it in the coordinates of the zoomed element, so without the zoom.
+  function pageSize(pages) {
+    const page = pages.querySelector('.pagedjs_page');
     if (!page) {
+      return undefined;
+    }
+    const rect = page.getBoundingClientRect();
+    const scale = 'currentCSSZoom' in Element.prototype ? page.currentCSSZoom || 1 : 1;
+    return rect.width > 0 && rect.height > 0 ? { width: rect.width / scale, height: rect.height / scale } : undefined;
+  }
+
+  // widthOfWindow returns the width of the window for the pages: the width of the body, without the space of the
+  // vertical scroll bar (paperPreview.css).
+  function widthOfWindow() {
+    return document.body.clientWidth || document.documentElement.clientWidth;
+  }
+
+  // factorFor returns the zoom of the mode for pages of a size in the window as it is now.
+  function factorFor(size) {
+    if (zoom.mode === 'fixed') {
+      return zoom.factor;
+    }
+    const byWidth = (widthOfWindow() - 2 * sideSpace) / size.width;
+    if (zoom.mode === 'page') {
+      return clampZoom(Math.min(byWidth, document.documentElement.clientHeight / (size.height + 2 * pageGap)));
+    }
+    return clampZoom(byWidth);
+  }
+
+  // fit gives the pages the zoom of the mode. With an anchor, a point of the window ({ x, y }), the place of the pages at
+  // that point stays there; in the mode "page", the page at that point then fills the window. Without an anchor, the
+  // place in pixels stays, as for new pages, which take their place themselves (showPages).
+  function fit(anchor) {
+    const pages = document.querySelector('.nimblescape-paper-pages');
+    const size = pages && pageSize(pages);
+    if (!size) {
+      updateZoomBar();
       return;
     }
-    // The width of a page without zoom: the browser of VS Code has no standardized zoom, and gives the rectangle of an
-    // element in a zoomed element in the coordinates of that element, so the script measures without zoom.
-    pages.style.zoom = '1';
-    const width = page.getBoundingClientRect().width;
-    pages.style.zoom = String(Math.min(1, Math.max(0.25, (document.documentElement.clientWidth - 24) / width)));
+    const old = factorOf(pages);
+    const factor = factorFor(size);
+    if (Math.abs(factor - old) > 0.0001) {
+      const width = widthOfWindow();
+      // The place at the anchor on the pages without zoom: the pages start at the top of the page, and stand in the
+      // middle of the window while they are narrower than the window, else at its left edge.
+      const point = anchor && {
+        x: (window.scrollX + anchor.x - Math.max(0, (width - old * size.width) / 2)) / old,
+        y: (window.scrollY + anchor.y) / old,
+      };
+      pages.style.zoom = String(factor);
+      if (point) {
+        window.scrollTo(Math.max(0, (width - factor * size.width) / 2) + point.x * factor - anchor.x, point.y * factor - anchor.y);
+      }
+      window.dispatchEvent(new CustomEvent('nimblescape-paper-zoomed', { detail: { zoom: factor } }));
+    }
+    if (anchor && zoom.mode === 'page') {
+      // The page at the anchor fills the window, with the space above and below it.
+      const y = (window.scrollY + anchor.y) / factor;
+      const count = pages.querySelectorAll('.pagedjs_page').length;
+      const index = Math.min(count - 1, Math.max(0, Math.floor((y - pageGap / 2) / (size.height + pageGap))));
+      window.scrollTo(window.scrollX, index * (size.height + pageGap) * factor);
+    }
+    updateZoomBar(factor);
   }
+
+  // middle returns the middle of the window, the anchor of the zoom for the buttons and the keys.
+  function middle() {
+    return { x: widthOfWindow() / 2, y: document.documentElement.clientHeight / 2 };
+  }
+
+  // setZoom sets the zoom of the pages and keeps it in the storage of the page.
+  function setZoom(next, anchor) {
+    zoom = next.mode === 'fixed' ? { mode: 'fixed', factor: clampZoom(next.factor) } : { mode: next.mode };
+    keepZoom();
+    fit(anchor || middle());
+  }
+
+  // stepZoom zooms in (direction 1) or out (direction -1) to the next factor of zoomSteps.
+  function stepZoom(direction) {
+    const pages = document.querySelector('.nimblescape-paper-pages');
+    if (!pages) {
+      return;
+    }
+    const factor = factorOf(pages);
+    const next = direction > 0 ? zoomSteps.find((step) => step > factor * 1.01) : [...zoomSteps].reverse().find((step) => step < factor / 1.01);
+    setZoom({ mode: 'fixed', factor: next === undefined ? (direction > 0 ? maxZoom : zoomSteps[0]) : next });
+  }
+
+  // createZoomBar puts the bar of the zoom into the window: "Zoom Out", the factor ("Actual Size"), "Zoom In", "Page
+  // Width" and "Single Page". The bar stands outside the content of VS Code, so it stays when VS Code changes the content.
+  function createZoomBar() {
+    if (zoomBar && zoomBar.isConnected) {
+      return;
+    }
+    const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    const key = mac ? '⌘' : 'Ctrl+';
+    zoomBar = document.createElement('div');
+    zoomBar.className = 'nimblescape-paper-zoom';
+    zoomBar.setAttribute('role', 'toolbar');
+    zoomBar.setAttribute('aria-label', 'Zoom of the pages');
+    const buttons = [
+      ['out', '−', `Zoom Out (${key}-)`],
+      ['actual', '100 %', 'Actual Size: the size of the paper'],
+      ['in', '+', `Zoom In (${key}+)`],
+      ['width', 'Page Width', `Page Width: a page as wide as the window (${key}0)`],
+      ['page', 'Single Page', 'Single Page: a whole page in the window'],
+    ];
+    for (const [action, label, title] of buttons) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('data-zoom', action);
+      button.title = title;
+      button.setAttribute('aria-label', title);
+      button.textContent = label;
+      zoomBar.appendChild(button);
+    }
+    zoomBar.addEventListener('click', (event) => {
+      const button = event.target instanceof Element ? event.target.closest('button[data-zoom]') : null;
+      if (!button) {
+        return;
+      }
+      const action = button.getAttribute('data-zoom');
+      if (action === 'in' || action === 'out') {
+        stepZoom(action === 'in' ? 1 : -1);
+      } else if (action === 'actual') {
+        setZoom({ mode: 'fixed', factor: 1 });
+      } else {
+        setZoom({ mode: action });
+      }
+    });
+    // A press on the bar is no press on the pages: no double click to the text editor, no selection of a note. It
+    // keeps the selected text and the focus, as a button of a tool bar does, so that "Add Note" of Markdown Notes stays.
+    for (const type of ['mousedown', 'mouseup', 'click', 'dblclick', 'contextmenu']) {
+      zoomBar.addEventListener(type, (event) => {
+        event.stopPropagation();
+        if (type === 'mousedown') {
+          event.preventDefault();
+        }
+      });
+    }
+    document.body.appendChild(zoomBar);
+    updateZoomBar();
+  }
+
+  function removeZoomBar() {
+    if (zoomBar) {
+      zoomBar.remove();
+      zoomBar = undefined;
+    }
+  }
+
+  // updateZoomBar shows the factor and the mode of the zoom on the bar.
+  function updateZoomBar(factor) {
+    if (!zoomBar) {
+      return;
+    }
+    const actual = zoomBar.querySelector('[data-zoom="actual"]');
+    if (actual && typeof factor === 'number') {
+      actual.textContent = `${Math.round(factor * 100)} %`;
+    }
+    for (const mode of ['width', 'page']) {
+      const button = zoomBar.querySelector(`[data-zoom="${mode}"]`);
+      if (button) {
+        button.setAttribute('aria-pressed', String(zoom.mode === mode));
+      }
+    }
+  }
+
+  function paperShows() {
+    return document.body.classList.contains('nimblescape-paper-mode') && document.querySelector('.nimblescape-paper-pages') !== null;
+  }
+
+  // Ctrl or Cmd with + or = zooms in, with - zooms out, with 0 gives the mode "width". The script listens on the window
+  // before VS Code, which would otherwise zoom the whole window.
+  window.addEventListener(
+    'keydown',
+    (event) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || !paperShows()) {
+        return;
+      }
+      const code = event.code;
+      let action;
+      if (event.key === '+' || event.key === '=' || code === 'NumpadAdd') {
+        action = () => stepZoom(1);
+      } else if (event.key === '-' || code === 'NumpadSubtract') {
+        action = () => stepZoom(-1);
+      } else if (event.key === '0' || code === 'Numpad0') {
+        action = () => setZoom({ mode: 'width' });
+      }
+      if (action) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        action();
+      }
+    },
+    true,
+  );
+
+  // The wheel with Ctrl or Cmd, and the pinch on a touchpad, which the browser sends as such a wheel, zoom at the
+  // pointer.
+  window.addEventListener(
+    'wheel',
+    (event) => {
+      if (!(event.ctrlKey || event.metaKey) || !paperShows()) {
+        return;
+      }
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const pages = document.querySelector('.nimblescape-paper-pages');
+      const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? document.documentElement.clientHeight : 1);
+      setZoom({ mode: 'fixed', factor: factorOf(pages) * Math.exp(-pixels / 500) }, { x: event.clientX, y: event.clientY });
+    },
+    { capture: true, passive: false },
+  );
 
   window.addEventListener('scroll', keepPlace, { passive: true });
 
+  // After a change of the size of the window, the modes "width" and "page" zoom again; the place at the top of the
+  // window stays.
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(fit, 100);
+    resizeTimer = setTimeout(() => fit({ x: widthOfWindow() / 2, y: zoom.mode === 'page' ? document.documentElement.clientHeight / 2 : 0 }), 100);
   });
 
   function schedule(delay) {

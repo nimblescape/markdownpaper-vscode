@@ -71,6 +71,10 @@ The first version.
   "Show Page Preview" in the Command Palette opens the preview beside the
   text editor. Another
   Markdown file keeps the Markdown preview as VS Code shows it.
+- The zoom of the pages in the preview: a bar with "Page Width" (a page as
+  wide as the window, the zoom of a new preview), "Single Page" (a whole page
+  in the window), "Zoom Out", "Zoom In" and the size of the paper; Ctrl or
+  Cmd with 0, − and +, and with the wheel or a pinch on a touchpad, zoom too.
 - "Export PDF" writes the PDF with an installed Google Chrome, Chromium or
   Microsoft Edge beside the Markdown file, with the name that the layout
   gives, without the marks of the soft hyphens and with its title, author and

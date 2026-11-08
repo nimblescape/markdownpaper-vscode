@@ -273,21 +273,20 @@ interface Analysis {
 /** analyses holds the analysis of each document. */
 const analyses = new WeakMap<PmNode, Analysis>();
 
-/** editors are the Tiptap editors of the plugin, for the links that go to their targets. */
-const editors = new Set<Editor>();
+/** editors are the editors of the plugin by their Tiptap editors, for the links that go to their targets. */
+const editors = new Map<Editor, PluginEditor>();
 
 /**
- * reveal puts the cursor at a textblock of a document in the editor that shows the document, and scrolls to it.
+ * reveal goes to a textblock of a document in the editor that shows the document, with the jumps of the editor, so
+ * that Go Back returns to the link ([R-EDIT-001](../../docs/requirements.md#r-edit-001)).
  * @param doc - The document.
  * @param pos - The position of the textblock.
+ * @param from - The position of the link; the default is the cursor, which the editor puts at a clicked part.
  */
-function reveal(doc: PmNode, pos: number): void {
-  for (const editor of editors) {
-    const { state, view } = editor;
-    if (state.doc === doc) {
-      const selection = TextSelection.near(state.doc.resolve(Math.min(pos + 1, state.doc.content.size)));
-      view.dispatch(state.tr.setSelection(selection).scrollIntoView());
-      view.focus();
+function reveal(doc: PmNode, pos: number, from?: number): void {
+  for (const [tiptap, editor] of editors) {
+    if (tiptap.state.doc === doc) {
+      editor.jumpTo(Math.min(pos + 1, doc.content.size), from);
       return;
     }
   }
@@ -512,7 +511,7 @@ function followListLink(view: EditorView, pos: number, event: MouseEvent): boole
   if (target === undefined) {
     return false;
   }
-  reveal(doc, target);
+  reveal(doc, target, pos);
   return true;
 }
 
@@ -803,7 +802,7 @@ function activate(editor: PluginEditor, host?: PluginHost): () => void {
   const tiptap = editor.tiptap;
   const channel = host?.channel?.(pluginName);
   const page: Page = { editor, channel, schema: undefined, requests: 0, lists: new Map() };
-  editors.add(tiptap);
+  editors.set(tiptap, editor);
   pages.set(tiptap, page);
   const stop = channel?.onMessage((value) => {
     const message = extensionMessage(value);

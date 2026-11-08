@@ -25,6 +25,7 @@ html:has(> body.nimblescape-paper-mode) {
   --vscode-editor-background: #ffffff !important;
   --vscode-editor-foreground: #3b3b3b !important;
   --vscode-editorWidget-background: #f8f8f8 !important;
+  --vscode-editorWidget-foreground: #3b3b3b !important;
   --vscode-editorWidget-border: #c8c8c8 !important;
   --vscode-focusBorder: #005fb8 !important;
   --vscode-editorError-foreground: #e51400 !important;

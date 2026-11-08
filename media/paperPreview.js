@@ -16,7 +16,9 @@
 //    pages get smaller when the preview is narrower than a page. VS Code loads the page of the preview again for
 //    "Markdown: Refresh Preview", and so also each time Markdown Notes selects a note; it then puts the empty page at
 //    the top, before the pages exist. The script keeps the place of the pages of its source in the storage of the
-//    page, which stays over such a load, and the first pages after a load show at that place;
+//    page, which stays over such a load, and the first pages after a load show at that place. It also keeps the last
+//    pages there with the key of their content; when only the attributes of a state changed, such as the selected note
+//    of Markdown Notes, the pages of before show again at once, without Paged.js;
 // 4. lets VS Code read the lines of the blocks again, now on the pages, so that the double click to the line and the
 //    scrolling with the text editor work: VS Code keeps the blocks of a version of the content, and the script sends
 //    the last content of VS Code once more, which counts as a new version and changes nothing on the pages;
@@ -55,6 +57,18 @@
   const placeKey = 'nimblescape-paper-place';
   /** The place of the pages of the source before VS Code loaded the page, which the first pages take; then undefined. */
   let restore = readPlace();
+  /** The key of the last pages in the storage of the page, with their source, the key of their content and their styles. */
+  const pagesKey = 'nimblescape-paper-pages';
+  /**
+   * The attributes that mark a state for the scripts of other extensions, not the content: those of the selected note of
+   * Markdown Notes (its request to scroll, its link that deselects it) and of its hidden highlights. Only they change
+   * when Markdown Notes selects another note, and they do not change the pages.
+   */
+  const stateAttributes = /\sdata-(?:selected|reveal|deselect|hidden)="[^"]*"/g;
+  /** The key of the last content of VS Code (keyOf), taken when it arrives, before other scripts draw into it. */
+  let contentKey;
+  /** The style elements of the pages that the script took from the storage of the page, without Paged.js. */
+  let keptStyles = [];
   let headWatch;
   let themeWatch;
 
@@ -88,6 +102,154 @@
     } catch {
       // A page without storage starts at the top after a load.
     }
+  }
+
+  // keyOf returns the key of a content of VS Code: a hash of the HTML of its `.markdown-body` without the attributes of
+  // a state (stateAttributes). VS Code sends the content in two forms, alone and in its whole page; both go through the
+  // parser of the browser, so that the same content has the same key.
+  function keyOf(html) {
+    const body = new DOMParser().parseFromString(html, 'text/html').querySelector('.markdown-body');
+    const text = (body ? body.outerHTML : html).replace(stateAttributes, '');
+    // cyrb53, a hash of 53 bits.
+    let h1 = 0xdeadbeef;
+    let h2 = 0x41c6ce57;
+    for (let index = 0; index < text.length; index++) {
+      const code = text.charCodeAt(index);
+      h1 = Math.imul(h1 ^ code, 2654435761);
+      h2 = Math.imul(h2 ^ code, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return `${4294967296 * (2097151 & h2) + (h1 >>> 0)}:${text.length}`;
+  }
+
+  // keyOfContent returns the key of the content of VS Code that just arrived: of the content that VS Code sent, or else
+  // of the content in the page.
+  function keyOfContent() {
+    const body = content();
+    return original ? keyOf(original) : body ? keyOf(body.outerHTML) : undefined;
+  }
+
+  // sheetText returns the rules of a style element, also those that Paged.js added to its style sheet.
+  function sheetText(style) {
+    try {
+      return Array.from(style.sheet ? style.sheet.cssRules : [])
+        .map((rule) => rule.cssText)
+        .join('\n');
+    } catch {
+      return style.textContent || '';
+    }
+  }
+
+  // keepPages keeps the pages that show, with the key of their content and their styles, in the storage of the page, so
+  // that the page shows them again at once after VS Code loaded it again for the same content (showKeptPages). Pages
+  // too large for the storage are not kept.
+  function keepPages(area, key) {
+    if (typeof source !== 'string' || !key || !previewer || !previewer.polisher) {
+      return;
+    }
+    const polisher = previewer.polisher;
+    const styles = [polisher.styleEl, ...(polisher.inserted || [])]
+      .filter((style) => style && style.isConnected)
+      .sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1))
+      .map(sheetText);
+    try {
+      sessionStorage.setItem(pagesKey, JSON.stringify({ source, key, pages: area.outerHTML, styles }));
+    } catch {
+      try {
+        sessionStorage.removeItem(pagesKey);
+      } catch {
+        // A page without storage makes the pages after each load.
+      }
+    }
+  }
+
+  // afterScrollOfVsCode calls a function after VS Code scrolled the page that it loaded to its place of before: VS Code
+  // waits for the images of the content and then scrolls with a timer, so the function waits in the same way, after it.
+  function afterScrollOfVsCode(callback) {
+    const images = Array.from(document.getElementsByTagName('img'), (image) =>
+      image.complete
+        ? Promise.resolve()
+        : new Promise((resolve) => {
+            image.addEventListener('load', resolve);
+            image.addEventListener('error', resolve);
+          }),
+    );
+    Promise.all(images).then(() => setTimeout(callback, 0));
+  }
+
+  // showKeptPages shows the pages that the storage of the page keeps for the content that VS Code just put into the page,
+  // without Paged.js, and tells whether it will: VS Code loads the page again each time Markdown Notes selects a note,
+  // and only the attributes of a state change then. The pages show after VS Code scrolled the empty page, so that the
+  // scroll of VS Code does not move them; a script that scrolls to a place on them after the event
+  // `nimblescape-paper-rendered`, such as the one of Markdown Notes, has the last word.
+  function showKeptPages() {
+    const paper = paperData();
+    const body = content();
+    let kept;
+    try {
+      kept = JSON.parse(sessionStorage.getItem(pagesKey) || 'null');
+    } catch {
+      kept = undefined;
+    }
+    if (!paper || paper.pending || !body || !kept || kept.source !== source || !contentKey || kept.key !== contentKey || typeof kept.pages !== 'string' || !Array.isArray(kept.styles)) {
+      return false;
+    }
+    const template = document.createElement('template');
+    template.innerHTML = kept.pages;
+    const area = template.content.firstElementChild;
+    if (!area || !area.classList.contains('nimblescape-paper-pages')) {
+      return false;
+    }
+    afterScrollOfVsCode(() => {
+      const now = content();
+      if (!now || contentKey !== kept.key || !paperData() || document.querySelector('.nimblescape-paper-pages') || running) {
+        // A new content came in the meantime.
+        schedule(0);
+        return;
+      }
+      setBodyAttributes(Object.assign({ 'data-layout': paper.layout }, paper.attributes || {}));
+      document.documentElement.lang = paper.language || document.documentElement.lang;
+      removeKeptStyles();
+      keptStyles = kept.styles.map((css) => {
+        const style = document.createElement('style');
+        style.setAttribute('data-nimblescape-paper', 'pages');
+        style.textContent = css;
+        document.head.appendChild(style);
+        return style;
+      });
+      now.before(area);
+      showPages(area, window.scrollY);
+    });
+    return true;
+  }
+
+  // showPages shows new pages at their place, lets VS Code read the lines of their blocks, and tells the scripts of other
+  // extensions that the pages are there.
+  function showPages(area, scroll) {
+    fit();
+    if (restore) {
+      // The first pages after VS Code loaded the page again stand where the pages of before stood.
+      window.scrollTo(restore.left || 0, restore.top);
+      restore = undefined;
+    } else {
+      window.scrollTo(0, scroll);
+    }
+    keepPlace();
+    indicator(false);
+    // VS Code reads the lines of the blocks again, now on the pages.
+    echo = true;
+    const current = content();
+    window.postMessage({ type: 'updateContent', source, content: original || `<!DOCTYPE html><html><body>${current ? current.outerHTML : ''}</body></html>` }, '*');
+    window.dispatchEvent(new CustomEvent('nimblescape-paper-rendered', { detail: { pages: area.querySelectorAll('.pagedjs_page').length } }));
+  }
+
+  // removeKeptStyles removes the styles of the pages that the script took from the storage of the page.
+  function removeKeptStyles() {
+    for (const style of keptStyles) {
+      style.remove();
+    }
+    keptStyles = [];
   }
 
   function readInitialContent() {
@@ -219,6 +381,7 @@
       area.remove();
     }
     removeStylesOf(previewer);
+    removeKeptStyles();
     previewer = undefined;
     setBodyAttributes({});
   }
@@ -321,6 +484,8 @@
       // The extension still reads the layout, and then renders the preview again.
       return;
     }
+    // The key of the content of these pages, before the scripts of other extensions draw into it.
+    const key = contentKey;
     await loadPagedJs();
     await settle(body);
     // A script that draws only after an update, such as the one of Mermaid for the first content, draws after the
@@ -349,7 +514,6 @@
     }
     window.paperDrawings.copyPlantUml(body, template.content);
     keepFromScripts(template.content);
-    const old = document.querySelector('.nimblescape-paper-pages');
     const area = document.createElement('div');
     area.className = 'nimblescape-paper-next';
     body.before(area);
@@ -371,27 +535,16 @@
     for (const page of (next.chunker && next.chunker.pages) || []) {
       page.removeListeners();
     }
-    if (old) {
-      old.remove();
+    // Also pages from the storage of the page that showed in the meantime.
+    for (const element of Array.from(document.querySelectorAll('.nimblescape-paper-pages'))) {
+      element.remove();
     }
     removeStylesOf(previewer);
+    removeKeptStyles();
     previewer = next;
     area.className = 'nimblescape-paper-pages';
-    fit();
-    if (restore) {
-      // The first pages after VS Code loaded the page again stand where the pages of before stood.
-      window.scrollTo(restore.left || 0, restore.top);
-      restore = undefined;
-    } else {
-      window.scrollTo(0, scroll);
-    }
-    keepPlace();
-    indicator(false);
-    // VS Code reads the lines of the blocks again, now on the pages.
-    echo = true;
-    const current = content();
-    window.postMessage({ type: 'updateContent', source, content: original || `<!DOCTYPE html><html><body>${current ? current.outerHTML : ''}</body></html>` }, '*');
-    window.dispatchEvent(new CustomEvent('nimblescape-paper-rendered', { detail: { pages: area.querySelectorAll('.pagedjs_page').length } }));
+    showPages(area, scroll);
+    keepPages(area, key);
     if (unfinished && !retried) {
       retried = true;
       schedule(typeof paper.delay === 'number' ? paper.delay : 800);
@@ -424,8 +577,10 @@
     if (!page) {
       return;
     }
-    const zoom = Number.parseFloat(pages.style.zoom || '1') || 1;
-    const width = page.getBoundingClientRect().width / zoom;
+    // The width of a page without zoom: the browser of VS Code has no standardized zoom, and gives the rectangle of an
+    // element in a zoomed element in the coordinates of that element, so the script measures without zoom.
+    pages.style.zoom = '1';
+    const width = page.getBoundingClientRect().width;
     pages.style.zoom = String(Math.min(1, Math.max(0.25, (document.documentElement.clientWidth - 24) / width)));
   }
 
@@ -448,6 +603,7 @@
     if (message && message.type === 'updateContent' && typeof message.source === 'string' && event.source !== window) {
       source = message.source;
       original = typeof message.content === 'string' ? message.content : undefined;
+      contentKey = keyOfContent();
     }
   });
 
@@ -499,9 +655,13 @@
     if (!content()) {
       return false;
     }
+    contentKey = keyOfContent();
     if (paperData()) {
       enterPaperMode();
-      schedule(0);
+      // After VS Code loaded the page again for the same content, the pages of before show at once.
+      if (!showKeptPages()) {
+        schedule(0);
+      }
     }
     return true;
   }

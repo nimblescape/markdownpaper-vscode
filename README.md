@@ -102,12 +102,13 @@ Node.js 22 or newer.
   exist and a link to a figure or a table that does not exist show as
   warnings in the text editor. The pointer on a field of the front matter
   shows its description.
-- **Front matter form.** The view "Front Matter" in the side bar shows the
-  front matter of the active Markdown file as a form, with one row for each
-  field of its layout, a choice list for a field with names, and read-only
-  rows for `layout` and `repos`. Each change is one edit of the file. In the
-  editor of a whole file of Markdown Notes, the form is at the top of the
-  file.
+- **Front matter in the page.** The editor of rendered Markdown of Markdown
+  Notes shows the front matter as a form at the top of the file, with one row
+  for each field of the layout, a choice list for a field with names, and
+  read-only rows for `layout` and `repos`. In the text editor, the clean
+  editing view of Markdown Notes, the keys of the layout are read-only, the
+  problems show as warnings with quick fixes, and the completion offers the
+  names of a field.
 - **Export PDF.** "Export PDF" in the menu "Run" of the title of a Markdown
   file writes the PDF beside the file, with the name that the layout gives,
   for example `{{matrikelnummer}}_{{author}}`. The PDF shows what the other
@@ -168,8 +169,8 @@ Node.js 22 or newer.
 
 1. Open a folder and run "Markdown Paper: New Project" in the Command Palette
    (Ctrl+Shift+P), or open a Markdown file with a front matter.
-2. Write the fields of the layout in the front matter, in the text or in the
-   view "Front Matter" of the side bar. The warnings name the missing ones.
+2. Write the fields of the layout in the front matter, in the text editor or
+   in the form at the top of the editor. The warnings name the missing ones.
 3. Press Ctrl+Shift+V or Ctrl+K V (on macOS Cmd) for the Markdown preview,
    or choose "Show Page Preview" in the title of the editor.
 4. Choose "Export PDF" in the menu "Run" of the title of the editor.

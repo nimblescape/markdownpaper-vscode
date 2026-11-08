@@ -12,14 +12,16 @@
  * in the list of `/cite`, which merges an item of Zotero into the database of the file; the page inserts the citation.
  */
 
+import type { Layout } from '@nimblescape/markdownlayout';
 import * as vscode from 'vscode';
 import { citationFor, type CiteContext } from './cite';
-import { layoutOf } from './frontMatterView';
-import { type EditorPanelChannel, registerWithNotes } from './notesApi';
+import { type EditorPanelChannel, type FrontMatterRules, registerWithNotes } from './notesApi';
 import { editorPluginName, type ExtensionMessage, pageMessage } from './paper/editorMessages';
 import { isPaperDocument, readFrontMatter } from './paper/frontMatter';
 import { frontMatterSchemaOf } from './paper/frontMatterSchema';
 import { referencesOf } from './paper/references';
+import { findLayout } from './paper/render';
+import { searchHost } from './workspaceHost';
 
 /** EditorPartsContext is what the part of the plugin needs from the extension. */
 export interface EditorPartsContext {
@@ -29,6 +31,19 @@ export interface EditorPartsContext {
   citations: CiteContext;
   /** openRepository is the ID of the command "Open Repository in New Window". */
   openRepository: string;
+}
+
+/**
+ * layoutOf finds the layout of a text: the layout of its field `layout`, else the built-in layout plain.
+ * @param extension - The folder of the extension.
+ * @param file - The file.
+ * @param text - The text of the file.
+ */
+export async function layoutOf(extension: vscode.Uri, file: vscode.Uri, text: string): Promise<{ layout?: Layout; problem: string }> {
+  const name = readFrontMatter(text)?.values.layout?.trim() || 'plain';
+  const found = await findLayout(searchHost(extension, file), file.toString(), name);
+  const errors = found.problems.filter((problem) => problem.severity === 'error').map((problem) => problem.message);
+  return { ...(found.layout ? { layout: found.layout } : {}), problem: errors.join(' ') };
 }
 
 /**
@@ -99,6 +114,62 @@ export function connectPanel(context: EditorPartsContext, channel: EditorPanelCh
           .catch(() => undefined)
           .then((found) => post({ type: 'citation', request: message.request, ...found }));
       }
+    }),
+  );
+}
+
+/**
+ * rulesOf returns the rules of the front matter of a paper for the clean editing view of Markdown Notes: the schema of
+ * its layout, and `repos`, which only `mp get` writes, as a read-only key besides `layout`, which the schema marks
+ * read-only ([R-DOC-005](../docs/requirements.md#r-doc-005)). A document that is no paper gets none.
+ * @param extension - The folder of the extension.
+ * @param file - The file.
+ * @param text - The text of the file.
+ */
+export async function rulesOf(extension: vscode.Uri, file: vscode.Uri, text: string): Promise<FrontMatterRules | undefined> {
+  if (!isPaperDocument(text)) {
+    return undefined;
+  }
+  const { layout } = await layoutOf(extension, file, text);
+  return layout ? { schema: frontMatterSchemaOf(layout), readOnly: ['repos'] } : undefined;
+}
+
+/** schemaInNotes tells whether Markdown Notes took the rules of the front matter of the papers. */
+let schemaInNotes = false;
+
+/**
+ * notesChecksFrontMatter tells whether Markdown Notes checks the front matter of a paper against its schema in its clean
+ * editing view, so that the checks of this extension leave out the same problems there
+ * ([R-DOC-002](../docs/requirements.md#r-doc-002)).
+ */
+export const notesChecksFrontMatter = (): boolean => schemaInNotes;
+
+/**
+ * registerFrontMatterRules gives the clean editing view of Markdown Notes the rules of the front matter of each paper,
+ * again after a change of a file of a layout, when Markdown Notes has `registerFrontMatterSchema`.
+ * @param extension - The folder of the extension.
+ * @returns The registration.
+ */
+export function registerFrontMatterRules(extension: vscode.Uri): vscode.Disposable {
+  const watcher = vscode.workspace.createFileSystemWatcher('**/layouts/**');
+  const changes = new vscode.EventEmitter<void>();
+  const changed = (): void => changes.fire();
+  return vscode.Disposable.from(
+    watcher,
+    changes,
+    watcher.onDidChange(changed),
+    watcher.onDidCreate(changed),
+    watcher.onDidDelete(changed),
+    registerWithNotes((api) => {
+      const registration = api.registerFrontMatterSchema?.({ schemaOf: (file, text) => rulesOf(extension, file, text).catch(() => undefined), onDidChange: changes.event });
+      if (!registration) {
+        return undefined;
+      }
+      schemaInNotes = true;
+      return new vscode.Disposable(() => {
+        schemaInNotes = false;
+        registration.dispose();
+      });
     }),
   );
 }

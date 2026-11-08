@@ -7,7 +7,7 @@
 import { expect, test } from 'vitest';
 import { frontMatterSchemaOf } from './frontMatterSchema';
 
-test('the schema of a layout: layout, the fields with their descriptions, defaults and values, and lang, in the order of the view "Front Matter"', () => {
+test('the schema of a layout: layout, the fields with their descriptions, defaults and values, and lang, in the order of the layout', () => {
   const schema = frontMatterSchemaOf({
     name: 'Thesis',
     language: 'de-AT',

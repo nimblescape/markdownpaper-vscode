@@ -295,4 +295,58 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       await running.close();
     }
   });
+
+  it.skipIf(!browser)('shows the pages of before without a new layout after VS Code loaded the page again for the same content with another selected note', { timeout: 90_000 }, async () => {
+    const paragraph = 'Ein Absatz über die Arbeit von Teams mit Agenten. '.repeat(12);
+    const text = `---\nlayout: plain\ntitle: Agenten\nauthor: Hannes\n---\n\n# Einleitung\n\n${`${paragraph}\n\n`.repeat(12)}`;
+    const paper = await paperContent(text);
+    // Markdown Notes marks the selected note with attributes of a state, which change nothing on the pages.
+    const selected = paper.replace('<h1 ', '<h1 data-selected="true" data-reveal="2" ');
+    expect(selected).not.toBe(paper);
+    const changed = await paperContent(text.replace('# Einleitung', '# Einführung'));
+    const page = writePage();
+    const running = await Browser.launch(browser as string);
+    try {
+      const { targetId } = (await running.send('Target.createTarget', { url: 'about:blank' })) as { targetId: string };
+      const { sessionId } = (await running.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
+      const session = { browser: running, id: sessionId };
+      await running.send('Page.enable', {}, sessionId);
+      const open = async (navigate: () => Promise<unknown>, content: string) => {
+        const loaded = running.once('Page.loadEventFired', sessionId);
+        await navigate();
+        await loaded;
+        await evaluate(session, `window.show(${JSON.stringify(content)})`);
+        await evaluate(session, waitFor('window.rendered.length > 0'));
+        return evaluate<{ pagedJs: boolean; pages: number; width: number; font: string; heading: string; echo: number; vscodeSheets: boolean[] }>(
+          session,
+          `(() => {
+            const pages = document.querySelector('.nimblescape-paper-pages');
+            return {
+              pagedJs: typeof window.Paged !== 'undefined',
+              pages: pages.querySelectorAll('.pagedjs_page').length,
+              width: Math.round(pages.querySelector('.pagedjs_page').getBoundingClientRect().width),
+              font: getComputedStyle(pages.querySelector('p')).fontFamily,
+              heading: pages.querySelector('h1').textContent,
+              echo: window.messages.length,
+              vscodeSheets: [document.getElementById('_defaultStyles').sheet.disabled, document.querySelector('link.code-user-style').disabled],
+            };
+          })()`,
+        );
+      };
+      const first = await open(() => running.send('Page.navigate', { url: pathToFileURL(page).href }, sessionId), paper);
+      expect(first.pagedJs).toBe(true);
+      expect(first.pages).toBeGreaterThan(1);
+
+      // VS Code loads the page again because Markdown Notes selected a note: the pages of before show, without Paged.js.
+      const kept = await open(() => running.send('Page.reload', {}, sessionId), selected);
+      expect(kept).toEqual({ ...first, pagedJs: false });
+
+      // Another text makes new pages.
+      const next = await open(() => running.send('Page.reload', {}, sessionId), changed);
+      expect(next.pagedJs).toBe(true);
+      expect(next.heading).toContain('Einführung');
+    } finally {
+      await running.close();
+    }
+  });
 });

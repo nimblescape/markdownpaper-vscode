@@ -16,6 +16,9 @@
  *   here, the numbers, the captions and the lists. Then the tokens get the form of the output of
  *   `@nimblescape/markdownrender`, such as the alerts and the widths of the columns of the tables, and a first token
  *   with the layout and what it found. The headings keep the IDs of the renderer.
+ * - The footnotes of a paper document are those of the PDF: when another extension adds markdown-it-footnote too, for
+ *   example "Markdown Footnotes", only one rule of each name works for it, and no rule of the inline footnotes
+ *   `^[text]` (paperFootnotes).
  * - The front matter of a paper document does not show: its fields fill the templates of the layout. VS Code shows the
  *   front matter as a table, and the plugin of another extension can show it in its own way, for example as a table
  *   of its own with other tokens. So markdown-it reads the text of a paper document with a blank line for each line of
@@ -96,9 +99,10 @@ export const paperClass = 'nimblescape-paper';
 /** paperTokenType is the type of the hidden token that the plugin puts first, with the PreviewPaper as its meta. */
 const paperTokenType = 'nimblescape_paper';
 
-/** Ruler is the part of a ruler of markdown-it that onlyForPapers needs. */
+/** Ruler is the part of a ruler of markdown-it that onlyForPapers and paperFootnotes need. */
 interface Ruler {
   __rules__: { name: string; fn: (...args: never[]) => unknown; alt: string[] }[];
+  __cache__: unknown;
   at(name: string, fn: (...args: never[]) => unknown, options?: { alt: string[] }): void;
 }
 
@@ -114,6 +118,46 @@ function onlyForPapers(ruler: Ruler, names: readonly string[]): void {
     if (rule) {
       const fn = rule.fn as (state: { env?: Record<string, unknown> }, ...rest: unknown[]) => unknown;
       ruler.at(name, ((state: { env?: Record<string, unknown> }, ...rest: unknown[]) => (state.env?.[layoutEnvKey] ? fn(state, ...rest) : false)) as never, { alt: rule.alt });
+      ownFootnoteRules.add(ruler.__rules__.find((candidate) => candidate.name === name)?.fn ?? fn);
+    }
+  }
+}
+
+/** ownFootnoteRules are the rules of footnotes that the plugin added itself, which work only for a paper document. */
+const ownFootnoteRules = new WeakSet<object>();
+
+/** notForPapers are the rules of footnotes of other plugins that paperFootnotes made skip a paper document. */
+const notForPapers = new WeakSet<object>();
+
+/**
+ * paperFootnotes makes the footnotes of a paper document the footnotes of the PDF ([R-REN-010](../docs/requirements.md#r-ren-010)):
+ * of the rules of markdown-it-footnote with the same name, only one works in the parsing of a paper document, the rule
+ * of the plugin itself if it added one, and else the first; no rule of the inline footnotes `^[text]` works. Another
+ * extension, for example "Markdown Footnotes", which Markdown Notes installs, adds markdown-it-footnote too, before or
+ * after this plugin. A second rule `footnote_tail` would write the list of the footnotes a second time, and the rule
+ * `footnote_inline` of that extension would read the inline footnotes. A notes document keeps the rules of that
+ * extension.
+ * @param md - The markdown-it instance of the Markdown preview, with the plugins of all extensions.
+ */
+function paperFootnotes(md: MarkdownIt): void {
+  const rulers: [Ruler, string][] = [
+    [md.block.ruler as unknown as Ruler, 'footnote_def'],
+    [md.inline.ruler as unknown as Ruler, 'footnote_ref'],
+    [md.inline.ruler as unknown as Ruler, 'footnote_inline'],
+    [md.core.ruler as unknown as Ruler, 'footnote_tail'],
+  ];
+  for (const [ruler, name] of rulers) {
+    const rules = ruler.__rules__.filter((rule) => rule.name === name);
+    const working = name === 'footnote_inline' ? undefined : (rules.find((rule) => ownFootnoteRules.has(rule.fn)) ?? rules[0]);
+    for (const rule of rules) {
+      if (rule === working || ownFootnoteRules.has(rule.fn) || notForPapers.has(rule.fn)) {
+        continue;
+      }
+      const fn = rule.fn as (state: { env?: Record<string, unknown> }, ...rest: unknown[]) => unknown;
+      rule.fn = ((state: { env?: Record<string, unknown> }, ...rest: unknown[]) => (state.env?.[layoutEnvKey] ? false : fn(state, ...rest))) as never;
+      notForPapers.add(rule.fn);
+      // markdown-it builds the chains of the rules again.
+      ruler.__cache__ = null;
     }
   }
 }
@@ -186,7 +230,8 @@ export class PaperPreview implements vscode.Disposable {
    */
   extendMarkdownIt(md: MarkdownIt): MarkdownIt {
     // The footnotes of the pages, as the renderer of the PDF reads them, without the inline footnotes `^[text]`. Another
-    // plugin, such as the footnotes of an extension of VS Code, may have the footnotes already.
+    // plugin, such as the footnotes of an extension of VS Code, may have the footnotes already; then its rules work for a
+    // paper document, without its inline footnotes (paperFootnotes).
     if (!(md.block.ruler as unknown as Ruler).__rules__.some((rule) => rule.name === 'footnote_def')) {
       md.use(footnote);
       md.disable('footnote_inline');
@@ -216,6 +261,7 @@ export class PaperPreview implements vscode.Disposable {
         return parse(src, env);
       }
       const values = env as Record<string, unknown>;
+      paperFootnotes(md);
       if (!('pending' in paper)) {
         values[layoutEnvKey] = paper.layout;
         values[paperEnvKey] = paper.paper;

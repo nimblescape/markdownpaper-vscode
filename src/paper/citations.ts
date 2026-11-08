@@ -320,10 +320,10 @@ const targetSearch = /\]\(#([^\s()"<>]+)/g;
 const codeSearch = /(`+)[^]*?(?<!`)\1(?!`)/g;
 
 /** anchorStart matches the anchor of an entry at the start of its line, with the identifier of its source. */
-const anchorStart = /^<a id="([^"]+)"><\/a>/;
+export const anchorStart = /^<a id="([^"]+)"><\/a>/;
 
 /** noteMarkup matches the markup of a note of Markdown Notes: its start marker or its reference. */
-const noteMarkup = /<!--\[note-[a-z0-9]{4}|\[\^note-[a-z0-9]{4}\]/;
+export const noteMarkup = /<!--\[note-[a-z0-9]{4}|\[\^note-[a-z0-9]{4}\]/;
 
 /** headingLine matches an ATX heading. */
 const headingLine = /^ {0,3}#{1,6}(?:[ \t]|$)/;
@@ -349,7 +349,7 @@ export interface Marker {
  * block or a comment of HTML that starts at the start of a line, such as the database.
  * @param lines - The lines of the text.
  */
-function textLines(lines: readonly string[]): number[] {
+export function textLines(lines: readonly string[]): number[] {
   const found: number[] = [];
   let open: string | undefined;
   let comment = false;

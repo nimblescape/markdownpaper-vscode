@@ -5,26 +5,19 @@
 /**
  * The parts of the paper in the editor of Markdown Notes, through its interface
  * ([R-GEN-003](../docs/requirements.md#r-gen-003)): the clean editing view leaves out the database of the sources
- * ([R-CITE-001](../docs/requirements.md#r-cite-001)) and the start markers of the arguments to research, and the
- * slash command `/research` marks a selected argument for an AI agent, and `/cite` of [cite.ts](cite.ts) inserts a
- * citation ([R-CITE-002](../docs/requirements.md#r-cite-002)). Markdown Notes knows nothing of them; without Markdown Notes, or
+ * ([R-CITE-001](../docs/requirements.md#r-cite-001)), the anchors of the entries of the reference list, the markers of
+ * the lists of the special sections and the start markers of the arguments to research, and keeps the citations, the
+ * entries and the lists read-only ([src/paper/parts.ts](paper/parts.ts)); the slash command `/research` marks a
+ * selected argument for an AI agent, and `/cite` of [cite.ts](cite.ts) inserts a citation
+ * ([R-CITE-002](../docs/requirements.md#r-cite-002)). Markdown Notes knows nothing of them; without Markdown Notes, or
  * with a version without a function, the part is missing.
  */
 
 import * as vscode from 'vscode';
 import { fileOf, type NotesApiV1, registerWithNotes, type SlashCommand, textOf } from './notesApi';
-import { findDatabase, researchEdit, researchMarkers, researchMark, researchText } from './paper/citations';
+import { researchEdit, researchMark, researchText } from './paper/citations';
 import { isPaperDocument } from './paper/frontMatter';
-
-/**
- * hiddenDatabase returns the database of the sources as a block for the clean editing view, when it is the end of the
- * file: Markdown Notes keeps a hidden block at the end of the file.
- * @param lines - The lines of the file.
- */
-export function hiddenDatabase(lines: readonly string[]): { first: number; last: number }[] {
-  const database = findDatabase(lines);
-  return database && lines.slice(database.end + 1).every((line) => line.trim() === '') ? [{ first: database.start, last: database.end }] : [];
-}
+import { generatedParts, hiddenDatabase, hiddenMarkers } from './paper/parts';
 
 /**
  * research marks the selected argument of a paper document for an AI agent: the hidden start marker before it, and
@@ -83,7 +76,8 @@ export function registerNotesParts(slashCommands: readonly SlashCommand[] = []):
       }
     };
     add(() => api.registerHiddenBlocks?.({ find: hiddenDatabase }));
-    add(() => api.registerHiddenMarkers?.({ find: researchMarkers }));
+    add(() => api.registerHiddenMarkers?.({ find: hiddenMarkers }));
+    add(() => api.registerGeneratedParts?.({ find: generatedParts }));
     add(() => api.registerSlashCommand?.(researchCommand));
     for (const command of slashCommands) {
       add(() => api.registerSlashCommand?.(command));

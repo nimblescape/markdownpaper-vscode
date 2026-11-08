@@ -117,9 +117,20 @@ without it.
   the range of that text; and `registerHiddenMarkers({ find(lines) })`, parts
   of lines that the clean editing view leaves out and keeps at their text.
   Markdown Paper registers the database of the sources as a hidden block
-  ([R-CITE-001](#r-cite-001)), each start marker `<wbr><!--[research-->`
-  outside code as a hidden marker, and `/research`. A version of Markdown
-  Notes without a function gets no such part.
+  ([R-CITE-001](#r-cite-001)); each start marker `<wbr><!--[research-->`
+  outside code, the anchor at the start of each entry of the reference list
+  and, in a paper document, the markers of the lists of the special sections
+  as hidden markers; and `/research`. A version of Markdown Notes without a
+  function gets no such part.
+- For the parts that the format step writes, Markdown Notes has
+  `registerGeneratedParts({ find(lines) })` (decision 74 of Markdown Notes):
+  parts of a line and blocks of whole lines that its clean editing view
+  keeps read-only. Markdown Paper registers the text of each citation
+  between its square brackets, each entry of the reference list and, in a
+  paper document, each list of a special section with its markers
+  ([R-EDIT-001](#r-edit-001), [decision 71](#decisions)). An edit of such a
+  part in the clean editing view goes back. A version of Markdown Notes
+  without the function keeps these parts editable there.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
@@ -1744,7 +1755,10 @@ cited or not, in one HTML comment at the end of the file, its database:
 - The checks report a line that is no JSON object, a source without a valid
   `id`, a second source with the same `id`, and a comment without its end.
 - The clean editing view of Markdown Notes leaves the database out (a hidden
-  block of [R-GEN-003](#r-gen-003)), when only empty lines follow it.
+  block of [R-GEN-003](#r-gen-003)), wherever it stands, when its comment
+  has its end; a comment without its end stays in the view, so that its
+  check shows. An edit that the view writes anew moves the database to the
+  end of the file.
 
 ### R-CITE-002
 
@@ -2050,7 +2064,12 @@ nimblescape Markdown is public, so CI reads it without a token
   interface of Markdown Notes ([R-GEN-003](#r-gen-003);
   [R-TEXT-009](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-text-009) of Markdown Notes). Each new feature
   of the paper in one of the two gets its solution in the other in the same
-  step ([decision 66](#decisions)).
+  step ([decision 66](#decisions)). The clean editing view hides the same
+  markup as the editor and keeps the same parts read-only
+  ([decision 71](#decisions)): the database of the sources, the anchors of
+  the entries, the markers of the lists and the start markers of the
+  arguments to research do not show there, and an edit of the text of a
+  citation, of an entry of the reference list or of a list goes back.
 - The database of the sources ([R-CITE-001](#r-cite-001)) and the markers
   of the lists of the special sections ([R-REN-004](#r-ren-004)) are hidden
   blocks. The anchor at the start of an entry of the reference list and the
@@ -2484,6 +2503,18 @@ requirement ([R-GEN-007](#r-gen-007)).
     which parts it shows. The other choice was a fourth view of Markdown
     Notes beside the visual editor of VS Code, which VS Code names "Markdown
     Editor".
+71. **The clean editing view hides the markup of the paper and keeps its
+    generated parts read-only** ([R-EDIT-001](#r-edit-001),
+    [R-GEN-003](#r-gen-003), [R-CITE-001](#r-cite-001)): as in the editor of
+    nimblescape Markdown, the clean editing view of Markdown Notes hides the
+    database of the sources wherever it stands, the anchor at the start of
+    each entry of the reference list, the markers of the lists of the
+    special sections and the start markers of the arguments to research.
+    The text of each citation, each entry of the reference list and each
+    list of a special section are read-only there; an edit of them goes
+    back. The other choice was to show the anchors and the markers in the
+    view, to hide the database only at the end of the file, and to keep the
+    parts editable until the format step writes them again.
 
 ## Open questions
 

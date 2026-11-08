@@ -171,7 +171,9 @@ The first version.
   that it finds. The checks warn of each `(RESEARCH)` and of a start marker
   without one, the pages leave the start marker out, and the clean editing
   view of Markdown Notes hides the start marker and the database of the
-  sources.
+  sources. The clean editing view also hides the anchors of the entries of
+  the reference list and the markers of the lists, and keeps the citations,
+  the entries and the lists read-only, as the rendered editor does.
 - Alerts of GitHub: a block quote whose first line is `[!NOTE]`, `[!TIP]`,
   `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]` becomes the element of an alert
   as GitHub writes it, which a layout draws as a box, for example the hint of

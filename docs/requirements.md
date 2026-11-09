@@ -1446,16 +1446,17 @@ selected, and "Add Note" above a selected passage.
   `data-deselect`, `data-hidden`). A script that reads these attributes
   takes them from the content of VS Code, as the script of Markdown Notes
   does.
-- The pages get their zoom ([R-PRV-007](#r-prv-007)) with the CSS property
-  `zoom` on `.nimblescape-paper-pages`, smaller or larger than the paper. The
-  browser of VS Code has no standardized zoom: it gives the rectangles of
-  text and elements in the pages in the coordinates of the pages, without
-  the zoom. A script that places an element outside the pages at a text on
-  the pages multiplies these rectangles by the zoom. After each change of the
-  zoom, the script of the pages sends the event `nimblescape-paper-zoomed` to
-  `window`, with the new factor, so that such a script places its elements
-  again; Markdown Notes does so for the frame of the selected note and for
-  "Add Note".
+- The zoom of the pages ([R-PRV-007](#r-prv-007)) is the CSS transform
+  `scale` of the element `.pagedjs_pages` of Paged.js, smaller or larger than
+  the paper, and `.nimblescape-paper-pages` around it has the size of the
+  scaled pages and the factor in its attribute `data-zoom`. The rectangles of
+  text and elements in the pages (`getBoundingClientRect`,
+  `getClientRects`) are in the coordinates of the window, with the zoom, so a
+  script that places an element outside the pages at a text on the pages
+  needs no factor. After each change of the zoom, the script of the pages
+  sends the event `nimblescape-paper-zoomed` to `window`, with the new
+  factor, so that such a script places its elements again; Markdown Notes
+  does so for the frame of the selected note and for "Add Note".
 - The text on the pages has soft hyphens (U+00AD) where the layout
   hyphenates words ([R-REN-007](#r-ren-007)); a script that compares a
   selected passage with the Markdown text leaves them out. The text of a page
@@ -1483,6 +1484,10 @@ stands on the pages ([decision 82](#decisions)):
 - The wheel with Ctrl (on macOS Cmd), and the pinch on a touchpad, zoom in
   small steps, and the place under the pointer stays under it. When the
   pages are wider than the window, the window scrolls to the side.
+- The zoom scales the pages as a picture ([decision 83](#decisions)): the
+  text keeps the lines and the page breaks that Paged.js made at the size of
+  the paper, the same as in the PDF, at every zoom, and the pages are not
+  made again for a zoom.
 - After each change of the zoom with the menu, the keys or the wheel, a
   label at the top of the preview shows the factor for about one second,
   with "Page Width" or "Single Page" in these modes. The pointer goes
@@ -2786,6 +2791,15 @@ requirement ([R-GEN-007](#r-gen-007)).
     show at once. A label shows the factor for a moment after each change of
     the zoom. The other choices were the bar only under the pointer, and a
     strip above the pages that takes height from them.
+83. **The zoom scales the pages as a picture** ([R-PRV-007](#r-prv-007),
+    [R-PRV-006](#r-prv-006)): the pages keep the lines and the page breaks
+    of the PDF at every zoom. The CSS property `zoom` laid the text out again
+    in the zoomed size: in the browser of VS Code, which has no standardized
+    zoom, the line height that a layout sets on the body kept its pixels
+    while the letters grew or shrank, so a larger zoom left a growing gap at
+    the foot of a page and a smaller zoom moved the last lines of a page
+    into the column of Paged.js that does not show. The CSS transform
+    `scale` changes only the picture of the pages, not their layout.
 
 ## Open questions
 

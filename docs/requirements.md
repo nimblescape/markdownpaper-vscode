@@ -1161,6 +1161,26 @@ itself ([R-REN-010](#r-ren-010)).
 - A new version of VS Code with another version of Mermaid makes a new version
   of the script.
 
+### R-REN-017
+
+**No text lost or shown twice at a page break.** Every line of the text shows
+on exactly one page, in the PDF and in the page preview
+([decision 81](#decisions)). The layout of the library does this
+([R-LAYOUT-002](https://github.com/nimblescape/markdown/blob/main/docs/rendering.md#r-layout-002),
+[R-LAYOUT-004](https://github.com/nimblescape/markdown/blob/main/docs/rendering.md#r-layout-004)):
+
+- A word in which a page breaks ends the page at one of its soft hyphens,
+  with a hyphen, and the next page starts with the rest of the word.
+- After Paged.js has made a page, the layout measures the page again: text
+  that still lies outside the page goes to the next page, from the last place
+  before it where a line can break.
+- The next page starts at exactly the place of the break, also in a
+  paragraph with a text that repeats, such as "). " after each citation.
+- A reference to a place in a source, such as "S. 18 – 19", "p. 3",
+  "Kap. 2" or "§ 8", and a range of numbers with a dash, such as
+  "2015 – 2023", stay on one line. The text stays the same for search and
+  copy in the PDF.
+
 ## PDF
 
 ### R-PDF-001
@@ -2732,6 +2752,18 @@ requirement ([R-GEN-007](#r-gen-007)).
     slash command `/citenarrative`, a citation in the sentence, join the new
     citation to a citation in the same form right before the cursor, in the
     Text Editor and in the Markdown Editor.
+81. **No text lost or shown twice at a page break** ([R-REN-017](#r-ren-017)):
+    at a page break inside a word with soft hyphens, the browser gave the
+    first glyph after the line break the place of the line before, so
+    Paged.js measured one line too few and the last lines of the page went
+    into a column that does not show. The layout breaks such a word at its
+    soft hyphen, measures each page again and moves text that still lies
+    outside the page to the next page. The next page starts at the copy of
+    the text where the page broke, not at an earlier text with the same
+    characters. A reference to a place in a source and a range of numbers
+    with a dash stay on one line in an element whose text does not wrap,
+    because a character that joins words would change the text for search
+    and copy in the PDF.
 
 ## Open questions
 

@@ -132,8 +132,10 @@ without it.
   text of each link to a heading that the format step writes
   ([R-REN-009](#r-ren-009)) ([R-EDIT-001](#r-edit-001),
   [decision 71](#decisions), [decision 73](#decisions)). An edit of such a
-  part in the clean editing view goes back. A version of Markdown Notes
-  without the function keeps these parts editable there.
+  part in the clean editing view goes back. Each entry of the reference
+  list and each list is locked (`locked: true`): an edit that takes the
+  whole part goes back too ([decision 84](#decisions)). A version of
+  Markdown Notes without the function keeps these parts editable there.
 - The npm package of Markdown Notes, `@nimblescape/markdownnotes`, gives its
   formatter as the library function `formatMarkdown(lines)` for
   [R-CLI-002](#r-cli-002).
@@ -2235,6 +2237,15 @@ nimblescape Markdown is public, so CI reads it without a token
   Markdown,
   [R-EDIT-014](https://github.com/nimblescape/markdown/blob/main/docs/editor.md#r-edit-014)). The user changes these parts through what they
   come from, and the format step writes them again when the file is saved.
+- Each entry of the reference list and each list of a special section is
+  locked, in the editor and in the clean editing view
+  ([decision 84](#decisions); the locked parts of the editor of nimblescape
+  Markdown,
+  [R-EDIT-011](https://github.com/nimblescape/markdown/blob/main/docs/editor.md#r-edit-011)):
+  no edit of the user deletes it, also not as a whole, for example a
+  selection over several entries and the empty lines between them. The
+  edit goes back as a whole, and none of the hidden anchors and markers
+  goes. A citation in a sentence goes with the sentence.
 - Backspace and Delete jump over the hidden anchors and markers in the line.
   A database of the sources that an edit of the user deletes goes back to
   the end of the document.
@@ -2800,6 +2811,15 @@ requirement ([R-GEN-007](#r-gen-007)).
     the foot of a page and a smaller zoom moved the last lines of a page
     into the column of Paged.js that does not show. The CSS transform
     `scale` changes only the picture of the pages, not their layout.
+84. **The reference list and the generated lists are locked**
+    ([R-EDIT-001](#r-edit-001), [R-GEN-003](#r-gen-003)): no edit of the
+    user in the Markdown Editor or in the Text Editor deletes an entry of
+    the reference list or a list of a special section, also not as a whole
+    with the text and the empty lines around it; the edit goes back as a
+    whole, so that no entry loses its text or its hidden anchor. The format
+    step writes them from the citations, the headings and the captions at
+    each save. The other choice was to delete such a part as a whole, with
+    its hidden anchor or markers, until the next save writes it again.
 
 ## Open questions
 

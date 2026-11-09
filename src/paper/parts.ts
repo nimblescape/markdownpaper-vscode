@@ -232,13 +232,15 @@ export function hiddenMarkers(lines: readonly string[]): Marker[] {
  * generatedParts returns the parts of a paper document that the format step writes, which the clean editing view
  * keeps read-only: the text of each citation between its square brackets, without one that holds the markup of a note,
  * and the text of each link to a heading that the format step writes, as a part of its line; and each entry of the
- * reference list and each list of a special section with its markers, as a block of whole lines.
+ * reference list and each list of a special section with its markers, as a locked block of whole lines, which no edit
+ * deletes, also not as a whole ([decision 84](../../docs/requirements.md#decisions)).
  * @param lines - The lines of the file.
  */
-export function generatedParts(lines: readonly string[]): (Marker | Block)[] {
+export function generatedParts(lines: readonly string[]): (Marker | (Block & { locked: true }))[] {
   const { ids, entries, lists, headingLinks } = analysisOf(lines);
   const citations: Marker[] = (ids.size > 0 ? findCitations(lines, ids) : [])
     .filter((citation) => citation.textEnd > citation.textStart && !noteMarkup.test(lines[citation.line].slice(citation.textStart, citation.textEnd)))
     .map((citation) => ({ line: citation.line, start: citation.textStart, end: citation.textEnd }));
-  return [...citations, ...headingLinks, ...entries.map((entry) => entry.block), ...lists];
+  const locked = (block: Block): Block & { locked: true } => ({ ...block, locked: true });
+  return [...citations, ...headingLinks, ...entries.map((entry) => locked(entry.block)), ...lists.map(locked)];
 }

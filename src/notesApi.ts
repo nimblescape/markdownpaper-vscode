@@ -43,9 +43,12 @@ export interface NotesApiV1 {
   /**
    * registerGeneratedParts makes the clean editing view keep the parts of a file that the format step writes read-only:
    * parts of a line, such as the text of a citation, and blocks of whole lines, such as an entry of the reference list.
-   * An older version of Markdown Notes does not have it.
+   * A locked part, such as an entry of the reference list or a generated list, no edit deletes, also not as a whole.
+   * An older version of Markdown Notes does not have it; one without locked parts lets a deletion take a whole part.
    */
-  registerGeneratedParts?(parts: { find(lines: readonly string[]): readonly ({ line: number; start: number; end: number } | { first: number; last: number })[] }): vscode.Disposable;
+  registerGeneratedParts?(parts: {
+    find(lines: readonly string[]): readonly (({ line: number; start: number; end: number } | { first: number; last: number }) & { locked?: boolean })[];
+  }): vscode.Disposable;
   /**
    * registerSlashCommand adds a slash command to the text editors of Markdown files. A command with `selection` shows
    * only when the typed slash replaced selected text, and `run` gets the range of that text; an older version of

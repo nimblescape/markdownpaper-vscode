@@ -16,8 +16,9 @@
  *   citation, a link to a source of the database, which Ctrl+click (Cmd+click on macOS) follows to the entry of the
  *   source; each entry of the reference list; each list between the markers of a special section, whose links
  *   Ctrl+click follows to their headings and captions; and the text of each link to a heading that the format step
- *   writes, a word and the number or the label of the heading, such as `[Anhang B](#daten)`. The user changes them
- *   through what they come from, and the format step writes them again when the file is saved.
+ *   writes, a word and the number or the label of the heading, such as `[Anhang B](#daten)`. The entries and the lists
+ *   are locked: no edit deletes them, also not as a whole. The user changes them through what they come from, and the
+ *   format step writes them again when the file is saved.
  * - Backspace and Delete jump over the hidden anchors and markers in the line. A database of the sources that an edit of
  *   the user deleted goes back to the end of the document. Changes from outside, Undo and Redo pass.
  *
@@ -405,7 +406,7 @@ export function analysisOf(doc: PmNode): Analysis {
     if (entry !== undefined) {
       targets.set(entry, pos);
       if (ids.has(entry)) {
-        parts.push({ from: pos, to: pos + node.nodeSize });
+        parts.push({ from: pos, to: pos + node.nodeSize, locked: true });
         return false;
       }
     }
@@ -413,7 +414,7 @@ export function analysisOf(doc: PmNode): Analysis {
     return false;
   });
   for (const list of lists) {
-    parts.push({ from: list.from, to: list.to });
+    parts.push({ from: list.from, to: list.to, locked: true });
   }
   const inPart = (pos: number) => parts.some((part) => part.from <= pos && pos < part.to);
   for (const link of links) {

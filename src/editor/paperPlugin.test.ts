@@ -206,6 +206,29 @@ describe('the generated parts', () => {
     expect(editor.getMarkdown()).toBe(linked);
   });
 
+  it('keep the entries and the lists also from a deletion as a whole, also over the space between the entries (decision 84)', () => {
+    const two = text
+      .replace('<a id="doe2020"></a>Doe, J. (2020). *An example*.\n', '<a id="doe2020"></a>Doe, J. (2020). *An example*.\n\n<a id="roe2021"></a>Roe, R. (2021). *Another one*.\n')
+      .replace('{"id":"doe2020","type":"book","title":"An example"}\n', '{"id":"doe2020","type":"book","title":"An example"}\n{"id":"roe2021","type":"book","title":"Another one"}\n');
+    const editor = open(two);
+    const { view } = editor.tiptap;
+    const parts = analysisOf(view.state.doc).parts;
+    const entries = parts.filter((part) => part.locked && /^(Doe|Roe), /.test(view.state.doc.textBetween(part.from, part.to)));
+    expect(entries).toHaveLength(2);
+    expect(parts.filter((part) => part.locked)).toHaveLength(3);
+    // From the heading over both entries, both whole entries, and the text of one entry to the text of the other.
+    view.dispatch(view.state.tr.delete(positionOf(editor, 'Literaturverzeichnis', true), entries[1].to));
+    view.dispatch(view.state.tr.delete(entries[0].from, entries[1].to));
+    view.dispatch(view.state.tr.delete(positionOf(editor, 'An example'), positionOf(editor, 'Another')));
+    // The whole list of the table of contents with the heading before it.
+    view.dispatch(view.state.tr.delete(positionOf(editor, 'Inhaltsverzeichnis'), positionOf(editor, 'Einleitung', true) + 40));
+    view.dispatch(view.state.tr.delete(0, view.state.doc.content.size));
+    expect(editor.getMarkdown()).toBe(two);
+    // The citations are no locked parts: a sentence with a citation goes.
+    view.dispatch(view.state.tr.delete(positionOf(editor, 'Teams change'), positionOf(editor, 'S. 3', true) + 2));
+    expect(editor.getMarkdown()).not.toContain('[Doe, 2020, S. 3]');
+  });
+
   it('go to their targets with Ctrl+click: a citation to its entry, a link of the list to its heading', () => {
     const editor = open(text);
     const { view } = editor.tiptap;
@@ -221,13 +244,14 @@ describe('the generated parts', () => {
 
 describe('the guard', () => {
   it('puts the database back at the end after the user deleted it, and Undo brings back the text', () => {
-    const editor = open(text);
+    const ended = text.replace('"An example"}\n-->\n', '"An example"}\n-->\n\nThe end.\n');
+    const editor = open(ended);
     const { view } = editor.tiptap;
-    view.dispatch(view.state.tr.delete(positionOf(editor, 'Literaturverzeichnis') - 1, view.state.doc.content.size));
+    view.dispatch(view.state.tr.delete(positionOf(editor, 'An example', true) + 2, view.state.doc.content.size));
     expect(editor.getMarkdown()).toContain('\n<!-- nimblescape-sources\n{"id":"doe2020","type":"book","title":"An example"}\n-->\n');
-    expect(editor.getMarkdown()).not.toContain('Literaturverzeichnis');
+    expect(editor.getMarkdown()).not.toContain('The end.');
     undo(view.state, view.dispatch);
-    expect(editor.getMarkdown()).toBe(text);
+    expect(editor.getMarkdown()).toBe(ended);
   });
 
   it('jumps over the marker of an argument to research with Backspace', () => {

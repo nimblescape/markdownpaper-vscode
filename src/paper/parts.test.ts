@@ -75,6 +75,15 @@ describe('generatedParts', () => {
     ]);
   });
 
+  test('locks each entry and each list, so that no edit deletes them, also not as a whole, and leaves the citations unlocked (decision 84)', () => {
+    const parts = generatedParts(paper);
+    expect(parts.filter((part) => 'locked' in part && part.locked).map((part) => texts(paper, [part])[0])).toEqual([
+      '<a id="hong2024"></a>Hong, S. (2024). MetaGPT.\nThe second line of the entry.',
+      '<!-- toc -->\n- [1 Einleitung](#einleitung)\n<!-- /toc -->',
+    ]);
+    expect(parts.filter((part) => !('locked' in part))).toEqual([{ line: 13, start: 21, end: 44 }]);
+  });
+
   test('finds nothing in a file without a database and without lists', () => {
     expect(generatedParts(['# A text', '', 'See [Hong](#hong2024).'])).toEqual([]);
   });

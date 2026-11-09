@@ -633,8 +633,13 @@
 
   // The zoom of the pages (R-PRV-007). The mode "width" (Page Width) makes a page as wide as the window of the preview,
   // the mode "page" (Single Page) shows a whole page in the window, and the mode "fixed" keeps a factor, which "Zoom In",
-  // "Zoom Out", "Actual Size" and the wheel with Ctrl or Cmd choose. The pages get the zoom with the CSS property `zoom`
-  // on `.nimblescape-paper-pages`; the space around the pages (paperPreview.css) is inside that element, so it zooms too.
+  // "Zoom Out", "Actual Size" and the wheel with Ctrl or Cmd choose. The zoom scales the pages as a picture: the element
+  // `.pagedjs_pages` of Paged.js, with the space around the pages (paperPreview.css), gets the CSS transform `scale`, and
+  // `.nimblescape-paper-pages` around it gets the size of the scaled pages, which the page scrolls. So the text keeps the
+  // lines and the page breaks that Paged.js made at the size of the paper, as in the PDF, at every zoom. The CSS
+  // property `zoom` would lay the text out again: in the browser of VS Code, which has no standardized zoom, a line
+  // height of the body, outside the zoomed element, keeps its pixels, so the lines got closer or farther apart than
+  // the letters, and text at the end of a page moved into the column of Paged.js that does not show.
   // The menu "Zoom" in the title of the preview belongs to the extension, which cannot send a message to the page: it
   // asks for a zoom with the hidden element of the next content (zoomRequest), and VS Code loads the page again for it.
   // Nothing of the zoom stands on the pages: after a change of the zoom, a label shows the factor for a moment.
@@ -700,23 +705,33 @@
     return Math.min(maxZoom, Math.max(minZoom, factor));
   }
 
-  // factorOf returns the zoom that the pages have now.
+  // factorOf returns the zoom that the pages have now, from their attribute `data-zoom`.
   function factorOf(pages) {
-    const factor = Number.parseFloat(pages.style.zoom);
+    const factor = Number.parseFloat(pages.getAttribute('data-zoom') || '');
     return factor > 0 ? factor : 1;
   }
 
-  // pageSize returns the size of the first page without zoom, in CSS pixels. A browser with the standardized zoom
-  // (`Element.currentCSSZoom`) gives the rectangle of an element in a zoomed element with the zoom; the browser of VS
-  // Code has no standardized zoom and gives it in the coordinates of the zoomed element, so without the zoom.
+  // pageSize returns the size of the first page without zoom, in CSS pixels: the size of its box, which the transform
+  // of the zoom does not change.
   function pageSize(pages) {
     const page = pages.querySelector('.pagedjs_page');
     if (!page) {
       return undefined;
     }
-    const rect = page.getBoundingClientRect();
-    const scale = 'currentCSSZoom' in Element.prototype ? page.currentCSSZoom || 1 : 1;
-    return rect.width > 0 && rect.height > 0 ? { width: rect.width / scale, height: rect.height / scale } : undefined;
+    return page.offsetWidth > 0 && page.offsetHeight > 0 ? { width: page.offsetWidth, height: page.offsetHeight } : undefined;
+  }
+
+  // scalePages scales the pages by a factor as a picture: `.pagedjs_pages` gets the transform, and the element of the
+  // pages gets the size of the scaled pages, in the middle of the window while it is narrower than the window.
+  function scalePages(pages, factor) {
+    const inner = pages.querySelector(':scope > .pagedjs_pages');
+    if (!inner) {
+      return;
+    }
+    inner.style.transform = `scale(${factor})`;
+    pages.style.width = `${inner.offsetWidth * factor}px`;
+    pages.style.height = `${inner.offsetHeight * factor}px`;
+    pages.setAttribute('data-zoom', String(factor));
   }
 
   // widthOfWindow returns the width of the window for the pages: the width of the body, without the space of the
@@ -749,15 +764,18 @@
     }
     const old = factorOf(pages);
     const factor = factorFor(size);
-    if (Math.abs(factor - old) > 0.0001) {
-      const width = widthOfWindow();
-      // The place at the anchor on the pages without zoom: the pages start at the top of the page, and stand in the
-      // middle of the window while they are narrower than the window, else at its left edge.
-      const point = anchor && {
+    const changed = Math.abs(factor - old) > 0.0001;
+    const width = widthOfWindow();
+    // The place at the anchor on the pages without zoom: the pages start at the top of the page, and stand in the
+    // middle of the window while they are narrower than the window, else at its left edge.
+    const point = changed &&
+      anchor && {
         x: (window.scrollX + anchor.x - Math.max(0, (width - old * size.width) / 2)) / old,
         y: (window.scrollY + anchor.y) / old,
       };
-      pages.style.zoom = String(factor);
+    // Also new pages without a change of the zoom get the size of the scaled pages.
+    scalePages(pages, factor);
+    if (changed) {
       if (point) {
         window.scrollTo(Math.max(0, (width - factor * size.width) / 2) + point.x * factor - anchor.x, point.y * factor - anchor.y);
       }

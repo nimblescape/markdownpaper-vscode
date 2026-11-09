@@ -8,8 +8,9 @@ preview of every Markdown file, so each rule applies only while the preview show
 has the class nimblescape-paper-mode, which the script of the pages (paperPreview.js) sets. The colors of the theme
 are those of a light theme. The pages stand on a grey background, with a shadow and a gap between them. The content
 of the preview stays in the page, hidden and off screen, as wide as the text of a page, so that the scripts of other
-extensions draw in it; the next pages are made in a hidden area. A note at the top left shows while Paged.js makes the
-pages, and a label at the top shows the factor of the zoom for a moment after a change of the zoom (R-PRV-007).
+extensions draw in it; the next pages are made in a hidden area. The zoom scales the pages that show as a picture. A note
+at the top left shows while Paged.js makes the pages, and a label at the top shows the factor of the zoom for a moment
+after a change of the zoom (R-PRV-007).
 */
 
 html:has(> body.nimblescape-paper-mode) {
@@ -86,6 +87,22 @@ body.nimblescape-paper-mode .pagedjs_pages {
   min-width: 100%;
   padding: 16px 0;
   gap: 16px;
+}
+
+/* The pages that show have the zoom of the script (R-PRV-007) as a picture: `.pagedjs_pages` keeps the size of the
+   paper and gets the transform `scale`, so the text keeps its lines and its page breaks; the element around it gets the
+   size of the scaled pages and stands in the middle of the window while it is narrower than the window. */
+body.nimblescape-paper-mode .nimblescape-paper-pages {
+  position: relative;
+  margin: 0 auto;
+}
+
+body.nimblescape-paper-mode .nimblescape-paper-pages > .pagedjs_pages {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 0;
+  transform-origin: 0 0;
 }
 
 body.nimblescape-paper-mode .pagedjs_page {

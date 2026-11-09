@@ -529,8 +529,9 @@ document stays as VS Code shows it. The pages in the preview:
   (the zoom of a new preview) and "Single Page" for a whole page in the
   window. Ctrl+0, Ctrl+− and Ctrl++ (on macOS Cmd) zoom too while the
   preview has the focus, and the wheel with Ctrl, or a pinch on a touchpad,
-  zooms at the pointer. Nothing of the zoom covers the pages: after a change,
-  the factor shows at the top for a moment. In Zen mode of
+  zooms at the pointer. The zoom scales the pages as a picture, so the lines
+  and the page breaks stay those of the PDF. Nothing of the zoom covers the
+  pages: after a change, the factor shows at the top for a moment. In Zen mode of
   VS Code, the pages fill the whole window when the setting
   `zenMode.centerLayout` is off, since VS Code centers the editor in Zen mode
   by default;

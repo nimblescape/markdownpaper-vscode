@@ -75,7 +75,9 @@ The first version.
   preview with "Zoom In", "Zoom Out", "Actual Size (100 %)", "Page Width" (a
   page as wide as the window, the zoom of a new preview) and "Single Page" (a
   whole page in the window); Ctrl or Cmd with 0, − and +, and with the wheel
-  or a pinch on a touchpad, zoom too. Nothing of the zoom covers the pages.
+  or a pinch on a touchpad, zoom too. The zoom scales the pages as a picture,
+  with the lines and the page breaks of the PDF, and nothing of the zoom
+  covers the pages.
 - "Export PDF" writes the PDF with an installed Google Chrome, Chromium or
   Microsoft Edge beside the Markdown file, with the name that the layout
   gives, without the marks of the soft hyphens and with its title, author and

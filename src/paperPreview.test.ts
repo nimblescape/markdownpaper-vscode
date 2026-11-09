@@ -310,7 +310,7 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
         session,
         `(() => {
           const pages = document.querySelector('.nimblescape-paper-pages');
-          pages.style.zoom = '1';
+          pages.querySelector('.pagedjs_pages').style.transform = 'none';
           const area = pages.querySelector('.pagedjs_page_content').getBoundingClientRect();
           const text = pages.querySelector('p').getBoundingClientRect();
           return {
@@ -512,22 +512,35 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       // A click in the menu "Zoom": VS Code loads the page again with the request in the content.
       const menu = (action: string) => open(() => running.send('Page.reload', {}, sessionId), asked(action));
       await open(() => running.send('Page.navigate', { url: pathToFileURL(page).href }, sessionId));
-      type State = { zoom: number; width: number; height: number; count: number; bodyWidth: number; clientWidth: number; clientHeight: number; scrollX: number; scrollY: number; scrollWidth: number; scrollHeight: number; mode: string; label: string; shown: boolean; labels: number; pagedJs: boolean; vscodeKeys: number; zoomed: number[] };
+      type State = { zoom: number; cssZoom: string; transform: string; text: { top: number; height: number; lines: number }; width: number; height: number; count: number; bodyWidth: number; clientWidth: number; clientHeight: number; scrollX: number; scrollY: number; scrollWidth: number; scrollHeight: number; mode: string; label: string; shown: boolean; labels: number; pagedJs: boolean; vscodeKeys: number; zoomed: number[] };
       const state = (): Promise<State> =>
         evaluate<State>(
           session,
           `(() => {
             const pages = document.querySelector('.nimblescape-paper-pages');
             const page = pages.querySelector('.pagedjs_page');
-            const zoom = Number.parseFloat(pages.style.zoom) || 1;
-            const rect = page.getBoundingClientRect();
-            const scale = 'currentCSSZoom' in Element.prototype ? page.currentCSSZoom : 1;
+            const zoom = Number.parseFloat(pages.getAttribute('data-zoom')) || 1;
             const view = document.documentElement;
             const label = document.querySelector('.nimblescape-paper-zoom');
+            // A paragraph on the second page, in the coordinates of the page without the zoom: its place, its height and
+            // its lines stay the same at every zoom, since the zoom scales the pages as a picture.
+            const second = pages.querySelectorAll('.pagedjs_page')[1];
+            const paragraph = second.querySelector('.pagedjs_page_content p');
+            const range = document.createRange();
+            range.selectNodeContents(paragraph);
+            const box = paragraph.getBoundingClientRect();
+            const top = second.getBoundingClientRect().top;
             return {
               zoom,
-              width: rect.width / scale,
-              height: rect.height / scale,
+              cssZoom: [pages, ...pages.querySelectorAll('.pagedjs_pages, .pagedjs_page, p')].map((element) => getComputedStyle(element).zoom).find((value) => value !== '1') || '1',
+              transform: pages.querySelector('.pagedjs_pages').style.transform,
+              text: {
+                top: Math.round(((box.top - top) / zoom) * 10) / 10,
+                height: Math.round((box.height / zoom) * 10) / 10,
+                lines: new Set([...range.getClientRects()].map((line) => Math.round(line.top))).size,
+              },
+              width: page.offsetWidth,
+              height: page.offsetHeight,
               count: pages.querySelectorAll('.pagedjs_page').length,
               bodyWidth: document.body.clientWidth,
               clientWidth: view.clientWidth,
@@ -552,6 +565,16 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       const width = await state();
       expect(width.mode).toBe('width');
       expect(width.zoom).toBeGreaterThan(1);
+      expect(width.cssZoom).toBe('1');
+      expect(width.transform).toMatch(/^scale\(1\.\d+\)$/);
+      expect(width.text.lines).toBeGreaterThan(2);
+      // At each zoom below, the text of the pages keeps its lines, as Paged.js made them at the size of the paper.
+      const samePicture = (s: State) => {
+        expect(s.cssZoom).toBe('1');
+        expect(s.text.lines).toBe(width.text.lines);
+        expect(Math.abs(s.text.top - width.text.top)).toBeLessThan(0.5);
+        expect(Math.abs(s.text.height - width.text.height)).toBeLessThan(0.5);
+      };
       expect(Math.abs(width.zoom * width.width - (width.bodyWidth - 24))).toBeLessThan(1);
       expect(width.scrollWidth).toBeLessThanOrEqual(width.clientWidth);
       expect(width.labels).toBe(0);
@@ -565,6 +588,7 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       await evaluate(session, waitFor("window.scrollY > 0 && (JSON.parse(sessionStorage.getItem('nimblescape-paper-place') || 'null') || {}).top === window.scrollY"));
       await menu('page');
       const single = await state();
+      samePicture(single);
       expect(single.pagedJs).toBe(false);
       expect(single.mode).toBe('page');
       expect(Math.abs(single.zoom * (single.height + 32) - single.clientHeight)).toBeLessThan(1);
@@ -583,6 +607,7 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       const middleY = (before.scrollY + before.clientHeight / 2) / before.zoom;
       await menu('in');
       const larger = await state();
+      samePicture(larger);
       expect(larger.mode).toBe('fixed');
       expect(larger.zoom).toBeGreaterThan(before.zoom);
       expect([0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1]).toContain(larger.zoom);
@@ -624,6 +649,7 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
         await menu('in');
       }
       const wide = await state();
+      samePicture(wide);
       expect(wide.zoom).toBe(2);
       expect(wide.scrollWidth).toBeGreaterThan(wide.clientWidth);
 
@@ -640,6 +666,7 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
         await evaluate(session, `document.querySelector('.nimblescape-paper-pages p').dispatchEvent(new WheelEvent('wheel', { deltaY: -100, clientX: ${pointer.x}, clientY: ${pointer.y}, ctrlKey: true, bubbles: true, cancelable: true }))`);
       }
       const wheel = await state();
+      samePicture(wheel);
       expect(wheel.zoom).toBeCloseTo(2 * Math.exp(0.6), 2);
       expect(Math.abs(placeOf(wheel).x - under.x)).toBeLessThan(2);
       expect(Math.abs(placeOf(wheel).y - under.y)).toBeLessThan(2);
@@ -664,6 +691,7 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       await running.send('Emulation.setDeviceMetricsOverride', { width: 700, height: 1000, deviceScaleFactor: 1, mobile: false }, sessionId);
       await evaluate(session, `new Promise((resolve) => setTimeout(() => resolve(true), 400))`);
       const narrow = await state();
+      samePicture(narrow);
       expect(narrow.mode).toBe('page');
       expect(narrow.zoom * narrow.width).toBeLessThanOrEqual(narrow.bodyWidth - 24 + 1);
       expect(narrow.zoom * (narrow.height + 32)).toBeLessThanOrEqual(narrow.clientHeight + 1);

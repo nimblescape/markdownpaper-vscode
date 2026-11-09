@@ -243,4 +243,64 @@ describe('the command mp', () => {
       await page.close();
     }
   }, 150_000);
+
+  it.skipIf(!browser)('loses no text at a page break inside a hyphenated word, and keeps a page reference on one line (R-REN-017)', async () => {
+    const folder = temporary();
+    fs.mkdirSync(path.join(folder, 'layouts', 'word'), { recursive: true });
+    fs.writeFileSync(path.join(folder, 'layouts', 'word', 'layout.json'), JSON.stringify({ format: 'nimblescape-layout 1.0.0', language: 'de-AT', hyphenate: true }));
+    fs.writeFileSync(path.join(folder, 'layouts', 'word', 'page.css'), '@page { size: A6; margin: 12mm; }\nbody { font: 10pt serif; }\np { text-align: justify; word-spacing: -0.05em; orphans: 2; widows: 2; }\n');
+    // Many page breaks fall inside a word with soft hyphens, where Paged.js broke the word one glyph late and the page
+    // lost the last lines into a column beside it.
+    const sentence = 'Die Industrialisierung von Dienstleistungen verbindet Standardisierung, Automatisierung und Spezialisierung nach dem Vorbild der Fließbandfertigung (S. 371 \u2013 373).';
+    const paragraphs = Array.from({ length: 24 }, (_, index) => Array.from({ length: 2 + (index % 3) }, () => sentence).join(' '));
+    fs.writeFileSync(path.join(folder, 'paper.md'), `---\nlayout: word\n---\n\n${paragraphs.join('\n\n')}\n`);
+    expect(run(folder, ['build', 'paper.md', '--html', 'page.html'], 120_000)).toMatchObject({ code: 0 });
+    const page = await Browser.launch(browser!);
+    try {
+      const { targetId } = await page.send('Target.createTarget', { url: 'about:blank' });
+      const { sessionId } = (await page.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
+      await page.send('Page.enable', {}, sessionId);
+      const loaded = page.once('Page.loadEventFired', sessionId);
+      await page.send('Page.navigate', { url: pathToFileURL(path.join(folder, 'page.html')).href }, sessionId);
+      await loaded;
+      // For each page: the glyphs outside the box of its text, and its text without soft hyphens and without the hyphen
+      // of Paged.js at its end; and the number of lines of each page reference.
+      const expression = `new Promise((resolve) => {
+        const read = () => {
+          const pages = [...document.querySelectorAll('.pagedjs_page')].map((sheet) => {
+            const box = sheet.querySelector('.pagedjs_page_content');
+            const bounds = box.getBoundingClientRect();
+            const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+            const range = document.createRange();
+            let outside = '';
+            for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+              for (let index = 0; index < node.data.length; index++) {
+                if (/\\s|\\u00ad/.test(node.data[index])) continue;
+                range.setStart(node, index);
+                range.setEnd(node, index + 1);
+                const rect = range.getClientRects()[0];
+                if (rect && (rect.left >= bounds.right - 0.5 || rect.top >= bounds.bottom - 0.5)) outside += node.data[index];
+              }
+            }
+            return { outside, text: box.textContent.replace(/\\u00ad/g, '').replace(/\\u2011\\s*$/, '') };
+          });
+          const references = [...document.querySelectorAll('.pagedjs_page .nsmd-nowrap')].map((element) => element.getClientRects().length);
+          resolve({ pages, references });
+        };
+        if (window.paperRendered) { read(); } else { document.addEventListener('paper-rendered', read); }
+      })`;
+      const { result } = (await page.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)) as {
+        result: { value: { pages: { outside: string; text: string }[]; references: number[] } };
+      };
+      const { pages, references } = result.value;
+      expect(pages.length).toBeGreaterThan(5);
+      expect(pages.map((sheet) => sheet.outside).filter(Boolean)).toEqual([]);
+      const letters = (text: string): string => text.replace(/\s+/g, '');
+      expect(letters(pages.map((sheet) => sheet.text).join(''))).toBe(letters(paragraphs.join('')));
+      expect(references.length).toBeGreaterThan(40);
+      expect(references.filter((lines) => lines !== 1)).toEqual([]);
+    } finally {
+      await page.close();
+    }
+  }, 150_000);
 });

@@ -113,6 +113,10 @@ The first version.
   layout can shrink the spaces of justified lines with a negative
   `word-spacing`, as Word does; the last line of such a paragraph keeps its
   natural spaces.
+- No text is lost or shows twice at a page break, in the PDF and in the page
+  preview, also in a word with soft hyphens and in a paragraph with a text
+  that repeats; a reference to a place in a source, such as "S. 18 – 19",
+  stays on one line.
 - The parts of a document: the front part, the body and the appendix part,
   each in an element, so that a layout gives each part its own pages, such as
   no page number in the front part and the numbers I, II, … in the appendix

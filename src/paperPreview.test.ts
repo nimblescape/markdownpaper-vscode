@@ -561,6 +561,8 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       // page and the space above and below it fill the height of the window, and a page starts at the top of the
       // window; the page is not longer than the pages, although the hidden content is longer.
       await evaluate(session, 'window.scrollTo(0, 2500)');
+      // The page keeps the place after the event of the scroll, before VS Code loads the page again.
+      await evaluate(session, waitFor("window.scrollY > 0 && (JSON.parse(sessionStorage.getItem('nimblescape-paper-place') || 'null') || {}).top === window.scrollY"));
       await menu('page');
       const single = await state();
       expect(single.pagedJs).toBe(false);

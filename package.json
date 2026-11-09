@@ -147,6 +147,33 @@
         "command": "nimblescape.markdownPaper.updateSourcesFromZotero",
         "title": "Update Sources from Zotero",
         "category": "Markdown Paper"
+      },
+      {
+        "command": "nimblescape.markdownPaper.zoomIn",
+        "title": "Zoom In",
+        "category": "Markdown Paper",
+        "icon": "$(zoom-in)"
+      },
+      {
+        "command": "nimblescape.markdownPaper.zoomOut",
+        "title": "Zoom Out",
+        "category": "Markdown Paper",
+        "icon": "$(zoom-out)"
+      },
+      {
+        "command": "nimblescape.markdownPaper.actualSize",
+        "title": "Actual Size (100 %)",
+        "category": "Markdown Paper"
+      },
+      {
+        "command": "nimblescape.markdownPaper.pageWidth",
+        "title": "Page Width",
+        "category": "Markdown Paper"
+      },
+      {
+        "command": "nimblescape.markdownPaper.singlePage",
+        "title": "Single Page",
+        "category": "Markdown Paper"
       }
     ],
     "menus": {
@@ -154,6 +181,35 @@
         {
           "command": "nimblescape.markdownPaper.exportPdf",
           "when": "(editorLangId == markdown || activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor' || activeCustomEditorId == 'nimblescape.markdownNotes.editor') && nimblescape.markdownPaper.paperDocument"
+        }
+      ],
+      "editor/title": [
+        {
+          "submenu": "nimblescape.markdownPaper.zoom",
+          "group": "navigation",
+          "when": "(activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor') && nimblescape.markdownPaper.paperDocument"
+        }
+      ],
+      "nimblescape.markdownPaper.zoom": [
+        {
+          "command": "nimblescape.markdownPaper.zoomIn",
+          "group": "1_step@1"
+        },
+        {
+          "command": "nimblescape.markdownPaper.zoomOut",
+          "group": "1_step@2"
+        },
+        {
+          "command": "nimblescape.markdownPaper.actualSize",
+          "group": "1_step@3"
+        },
+        {
+          "command": "nimblescape.markdownPaper.pageWidth",
+          "group": "2_fit@1"
+        },
+        {
+          "command": "nimblescape.markdownPaper.singlePage",
+          "group": "2_fit@2"
         }
       ],
       "commandPalette": [
@@ -172,6 +228,26 @@
         {
           "command": "nimblescape.markdownPaper.openRepository",
           "when": "editorLangId == markdown && nimblescape.markdownPaper.paperDocument"
+        },
+        {
+          "command": "nimblescape.markdownPaper.zoomIn",
+          "when": "(activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor') && nimblescape.markdownPaper.paperDocument"
+        },
+        {
+          "command": "nimblescape.markdownPaper.zoomOut",
+          "when": "(activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor') && nimblescape.markdownPaper.paperDocument"
+        },
+        {
+          "command": "nimblescape.markdownPaper.actualSize",
+          "when": "(activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor') && nimblescape.markdownPaper.paperDocument"
+        },
+        {
+          "command": "nimblescape.markdownPaper.pageWidth",
+          "when": "(activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor') && nimblescape.markdownPaper.paperDocument"
+        },
+        {
+          "command": "nimblescape.markdownPaper.singlePage",
+          "when": "(activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == 'vscode.markdown.preview.editor') && nimblescape.markdownPaper.paperDocument"
         }
       ],
       "explorer/context": [
@@ -192,6 +268,13 @@
         }
       ]
     },
+    "submenus": [
+      {
+        "id": "nimblescape.markdownPaper.zoom",
+        "label": "Zoom",
+        "icon": "$(zoom-in)"
+      }
+    ],
     "jsonValidation": [
       {
         "fileMatch": [

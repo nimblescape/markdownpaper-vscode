@@ -9,7 +9,8 @@
  * ([notesParts.ts](notesParts.ts)) and in its editor of a whole file ([editorParts.ts](editorParts.ts)), the citations from
  * the editor and from Zotero ([cite.ts](cite.ts)), the slash commands of the lists of the special sections
  * ([listCommands.ts](listCommands.ts)), the command mp
- * in the terminals of VS Code ([terminal.ts](terminal.ts)) and the commands, and returns the export of the extension: the markdown-it plugin
+ * in the terminals of VS Code ([terminal.ts](terminal.ts)) and the commands, among them those of the menu "Zoom" of the
+ * pages in the Markdown preview, and returns the export of the extension: the markdown-it plugin
  * of the pages in the Markdown preview of VS Code ([markdownPreview.ts](markdownPreview.ts)), which VS Code reads, and
  * the functions that the tests in VS Code read.
  */
@@ -22,7 +23,7 @@ import { registerEditorParts, registerFrontMatterRules } from './editorParts';
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
 import { FrontMatterChecks } from './frontMatterChecks';
 import { ReferenceLinks, referenceLinkSelector } from './referenceLinks';
-import { PaperPreview } from './markdownPreview';
+import { PaperPreview, type ZoomAction } from './markdownPreview';
 import { type SlashCommand } from './notesApi';
 import { listCommands } from './listCommands';
 import { registerNotesParts, researchCommand } from './notesParts';
@@ -44,7 +45,24 @@ export const commands = {
   openRepository: 'nimblescape.markdownPaper.openRepository',
   connectZotero: 'nimblescape.markdownPaper.connectZotero',
   updateSources: 'nimblescape.markdownPaper.updateSourcesFromZotero',
+  zoomIn: 'nimblescape.markdownPaper.zoomIn',
+  zoomOut: 'nimblescape.markdownPaper.zoomOut',
+  actualSize: 'nimblescape.markdownPaper.actualSize',
+  pageWidth: 'nimblescape.markdownPaper.pageWidth',
+  singlePage: 'nimblescape.markdownPaper.singlePage',
 };
+
+/** zoomMenu is the ID of the menu "Zoom" in the title of the Markdown preview of a paper document (R-PRV-007). */
+export const zoomMenu = 'nimblescape.markdownPaper.zoom';
+
+/** zoomActions are the commands of the menu "Zoom" with their actions. */
+export const zoomActions: readonly (readonly [string, ZoomAction])[] = [
+  [commands.zoomIn, 'in'],
+  [commands.zoomOut, 'out'],
+  [commands.actualSize, 'actual'],
+  [commands.pageWidth, 'width'],
+  [commands.singlePage, 'page'],
+];
 
 /** Api is the export of the extension: the plugin for the Markdown preview of VS Code, and a function for the tests. */
 export interface Api {
@@ -135,6 +153,17 @@ export function activate(context: vscode.ExtensionContext): Api {
     vscode.languages.registerDocumentLinkProvider(referenceLinkSelector, new ReferenceLinks(commands.openRepository)),
     vscode.commands.registerCommand(commands.connectZotero, () => connectZoteroCommand(citations)),
     vscode.commands.registerCommand(commands.updateSources, (uri?: unknown) => updateSourcesCommand(citations, uri)),
+    // The menu "Zoom" in the title of the Markdown preview of a paper document zooms the pages of the active preview.
+    ...zoomActions.map(([command, action]) =>
+      vscode.commands.registerCommand(command, () => {
+        const file = preview.fileOfActive();
+        if (file) {
+          preview.zoom(file, action);
+        } else {
+          void vscode.window.showWarningMessage('Zoom: open the Markdown preview of a paper document first.');
+        }
+      }),
+    ),
   );
   return {
     extendMarkdownIt: (md) => preview.extendMarkdownIt(md),

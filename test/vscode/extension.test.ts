@@ -281,6 +281,25 @@ describe('nimblescape Markdown Paper', function () {
     assert.equal(editor.document.lineAt(5).text, 'Agents change the work of teams ([Hong et al., 2024](#hong2024)).');
   });
 
+  it('/citenarrative after a citation in the sentence of the same author joins it as "Levitt (1972, 1976)" (decision 80)', async () => {
+    const extension = await api();
+    const levitt1976 = '{"id":"levitt1976","type":"article-journal","author":[{"family":"Levitt","given":"Theodore"}],"issued":{"date-parts":[[1976]]},"title":"The industrialization of service"}';
+    const levitt1972 = '{"id":"levitt1972","type":"article-journal","author":[{"family":"Levitt","given":"Theodore"}],"issued":{"date-parts":[[1972]]},"title":"Production-line approach to service"}';
+    const first = '[Levitt (1972)](#levitt1972 "narrative")';
+    const file = write('paper/cite-narrative.md', `---\nlayout: plain\nlang: de-AT\n---\n\n${first} beschreibt es.\n\n<!-- nimblescape-sources\n${levitt1976}\n${levitt1972}\n-->\n`);
+    const editor = await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(file));
+    const lines = editor.document.getText().split('\n');
+    await waitFor(() => (extension.formatStep.applies(lines, file) ? true : undefined), 'the layout of the format step');
+    const place = new vscode.Position(5, first.length);
+    const inserted = extension.citeNarrative.run(editor, new vscode.Range(place, place)) as Promise<boolean>;
+    // The list shows the sources of the database in their order; Enter chooses the first, levitt1976.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
+    assert.equal(await inserted, true);
+    // The format writes the text of the first citation anew: "Levitt (1972".
+    assert.equal(editor.document.lineAt(5).text, `${first}, [1976)](#levitt1976 "narrative") beschreibt es.`);
+  });
+
   it('/toc inserts the table of contents in the language of the layout, with its list, and a second /toc inserts nothing (R-REN-004)', async () => {
     const extension = await api();
     const toc = extension.lists.find((command) => command.label === '/toc');

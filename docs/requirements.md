@@ -103,8 +103,8 @@ without it.
   `registerHiddenBlocks({ find(lines) })`, blocks at the end of a file that the
   clean editing view leaves out, for the database of [R-CITE-001](#r-cite-001);
   `registerSlashCommand({ label, description, detail, run(editor, range) })`, a
-  slash command of the text editor (a slash and small letters), for `/cite`
-  and `/research` of [R-CITE-002](#r-cite-002) and for `/toc`, `/lof`,
+  slash command of the text editor (a slash and small letters), for `/cite`,
+  `/citenarrative` and `/research` of [R-CITE-002](#r-cite-002) and for `/toc`, `/lof`,
   `/lot` and `/lol` of [R-REN-004](#r-ren-004). Each call returns a
   `Disposable`. Markdown Notes has them since commit `bf3b719` of its
   [pull request 1](https://github.com/nimblescape/markdownnotes-vscode/pull/1).
@@ -1876,11 +1876,16 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
 - The checks warn of a title with words that are no CSL term or value, such
   as `"S. 3"`, and the formatter keeps the text of such a link.
 - Two citations in one pair of parentheses stand apart with `; `. A comma
-  `, ` joins a work of the same authors to the citation before it, as APA
-  writes "(Levitt, 1972, 1976)": the formatter writes only the year and the
-  place of the joined citation, `([Levitt, 1972](#levitt1972), [1976](#levitt1976))`.
-  After a citation of other authors, a joined citation keeps its names
-  ([decision 47](#decisions)).
+  `, ` joins a work of the same authors to the citation before it in the same
+  form, as APA writes "(Levitt, 1972, 1976)" in parentheses and
+  "Levitt (1972, 1976)" in the sentence: the formatter writes only the year
+  and the place of the joined citation. In parentheses, the parentheses stand
+  outside the links, `([Levitt, 1972](#levitt1972), [1976](#levitt1976))`. In
+  the sentence, each link has the title `narrative`; the first link holds the
+  names and the opening parenthesis, the last link the closing parenthesis,
+  `[Levitt (1972](#levitt1972 "narrative"), [1976)](#levitt1976 "narrative")`.
+  After a citation of other authors or in the other form, a citation keeps its
+  names ([decision 47](#decisions), [decision 80](#decisions)).
 - `(RESEARCH)` asks an AI agent to research the evidence for an argument
   ([decision 43](#decisions)). The author selects the argument in the text
   editor and types `/research`, which works only with selected text of a
@@ -1911,12 +1916,20 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
   list of the sources, with a search by author, title and year, and inserts
   the chosen source at its place as a citation in parentheses, with the text
   of the citation style of the layout:
-  `([Hong et al., 2024](#hong2024))`, with a space before it after a word. A
-  title such as `"narrative"` or `"page 3"` makes it another citation. There is no slash command that only adds a
+  `([Hong et al., 2024](#hong2024))`, with a space before it after a word.
+  `/citenarrative` inserts the chosen source in the same way as a citation in
+  the sentence, `[Hong et al. (2024)](#hong2024 "narrative")`. A title such as
+  `"page 3"` makes it another citation. Right after a citation in the same
+  form, the new citation joins it ([decision 80](#decisions)): a work of the
+  same authors after a comma with only its year, in parentheses before the
+  closing parenthesis, and another source in parentheses after `; `; in the
+  sentence, a source of other authors stands alone. The format writes the
+  text of the citation before it anew at the next save. Both slash commands
+  work the same in the Text Editor and in the Markdown Editor. There is no slash command that only adds a
   source: the database gets its sources from Zotero through `/cite`, or from
   an AI agent through `mp source` ([R-CITE-005](#r-cite-005)).
-  Markdown Paper registers `/cite` and `/research` as slash commands of
-  Markdown Notes ([R-GEN-003](#r-gen-003)).
+  Markdown Paper registers `/cite`, `/citenarrative` and `/research` as slash
+  commands of Markdown Notes ([R-GEN-003](#r-gen-003)).
 
 ### R-CITE-003
 
@@ -2205,16 +2218,19 @@ nimblescape Markdown is public, so CI reads it without a token
   the command `mp` writes them. Ctrl+click (Cmd+click on macOS) on a
   reference to GitHub runs "Open Repository in New Window" for it
   ([R-CLI-004](#r-cli-004)).
-- In a paper, `/cite` in the slash commands and in the insert
-  menu, and "Cite" in the format bar, show the list of `/cite` in VS Code
-  ([R-CITE-006](#r-cite-006)); the editor inserts the citation of the chosen
-  source at the cursor or after the selected text, with a space before it
-  after a word. An item of Zotero goes into the database first.
+- In a paper, `/cite` and `/citenarrative` in the slash commands and in the
+  insert menu, and "Cite" in the format bar, show the list of `/cite` in VS
+  Code ([R-CITE-006](#r-cite-006)); the editor inserts the citation of the
+  chosen source at the cursor or after the selected text, with a space before
+  it after a word, and joins it to a citation in the same form right before
+  the cursor as the text editor does ([R-CITE-002](#r-cite-002),
+  [decision 80](#decisions)). An item of Zotero goes into the database
+  first.
 - "Research" in the format bar, and `/research` after a slash typed on the
   selected argument, mark the argument as `/research` does in the text
   editor ([R-CITE-002](#r-cite-002)). They show only in a paper and only on
   a selection that is an argument. The slash commands of the editor have
-  the same names as in the text editor, also `/cite`, and the text editor
+  the same names as in the text editor, also `/cite` and `/citenarrative`, and the text editor
   has the commands of the blocks of the editor
   ([R-EDIT-008](https://github.com/nimblescape/markdownnotes-vscode/blob/main/docs/requirements.md#r-edit-008)
   of Markdown Notes, [decision 74](#decisions)).
@@ -2706,6 +2722,16 @@ requirement ([R-GEN-007](#r-gen-007)).
     them, and go back with the keys that the user binds to Go Back and Go
     Forward of VS Code (decision 87 of Markdown Notes), the buttons of the
     mouse and their own buttons. A key without a place goes on to VS Code.
+80. **Works of the same authors in one citation in the sentence**
+    ([R-CITE-002](#r-cite-002)): a comma between two citations in the
+    sentence joins a work of the same authors to the citation before it, as
+    APA 7 writes "Levitt (1972, 1976)". The first link holds the names and
+    the opening parenthesis, the last link the closing parenthesis, and each
+    year stays a link to its own entry. A citation keeps its names after a
+    citation of other authors or in the other form. `/cite` and the new
+    slash command `/citenarrative`, a citation in the sentence, join the new
+    citation to a citation in the same form right before the cursor, in the
+    Text Editor and in the Markdown Editor.
 
 ## Open questions
 

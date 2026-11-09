@@ -209,6 +209,41 @@ describe('the text of a citation in the style of the PHT (R-CITE-002, R-CITE-003
     expect(cited.entries.map((entry) => entry.text)).toEqual(['Festman, J., & Schwieter, J. (2019). *F*.', 'Raggl, A. (2015a). *Alter*.', 'Raggl, A. (2015b). *Zeit*.']);
   });
 
+  test('joins works of the same authors in the same form: "(Raggl, 2015, 2017)" in parentheses, "Raggl (2015, 2017)" in the sentence (decision 80)', () => {
+    const later: Source = { ...raggl, id: 'raggl2017', issued: { 'date-parts': [[2017]] }, title: 'Lernen' };
+    const latest: Source = { ...raggl, id: 'raggl2019', issued: { 'date-parts': [[2019]] }, title: 'Musik' };
+    const sources = [raggl, later, latest, two];
+    expect(
+      citationsOf(sources, [
+        { id: 'raggl2015', form: 'narrative' },
+        { id: 'raggl2017', form: 'narrative', joined: true },
+      ]),
+    ).toEqual(['Raggl (2015', '2017)']);
+    expect(
+      citationsOf(sources, [
+        { id: 'raggl2015', form: 'narrative', label: 'page', locator: '3' },
+        { id: 'raggl2017', form: 'narrative', joined: true },
+        { id: 'raggl2019', form: 'narrative', joined: true, label: 'chapter', locator: '2' },
+      ]),
+    ).toEqual(['Raggl (2015, S. 3', '2017', '2019, Kap. 2)']);
+    expect(
+      citationsOf(sources, [
+        { id: 'raggl2015', form: 'parenthetical' },
+        { id: 'raggl2017', form: 'parenthetical', joined: true },
+      ]),
+    ).toEqual(['Raggl, 2015', '2017']);
+    // Other authors, another form, or no comma: each citation keeps its names.
+    expect(
+      citationsOf(sources, [
+        { id: 'raggl2015', form: 'narrative' },
+        { id: 'festman2019', form: 'narrative', joined: true },
+        { id: 'raggl2017', form: 'narrative', joined: true },
+        { id: 'raggl2019', form: 'parenthetical', joined: true },
+        { id: 'raggl2015', form: 'narrative' },
+      ]),
+    ).toEqual(['Raggl (2015)', 'Festman und Schwieter (2019)', 'Raggl (2017)', 'Raggl, 2019', 'Raggl (2015)']);
+  });
+
   test('a narrative citation of a law, which has no author, has the title in the place of the names', () => {
     const law: Source = { id: 'schog', type: 'legislation', title: 'Schulorganisationsgesetz', issued: { 'date-parts': [[1962]] } };
     const cites: Cite[] = [

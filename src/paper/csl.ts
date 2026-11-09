@@ -64,8 +64,9 @@ export interface Cite {
   label?: string;
   locator?: string;
   /**
-   * joined is true for a citation that a comma joins to the citation before it in one pair of parentheses: a work of
-   * the same author or authors then has only its year and its place, as APA writes "(Levitt, 1972, 1976)".
+   * joined is true for a citation that a comma joins to the citation before it: a work of the same author or authors
+   * in the same form then has only its year and its place, as APA writes "(Levitt, 1972, 1976)" in parentheses and
+   * "Levitt (1972, 1976)" in the sentence.
    */
   joined?: boolean;
 }
@@ -227,6 +228,8 @@ export interface Cited {
   citations: string[];
   /** entries are the entries of the cited sources, in the order of the style. */
   entries: { id: string; text: string }[];
+  /** joined tells for each cite whether it joins the cite before it as a work of the same authors in the same form. */
+  joined: boolean[];
 }
 
 /**
@@ -234,6 +237,11 @@ export interface Cited {
  * text in the parentheses, because a link stands for each source and the parentheses stand outside the links. A
  * narrative citation is the names and, in parentheses, the year and the place; it joins the last two names with the
  * word "and" of the language, as APA writes a citation in the sentence (Festman und Schwieter, 2019).
+ *
+ * A joined citation of the same authors in the same form has only its year and its place. In parentheses, the
+ * parentheses stand outside the links: `([Levitt, 1972](#levitt1972), [1976](#levitt1976))`. In the sentence, the
+ * first citation has the names and the opening parenthesis, and the last one the closing parenthesis:
+ * `[Levitt (1972](#levitt1972 "narrative"), [1976)](#levitt1976 "narrative")`, which reads "Levitt (1972, 1976)".
  * @param style - The style.
  * @param language - The language tag of the document, which chooses the CSL locale.
  * @param sources - The sources of the document; cites of an unknown source get an empty text.
@@ -251,28 +259,43 @@ export function cite(style: CitationStyle, language: string, sources: readonly S
   engine.updateItems(ids);
   const and = engine.getTerm('and');
   const namesOf = (id: string) => tidy(engine.makeCitationCluster([{ id, 'author-only': true }]));
+  const inner = (text: string) => (/^\(.*\)$/.test(text) ? text.slice(1, -1) : text);
+  /** joins tells whether the cite at an index joins the cite before it: a comma, a known source of the same names, the same form. */
+  const joins = (index: number): boolean => {
+    const one = cites[index];
+    const before = cites[index - 1];
+    if (!one?.joined || !before || before.form !== one.form || !known.has(one.id) || !known.has(before.id)) {
+      return false;
+    }
+    const names = namesOf(one.id);
+    return names !== '' && !names.includes('[NO_PRINTED_FORM]') && namesOf(before.id) === names;
+  };
   const citations = cites.map((one, index) => {
     if (!known.has(one.id)) {
       return '';
     }
     const place = one.locator ? { locator: one.locator, label: one.label ?? 'page' } : {};
-    const before = cites[index - 1];
-    if (one.joined && one.form === 'parenthetical' && before && known.has(before.id) && namesOf(before.id) === namesOf(one.id) && !namesOf(one.id).includes('[NO_PRINTED_FORM]')) {
-      const year = tidy(engine.makeCitationCluster([{ id: one.id, 'suppress-author': true, ...place }]));
-      return /^\(.*\)$/.test(year) ? year.slice(1, -1) : year;
+    const year = () => inner(tidy(engine.makeCitationCluster([{ id: one.id, 'suppress-author': true, ...place }])));
+    const first = !joins(index);
+    if (one.form === 'parenthetical' && !first) {
+      return year();
     }
     if (one.form === 'narrative') {
-      const names = tidy(engine.makeCitationCluster([{ id: one.id, 'author-only': true }])).replace(/ & (?!.* & )/, ` ${and} `);
+      // A run of joined citations in the sentence opens its parenthesis in the first link and closes it in the last.
+      const last = !joins(index + 1);
+      if (!first) {
+        return `${year()}${last ? ')' : ''}`;
+      }
+      const names = namesOf(one.id).replace(/ & (?!.* & )/, ` ${and} `);
       if (names === '' || names.includes('[NO_PRINTED_FORM]')) {
         return titleNarrative(tidy(engine.makeCitationCluster([{ id: one.id, ...place }])), known.get(one.id)?.title);
       }
-      const year = tidy(engine.makeCitationCluster([{ id: one.id, 'suppress-author': true, ...place }]));
-      return `${names} ${/^\(.*\)$/.test(year) ? year : `(${year})`}`;
+      return `${names} (${year()}${last ? ')' : ''}`;
     }
     const text = tidy(engine.makeCitationCluster([{ id: one.id, ...place }]));
     return /^\(.*\)$/.test(text) ? text.slice(1, -1) : text;
   });
   const bibliography = ids.length > 0 ? engine.makeBibliography() : false;
   const entries = bibliography ? bibliography[1].map((text, index) => ({ id: bibliography[0].entry_ids[index][0], text: tidy(text) })) : [];
-  return { citations, entries };
+  return { citations, entries, joined: cites.map((_, index) => known.has(cites[index].id) && joins(index)) };
 }

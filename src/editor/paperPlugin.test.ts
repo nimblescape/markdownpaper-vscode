@@ -303,7 +303,7 @@ describe('the part on the platform', () => {
     const platform = platformOf();
     const editor = open(paper, platform);
     const items = paperPlugin.menus!.insert!(editor.tiptap);
-    expect(items.map((item) => item.slash)).toEqual(['cite', 'toc', 'lof', 'lot', 'lol']);
+    expect(items.map((item) => item.slash)).toEqual(['cite', 'citenarrative', 'toc', 'lof', 'lot', 'lol']);
     select(editor, positionOf(editor, 'Teams change', true));
     items[0].run();
     expect(platform.sent[1]).toEqual({ type: 'cite', request: 1 });
@@ -341,6 +341,41 @@ describe('the part on the platform', () => {
     editor.tiptap.commands.insertContent('x');
     platform.send({ type: 'listChange', request: 3, change: { from: 0, to: 0, text: '# Inhaltsverzeichnis\n\n' , heading: { from: 2, to: 20 } } });
     expect(editor.getMarkdown()).not.toContain('Inhaltsverzeichnis');
+  });
+
+  it('offers /citenarrative, which joins a work of the same authors to the citation in the sentence before the cursor (decision 80)', () => {
+    const platform = platformOf();
+    const levitt = paper.replace('Teams change.', '[Levitt (1972)](#levitt1972 "narrative") describes it.');
+    const editor = open(levitt, platform);
+    const narrative = paperPlugin.menus!.insert!(editor.tiptap).find((item) => item.slash === 'citenarrative')!;
+    // The cursor right after a citation in the sentence: the request sends its link.
+    select(editor, positionOf(editor, ' describes'));
+    narrative.run();
+    expect(platform.sent[1]).toEqual({ type: 'cite', request: 1, form: 'narrative', before: { id: 'levitt1972', title: 'narrative' } });
+    platform.send({ type: 'citation', request: 1, id: 'levitt1976', text: '1976)', join: ', ' });
+    expect(editor.getMarkdown()).toBe(paper.replace('Teams change.', '[Levitt (1972)](#levitt1972 "narrative"), [1976)](#levitt1976 "narrative") describes it.'));
+    // Without a link before the cursor: the citation stands alone in the sentence.
+    select(editor, positionOf(editor, 'Teams plan'));
+    narrative.run();
+    expect(platform.sent[2]).toEqual({ type: 'cite', request: 2, form: 'narrative' });
+    platform.send({ type: 'citation', request: 2, id: 'shao2025', text: 'Shao (2025)' });
+    expect(editor.getMarkdown()).toContain(' [Shao (2025)](#shao2025 "narrative")Teams plan');
+  });
+
+  it('joins a citation in parentheses to the citation before the cursor, before the closing parenthesis (decision 80)', () => {
+    const platform = platformOf();
+    const editor = open(paper.replace('Teams change.', 'Teams change ([Levitt, 1972](#levitt1972)).'), platform);
+    const cite = paperPlugin.menus!.insert!(editor.tiptap).find((item) => item.slash === 'cite')!;
+    select(editor, positionOf(editor, ').', true) - 1);
+    cite.run();
+    expect(platform.sent[1]).toEqual({ type: 'cite', request: 1, before: { id: 'levitt1972', title: '' } });
+    platform.send({ type: 'citation', request: 1, id: 'levitt1976', text: '1976', join: ', ' });
+    // The cursor stays after the closing parenthesis, and a source of other authors goes after a semicolon.
+    cite.run();
+    platform.send({ type: 'citation', request: 2, id: 'shao2025', text: 'Shao, 2025', join: '; ' });
+    expect(editor.getMarkdown()).toBe(paper.replace('Teams change.', 'Teams change ([Levitt, 1972](#levitt1972), [1976](#levitt1976); [Shao, 2025](#shao2025)).'));
+    // The format bar inserts a citation in parentheses after the selection, as before.
+    expect(platform.sent[2]).toEqual({ type: 'cite', request: 2, before: { id: 'levitt1976', title: '' } });
   });
 
   it('inserts a citation after a space or a parenthesis without a space before it', () => {

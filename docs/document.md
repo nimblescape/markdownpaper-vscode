@@ -347,6 +347,11 @@ write the text of a citation or of an entry yourself.
    - Two works of the same authors, with a comma between the links:
      `([Levitt, 1972](#levitt1972), [1976](#levitt1976))`; the format writes
      only the year of the second.
+   - Two works of the same authors as a part of the sentence, with a comma
+     between two links with the title `narrative`:
+     `[Levitt (1972](#levitt1972 "narrative"), [1976)](#levitt1976 "narrative") beschreibt …`;
+     the format writes "Levitt (1972, 1976)", with the names and the opening
+     parenthesis in the first link and the closing parenthesis in the last.
 3. **Give the place** in the source in the title of the link, with a CSL term
    and its value: `page 3`, `page 13-14`, `chapter 2`, `section 4.1`,
    `figure 1`, `table 2`, `paragraph 5`, and in a law `section 65` (§ 65),

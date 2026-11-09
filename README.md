@@ -156,12 +156,14 @@ Node.js 22 or newer.
   generated lists are read-only. Ctrl+click on a citation goes to its entry,
   and on a link of a list to its heading or caption. The format step writes
   these parts again when you save the file. The form of the front matter shows
-  the fields of the layout, `/cite` and "Cite" insert a citation,
+  the fields of the layout, `/cite`, `/citenarrative` and "Cite" insert a citation,
   "Research" marks a selected argument, and `/toc`, `/lof`, `/lot` and
   `/lol` insert the table of contents and the lists.
 - **Citations and Zotero.** With Markdown Notes, type `/cite` in a paper
   document and choose a source: the citation goes in at the place, in the
-  citation style of the layout. After "Connect Zotero" (with an API key of
+  citation style of the layout. `/citenarrative` inserts a citation in the
+  sentence, such as "Levitt (1972)"; right after a citation, a work of the
+  same authors joins it, as in "Levitt (1972, 1976)". After "Connect Zotero" (with an API key of
   zotero.org), the list also shows the items of your Zotero library and of
   the group libraries that the setting
   `nimblescape.markdownPaper.zoteroGroups` names; a chosen item goes into the

@@ -30,7 +30,7 @@
  */
 
 import type { Layout, Problem } from '@nimblescape/markdownlayout';
-import { type CitationStyle, cite, type Form, type Source } from './csl';
+import { type Cite, type CitationStyle, cite, type Form, type Source } from './csl';
 import { bodyOf, readFrontMatter } from './frontMatter';
 import { type Heading, renderBody } from './markdown';
 import { idPattern, researchEdit, type ResearchEdit, researchMark, researchText, sourcesName } from './marks';
@@ -434,6 +434,94 @@ export function findCitations(lines: readonly string[], ids: ReadonlySet<string>
   return citations;
 }
 
+/** Join is how a new citation joins the citation before it: ", " as a work of the same authors, "; " as another source in its parentheses. */
+export type Join = ', ' | '; ';
+
+/** CitationBefore is the citation that a new citation joins: its source, its data, and the column where the new citation goes. */
+export interface CitationBefore {
+  id: string;
+  data: CitationData;
+  at: number;
+}
+
+/**
+ * citationBefore returns the citation of a line that a new citation of `/cite` or `/citenarrative` at a column joins
+ * ([decision 80](../../docs/requirements.md#decisions)): for a citation in the sentence, a citation in the sentence
+ * whose link ends at the column, and the new citation goes after it; for a citation in parentheses, a citation in
+ * parentheses whose link ends at the closing parenthesis just before or just after the column, and the new citation
+ * goes before that parenthesis. A link in code, a link to no source and a title with words that are no data do not
+ * count.
+ * @param text - The text of the line.
+ * @param column - The column of the new citation.
+ * @param form - The form of the new citation.
+ * @param ids - The identifiers of the sources of the database.
+ */
+export function citationBefore(text: string, column: number, form: Form, ids: ReadonlySet<string>): CitationBefore | undefined {
+  const code = codeSpans(text);
+  for (const match of text.matchAll(linkSearch)) {
+    const start = match.index;
+    const end = start + match[0].length;
+    const data = parseData(match[3]);
+    if (!ids.has(match[2]) || data.unknown.length > 0 || data.form !== form || code.some(([a, b]) => a < end && start < b)) {
+      continue;
+    }
+    if (form === 'narrative' ? end === column : (end === column - 1 && text[end] === ')') || (end === column && text[end] === ')')) {
+      return { id: match[2], data, at: end };
+    }
+  }
+  return undefined;
+}
+
+/** NewCitation is the text of a new citation, and how it joins the citation before it; without join, it stands alone. */
+export interface NewCitation {
+  text: string;
+  join?: Join;
+}
+
+/**
+ * newCitation writes the text of a new citation of a source in a form, as `/cite` and `/citenarrative` insert it. After
+ * a citation in the same form that the new one joins, a work of the same authors has only its year, as the format
+ * writes it, and another source in parentheses stands after a semicolon; else the citation stands alone. The citation
+ * before it keeps its text until the format writes it anew.
+ * @param style - The citation style of the layout.
+ * @param language - The language of the layout.
+ * @param sources - The sources of the database, with the source of the new citation.
+ * @param id - The identifier of the source of the new citation.
+ * @param form - The form of the new citation.
+ * @param before - The citation before the place of the new citation, if there is one.
+ */
+export function newCitation(style: CitationStyle, language: string, sources: readonly Source[], id: string, form: Form, before?: CitationBefore): NewCitation {
+  if (before && before.data.form === form) {
+    const previous: Cite = { id: before.id, form, ...(before.data.term && before.data.value ? { label: before.data.term, locator: before.data.value } : {}) };
+    const written = cite(style, language, sources, [previous, { id, form, joined: true }]);
+    if (written.joined[1]) {
+      return { text: written.citations[1], join: ', ' };
+    }
+    if (form === 'parenthetical' && written.citations[1] !== '') {
+      return { text: written.citations[1], join: '; ' };
+    }
+  }
+  return { text: cite(style, language, sources, [{ id, form }]).citations[0] };
+}
+
+/**
+ * citationMarkup returns the Markdown of a new citation: after the citation that it joins, the join and the link; in
+ * parentheses, the link in parentheses; in the sentence, the link with the title "narrative"; a citation that stands
+ * alone after a word gets a space before it.
+ * @param id - The identifier of the source.
+ * @param form - The form of the citation.
+ * @param citation - The text of the citation and its join.
+ * @param before - The character before the place of the citation, or "" at the start of the line.
+ */
+export function citationMarkup(id: string, form: Form, citation: NewCitation, before: string): string {
+  const link = `[${citation.text}](#${id}${form === 'narrative' ? ' "narrative"' : ''})`;
+  if (citation.join) {
+    return `${citation.join}${link}`;
+  }
+  const space = /^[^\s([]$/.test(before) ? ' ' : '';
+  return form === 'narrative' ? `${space}${link}` : `${space}(${link})`;
+}
+
 /**
  * citedIds returns the identifiers of the sources that a text cites, in the order of the text: the targets of the
  * links to a place of the page that are sources of the database, outside code, also of a link whose text holds the
@@ -542,7 +630,8 @@ export function writeCitations(lines: readonly string[], layout: Layout, style: 
       id: citation.id,
       form: citation.data.form,
       ...(citation.data.term && citation.data.value ? { label: citation.data.term, locator: citation.data.value } : {}),
-      // A comma between two links joins a work of the same author to the one before: "(Levitt, 1972, 1976)".
+      // A comma between two links joins a work of the same author in the same form to the one before: "(Levitt, 1972,
+      // 1976)" in parentheses, "Levitt (1972, 1976)" in the sentence.
       joined: index > 0 && citations[index - 1].line === citation.line && lines[citation.line].slice(citations[index - 1].end, citation.start) === ', ',
     })),
     cited,

@@ -113,7 +113,7 @@ export function connectPanel(context: EditorPartsContext, channel: EditorPanelCh
           void vscode.commands.executeCommand(context.openRepository, document.uri.toString(), reference.name);
         }
       } else if (message?.type === 'cite') {
-        void citationFor(context.citations, document.uri)
+        void citationFor(context.citations, document.uri, message.form ?? 'parenthetical', message.before)
           .catch(() => undefined)
           .then((found) => post({ type: 'citation', request: message.request, ...found }));
       } else if (message?.type === 'list') {

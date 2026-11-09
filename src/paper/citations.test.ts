@@ -12,7 +12,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { type Layout, termsFor } from '@nimblescape/markdownlayout';
 import { describe, expect, test } from 'vitest';
-import { addSources, citationProblems, findCitations, findDatabase, parseData, researchEdit, researchMarkers, sourceLine, writeCitations } from './citations';
+import { addSources, citationBefore, citationMarkup, citationProblems, findCitations, findDatabase, newCitation, parseData, researchEdit, researchMarkers, sourceLine, writeCitations } from './citations';
+import type { Source } from './csl';
 import type { CitationStyle } from './csl';
 
 /** layout is a German layout of the PHT. */
@@ -169,6 +170,14 @@ describe('the format step of the citations (R-CITE-002, R-CITE-004)', () => {
     );
   });
 
+  test('a comma joins works of the same author in the sentence, as APA writes "Shao (2025, 2026)", and the text stays at the next format (decision 80)', () => {
+    const shao2026 = '{"id":"shao2026","type":"report","author":[{"family":"Shao","given":"Yijia"}],"issued":{"date-parts":[[2026]]},"title":"Agents at work"}';
+    const lines = file(['[a](#shao2025 "narrative"), [b](#shao2026 "narrative page 4") beschreibt es. [Shao (2025)](#shao2025 "narrative") und [x](#shao2026 "narrative").'], [hong, shao, shao2026]);
+    const formatted = writeCitations(lines, layout, style);
+    expect(formatted[at]).toBe('[Shao (2025](#shao2025 "narrative"), [2026, S. 4)](#shao2026 "narrative page 4") beschreibt es. [Shao (2025)](#shao2025 "narrative") und [Shao (2026)](#shao2026 "narrative").');
+    expect(writeCitations(formatted, layout, style)).toEqual(formatted);
+  });
+
   test('puts a new reference list before the appendix part, with the heading of the language of the layout', () => {
     const lines = file(['# Introduction', '', 'Text ([Hong](#hong2024)).', '', '# Appendix', '', '## Guide', '', 'Questions.']);
     const formatted = writeCitations(lines, { ...layout, language: 'en-US', terms: termsFor('en-US') }, style);
@@ -303,4 +312,49 @@ test('/research puts the start marker before the selected argument and "(RESEARC
   expect(researchEdit('.')).toBe('Select the argument to research, then type /research.');
   expect(researchEdit('First argument.\n\nSecond argument.')).toBe('Select an argument in one paragraph.');
   expect(researchEdit('Teams learn (RESEARCH).')).toBe('The selected text has a mark of /research already.');
+});
+
+describe('the citations of /cite and /citenarrative (R-CITE-002, decision 80)', () => {
+  const ids = new Set(['levitt1972', 'levitt1976', 'shao2025']);
+  const sources: Source[] = [
+    { id: 'levitt1972', type: 'article-journal', author: [{ family: 'Levitt', given: 'Theodore' }], issued: { 'date-parts': [[1972]] }, title: 'Production-line approach to service' },
+    { id: 'levitt1976', type: 'article-journal', author: [{ family: 'Levitt', given: 'Theodore' }], issued: { 'date-parts': [[1976]] }, title: 'The industrialization of service' },
+    JSON.parse(shao) as Source,
+  ];
+
+  test('find the citation in the same form right before the place, and the column where the new citation goes', () => {
+    const narrative = 'So [Levitt (1972)](#levitt1972 "narrative") sagt';
+    const end = narrative.indexOf(' sagt');
+    expect(citationBefore(narrative, end, 'narrative', ids)).toEqual({ id: 'levitt1972', data: { form: 'narrative', unknown: [] }, at: end });
+    expect(citationBefore(narrative, end, 'parenthetical', ids)).toBeUndefined();
+    expect(citationBefore(narrative, end + 1, 'narrative', ids)).toBeUndefined();
+    const parenthetical = 'Text ([Levitt, 1972, S. 3](#levitt1972 "page 3")).';
+    const close = parenthetical.indexOf(')).') + 1;
+    const found = { id: 'levitt1972', data: { form: 'parenthetical', term: 'page', value: '3', unknown: [] }, at: close };
+    // After the closing parenthesis, and before it.
+    expect(citationBefore(parenthetical, close + 1, 'parenthetical', ids)).toEqual(found);
+    expect(citationBefore(parenthetical, close, 'parenthetical', ids)).toEqual(found);
+    expect(citationBefore(parenthetical, close + 2, 'parenthetical', ids)).toBeUndefined();
+    expect(citationBefore(parenthetical, close + 1, 'parenthetical', new Set(['shao2025']))).toBeUndefined();
+    expect(citationBefore('`[Levitt (1972)](#levitt1972 "narrative")`', 41, 'narrative', ids)).toBeUndefined();
+  });
+
+  test('a work of the same authors joins after a comma with its year, another source in parentheses after a semicolon', () => {
+    const narrative = citationBefore('[Levitt (1972)](#levitt1972 "narrative")', 40, 'narrative', ids);
+    const joined = newCitation(style, 'de-AT', sources, 'levitt1976', 'narrative', narrative);
+    expect(joined).toEqual({ text: '1976)', join: ', ' });
+    expect(citationMarkup('levitt1976', 'narrative', joined, ')')).toBe(', [1976)](#levitt1976 "narrative")');
+    expect(newCitation(style, 'de-AT', sources, 'shao2025', 'narrative', narrative)).toEqual({ text: 'Shao (2025)' });
+    const parenthetical = citationBefore('([Levitt, 1972](#levitt1972))', 28, 'parenthetical', ids);
+    expect(newCitation(style, 'de-AT', sources, 'levitt1976', 'parenthetical', parenthetical)).toEqual({ text: '1976', join: ', ' });
+    expect(newCitation(style, 'de-AT', sources, 'shao2025', 'parenthetical', parenthetical)).toEqual({ text: 'Shao, 2025', join: '; ' });
+    expect(newCitation(style, 'de-AT', sources, 'shao2025', 'parenthetical')).toEqual({ text: 'Shao, 2025' });
+  });
+
+  test('a citation that stands alone gets its parentheses or its title, and a space after a word', () => {
+    expect(citationMarkup('shao2025', 'parenthetical', { text: 'Shao, 2025' }, 's')).toBe(' ([Shao, 2025](#shao2025))');
+    expect(citationMarkup('shao2025', 'narrative', { text: 'Shao (2025)' }, ' ')).toBe('[Shao (2025)](#shao2025 "narrative")');
+    expect(citationMarkup('shao2025', 'narrative', { text: 'Shao (2025)' }, '')).toBe('[Shao (2025)](#shao2025 "narrative")');
+    expect(citationMarkup('shao2025', 'parenthetical', { text: 'Shao, 2025', join: '; ' }, ')')).toBe('; [Shao, 2025](#shao2025)');
+  });
 });

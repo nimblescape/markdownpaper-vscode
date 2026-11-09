@@ -23,8 +23,9 @@
  *
  * - *(proposal)* With its part on the platform, for example in the extension of VS Code (src/editorParts.ts), the plugin
  *   gives the form of the front matter the JSON schema of the layout of the paper, and shows `layout` and `repos`
- *   read-only: Ctrl+click on a reference opens its clone. `/cite` in the slash commands and in the insert menu, and
- *   "Cite" in the format bar, insert the citation of the source that the user chooses on the platform. "Research" in the
+ *   read-only: Ctrl+click on a reference opens its clone. `/cite` and `/citenarrative` in the slash commands and in
+ *   the insert menu, and "Cite" in the format bar, insert the citation of the source that the user chooses on the
+ *   platform, joined to a citation right before the cursor as in the text editor. "Research" in the
  *   format bar and `/research` typed on the selected argument mark it for an AI agent, as `/research` does in the text
  *   editor.
  *
@@ -556,6 +557,8 @@ interface Page {
   requests: number;
   /** lists holds the text of the file that each open request of a list sent, by its number. */
   readonly lists: Map<number, string>;
+  /** cites holds the form of each open request of a citation and the link before the cursor that it sent, by its number. */
+  readonly cites: Map<number, { form: CitationForm; before?: LinkBefore }>;
 }
 
 /** pages are the states of the plugin, by the Tiptap editor. */
@@ -611,39 +614,118 @@ export function markResearch(tiptap: Editor): boolean {
   return true;
 }
 
+/** CitationForm is the form of a citation: in parentheses, or in the sentence with the title "narrative". */
+export type CitationForm = 'parenthetical' | 'narrative';
+
+/** LinkBefore is a link to a place of the page before the cursor, which a new citation may join: its target and its title. */
+export interface LinkBefore {
+  id: string;
+  title: string;
+}
+
 /**
- * insertCitation inserts a citation at the end of the selection of an editor: `([Hong et al., 2024](#hong2024))`, with a
- * space before it after a word, as `/cite` does in the text editor.
+ * isNarrative returns true for the title of a citation in the sentence: "narrative" as its first word, or as its last
+ * word after a place, as the format step reads it.
+ * @param title - The title of the link.
+ */
+const isNarrative = (title: string): boolean => {
+  const words = title.trim().split(/\s+/);
+  return words[0] === 'narrative' || (words.length > 1 && words[words.length - 1] === 'narrative');
+};
+
+/**
+ * citationPlace returns the link before the cursor that a new citation in a form joins, as `/cite` does in the text
+ * editor (decision 80 of Markdown Paper): for a citation in the sentence, a link with the title "narrative" that ends
+ * at the cursor, and the new citation goes after it; for a citation in parentheses, a link without it that ends at a
+ * closing parenthesis just before or just after the cursor, and the new citation goes before that parenthesis. The
+ * platform tells whether the link is a citation of a source of the same authors.
+ * @param state - The state of the editor.
+ * @param form - The form of the new citation.
+ * @returns The link and the place of the new citation, or undefined.
+ */
+export function citationPlace(state: EditorState, form: CitationForm): (LinkBefore & { at: number }) | undefined {
+  const link = state.schema.marks.link;
+  const { to, $to } = state.selection;
+  if (!link || !$to.parent.inlineContent) {
+    return undefined;
+  }
+  const endingAt = (pos: number): (LinkBefore & { at: number }) | undefined => {
+    if (pos <= $to.start() || pos > $to.end()) {
+      return undefined;
+    }
+    const $pos = state.doc.resolve(pos);
+    const before = $pos.nodeBefore;
+    const mark = before?.isText ? link.isInSet(before.marks) : undefined;
+    const after = $pos.nodeAfter;
+    if (!mark || (after && mark.isInSet(after.marks))) {
+      return undefined;
+    }
+    const href = typeof mark.attrs.href === 'string' ? (mark.attrs.href as string) : '';
+    const title = typeof mark.attrs.title === 'string' ? (mark.attrs.title as string) : '';
+    const id = href.startsWith('#') ? href.slice(1) : '';
+    return idPattern.test(id) && isNarrative(title) === (form === 'narrative') ? { id, title, at: pos } : undefined;
+  };
+  if (form === 'narrative') {
+    return endingAt(to);
+  }
+  const charAt = (pos: number): string => (pos >= $to.start() && pos < $to.end() ? state.doc.textBetween(pos, pos + 1, '', '\ufffc') : '');
+  return (charAt(to - 1) === ')' ? endingAt(to - 1) : undefined) ?? (charAt(to) === ')' ? endingAt(to) : undefined);
+}
+
+/**
+ * insertCitation inserts a citation at the end of the selection of an editor, as `/cite` and `/citenarrative` do in
+ * the text editor: in parentheses, `([Hong et al., 2024](#hong2024))`, or in the sentence,
+ * `[Hong et al. (2024)](#hong2024 "narrative")`, with a space before it after a word. With a join, the citation goes
+ * after the link before the cursor that the platform found as a citation to join: after a comma as a work of the same
+ * authors, or after a semicolon in its parentheses (decision 80 of Markdown Paper).
  * @param tiptap - The Tiptap editor.
  * @param id - The identifier of the source.
  * @param text - The text of the citation.
+ * @param form - The form of the citation.
+ * @param join - The join and the link that the request sent, which must still stand before the cursor.
  * @returns Whether the citation was inserted.
  */
-export function insertCitation(tiptap: Editor, id: string, text: string): boolean {
+export function insertCitation(tiptap: Editor, id: string, text: string, form: CitationForm = 'parenthetical', join?: { join: ', ' | '; '; link: LinkBefore }): boolean {
   const { state, view } = tiptap;
   const link = state.schema.marks.link;
   const { to, $to } = state.selection;
   if (!link || !tiptap.isEditable || !$to.parent.inlineContent || !idPattern.test(id) || text === '') {
     return false;
   }
-  const before = $to.parentOffset > 0 ? state.doc.textBetween(to - 1, to, '', '\ufffc') : '';
-  const citation = [state.schema.text(`${/^[^\s([]$/.test(before) ? ' ' : ''}(`), state.schema.text(text, [link.create({ href: `#${id}` })]), state.schema.text(')')];
-  const tr = state.tr.insert(to, citation);
+  const linked = state.schema.text(text, [link.create({ href: `#${id}`, ...(form === 'narrative' ? { title: 'narrative' } : {}) })]);
+  const place = join ? citationPlace(state, form) : undefined;
+  let at = to;
+  let citation;
+  if (join && place && place.id === join.link.id && place.title === join.link.title) {
+    at = place.at;
+    citation = [state.schema.text(join.join), linked];
+  } else {
+    const before = $to.parentOffset > 0 ? state.doc.textBetween(to - 1, to, '', '\ufffc') : '';
+    const space = /^[^\s([]$/.test(before) ? ' ' : '';
+    citation = form === 'narrative' ? [...(space ? [state.schema.text(space)] : []), linked] : [state.schema.text(`${space}(`), linked, state.schema.text(')')];
+  }
+  const tr = state.tr.insert(at, citation);
   const size = citation.reduce((sum, node) => sum + node.nodeSize, 0);
+  // The cursor stays at its place after the citation: also after the closing parenthesis, when it was there.
   view.dispatch(tr.setSelection(TextSelection.create(tr.doc, to + size)).scrollIntoView());
   view.focus();
   return true;
 }
 
 /**
- * askCitation asks the platform for a citation, which the user chooses there; the answer inserts it.
+ * askCitation asks the platform for a citation, which the user chooses there, with the link before the cursor that it
+ * may join; the answer inserts it.
  * @param tiptap - The Tiptap editor.
+ * @param form - The form of the citation.
  */
-function askCitation(tiptap: Editor): void {
+function askCitation(tiptap: Editor, form: CitationForm = 'parenthetical'): void {
   const page = pages.get(tiptap);
   if (page?.channel) {
-    page.requests++;
-    page.channel.post({ type: 'cite', request: page.requests } satisfies PageMessage);
+    const request = ++page.requests;
+    const place = citationPlace(tiptap.state, form);
+    const before = place ? { id: place.id, title: place.title } : undefined;
+    page.cites.set(request, { form, ...(before ? { before } : {}) });
+    page.channel.post({ type: 'cite', request, ...(form === 'narrative' ? { form } : {}), ...(before ? { before } : {}) } satisfies PageMessage);
   }
 }
 
@@ -695,15 +777,22 @@ const listItems: readonly (readonly [ListCode, string, string[]])[] = [
 ];
 
 /**
- * insertItems are the items of the plugin in the insert menu and in the slash commands of a paper: `/cite`, `/research`
- * typed on the selected argument, which only the slash commands offer, and `/toc`, `/lof`, `/lot` and `/lol`, with the
- * names of the text editor.
+ * insertItems are the items of the plugin in the insert menu and in the slash commands of a paper: `/cite`,
+ * `/citenarrative`, `/research` typed on the selected argument, which only the slash commands offer, and `/toc`,
+ * `/lof`, `/lot` and `/lol`, with the names of the text editor.
  * @param tiptap - The Tiptap editor.
  */
 function insertItems(tiptap: Editor): MenuItem[] {
   const items: MenuItem[] = [];
   if (canCite(tiptap)) {
     items.push({ id: 'cite', label: 'Cite a source', slash: 'cite', keywords: ['citation', 'source', 'zotero'], run: () => askCitation(tiptap) });
+    items.push({
+      id: 'cite-narrative',
+      label: 'Cite a source in the sentence',
+      slash: 'citenarrative',
+      keywords: ['citation', 'source', 'narrative', 'zotero'],
+      run: () => askCitation(tiptap, 'narrative'),
+    });
   }
   // The text before a slash typed on selected text, or the selected text, when the user types the slash on it.
   const { selection } = tiptap.state;
@@ -722,7 +811,7 @@ function insertItems(tiptap: Editor): MenuItem[] {
 
 /** formatButtons are the buttons of the plugin in the format bar: "Cite" and "Research" in a paper. */
 const formatButtons: FormatButton[] = [
-  { id: 'paper-cite', label: 'Cite a source after the selected text', text: 'Cite', isShown: canCite, run: askCitation },
+  { id: 'paper-cite', label: 'Cite a source after the selected text', text: 'Cite', isShown: canCite, run: (tiptap) => askCitation(tiptap) },
   {
     id: 'paper-research',
     label: 'Research the evidence for the selected argument',
@@ -801,7 +890,7 @@ const frontMatterInputs: FrontMatterInput[] = [
 function activate(editor: PluginEditor, host?: PluginHost): () => void {
   const tiptap = editor.tiptap;
   const channel = host?.channel?.(pluginName);
-  const page: Page = { editor, channel, schema: undefined, requests: 0, lists: new Map() };
+  const page: Page = { editor, channel, schema: undefined, requests: 0, lists: new Map(), cites: new Map() };
   editors.set(tiptap, editor);
   pages.set(tiptap, page);
   const stop = channel?.onMessage((value) => {
@@ -809,8 +898,13 @@ function activate(editor: PluginEditor, host?: PluginHost): () => void {
     if (message?.type === 'schema') {
       page.schema = (message.schema ?? undefined) as JsonSchema | undefined;
       editor.refreshPlugins();
-    } else if (message?.type === 'citation' && message.id !== undefined && message.text !== undefined && !tiptap.isDestroyed) {
-      insertCitation(tiptap, message.id, message.text);
+    } else if (message?.type === 'citation') {
+      const asked = page.cites.get(message.request);
+      page.cites.delete(message.request);
+      if (message.id !== undefined && message.text !== undefined && !tiptap.isDestroyed) {
+        const join = message.join && asked?.before ? { join: message.join, link: asked.before } : undefined;
+        insertCitation(tiptap, message.id, message.text, asked?.form ?? 'parenthetical', join);
+      }
     } else if (message?.type === 'listChange') {
       takeList(page, message.request, message.change);
     }

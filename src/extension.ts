@@ -16,7 +16,7 @@
 
 import type MarkdownIt from 'markdown-it';
 import * as vscode from 'vscode';
-import { citeCommand, citeContext, connectZoteroCommand, updateSourcesCommand } from './cite';
+import { citeCommand, citeContext, citeNarrativeCommand, connectZoteroCommand, updateSourcesCommand } from './cite';
 import { exportPdfCommand, getCommand, newDocumentCommand, newLayoutCommand, newProjectCommand, openRepositoryCommand } from './commands';
 import { registerEditorParts, registerFrontMatterRules } from './editorParts';
 import { type FormatStep, PaperFormatStep, registerFormatStep } from './formatStep';
@@ -58,6 +58,8 @@ export interface Api {
   research: SlashCommand;
   /** cite is the slash command `/cite`, which Markdown Notes offers in the text editor. */
   cite: SlashCommand;
+  /** citeNarrative is the slash command `/citenarrative`, a citation in the sentence, which Markdown Notes offers in the text editor. */
+  citeNarrative: SlashCommand;
   /** lists are the slash commands `/toc`, `/lof`, `/lot` and `/lol`, which Markdown Notes offers in the text editor. */
   lists: SlashCommand[];
   /** terminalFolder is the folder of the script mp, at the end of the PATH of the terminals, or undefined. */
@@ -102,6 +104,7 @@ export function activate(context: vscode.ExtensionContext): Api {
   };
   const citations = citeContext(context, formatStep);
   const cite = citeCommand(citations);
+  const citeNarrative = citeNarrativeCommand(citations);
   const lists = listCommands(formatStep);
   context.subscriptions.push(
     checks,
@@ -109,7 +112,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     preview,
     formatStep,
     registerFormatStep(formatStep),
-    registerNotesParts([cite, ...lists]),
+    registerNotesParts([cite, citeNarrative, ...lists]),
     // The part in this extension of the plugin of the paper in the editor of a whole file of Markdown Notes.
     registerEditorParts({ extension: context.extensionUri, citations, openRepository: commands.openRepository }),
     // The rules of the front matter of a paper for the clean editing view of Markdown Notes.
@@ -139,6 +142,7 @@ export function activate(context: vscode.ExtensionContext): Api {
     formatStep,
     research: researchCommand,
     cite,
+    citeNarrative,
     lists,
     ...(terminalFolder ? { terminalFolder } : {}),
   };

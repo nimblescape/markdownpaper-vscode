@@ -21,8 +21,11 @@ export type PageMessage =
   /** openReference opens the clone of a reference of the front matter: of `layout`, or of an entry of `repos`. */
   | { type: 'openReference'; key: 'layout' }
   | { type: 'openReference'; key: 'repos'; name: string }
-  /** cite asks for a citation of a source, which the user chooses in VS Code. */
-  | { type: 'cite'; request: number }
+  /**
+   * cite asks for a citation of a source, which the user chooses in VS Code: in the sentence for the form "narrative",
+   * else in parentheses, and the link before the cursor that the citation may join.
+   */
+  | { type: 'cite'; request: number; form?: 'narrative'; before?: { id: string; title: string } }
   /** list asks for the change of the text of the file that inserts a list of a special section at a place, for `/toc`, `/lof`, `/lot` and `/lol`. */
   | { type: 'list'; request: number; code: ListCode; text: string; at: number };
 
@@ -30,8 +33,11 @@ export type PageMessage =
 export type ExtensionMessage =
   /** schema is the JSON schema of the front matter of the layout of the document, or null for a document that is no paper. */
   | { type: 'schema'; schema: Record<string, unknown> | null }
-  /** citation answers a request `cite`: the identifier of the source and the text of its citation, or none. */
-  | { type: 'citation'; request: number; id?: string; text?: string }
+  /**
+   * citation answers a request `cite`: the identifier of the source and the text of its citation, or none, and how it
+   * joins the link before the cursor: ", " as a work of the same authors, "; " as another source in its parentheses.
+   */
+  | { type: 'citation'; request: number; id?: string; text?: string; join?: ', ' | '; ' }
   /**
    * listChange answers a request `list`: the change of the text of the file and the range of the text of the heading in
    * the text of the change, or none.
@@ -68,7 +74,8 @@ export function pageMessage(value: unknown): PageMessage | undefined {
     return { type: 'openReference', key: 'repos', name: value.name };
   }
   if (value.type === 'cite' && Number.isInteger(value.request)) {
-    return { type: 'cite', request: value.request as number };
+    const before = isObject(value.before) && typeof value.before.id === 'string' && typeof value.before.title === 'string' ? { id: value.before.id, title: value.before.title } : undefined;
+    return { type: 'cite', request: value.request as number, ...(value.form === 'narrative' ? { form: 'narrative' as const } : {}), ...(before ? { before } : {}) };
   }
   const code = listCodeOf(value.code);
   if (value.type === 'list' && Number.isInteger(value.request) && code && typeof value.text === 'string' && isOffset(value.at)) {
@@ -90,7 +97,8 @@ export function extensionMessage(value: unknown): ExtensionMessage | undefined {
   }
   if (value.type === 'citation' && Number.isInteger(value.request)) {
     const found = typeof value.id === 'string' && typeof value.text === 'string';
-    return { type: 'citation', request: value.request as number, ...(found ? { id: value.id as string, text: value.text as string } : {}) };
+    const join = found && (value.join === ', ' || value.join === '; ') ? value.join : undefined;
+    return { type: 'citation', request: value.request as number, ...(found ? { id: value.id as string, text: value.text as string } : {}), ...(join ? { join } : {}) };
   }
   if (value.type === 'listChange' && Number.isInteger(value.request)) {
     const change = isObject(value.change) ? value.change : undefined;

@@ -174,14 +174,23 @@ Agents change the work of teams ([Hong et al., 2024, S. 3](#hong2024 "page 3")).
 [Hong et al. (2024)](#hong2024 "narrative") describe three ways.
 ```
 
-Two works of the same authors in one pair of parentheses get a comma between
-their links, `([Levitt, 1972](#levitt1972), [1976](#levitt1976))`: the format
-writes only the year of the second, as APA does.
+Two works of the same authors get a comma between their links, and the
+format writes only the year of the second, as APA does. In parentheses:
+`([Levitt, 1972](#levitt1972), [1976](#levitt1976))` reads
+"(Levitt, 1972, 1976)". In the sentence, both links have the title
+`"narrative"`, and the format puts the parentheses into the first and the
+last link: `[Levitt (1972](#levitt1972 "narrative"), [1976)](#levitt1976 "narrative")`
+reads "Levitt (1972, 1976)".
 
 In VS Code with nimblescape Markdown Notes, type `/cite` in a paper document
 and choose a source from the list, which you can search by author, title and
-year: the citation goes in at the place, in parentheses. Add the title
-`"narrative"` or `"page 3"` to the link for another citation.
+year: the citation goes in at the place, in parentheses. `/citenarrative`
+inserts the citation in the sentence, such as "Levitt (1972)". Typed right
+after a citation in the same form, both join the new citation to it: a work
+of the same authors gets only its year, and another source in parentheses
+goes after a semicolon. The save writes the text of the citation before it
+anew. Both commands work in the Text Editor and in the Markdown Editor. Add
+the title `"page 3"` to the link for the place in the source.
 
 With Zotero, `/cite` also lists the items of your Zotero library. Run
 "Markdown Paper: Connect Zotero" once and give it an API key that may read

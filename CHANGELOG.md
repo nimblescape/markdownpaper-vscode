@@ -210,7 +210,13 @@ The first version.
 - A citation in the sentence of a source without names, such as a law, has its
   title in the place of the names: `Schulorganisationsgesetz (1962, § 65)`.
 - A comma between two citations in one pair of parentheses joins a work of the
-  same authors: the format writes "(Levitt, 1972, 1976)".
+  same authors: the format writes "(Levitt, 1972, 1976)". A comma between two
+  citations in the sentence does the same: the format writes
+  "Levitt (1972, 1976)", with the names and the opening parenthesis in the
+  first link and the closing parenthesis in the last.
+- `/citenarrative` inserts a citation in the sentence. `/cite` and
+  `/citenarrative` typed right after a citation in the same form join the new
+  citation to it, in the Text Editor and in the Markdown Editor.
 - The instructions for AI agents name the fields of a law or an ordinance:
   `container-title` and `number` of the first publication, `references` for
   the cited version, and `issued` for its day.

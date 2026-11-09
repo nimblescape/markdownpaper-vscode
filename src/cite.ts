@@ -15,8 +15,8 @@ import * as vscode from 'vscode';
 import { fetcher } from './commands';
 import type { PaperFormatStep } from './formatStep';
 import { fileOf, type SlashCommand } from './notesApi';
-import { findDatabase, updateSources } from './paper/citations';
-import { cite, type Source } from './paper/csl';
+import { type CitationBefore, citationBefore, citationMarkup, findDatabase, type Join, type NewCitation, newCitation, parseData, updateSources } from './paper/citations';
+import type { Form, Source } from './paper/csl';
 import { isPaperDocument } from './paper/frontMatter';
 import type { Fetcher } from './paper/lookup';
 import { sourcesFolder } from './paper/scaffold';
@@ -336,26 +336,34 @@ async function copyPdf(context: CiteContext, zotero: Connection, item: ZoteroIte
 }
 
 /**
- * citationText returns the text of a parenthetical citation of a source in the citation style of the layout of the
- * document, or, before the extension read the layout, the names and the year. The formatter writes the text anew.
+ * citationText returns the text of a new citation of a source in a form, in the citation style of the layout of the
+ * document, and how it joins the citation before it ([decision 80](../docs/requirements.md#decisions)); before the
+ * extension read the layout, the names and the year, alone. The formatter writes the text anew.
  * @param context - The context of the citations.
  * @param lines - The lines of the file, with the source in its database.
  * @param file - The file.
  * @param source - The source.
+ * @param form - The form of the citation.
+ * @param before - The citation before the place of the new citation, if there is one.
  */
-function citationText(context: CiteContext, lines: readonly string[], file: vscode.Uri, source: Source): string {
+function citationText(context: CiteContext, lines: readonly string[], file: vscode.Uri, source: Source, form: Form, before?: CitationBefore): NewCitation {
   const entry = context.formatStep.entryOf(lines, file);
   if (entry) {
     try {
-      const text = cite(entry.style, entry.layout.language, findDatabase(lines)?.sources ?? [source], [{ id: source.id, form: 'parenthetical' }]).citations[0];
-      if (text) {
-        return text;
+      const made = newCitation(entry.style, entry.layout.language, findDatabase(lines)?.sources ?? [source], source.id, form, before);
+      if (made.text) {
+        return made;
       }
     } catch {
       // A style that citeproc-js cannot apply: the checks name it, and the names and the year stand in the text.
     }
   }
-  return [authorsOf(source), yearOf(source)].filter((part) => part !== '').join(', ') || source.id;
+  const names = authorsOf(source);
+  const year = yearOf(source);
+  if (form === 'narrative' && names !== '') {
+    return { text: year ? `${names} (${year})` : names };
+  }
+  return { text: [names, year].filter((part) => part !== '').join(', ') || source.id };
 }
 
 /** Choice is the source that the user chose for a citation, with the database of the file after its merge. */
@@ -366,8 +374,6 @@ interface Choice {
   next: string[];
   eol: string;
   source: Source;
-  /** text is the text of the citation, without its link. */
-  text: string;
   /** copyPdf copies the PDF of an item of Zotero into `bib/`, after the edit. */
   copyPdf(): void;
 }
@@ -418,40 +424,53 @@ async function chooseCitation(context: CiteContext, file: vscode.Uri): Promise<C
       });
     }
   };
-  return { document, lines, next, eol: text.includes('\r\n') ? '\r\n' : '\n', source, text: citationText(context, next, file, source), copyPdf: copy };
+  return { document, lines, next, eol: text.includes('\r\n') ? '\r\n' : '\n', source, copyPdf: copy };
 }
 
 /**
- * citeAt inserts a citation of a chosen source at a place of a paper document: `([Hong et al., 2024](#hong2024))`. An
- * item of Zotero is merged into the database first, and its PDF file goes to `bib/`.
+ * citeAt inserts a citation of a chosen source at a place of a paper document: in parentheses,
+ * `([Hong et al., 2024](#hong2024))`, or in the sentence, `[Hong et al. (2024)](#hong2024 "narrative")`. Right after a
+ * citation in the same form, the new citation joins it ([decision 80](../docs/requirements.md#decisions)): a work of
+ * the same authors after a comma, `([Levitt, 1972](#levitt1972), [1976](#levitt1976))`, and another source in
+ * parentheses after a semicolon. An item of Zotero is merged into the database first, and its PDF file goes to `bib/`.
  * @param context - The context of the citations.
  * @param editor - The text editor, also of the clean editing view of Markdown Notes.
  * @param range - The place of the citation.
+ * @param form - The form of the citation.
  * @returns Whether the citation was inserted.
  */
-export async function citeAt(context: CiteContext, editor: vscode.TextEditor, range: vscode.Range): Promise<boolean> {
+export async function citeAt(context: CiteContext, editor: vscode.TextEditor, range: vscode.Range, form: Form = 'parenthetical'): Promise<boolean> {
   const file = fileOf(editor.document.uri);
   const choice = await chooseCitation(context, file);
   if (!choice) {
     return false;
   }
-  // A citation after a word gets a space before it: "teams ([Hong et al., 2024](#hong2024))".
-  const before = range.start.character > 0 ? editor.document.getText(new vscode.Range(range.start.translate(0, -1), range.start)) : '';
-  const citation = `${/^[^\s([]$/.test(before) ? ' ' : ''}([${choice.text}](#${choice.source.id}))`;
+  // The citation before the place, in the text of the editor now, after the time of the list.
+  const line = editor.document.lineAt(range.start.line).text;
+  const ids = new Set((findDatabase(choice.next)?.sources ?? []).map((source) => source.id));
+  const before = citationBefore(line, range.start.character, form, ids);
+  const made = citationText(context, choice.next, file, choice.source, form, before);
+  const place = made.join && before ? new vscode.Position(range.start.line, before.at) : range.start;
+  const citation = citationMarkup(choice.source.id, form, made, place.character > 0 ? line[place.character - 1] : '');
   const edit = new vscode.WorkspaceEdit();
   if (choice.next !== choice.lines) {
     replaceText(edit, choice.document, choice.next.join(choice.eol));
   }
   const same = editor.document.uri.toString() === file.toString();
   if (same) {
-    edit.insert(file, range.start, citation);
+    edit.insert(file, place, citation);
   }
   if (!(await vscode.workspace.applyEdit(edit))) {
     return false;
   }
   // The clean editing view of Markdown Notes leaves the database out, so its editor gets the citation after the file.
-  if (!same && !(await editor.edit((builder) => builder.insert(range.start, citation)))) {
+  if (!same && !(await editor.edit((builder) => builder.insert(place, citation)))) {
     return false;
+  }
+  if (place !== range.start) {
+    // The cursor stays at its place after the joined citation: also after the closing parenthesis, when it was there.
+    const end = range.start.translate(0, citation.length);
+    editor.selection = new vscode.Selection(end, end);
   }
   choice.copyPdf();
   return true;
@@ -463,9 +482,16 @@ export async function citeAt(context: CiteContext, editor: vscode.TextEditor, ra
  * the file first, and its PDF file goes to `bib/`.
  * @param context - The context of the citations.
  * @param file - The file of the paper.
- * @returns The identifier of the source and the text of its citation, or undefined when the user chose nothing.
+ * @param form - The form of the citation.
+ * @param before - The link before the place of the citation on the page, which the new citation may join.
+ * @returns The identifier of the source, the text of its citation and its join, or undefined when the user chose nothing.
  */
-export async function citationFor(context: CiteContext, file: vscode.Uri): Promise<{ id: string; text: string } | undefined> {
+export async function citationFor(
+  context: CiteContext,
+  file: vscode.Uri,
+  form: Form = 'parenthetical',
+  before?: { id: string; title: string },
+): Promise<{ id: string; text: string; join?: Join } | undefined> {
   const choice = await chooseCitation(context, file);
   if (!choice) {
     return undefined;
@@ -478,19 +504,36 @@ export async function citationFor(context: CiteContext, file: vscode.Uri): Promi
     }
   }
   choice.copyPdf();
-  return { id: choice.source.id, text: choice.text };
+  const ids = new Set((findDatabase(choice.next)?.sources ?? []).map((source) => source.id));
+  const data = before && ids.has(before.id) ? parseData(before.title) : undefined;
+  const made = citationText(context, choice.next, file, choice.source, form, before && data && data.unknown.length === 0 ? { id: before.id, data, at: 0 } : undefined);
+  return { id: choice.source.id, text: made.text, ...(made.join ? { join: made.join } : {}) };
 }
 
 /**
- * citeCommand returns the slash command `/cite`.
+ * citeCommand returns the slash command `/cite`, a citation in parentheses.
  * @param context - The context of the citations.
  */
 export function citeCommand(context: CiteContext): SlashCommand {
   return {
     label: '/cite',
     description: 'Cite a source',
-    detail: 'Inserts a citation of a source of the database of the document, or of an item of your Zotero library.',
+    detail: 'Inserts a citation of a source of the database of the document, or of an item of your Zotero library, in parentheses. Right after a citation, it joins that citation.',
     run: (editor, range) => citeAt(context, editor, range),
+  };
+}
+
+/**
+ * citeNarrativeCommand returns the slash command `/citenarrative`, a citation in the sentence
+ * ([decision 80](../docs/requirements.md#decisions)).
+ * @param context - The context of the citations.
+ */
+export function citeNarrativeCommand(context: CiteContext): SlashCommand {
+  return {
+    label: '/citenarrative',
+    description: 'Cite a source in the sentence',
+    detail: 'Inserts a citation of a source as a part of the sentence, such as "Levitt (1972)". Right after such a citation, a work of the same authors joins it: "Levitt (1972, 1976)".',
+    run: (editor, range) => citeAt(context, editor, range, 'narrative'),
   };
 }
 

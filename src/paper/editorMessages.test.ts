@@ -26,3 +26,22 @@ describe('the messages of the lists', () => {
     expect(extensionMessage({ type: 'listChange', request: 1, change: { ...change, heading: undefined } })).toEqual({ type: 'listChange', request: 1 });
   });
 });
+
+describe('the messages of the citations (decision 80)', () => {
+  test('the extension takes a request of a citation with its form and the link before the cursor', () => {
+    expect(pageMessage({ type: 'cite', request: 3 })).toEqual({ type: 'cite', request: 3 });
+    expect(pageMessage({ type: 'cite', request: 3, form: 'narrative', before: { id: 'levitt1972', title: 'narrative' } })).toEqual({
+      type: 'cite',
+      request: 3,
+      form: 'narrative',
+      before: { id: 'levitt1972', title: 'narrative' },
+    });
+    expect(pageMessage({ type: 'cite', request: 3, form: 'other', before: { id: 1 } })).toEqual({ type: 'cite', request: 3 });
+  });
+
+  test('the page takes a citation with its join, and an answer without a citation', () => {
+    expect(extensionMessage({ type: 'citation', request: 3, id: 'levitt1976', text: '1976)', join: ', ' })).toEqual({ type: 'citation', request: 3, id: 'levitt1976', text: '1976)', join: ', ' });
+    expect(extensionMessage({ type: 'citation', request: 3, id: 'shao2025', text: 'Shao, 2025', join: ' and ' })).toEqual({ type: 'citation', request: 3, id: 'shao2025', text: 'Shao, 2025' });
+    expect(extensionMessage({ type: 'citation', request: 3, join: ', ' })).toEqual({ type: 'citation', request: 3 });
+  });
+});

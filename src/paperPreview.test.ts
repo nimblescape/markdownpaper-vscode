@@ -145,6 +145,8 @@ new MutationObserver(() => {
 window.messages = [];
 window.rendered = [];
 window.addEventListener('nimblescape-paper-rendered', (event) => window.rendered.push(event.detail.pages));
+window.zoomed = [];
+window.addEventListener('nimblescape-paper-zoomed', (event) => window.zoomed.push(event.detail.zoom));
 window.addEventListener('message', (event) => {
   if (event.data.type !== 'updateContent') {
     return;
@@ -481,10 +483,14 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       await running.close();
     }
   });
-  it.skipIf(!browser)('zooms the pages: Page Width makes a page as wide as the window, Single Page shows a whole page, and the buttons, the keys and the wheel with Ctrl zoom at a place that stays (R-PRV-007)', { timeout: 90_000 }, async () => {
+  it.skipIf(!browser)('zooms the pages: Page Width makes a page as wide as the window, Single Page shows a whole page, the menu "Zoom" asks with the content, and the keys and the wheel with Ctrl zoom at a place that stays (R-PRV-007)', { timeout: 120_000 }, async () => {
     const paragraph = 'Ein Absatz über die Arbeit von Teams mit Agenten. '.repeat(12);
     const text = `---\nlayout: plain\ntitle: Agenten\nauthor: Hannes\n---\n\n# Einleitung\n\n${`${paragraph}\n\n`.repeat(30)}`;
     const paper = await paperContent(text);
+    // The content after a click in the menu "Zoom": the hidden element holds the number and the action of the request.
+    let requests = 0;
+    const asked = (action: string, id = `r${++requests}`) => paper.replace('<div class="nimblescape-paper" hidden ', `<div class="nimblescape-paper" hidden data-zoom-request="${id} ${action}" `);
+    expect(asked('in')).not.toBe(paper);
     const page = writePage();
     const running = await Browser.launch(browser as string);
     try {
@@ -494,17 +500,19 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       // A window wider than a page.
       await running.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false }, sessionId);
       await running.send('Page.enable', {}, sessionId);
-      const open = async (navigate: () => Promise<unknown>) => {
+      const open = async (navigate: () => Promise<unknown>, content = paper) => {
         const loaded = running.once('Page.loadEventFired', sessionId);
         await navigate();
         await loaded;
-        await evaluate(session, `window.show(${JSON.stringify(paper)})`);
+        await evaluate(session, `window.show(${JSON.stringify(content)})`);
         await evaluate(session, waitFor('window.rendered.length > 0'));
         // A stand-in for VS Code, which listens on the window for the keys and the wheel, after the scripts of the page.
-        await evaluate(session, `window.vscodeKeys = 0; window.addEventListener('keydown', () => window.vscodeKeys++); window.addEventListener('wheel', () => window.vscodeKeys++); window.zoomed = []; window.addEventListener('nimblescape-paper-zoomed', (event) => window.zoomed.push(event.detail.zoom)); true`);
+        await evaluate(session, `window.vscodeKeys = 0; window.addEventListener('keydown', () => window.vscodeKeys++); window.addEventListener('wheel', () => window.vscodeKeys++); true`);
       };
+      // A click in the menu "Zoom": VS Code loads the page again with the request in the content.
+      const menu = (action: string) => open(() => running.send('Page.reload', {}, sessionId), asked(action));
       await open(() => running.send('Page.navigate', { url: pathToFileURL(page).href }, sessionId));
-      type State = { zoom: number; width: number; height: number; count: number; bodyWidth: number; clientWidth: number; clientHeight: number; scrollX: number; scrollY: number; scrollWidth: number; scrollHeight: number; label: string; pressed: string[]; vscodeKeys: number; zoomed: number[] };
+      type State = { zoom: number; width: number; height: number; count: number; bodyWidth: number; clientWidth: number; clientHeight: number; scrollX: number; scrollY: number; scrollWidth: number; scrollHeight: number; mode: string; label: string; shown: boolean; labels: number; pagedJs: boolean; vscodeKeys: number; zoomed: number[] };
       const state = (): Promise<State> =>
         evaluate<State>(
           session,
@@ -515,7 +523,7 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
             const rect = page.getBoundingClientRect();
             const scale = 'currentCSSZoom' in Element.prototype ? page.currentCSSZoom : 1;
             const view = document.documentElement;
-            const bar = document.querySelector('.nimblescape-paper-zoom');
+            const label = document.querySelector('.nimblescape-paper-zoom');
             return {
               zoom,
               width: rect.width / scale,
@@ -528,73 +536,97 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
               scrollY: window.scrollY,
               scrollWidth: view.scrollWidth,
               scrollHeight: view.scrollHeight,
-              label: bar.querySelector('[data-zoom="actual"]').textContent,
-              pressed: [...bar.querySelectorAll('[aria-pressed="true"]')].map((button) => button.getAttribute('data-zoom')),
+              mode: (JSON.parse(sessionStorage.getItem('nimblescape-paper-zoom') || 'null') || { mode: 'width' }).mode,
+              label: label ? label.textContent : '',
+              shown: label ? label.classList.contains('nimblescape-paper-zoom-shown') : false,
+              labels: document.querySelectorAll('.nimblescape-paper-zoom').length,
+              pagedJs: typeof window.Paged !== 'undefined',
               vscodeKeys: window.vscodeKeys,
               zoomed: window.zoomed,
             };
           })()`,
         );
-      const click = (action: string) => evaluate(session, `document.querySelector('.nimblescape-paper-zoom [data-zoom="${action}"]').click()`);
 
-      // Page Width by default: a page is as wide as the window, with a small space at each side, also larger than the paper.
+      // Page Width by default: a page is as wide as the window, with a small space at each side, also larger than the
+      // paper. Nothing of the zoom shows on the pages: no bar, and no label before a change of the zoom.
       const width = await state();
-      expect(width.pressed).toEqual(['width']);
+      expect(width.mode).toBe('width');
       expect(width.zoom).toBeGreaterThan(1);
       expect(Math.abs(width.zoom * width.width - (width.bodyWidth - 24))).toBeLessThan(1);
       expect(width.scrollWidth).toBeLessThanOrEqual(width.clientWidth);
-      expect(width.label).toBe(`${Math.round(width.zoom * 100)} %`);
+      expect(width.labels).toBe(0);
+      expect(await evaluate<number>(session, `document.querySelectorAll('.nimblescape-paper-zoom button, [role="toolbar"]').length`)).toBe(0);
 
-      // Single Page: a whole page and the space above and below it fill the height of the window, and a page starts at
-      // the top of the window; the page is not longer than the pages, although the hidden content is longer.
+      // Single Page of the menu: VS Code loads the page again, the pages of before show without Paged.js, and a whole
+      // page and the space above and below it fill the height of the window, and a page starts at the top of the
+      // window; the page is not longer than the pages, although the hidden content is longer.
       await evaluate(session, 'window.scrollTo(0, 2500)');
-      await click('page');
+      await menu('page');
       const single = await state();
-      expect(single.pressed).toEqual(['page']);
+      expect(single.pagedJs).toBe(false);
+      expect(single.mode).toBe('page');
       expect(Math.abs(single.zoom * (single.height + 32) - single.clientHeight)).toBeLessThan(1);
       const index = Math.round(single.scrollY / ((single.height + 16) * single.zoom));
       expect(index).toBeGreaterThan(0);
       expect(Math.abs(single.scrollY - index * (single.height + 16) * single.zoom)).toBeLessThan(1);
       expect(single.scrollHeight).toBeLessThanOrEqual(Math.ceil((single.count * (single.height + 16) + 16) * single.zoom) + 1);
-      expect(single.zoomed.length).toBeGreaterThan(0);
+      // The label shows the factor and the mode for a moment, and lets the pointer through to the pages.
+      expect(single.label).toBe(`${Math.round(single.zoom * 100)} % · Single Page`);
+      expect(single.shown).toBe(true);
+      expect(await evaluate<string>(session, `getComputedStyle(document.querySelector('.nimblescape-paper-zoom')).pointerEvents`)).toBe('none');
+      await evaluate(session, waitFor("!document.querySelector('.nimblescape-paper-zoom').classList.contains('nimblescape-paper-zoom-shown')"));
 
-      // Zoom In goes to the next step and keeps the place in the middle of the window.
+      // Zoom In of the menu goes to the next step and keeps the place in the middle of the window.
       const before = await state();
       const middleY = (before.scrollY + before.clientHeight / 2) / before.zoom;
-      await click('in');
+      await menu('in');
       const larger = await state();
-      expect(larger.pressed).toEqual([]);
+      expect(larger.mode).toBe('fixed');
       expect(larger.zoom).toBeGreaterThan(before.zoom);
       expect([0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1]).toContain(larger.zoom);
       expect(Math.abs((larger.scrollY + larger.clientHeight / 2) / larger.zoom - middleY)).toBeLessThan(2);
+      expect(larger.label).toBe(`${Math.round(larger.zoom * 100)} %`);
+      expect(larger.zoomed.length).toBeGreaterThan(0);
+
+      // A request counts once: a new content with the same request, while the user types, and a load of the page again
+      // with it, do not zoom again.
+      const id = `r${requests}`;
+      await evaluate(session, `window.postMessage({ type: 'updateContent', source: 'file:///paper.md', content: ${JSON.stringify(`<!DOCTYPE html><html><body>${asked('in', id)}</body></html>`)} }, '*')`);
+      await evaluate(session, waitFor('window.rendered.length > 1'));
+      expect((await state()).zoom).toBe(larger.zoom);
+      await open(() => running.send('Page.reload', {}, sessionId), asked('in', id));
+      expect((await state()).zoom).toBe(larger.zoom);
 
       // Ctrl and + or - zoom, and VS Code does not get these keys, which would zoom the whole window; Ctrl+0 gives Page Width.
       await evaluate(session, `document.body.dispatchEvent(new KeyboardEvent('keydown', { key: '=', code: 'Equal', ctrlKey: true, bubbles: true, cancelable: true }))`);
       const key = await state();
       expect(key.zoom).toBeGreaterThan(larger.zoom);
+      expect(key.shown).toBe(true);
       await evaluate(session, `document.body.dispatchEvent(new KeyboardEvent('keydown', { key: '-', code: 'Minus', ctrlKey: true, bubbles: true, cancelable: true }))`);
       expect((await state()).zoom).toBe(larger.zoom);
       await evaluate(session, `document.body.dispatchEvent(new KeyboardEvent('keydown', { key: '0', code: 'Digit0', ctrlKey: true, bubbles: true, cancelable: true }))`);
       const reset = await state();
-      expect(reset.pressed).toEqual(['width']);
+      expect(reset.mode).toBe('width');
       expect(reset.zoom).toBeCloseTo(width.zoom, 3);
       expect(reset.vscodeKeys).toBe(0);
       // A key without Ctrl goes to VS Code.
       await evaluate(session, `document.body.dispatchEvent(new KeyboardEvent('keydown', { key: '=', code: 'Equal', bubbles: true, cancelable: true }))`);
       expect((await state()).vscodeKeys).toBe(1);
 
-      // The wheel with Ctrl zooms at the pointer: the place on the pages under the pointer stays under it, also to the
-      // side when the pages are wider than the window, which then scrolls to the side.
-      await click('actual');
+      // Actual Size of the menu shows the pages in the size of the paper; Zoom In five times gives 200 %.
+      await menu('actual');
       const actual = await state();
       expect(actual.zoom).toBe(1);
       expect(actual.label).toBe('100 %');
       for (let turn = 0; turn < 5; turn++) {
-        await click('in');
+        await menu('in');
       }
       const wide = await state();
       expect(wide.zoom).toBe(2);
       expect(wide.scrollWidth).toBeGreaterThan(wide.clientWidth);
+
+      // The wheel with Ctrl zooms at the pointer: the place on the pages under the pointer stays under it, also to the
+      // side when the pages are wider than the window, which then scrolls to the side.
       await evaluate(session, `window.scrollTo(200, window.scrollY)`);
       const pointer = { x: 700, y: 400 };
       const placeOf = (s: State) => ({
@@ -609,30 +641,69 @@ describe('the script of the pages in the Markdown preview (R-PRV-001 to R-PRV-00
       expect(wheel.zoom).toBeCloseTo(2 * Math.exp(0.6), 2);
       expect(Math.abs(placeOf(wheel).x - under.x)).toBeLessThan(2);
       expect(Math.abs(placeOf(wheel).y - under.y)).toBeLessThan(2);
-      expect(wheel.vscodeKeys).toBe(1);
+      expect(wheel.vscodeKeys).toBe(0);
 
       // The zoom stays when VS Code loads the page again, as for a note that Markdown Notes selects.
       await open(() => running.send('Page.reload', {}, sessionId));
       const again = await state();
       expect(again.zoom).toBeCloseTo(wheel.zoom, 3);
-      expect(again.pressed).toEqual([]);
+      expect(again.mode).toBe('fixed');
+      expect(again.labels).toBe(0);
+
+      // Page Width of the menu.
+      await menu('width');
+      const back = await state();
+      expect(back.mode).toBe('width');
+      expect(back.zoom).toBeCloseTo(width.zoom, 3);
+      expect(back.label).toBe(`${Math.round(back.zoom * 100)} % · Page Width`);
 
       // Single Page stays after a change of the size of the window, and fits the new window.
-      await click('page');
+      await menu('page');
       await running.send('Emulation.setDeviceMetricsOverride', { width: 700, height: 1000, deviceScaleFactor: 1, mobile: false }, sessionId);
       await evaluate(session, `new Promise((resolve) => setTimeout(() => resolve(true), 400))`);
       const narrow = await state();
-      expect(narrow.pressed).toEqual(['page']);
+      expect(narrow.mode).toBe('page');
       expect(narrow.zoom * narrow.width).toBeLessThanOrEqual(narrow.bodyWidth - 24 + 1);
       expect(narrow.zoom * (narrow.height + 32)).toBeLessThanOrEqual(narrow.clientHeight + 1);
 
-      // A notes document has no bar of the zoom.
+      // A notes document has no label of the zoom.
       await evaluate(
         session,
         `window.postMessage({ type: 'updateContent', source: 'file:///notes.md', content: '<!DOCTYPE html><html><body><div class="markdown-body"><h1 data-line="0" class="code-line">Notizen</h1></div></body></html>' }, '*')`,
       );
       await evaluate(session, waitFor("!document.body.classList.contains('nimblescape-paper-mode')"));
       expect(await evaluate<number>(session, `document.querySelectorAll('.nimblescape-paper-zoom').length`)).toBe(0);
+    } finally {
+      await running.close();
+    }
+  });
+
+  it.skipIf(!browser)('a new preview does not do the request of the zoom of its first content, which was meant for an older preview (R-PRV-007)', { timeout: 90_000 }, async () => {
+    const paragraph = 'Ein Absatz über die Arbeit von Teams mit Agenten. '.repeat(12);
+    const text = `---\nlayout: plain\ntitle: Agenten\nauthor: Hannes\n---\n\n# Einleitung\n\n${`${paragraph}\n\n`.repeat(10)}`;
+    const paper = (await paperContent(text)).replace('<div class="nimblescape-paper" hidden ', '<div class="nimblescape-paper" hidden data-zoom-request="old page" ');
+    const page = writePage();
+    const running = await Browser.launch(browser as string);
+    try {
+      const { targetId } = (await running.send('Target.createTarget', { url: 'about:blank' })) as { targetId: string };
+      const { sessionId } = (await running.send('Target.attachToTarget', { targetId, flatten: true })) as { sessionId: string };
+      const session = { browser: running, id: sessionId };
+      await running.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false }, sessionId);
+      await running.send('Page.enable', {}, sessionId);
+      const loaded = running.once('Page.loadEventFired', sessionId);
+      await running.send('Page.navigate', { url: pathToFileURL(page).href }, sessionId);
+      await loaded;
+      await evaluate(session, `window.show(${JSON.stringify(paper)})`);
+      await evaluate(session, waitFor('window.rendered.length > 0'));
+      expect(await evaluate<string | null>(session, `sessionStorage.getItem('nimblescape-paper-zoom')`)).toBeNull();
+      expect(await evaluate<number>(session, `document.querySelectorAll('.nimblescape-paper-zoom').length`)).toBe(0);
+      // The same request after a load of the page again is done already.
+      const again = running.once('Page.loadEventFired', sessionId);
+      await running.send('Page.reload', {}, sessionId);
+      await again;
+      await evaluate(session, `window.show(${JSON.stringify(paper)})`);
+      await evaluate(session, waitFor('window.rendered.length > 0'));
+      expect(await evaluate<string | null>(session, `sessionStorage.getItem('nimblescape-paper-zoom')`)).toBeNull();
     } finally {
       await running.close();
     }

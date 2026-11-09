@@ -17,7 +17,7 @@ import * as esbuild from 'esbuild';
 import { sharedModulesPlugin } from '@nimblescape/markdowneditor/bundle';
 import { sectionCodes } from '@nimblescape/markdownlayout';
 import { expect, test, vi } from 'vitest';
-import { commands, extensionId } from './extension';
+import { commands, extensionId, zoomActions, zoomMenu } from './extension';
 import { drawingsCss, lightThemeColors } from './paper/extensionStyles';
 import { markdownEditor, markdownPreviewEditor, paperDocumentKey } from './paperDocuments';
 import { defaults, settingsSection } from './settings';
@@ -117,9 +117,36 @@ test('"Export PDF" is a button of the menu "Run" of the three views of a paper d
   expect(menus['editor/title/run']).toEqual([{ command: commands.exportPdf, when: `(editorLangId == markdown || activeWebviewPanelId == 'markdown.preview' || ${views}) && ${paperDocumentKey}` }]);
   expect(menus.commandPalette).toContainEqual({ command: commands.exportPdf, when: `editorLangId == markdown || activeWebviewPanelId == 'markdown.preview' || ${views}` });
   // "Open Preview to the Side" of VS Code is the same button; VS Code shows at most eight buttons in the title.
-  expect(menus['editor/title']).toBeUndefined();
+  expect(menus['editor/title'].map((item: { command?: string }) => item.command)).not.toContain(commands.showPagePreview);
   expect(menus.commandPalette).toContainEqual({ command: commands.showPagePreview, when: `editorLangId == markdown && ${paperDocumentKey}` });
   expect(manifest.activationEvents).toEqual(['onLanguage:markdown']);
+});
+
+test('the menu "Zoom" in the title of the Markdown preview of a paper document holds the zoom of the pages, and no bar stands on the pages (R-PRV-007)', () => {
+  const menus = manifest.contributes.menus;
+  const preview = `(activeWebviewPanelId == 'markdown.preview' || activeCustomEditorId == '${markdownPreviewEditor}') && ${paperDocumentKey}`;
+  // One button in the title, only in the preview of a paper document: the Markdown Editor of a paper has no pages.
+  expect(menus['editor/title']).toEqual([{ submenu: zoomMenu, group: 'navigation', when: preview }]);
+  expect(manifest.contributes.submenus).toEqual([{ id: zoomMenu, label: 'Zoom', icon: '$(zoom-in)' }]);
+  // Zoom In, Zoom Out and Actual Size, then Page Width and Single Page.
+  expect(menus[zoomMenu]).toEqual([
+    { command: commands.zoomIn, group: '1_step@1' },
+    { command: commands.zoomOut, group: '1_step@2' },
+    { command: commands.actualSize, group: '1_step@3' },
+    { command: commands.pageWidth, group: '2_fit@1' },
+    { command: commands.singlePage, group: '2_fit@2' },
+  ]);
+  expect(zoomActions.map(([command]) => command)).toEqual(menus[zoomMenu].map((item: { command: string }) => item.command));
+  for (const [command] of zoomActions) {
+    expect(menus.commandPalette).toContainEqual({ command, when: preview });
+  }
+  const titles = Object.fromEntries(manifest.contributes.commands.map((command: { command: string; title: string }) => [command.command, command.title]));
+  expect(zoomActions.map(([command]) => titles[command])).toEqual(['Zoom In', 'Zoom Out', 'Actual Size (100 %)', 'Page Width', 'Single Page']);
+  // The keys and the wheel with Ctrl or Cmd belong to the script of the pages, so the extension binds no keys.
+  expect(manifest.contributes).not.toHaveProperty('keybindings');
+  const css = fs.readFileSync(path.join(repository, 'media', 'paperPreview.css'), 'utf8');
+  expect(css).toMatch(/\.nimblescape-paper-zoom \{[^}]*pointer-events: none;/);
+  expect(fs.readFileSync(path.join(repository, 'media', 'paperPreview.js'), 'utf8')).not.toContain("'toolbar'");
 });
 
 test('the pages are part of the Markdown preview of VS Code: a markdown-it plugin, a script and a style, and no keys or views of their own (R-PRV-005)', () => {

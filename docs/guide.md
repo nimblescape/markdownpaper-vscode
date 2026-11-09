@@ -523,12 +523,14 @@ Preview" in the Command Palette, open it beside the text editor too. The preview
 document stays as VS Code shows it. The pages in the preview:
 
 - are white paper on a grey background, also in a dark theme;
-- have the zoom of the bar at the top right: "Page Width" makes a page as
-  wide as the window of the preview (the zoom of a new preview), "Single
-  Page" shows a whole page in the window, − and + zoom out and in, and the
-  factor between them gives the size of the paper. Ctrl+0, Ctrl+− and Ctrl++
-  (on macOS Cmd) do the same while the preview has the focus, and the wheel
-  with Ctrl, or a pinch on a touchpad, zooms at the pointer. In Zen mode of
+- have the zoom of the menu "Zoom", the magnifier button in the title of the
+  preview: "Zoom In" and "Zoom Out", "Actual Size (100 %)" for the size of
+  the paper, "Page Width" for a page as wide as the window of the preview
+  (the zoom of a new preview) and "Single Page" for a whole page in the
+  window. Ctrl+0, Ctrl+− and Ctrl++ (on macOS Cmd) zoom too while the
+  preview has the focus, and the wheel with Ctrl, or a pinch on a touchpad,
+  zooms at the pointer. Nothing of the zoom covers the pages: after a change,
+  the factor shows at the top for a moment. In Zen mode of
   VS Code, the pages fill the whole window when the setting
   `zenMode.centerLayout` is off, since VS Code centers the editor in Zen mode
   by default;

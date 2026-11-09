@@ -38,6 +38,11 @@
  * - A layout that is not in the cache yet: the extension reads it, and the preview shows "Making the pages …" until
  *   then. After a change of a file of a layout, the extension reads the layout again. Then it lets VS Code render
  *   the previews again (`markdown.preview.refresh`).
+ * - The menu "Zoom" in the title of the preview ([R-PRV-007](../docs/requirements.md#r-prv-007)): an extension cannot
+ *   send a message to the page of the Markdown preview of VS Code, so a click in the menu asks for the zoom with the
+ *   next rendering of the file (zoom): for a short time, the hidden element has the attribute `data-zoom-request` with
+ *   the number and the action of the request, and VS Code renders the previews again. The script of the pages does
+ *   each request once, and keeps the pages of before, since the attribute does not change them.
  * - A notes document keeps the preview of VS Code: the plugin changes nothing.
  */
 
@@ -126,6 +131,19 @@ export interface PaperData {
   /** plantUml is the address of the script of the PlantUML diagrams of the PDF, if the pages load it. */
   plantUml?: string;
 }
+
+/** ZoomAction is an action of the menu "Zoom": Zoom In, Zoom Out, Actual Size, Page Width or Single Page. */
+export type ZoomAction = 'in' | 'out' | 'actual' | 'width' | 'page';
+
+/** ZoomRequest is a request of the zoom of the pages of a file, with its own number and its time. */
+interface ZoomRequest {
+  id: string;
+  action: ZoomAction;
+  time: number;
+}
+
+/** zoomRequestTime is the time in milliseconds in which a rendering of the preview holds a request of the zoom. */
+export const zoomRequestTime = 3000;
 
 /** paperClass is the class of the hidden element with the layout of a paper document. */
 export const paperClass = 'nimblescape-paper';
@@ -227,6 +245,10 @@ export class PaperPreview implements vscode.Disposable {
   private refreshTimer: NodeJS.Timeout | undefined;
   private reloadTimer: NodeJS.Timeout | undefined;
   private readonly changed = new Set<string>();
+  /** zoomRequests holds the last request of the zoom of each file (zoom). */
+  private readonly zoomRequests = new Map<string, ZoomRequest>();
+  /** zoomCount counts the requests of the zoom, so that each one has a number of its own. */
+  private zoomCount = 0;
 
   constructor(
     private readonly extension: vscode.Uri,
@@ -344,6 +366,8 @@ export class PaperPreview implements vscode.Disposable {
     const key = file.toString();
     this.rendered.delete(key);
     this.rendered.add(key);
+    const request = this.zoomRequests.get(key);
+    const zoom = request && Date.now() - request.time <= zoomRequestTime ? request : undefined;
     const data: PaperData = {
       layout: layout.id,
       language: layout.language,
@@ -362,7 +386,7 @@ export class PaperPreview implements vscode.Disposable {
       keep: this.keptStyles().map((file) => resource(file.toString())),
       ...(parts.plantUml ? { plantUml: resource(parts.plantUml) } : {}),
     };
-    return `${this.element(data)}<div class="${textClass}">\n${body.html}</div>\n`;
+    return `${this.element(data, zoom)}<div class="${textClass}">\n${body.html}</div>\n`;
   }
 
   /**
@@ -379,11 +403,26 @@ export class PaperPreview implements vscode.Disposable {
   }
 
   /**
-   * element returns the hidden element with the data of a paper.
+   * element returns the hidden element with the data of a paper, and with the request of the zoom, if any.
    * @param data - The data.
+   * @param zoom - The request of the zoom.
    */
-  private element(data: PaperData): string {
-    return `<div class="${paperClass}" hidden data-paper="${escapeHtml(JSON.stringify(data))}"></div>\n`;
+  private element(data: PaperData, zoom?: ZoomRequest): string {
+    const request = zoom ? ` data-zoom-request="${escapeHtml(`${zoom.id} ${zoom.action}`)}"` : '';
+    return `<div class="${paperClass}" hidden data-paper="${escapeHtml(JSON.stringify(data))}"${request}></div>\n`;
+  }
+
+  /**
+   * zoom asks the Markdown previews of a paper document for a zoom of their pages, for the menu "Zoom": the renderings
+   * of the file in the next zoomRequestTime hold the request, and VS Code renders the previews again at once.
+   * @param file - The paper document.
+   * @param action - The action of the menu.
+   */
+  zoom(file: vscode.Uri, action: ZoomAction): void {
+    const time = Date.now();
+    this.zoomRequests.set(file.toString(), { id: `${time.toString(36)}-${++this.zoomCount}`, action, time });
+    clearTimeout(this.refreshTimer);
+    void vscode.commands.executeCommand('markdown.preview.refresh');
   }
 
   /**

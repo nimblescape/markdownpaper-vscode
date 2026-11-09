@@ -9,7 +9,7 @@ has the class nimblescape-paper-mode, which the script of the pages (paperPrevie
 are those of a light theme. The pages stand on a grey background, with a shadow and a gap between them. The content
 of the preview stays in the page, hidden and off screen, as wide as the text of a page, so that the scripts of other
 extensions draw in it; the next pages are made in a hidden area. A note at the top left shows while Paged.js makes the
-pages, and the bar of the zoom stands at the top right of the window (R-PRV-007).
+pages, and a label at the top shows the factor of the zoom for a moment after a change of the zoom (R-PRV-007).
 */
 
 html:has(> body.nimblescape-paper-mode) {
@@ -114,62 +114,29 @@ body.nimblescape-paper-mode .nimblescape-paper-pages button {
   z-index: 10;
 }
 
-/* The bar of the zoom (R-PRV-007): its own font and colors, so the style sheets of the page do not change it. It
-   stands at the top, since the messages of VS Code show at the bottom right of its window. */
+/* The label of the factor of the zoom (R-PRV-007), which shows for a moment after a change of the zoom: its own font
+   and colors, so the style sheets of the page do not change it. The pointer goes through it to the pages. */
 body.nimblescape-paper-mode > .nimblescape-paper-zoom {
   position: fixed;
   top: 8px;
-  right: 12px;
+  left: 50%;
   z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 2px;
   margin: 0;
-  padding: 3px;
+  padding: 3px 10px;
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.7);
   color: white;
   font: 12px/1.4 system-ui, sans-serif;
-  opacity: 0.75;
-  user-select: none;
-  transition: opacity 0.15s;
-}
-
-body.nimblescape-paper-mode > .nimblescape-paper-zoom:hover,
-body.nimblescape-paper-mode > .nimblescape-paper-zoom:focus-within {
-  opacity: 1;
-}
-
-body.nimblescape-paper-mode > .nimblescape-paper-zoom > button {
-  display: inline-block;
-  min-width: 24px;
-  height: 22px;
-  margin: 0;
-  padding: 0 6px;
-  border: none;
-  border-radius: 3px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: center;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-body.nimblescape-paper-mode > .nimblescape-paper-zoom > button[data-zoom='actual'] {
-  min-width: 48px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  transform: translateX(-50%);
+  transition: opacity 0.3s;
 }
 
-body.nimblescape-paper-mode > .nimblescape-paper-zoom > button:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-body.nimblescape-paper-mode > .nimblescape-paper-zoom > button[aria-pressed='true'] {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-body.nimblescape-paper-mode > .nimblescape-paper-zoom > button:focus-visible {
-  outline: 1px solid white;
-  outline-offset: -1px;
+body.nimblescape-paper-mode > .nimblescape-paper-zoom.nimblescape-paper-zoom-shown {
+  opacity: 1;
+  transition: opacity 0.1s;
 }

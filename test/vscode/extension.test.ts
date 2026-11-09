@@ -144,7 +144,7 @@ describe('nimblescape Markdown Paper', function () {
   it('the extension starts and has its commands', async () => {
     await api();
     const commands = await vscode.commands.getCommands(true);
-    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'getLayoutsAndRepositories', 'openRepository', 'connectZotero', 'updateSourcesFromZotero']) {
+    for (const name of ['showPagePreview', 'exportPdf', 'newProject', 'newDocument', 'newLayout', 'getLayoutsAndRepositories', 'openRepository', 'connectZotero', 'updateSourcesFromZotero', 'zoomIn', 'zoomOut', 'actualSize', 'pageWidth', 'singlePage']) {
       assert.ok(commands.includes(`nimblescape.markdownPaper.${name}`), name);
     }
   });
@@ -439,6 +439,41 @@ describe('nimblescape Markdown Paper', function () {
       return tabs.some((tab) => tab.input instanceof vscode.TabInputWebview && tab.input.viewType.endsWith('markdown.preview')) ? true : undefined;
     }, 'the Markdown preview of VS Code');
     assert.equal(vscode.window.tabGroups.all.length, 2, 'the preview is beside the text editor');
+    await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+  });
+
+  it('the menu "Zoom" of the Markdown preview of a paper document asks the preview for the zoom with the renderings of the next 3 seconds (R-PRV-007)', async () => {
+    await api();
+    // A text of its own: the plugin finds the open document of a rendering by its text.
+    const paper = write('paper/zoom.md', '---\nlayout: thesis\ntitle: Agenten\n---\n\n# Einleitung\n\nText der Seiten mit Zoom.\n');
+    const document = await vscode.workspace.openTextDocument(paper);
+    await vscode.window.showTextDocument(document);
+    const render = () => vscode.commands.executeCommand<string>('markdown.api.render', document);
+    let rendered: string;
+    const end = Date.now() + 30_000;
+    do {
+      rendered = await render();
+      if (rendered.includes('&quot;layout&quot;:&quot;thesis&quot;')) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    } while (Date.now() < end);
+    assert.doesNotMatch(rendered, /data-zoom-request/, 'no request before a click in the menu');
+    await vscode.commands.executeCommand('markdown.showPreviewToSide', paper);
+    await waitFor(() => {
+      const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+      return input instanceof vscode.TabInputWebview && input.viewType.endsWith('markdown.preview') ? true : undefined;
+    }, 'the active Markdown preview of VS Code');
+    await vscode.commands.executeCommand('nimblescape.markdownPaper.singlePage');
+    const asked = await render();
+    const request = /<div class="nimblescape-paper" hidden data-paper="[^"]*" data-zoom-request="([0-9a-z]+-\d+) page"><\/div>/.exec(asked);
+    assert.ok(request, 'the request of Single Page in the hidden element');
+    await vscode.commands.executeCommand('nimblescape.markdownPaper.zoomIn');
+    const next = /data-zoom-request="([0-9a-z]+-\d+) in"/.exec(await render());
+    assert.ok(next, 'the request of Zoom In');
+    assert.notEqual(next[1], request[1], 'each request has a number of its own');
+    await new Promise((resolve) => setTimeout(resolve, 3200));
+    assert.doesNotMatch(await render(), /data-zoom-request/, 'no request after 3 seconds');
     await vscode.commands.executeCommand('workbench.action.closeAllEditors');
   });
 
